@@ -1,0 +1,90 @@
+:root {
+	--phc-bg-start: #f6f2ea;
+	--phc-bg-end: #fbf8f3;
+	--phc-text: #1f1d1a;
+	--phc-muted: #655e54;
+	--phc-label: #3a352e;
+	--phc-border-soft: rgba(31, 29, 26, 0.08);
+	--phc-font-ui: Manrope, system-ui, sans-serif;
+	--phc-font-display: Newsreader, Georgia, serif;
+}
+
+body {
+	margin: 0;
+	background: linear-gradient(180deg, var(--phc-bg-start) 0%, var(--phc-bg-end) 100%);
+	color: var(--phc-text);
+	font-family: var(--phc-font-ui);
+}
+
+.page-grid {
+	display: grid;
+	gap: 1rem;
+	margin-top: 1.5rem;
+}
+
+.card-title {
+	margin: 0 0 1rem;
+	font: 500 1.45rem/1.1 var(--phc-font-display);
+}
+
+.card-subtitle {
+	margin: 0 0 0.5rem;
+	font: 600 1rem/1.2 var(--phc-font-ui);
+}
+
+.status-copy {
+	color: var(--phc-muted);
+	font: 400 0.95rem/1.5 var(--phc-font-ui);
+}
+
+.button-row {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 0.75rem;
+}
+
+.form-row {
+	display: grid;
+	gap: 0.8rem;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+
+.field-grid {
+	display: grid;
+	gap: 0.8rem;
+	grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
+}
+
+.field-block {
+	margin-top: 1rem;
+}
+
+.note-field,
+.body-field,
+.spaced-field {
+	margin: 1rem 0;
+}
+
+.summary-list {
+	list-style: none;
+	padding: 0;
+	margin: 0;
+	display: grid;
+	gap: 0.75rem;
+}
+
+.entry-list {
+	list-style: none;
+	padding: 0;
+	margin: 1rem 0 0;
+	display: grid;
+	gap: 0.75rem;
+}
+
+.entry-list > li {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: start;
+	justify-content: space-between;
+	gap: 0.75rem;
+}

@@ -1,0 +1,55 @@
+{
+	"name": "personal-health-cockpit",
+	"description": "Private local-first health cockpit built with SvelteKit, Bun, and Playwright.",
+	"private": true,
+	"version": "0.0.1",
+	"packageManager": "bun@1.3.10",
+	"type": "module",
+	"engines": {
+		"bun": "1.3.10"
+	},
+	"scripts": {
+		"dev": "bun ./node_modules/vite/bin/vite.js dev",
+		"build": "bun ./node_modules/vite/bin/vite.js build",
+		"preview": "bun ./node_modules/vite/bin/vite.js preview",
+		"prepare": "svelte-kit sync || echo ''",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test:unit": "node ./scripts/run-vitest.mjs --config vitest.unit.config.ts",
+		"test:component": "node ./scripts/run-vitest.mjs --config vitest.component.config.ts",
+		"test:watch": "node ./scripts/run-vitest.mjs --config vitest.component.config.ts --watch",
+		"test": "node ./scripts/test-all.mjs",
+		"test:e2e": "playwright test",
+		"test:smoke": "playwright test --grep \"shell navigation smoke test\"",
+		"lint": "eslint ."
+	},
+	"devDependencies": {
+		"@eslint/compat": "^2.0.3",
+		"@eslint/js": "^10.0.1",
+		"@playwright/test": "^1.58.2",
+		"@sveltejs/adapter-auto": "^7.0.0",
+		"@sveltejs/kit": "^2.50.2",
+		"@sveltejs/vite-plugin-svelte": "^6.2.4",
+		"@types/node": "^24",
+		"eslint": "^10.0.3",
+		"eslint-plugin-svelte": "^3.15.2",
+		"globals": "^17.4.0",
+		"playwright": "^1.58.2",
+		"svelte": "^5.54.0",
+		"svelte-check": "^4.4.2",
+		"typescript": "^5.9.3",
+		"typescript-eslint": "^8.57.0",
+		"vite": "^7.3.1",
+		"vitest": "^4.1.0"
+	},
+	"dependencies": {
+		"@testing-library/svelte": "^5.3.1",
+		"@testing-library/user-event": "^14.6.1",
+		"bits-ui": "^2.16.5",
+		"dexie": "^4.4.2",
+		"fake-indexeddb": "^6.2.5",
+		"jsdom": "^29.0.1",
+		"lucide-svelte": "^1.0.1",
+		"zod": "^4.3.6"
+	}
+}
