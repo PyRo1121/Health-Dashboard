@@ -1,0 +1,93 @@
+name: 🛡️ Grok Threat Monitor
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: grok-threat-monitor-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  threat-monitor:
+    name: Threat Monitor
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Sync canonical labels
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/sync-labels.mjs .github/labels.json
+
+      - name: Run Grok threat monitor
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          XAI_MODEL: grok-4-1-fast-reasoning
+          THREAT_JSON_PATH: ${{ runner.temp }}/grok-threat-monitor.json
+          THREAT_MARKDOWN_PATH: ${{ runner.temp }}/grok-threat-monitor.md
+          GITHUB_REPOSITORY: ${{ github.repository }}
+        run: node .github/scripts/grok-threat-monitor.mjs
+
+      - name: Upsert threat monitor issue
+        uses: actions/github-script@v7
+        env:
+          THREAT_JSON_PATH: ${{ runner.temp }}/grok-threat-monitor.json
+          THREAT_MARKDOWN_PATH: ${{ runner.temp }}/grok-threat-monitor.md
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- grok-threat-monitor -->';
+            const result = JSON.parse(fs.readFileSync(process.env.THREAT_JSON_PATH, 'utf8'));
+            const body = fs.readFileSync(process.env.THREAT_MARKDOWN_PATH, 'utf8');
+            const labels = ['threat-monitor'];
+            if (['high', 'critical'].includes(String(result.severity || '').toLowerCase())) {
+              labels.push('security-issue');
+            }
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+
+            const existing = issues.find((issue) => issue.body?.includes(marker));
+            const title = `Grok Threat Monitor · ${String(result.severity || 'none').toUpperCase()}`;
+
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                title,
+                body,
+                labels,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels,
+              });
+            }
+
+      - name: Upload threat monitor artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: grok-threat-monitor-artifact
+          path: |
+            ${{ runner.temp }}/grok-threat-monitor.json
+            ${{ runner.temp }}/grok-threat-monitor.md

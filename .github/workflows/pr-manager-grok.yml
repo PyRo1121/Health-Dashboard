@@ -1,0 +1,148 @@
+name: 🧭 Grok PR Manager
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled, ready_for_review]
+  workflow_dispatch:
+
+concurrency:
+  group: grok-pr-manager-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  manage-pr:
+    name: PR Manager
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out base repository automation config
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Sync canonical labels
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/sync-labels.mjs .github/labels.json
+
+      - name: Collect PR file metadata
+        id: files
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = `${process.env.RUNNER_TEMP}/pr-files.json`;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              per_page: 100,
+            });
+            const simplified = files.map((file) => ({
+              filename: file.filename,
+              status: file.status,
+              additions: file.additions,
+              deletions: file.deletions,
+            }));
+            fs.writeFileSync(path, JSON.stringify(simplified, null, 2));
+            core.setOutput('files_path', path);
+
+      - name: Capture current labels
+        id: labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            const path = `${process.env.RUNNER_TEMP}/pr-labels.json`;
+            const labels = (context.payload.pull_request.labels || []).map((label) => label.name);
+            fs.writeFileSync(path, JSON.stringify(labels, null, 2));
+            core.setOutput('labels_path', path);
+
+      - name: Run PR manager classification
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_TITLE: ${{ github.event.pull_request.title }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_FILES_PATH: ${{ steps.files.outputs.files_path }}
+          PR_LABELS_PATH: ${{ steps.labels.outputs.labels_path }}
+          PR_MANAGER_JSON_PATH: ${{ runner.temp }}/pr-manager.json
+          PR_MANAGER_MARKDOWN_PATH: ${{ runner.temp }}/pr-manager.md
+        run: node .github/scripts/pr-manager.mjs
+
+      - name: Upsert PR manager comment
+        uses: actions/github-script@v7
+        env:
+          PR_MANAGER_MARKDOWN_PATH: ${{ runner.temp }}/pr-manager.md
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- grok-pr-manager -->';
+            const body = fs.readFileSync(process.env.PR_MANAGER_MARKDOWN_PATH, 'utf8');
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            }
+
+      - name: Sync manager labels
+        uses: actions/github-script@v7
+        env:
+          PR_MANAGER_JSON_PATH: ${{ runner.temp }}/pr-manager.json
+        with:
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync(process.env.PR_MANAGER_JSON_PATH, 'utf8'));
+            const add = Array.isArray(result.labelsToAdd) ? result.labelsToAdd : [];
+            const remove = Array.isArray(result.labelsToRemove) ? result.labelsToRemove : [];
+
+            if (add.length) {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: add,
+              });
+            }
+
+            for (const name of remove) {
+              try {
+                await github.rest.issues.removeLabel({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                });
+              } catch {}
+            }
+
+      - name: Upload PR manager artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-manager-artifact
+          path: |
+            ${{ runner.temp }}/pr-manager.json
+            ${{ runner.temp }}/pr-manager.md
