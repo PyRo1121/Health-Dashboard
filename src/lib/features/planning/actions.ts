@@ -7,7 +7,7 @@ import {
 } from '$lib/features/groceries/service';
 import { createWorkoutTemplateForm, normalizeExerciseDrafts } from '$lib/features/movement/model';
 import { saveWorkoutTemplate } from '$lib/features/movement/service';
-import { refreshWeeklyReviewArtifacts } from '$lib/features/review/service';
+import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
 import { deletePlanSlot, movePlanSlot, savePlanSlot, updatePlanSlotStatus } from './service';
 import { createPlanningSlotForm } from './model';
 import { type PlanningPageState, reloadPlanningPageState } from './state';
@@ -98,7 +98,7 @@ export async function savePlanningSlotPage(
     title,
     notes: state.slotForm.notes,
   });
-  await refreshWeeklyReviewArtifacts(db, state.slotForm.localDay);
+  await refreshWeeklyReviewArtifactsSafely(db, state.slotForm.localDay);
 
   return await reloadPlanningPageState(db, state, {
     planNotice: 'Plan slot saved.',
@@ -130,7 +130,7 @@ export async function markPlanningSlotStatusPage(
   status: PlanSlot['status']
 ): Promise<PlanningPageState> {
   await updatePlanSlotStatus(db, slotId, status);
-  await refreshWeeklyReviewArtifacts(db, state.localDay);
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   return await reloadPlanningPageState(db, state, {
     planNotice: `Plan slot marked ${status}.`,
   });
@@ -142,7 +142,7 @@ export async function deletePlanningSlotPage(
   slotId: string
 ): Promise<PlanningPageState> {
   await deletePlanSlot(db, slotId);
-  await refreshWeeklyReviewArtifacts(db, state.localDay);
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   return await reloadPlanningPageState(db, state, {
     planNotice: 'Plan slot removed.',
   });
@@ -155,7 +155,7 @@ export async function movePlanningSlotPage(
   direction: 'up' | 'down'
 ): Promise<PlanningPageState> {
   await movePlanSlot(db, slotId, direction);
-  await refreshWeeklyReviewArtifacts(db, state.localDay);
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   return await reloadPlanningPageState(db, state, {
     planNotice: `Plan slot moved ${direction}.`,
   });
@@ -168,7 +168,7 @@ export async function togglePlanningGroceryStatePage(
   patch: Pick<GroceryItem, 'checked' | 'excluded' | 'onHand'>
 ): Promise<PlanningPageState> {
   await setGroceryItemState(db, itemId, patch);
-  await refreshWeeklyReviewArtifacts(db, state.localDay);
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   return await reloadPlanningPageState(db, state, {
     groceryNotice: 'Grocery item updated.',
   });
@@ -193,7 +193,7 @@ export async function addManualPlanningGroceryItemPage(
   await saveManualGroceryItem(db, state.weeklyPlan.id, {
     rawLabel: [draft.quantityText.trim(), draft.label.trim()].filter(Boolean).join(' '),
   });
-  await refreshWeeklyReviewArtifacts(db, state.localDay);
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   return await reloadPlanningPageState(db, state, {
     groceryNotice: 'Manual grocery item added.',
   });
@@ -205,7 +205,7 @@ export async function removeManualPlanningGroceryItemPage(
   itemId: string
 ): Promise<PlanningPageState> {
   await removeManualGroceryItem(db, itemId);
-  await refreshWeeklyReviewArtifacts(db, state.localDay);
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   return await reloadPlanningPageState(db, state, {
     groceryNotice: 'Manual grocery item removed.',
   });

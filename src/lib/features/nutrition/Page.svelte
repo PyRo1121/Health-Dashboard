@@ -64,6 +64,13 @@
       recipes: page.recipeCatalogItems,
     })
   );
+  let pendingAction = Promise.resolve();
+
+  function runNutritionAction(run: () => Promise<void>) {
+    const next = pendingAction.catch(() => undefined).then(run);
+    pendingAction = next;
+    return next;
+  }
 
   async function applyPendingIntent(nextPage: typeof page): Promise<typeof page> {
     const intent = readNutritionIntentFromSearch(window.location.search);
@@ -104,59 +111,83 @@
   }
 
   async function refreshData() {
-    const loaded = await loadNutritionPage(page);
-    page = await applyPendingIntent(loaded);
+    await runNutritionAction(async () => {
+      const loaded = await loadNutritionPage(page);
+      page = await applyPendingIntent(loaded);
+    });
   }
 
   async function runSearch() {
-    page = await searchNutritionFoods(page);
+    await runNutritionAction(async () => {
+      page = await searchNutritionFoods(page);
+    });
   }
 
   async function runPackagedSearch() {
-    page = await searchPackagedFoods(page);
+    await runNutritionAction(async () => {
+      page = await searchPackagedFoods(page);
+    });
   }
 
   async function runBarcodeLookup() {
-    page = await lookupPackagedBarcode(page);
+    await runNutritionAction(async () => {
+      page = await lookupPackagedBarcode(page);
+    });
   }
 
   async function runRecipeSearch() {
-    page = await searchNutritionRecipes(page);
+    await runNutritionAction(async () => {
+      page = await searchNutritionRecipes(page);
+    });
   }
 
   async function useMatch(match: FoodLookupResult) {
-    page = await useNutritionMatch(page, match);
+    await runNutritionAction(async () => {
+      page = await useNutritionMatch(page, match);
+    });
   }
 
   async function saveMeal() {
-    page = await saveNutritionMeal(page, draftFromForm);
+    await runNutritionAction(async () => {
+      page = await saveNutritionMeal(page, draftFromForm);
+    });
   }
 
   async function saveRecurringMeal() {
-    page = await saveNutritionRecurringMeal(page, draftFromForm);
+    await runNutritionAction(async () => {
+      page = await saveNutritionRecurringMeal(page, draftFromForm);
+    });
   }
 
   async function saveCustomFood() {
-    page = await saveNutritionCatalogItem(page, {
-      name: draftFromForm.name,
-      calories: draftFromForm.calories,
-      protein: draftFromForm.protein,
-      fiber: draftFromForm.fiber,
-      carbs: draftFromForm.carbs,
-      fat: draftFromForm.fat,
+    await runNutritionAction(async () => {
+      page = await saveNutritionCatalogItem(page, {
+        name: draftFromForm.name,
+        calories: draftFromForm.calories,
+        protein: draftFromForm.protein,
+        fiber: draftFromForm.fiber,
+        carbs: draftFromForm.carbs,
+        fat: draftFromForm.fat,
+      });
     });
   }
 
   async function savePlannedMeal() {
-    page = await planNutritionMeal(page, draftFromForm);
+    await runNutritionAction(async () => {
+      page = await planNutritionMeal(page, draftFromForm);
+    });
   }
 
   async function clearPlannedMeal() {
-    page = await clearNutritionPlannedMeal(page);
+    await runNutritionAction(async () => {
+      page = await clearNutritionPlannedMeal(page);
+    });
   }
 
   async function reuseMeal(id: string) {
-    page = await reuseNutritionMeal(page, id);
+    await runNutritionAction(async () => {
+      page = await reuseNutritionMeal(page, id);
+    });
   }
 
   function updateFormField(field: keyof typeof page.form, value: string) {
@@ -194,49 +225,53 @@
   }
 
   async function planRecommendation(recommendationId: string, kind: 'food' | 'recipe') {
-    if (kind === 'food') {
-      const item = page.catalogItems.find((candidate) => candidate.id === recommendationId);
-      if (!item) return;
-      page = await planNutritionMeal(page, {
-        name: item.name,
-        mealType: page.form.mealType,
-        calories: item.calories ?? 0,
-        protein: item.protein ?? 0,
-        fiber: item.fiber ?? 0,
-        carbs: item.carbs ?? 0,
-        fat: item.fat ?? 0,
-        notes: '',
-        sourceName: item.sourceName,
-      });
-      return;
-    }
+    await runNutritionAction(async () => {
+      if (kind === 'food') {
+        const item = page.catalogItems.find((candidate) => candidate.id === recommendationId);
+        if (!item) return;
+        page = await planNutritionMeal(page, {
+          name: item.name,
+          mealType: page.form.mealType,
+          calories: item.calories ?? 0,
+          protein: item.protein ?? 0,
+          fiber: item.fiber ?? 0,
+          carbs: item.carbs ?? 0,
+          fat: item.fat ?? 0,
+          notes: '',
+          sourceName: item.sourceName,
+        });
+        return;
+      }
 
-    const recipe = page.recipeCatalogItems.find((candidate) => candidate.id === recommendationId);
-    if (!recipe) return;
-    page = await planNutritionMeal(page, {
-      name: recipe.title,
-      mealType: recipe.mealType ?? page.form.mealType,
-      calories: 0,
-      protein: 0,
-      fiber: 0,
-      carbs: 0,
-      fat: 0,
-      notes: recipe.ingredients.slice(0, 4).join(', '),
-      sourceName: recipe.sourceName,
+      const recipe = page.recipeCatalogItems.find((candidate) => candidate.id === recommendationId);
+      if (!recipe) return;
+      page = await planNutritionMeal(page, {
+        name: recipe.title,
+        mealType: recipe.mealType ?? page.form.mealType,
+        calories: 0,
+        protein: 0,
+        fiber: 0,
+        carbs: 0,
+        fat: 0,
+        notes: recipe.ingredients.slice(0, 4).join(', '),
+        sourceName: recipe.sourceName,
+      });
     });
   }
 
   async function useRecommendation(recommendationId: string, kind: 'food' | 'recipe') {
-    if (kind === 'food') {
-      const item = page.catalogItems.find((candidate) => candidate.id === recommendationId);
-      if (!item) return;
-      page = await useNutritionMatch(page, foodLookupResultFromCatalogItem(item));
-      return;
-    }
+    await runNutritionAction(async () => {
+      if (kind === 'food') {
+        const item = page.catalogItems.find((candidate) => candidate.id === recommendationId);
+        if (!item) return;
+        page = await useNutritionMatch(page, foodLookupResultFromCatalogItem(item));
+        return;
+      }
 
-    const recipe = page.recipeCatalogItems.find((candidate) => candidate.id === recommendationId);
-    if (!recipe) return;
-    page = useNutritionRecipeIdea(page, recipe);
+      const recipe = page.recipeCatalogItems.find((candidate) => candidate.id === recommendationId);
+      if (!recipe) return;
+      page = useNutritionRecipeIdea(page, recipe);
+    });
   }
 
   onBrowserRouteMount(refreshData);

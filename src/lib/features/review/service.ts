@@ -163,3 +163,23 @@ export async function refreshWeeklyReviewArtifacts(
   await db.reviewSnapshots.put(weekly.snapshot);
   return weekly;
 }
+
+function isDatabaseClosedError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    (error.name === 'DatabaseClosedError' || /database has been closed/i.test(error.message))
+  );
+}
+
+export async function refreshWeeklyReviewArtifactsSafely(
+  db: HealthDatabase,
+  anchorDay: string
+): Promise<void> {
+  try {
+    await refreshWeeklyReviewArtifacts(db, anchorDay);
+  } catch (error) {
+    if (!isDatabaseClosedError(error)) {
+      throw error;
+    }
+  }
+}
