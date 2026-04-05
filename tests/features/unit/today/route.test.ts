@@ -25,12 +25,18 @@ describe('today route', () => {
     vi.doMock('$lib/server/http/action-route', () => ({
       ...actual,
       createDbActionPostHandler: (
-        handlers: Parameters<typeof actual.createDbActionPostHandler>[0]
+        handlers: Parameters<typeof actual.createDbActionPostHandler>[0],
+        _deps: Parameters<typeof actual.createDbActionPostHandler>[1],
+        options: Parameters<typeof actual.createDbActionPostHandler>[2]
       ) =>
-        actual.createDbActionPostHandler(handlers, {
-          withDb: async (run) => await run(db),
-          toResponse: (body) => Response.json(body),
-        }),
+        actual.createDbActionPostHandler(
+          handlers,
+          {
+            withDb: async (run) => await run(db),
+            toResponse: (body) => Response.json(body),
+          },
+          options
+        ),
     }));
     vi.doMock('$lib/features/today/controller', () => ({
       loadTodayPage:
@@ -204,5 +210,24 @@ describe('today route', () => {
       expect.objectContaining({ saveNotice: 'Plan item marked done.' })
     );
     expect(markTodayPlanSlotStatusPage).toHaveBeenCalledWith(db, state, 'slot-1', 'done');
+  });
+
+  it('returns 400 for invalid today action payloads', async () => {
+    const loadTodayPage = vi.fn();
+    const { POST } = await importRoute({ loadTodayPage });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/today', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'markPlanSlotStatus',
+          localDay: '2026-04-04',
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid today request payload.');
+    expect(loadTodayPage).not.toHaveBeenCalled();
   });
 });
