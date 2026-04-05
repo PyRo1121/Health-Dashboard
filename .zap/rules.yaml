@@ -1,0 +1,47 @@
+version: 1
+rules:
+  - id: 10010
+    name: 'Cookie No HttpOnly Flag'
+    status: OFF
+  - id: 10011
+    name: 'Cookie Without Secure Flag'
+    status: OFF
+  - id: 10054
+    name: 'Cookie Poisoning'
+    status: OFF
+  - id: 90011
+    name: 'Reliance on Client-Side Authentication'
+    status: OFF
+  - id: 90022
+    name: 'Application Error Disclosure'
+    status: OFF
+  - id: 10104
+    name: 'User Controllable Charset'
+    status: OFF
+  - id: 10108
+    name: 'User Controllable Meta Refresh'
+    status: OFF
+  - id: 40012
+    name: 'Cross Site Request Forgery'
+    status: OFF
+  - id: 40014
+    name: 'Proxy Disclosure'
+    status: OFF
+  - id: 40016
+    name: 'Source Code Disclosure - Git'
+    status: OFF
+  - id: 40017
+    name: 'Source Code Disclosure - Subversion'
+    status: OFF
+  - id: 40018
+    name: 'Source Code Disclosure - Mercurial'
+    status: OFF
+  - id: 40019
+    name: 'Source Code Disclosure - CVS'
+    status: OFF
+  - id: 90001
+    name: 'In Page Attribute Injection'
+    status: OFF
+  - id: 90022
+    name: 'Application Error Disclosure'
+    status: OFF

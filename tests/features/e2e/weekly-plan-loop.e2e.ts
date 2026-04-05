@@ -275,3 +275,45 @@ test('manual grocery items persist after weekly plan recompute', async ({ page }
   await expect(page.locator('.entry-list').getByText('Manual item', { exact: true })).toBeVisible();
   await expect(page.getByText('lentils')).toBeVisible();
 });
+
+test('review shows inferred adherence when a planned saved-food meal is logged manually', async ({
+  page,
+}) => {
+  await page.goto('/nutrition');
+  await page.getByLabel('Meal name').fill('Greek yogurt bowl');
+  await page.getByLabel('Calories').fill('310');
+  await page.getByLabel('Protein').fill('24');
+  await page.getByLabel('Fiber').fill('6');
+  await page.getByLabel('Carbs').fill('34');
+  await page.getByLabel('Fat').fill('8');
+  await page.getByRole('button', { name: 'Save as custom food' }).click();
+  await expect(page.getByText(/Saved to custom food catalog\./i)).toBeVisible();
+
+  await page.goto('/plan');
+  await page.getByLabel('Meal source').selectOption('food');
+  await page.getByLabel('Saved food').selectOption({ label: 'Greek yogurt bowl' });
+  await page.getByRole('button', { name: 'Add to week' }).click();
+  await expect(page.getByText(/Plan slot saved\./i)).toBeVisible();
+
+  await page.goto('/nutrition');
+  await page.getByLabel('Meal name').fill('Greek yogurt bowl');
+  await page.getByLabel('Calories').fill('310');
+  await page.getByLabel('Protein').fill('24');
+  await page.getByLabel('Fiber').fill('6');
+  await page.getByLabel('Carbs').fill('34');
+  await page.getByLabel('Fat').fill('8');
+  await page.getByRole('button', { name: 'Save meal' }).click();
+  await expect(page.getByText(/Meal saved\./i)).toBeVisible();
+
+  await page.goto('/review');
+  await expect(page.getByRole('heading', { name: 'Actual adherence' })).toBeVisible();
+  await expect(
+    page
+      .getByRole('article')
+      .filter({ hasText: 'Meals' })
+      .getByText(/1 hit, 0 misses, 1 inferred\./i)
+  ).toBeVisible();
+  await expect(
+    page.getByText(/Meal inferred hit: Greek yogurt bowl matched a logged meal on/i)
+  ).toBeVisible();
+});
