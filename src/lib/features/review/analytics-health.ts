@@ -151,7 +151,7 @@ export function buildPatternHighlights(
 
       if (event.eventType === 'symptom') {
         const symptomName =
-          typeof event.payload?.symptom === 'string'
+          typeof event.payload?.symptom === 'string' && event.payload.symptom.trim().length > 0
             ? event.payload.symptom.trim()
             : 'Symptom';
         if (!seenSymptomNames.has(symptomName)) {
