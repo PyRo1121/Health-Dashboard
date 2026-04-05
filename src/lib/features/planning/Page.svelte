@@ -5,6 +5,7 @@
   import WorkoutTemplateStudioShell from '$lib/features/movement/components/WorkoutTemplateStudioShell.svelte';
   import {
     addManualPlanningGroceryItemPage,
+    createGroceryDraftState,
     createPlanningPageState,
     deletePlanningSlotPage,
     loadPlanningPage,
@@ -22,8 +23,7 @@
 
   let page = $state(createPlanningPageState());
   let boardDays = $derived(createPlanningBoardDays(page.weekDays, page.slots));
-  let manualLabel = $state('');
-  let manualQuantityText = $state('');
+  let groceryDraftState = $state(createGroceryDraftState());
 
   async function refreshData() {
     page = await loadPlanningPage(undefined, page);
@@ -54,15 +54,12 @@
     page = await togglePlanningGroceryStatePage(page, itemId, { checked, excluded, onHand });
   }
 
-  async function addManualGroceryItem() {
+  async function addManualGroceryItem(nextDraftState: typeof groceryDraftState) {
     page = await addManualPlanningGroceryItemPage(page, {
-      label: manualLabel,
-      quantityText: manualQuantityText,
+      label: nextDraftState.manualLabel,
+      quantityText: nextDraftState.manualQuantityText,
     });
-    if (page.groceryNotice === 'Manual grocery item added.') {
-      manualLabel = '';
-      manualQuantityText = '';
-    }
+    return page.groceryNotice === 'Manual grocery item added.';
   }
 
   async function removeManualGroceryItem(itemId: string) {
@@ -151,13 +148,9 @@
       groceryWarnings={page.groceryWarnings}
       groceryItems={page.groceryItems}
       recipeCatalogItems={page.recipeCatalogItems}
-      {manualLabel}
-      {manualQuantityText}
-      onManualLabelChange={(value) => {
-        manualLabel = value;
-      }}
-      onManualQuantityChange={(value) => {
-        manualQuantityText = value;
+      draftState={groceryDraftState}
+      onDraftStateChange={(nextDraftState) => {
+        groceryDraftState = nextDraftState;
       }}
       onAddManualItem={addManualGroceryItem}
       onRemoveManualItem={removeManualGroceryItem}

@@ -2,6 +2,7 @@ import type { HealthDatabase } from '$lib/core/db/types';
 import type { GroceryItem, RecipeCatalogItem, WeeklyPlan } from '$lib/core/domain/types';
 import { listRecipeCatalogItems } from '$lib/features/nutrition/service';
 import { ensureWeeklyPlan } from '$lib/features/planning/service';
+import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
 import {
   deriveWeeklyGroceriesWithWarnings,
   removeManualGroceryItem,
@@ -12,6 +13,11 @@ import {
 export interface ManualGroceryDraft {
   label: string;
   quantityText: string;
+}
+
+export interface GroceryDraftState {
+  manualLabel: string;
+  manualQuantityText: string;
 }
 
 export interface GroceriesPageState {
@@ -33,6 +39,13 @@ export function createGroceriesPageState(): GroceriesPageState {
     groceryItems: [],
     groceryWarnings: [],
     recipeCatalogItems: [],
+  };
+}
+
+export function createGroceryDraftState(): GroceryDraftState {
+  return {
+    manualLabel: '',
+    manualQuantityText: '',
   };
 }
 
@@ -66,6 +79,7 @@ export async function toggleGroceryItemPage(
   patch: Pick<GroceryItem, 'checked' | 'excluded' | 'onHand'>
 ): Promise<GroceriesPageState> {
   await setGroceryItemState(db, itemId, patch);
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   const next = await loadGroceriesPage(db, state.localDay);
   return {
     ...next,
@@ -92,6 +106,7 @@ export async function addManualGroceryItemPage(
   await saveManualGroceryItem(db, state.weeklyPlan.id, {
     rawLabel: [draft.quantityText.trim(), draft.label.trim()].filter(Boolean).join(' '),
   });
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   const next = await loadGroceriesPage(db, state.localDay);
   return {
     ...next,
@@ -105,6 +120,7 @@ export async function removeManualGroceryItemPage(
   itemId: string
 ): Promise<GroceriesPageState> {
   await removeManualGroceryItem(db, itemId);
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   const next = await loadGroceriesPage(db, state.localDay);
   return {
     ...next,
