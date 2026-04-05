@@ -1,0 +1,82 @@
+name: Enable Auto-merge on Approval
+
+on:
+  pull_request_review:
+    types:
+      - submitted
+  pull_request:
+    types:
+      - labeled
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  enable-automerge:
+    if: >-
+      (github.event_name == 'pull_request_review' && github.event.review.state == 'approved') ||
+      (github.event_name == 'pull_request' && github.event.action == 'labeled')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Enable PR auto-merge for approved automation PRs
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const pr = context.payload.pull_request;
+            if (!pr || pr.draft || pr.state !== 'open') {
+              core.info('PR not eligible for auto-merge.');
+              return;
+            }
+
+            const labels = (pr.labels || []).map((l) => l.name);
+            const isEligibleLabel = labels.includes('automerge') || labels.includes('ai-fix') || labels.includes('dependencies');
+            if (!isEligibleLabel) {
+              core.info('Skipping: missing automerge/ai-fix/dependencies label.');
+              return;
+            }
+
+            const { data: reviews } = await github.rest.pulls.listReviews({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+              per_page: 100,
+            });
+
+            const approvedBy = new Set(
+              reviews
+                .filter((r) => r.state === 'APPROVED')
+                .map((r) => r.user?.login)
+                .filter(Boolean)
+            );
+
+            if (approvedBy.size === 0) {
+              core.info('Skipping: no approvals on PR yet.');
+              return;
+            }
+
+            const mutation = `
+              mutation($pullRequestId: ID!) {
+                enablePullRequestAutoMerge(input: {
+                  pullRequestId: $pullRequestId,
+                  mergeMethod: SQUASH
+                }) {
+                  pullRequest {
+                    number
+                    autoMergeRequest {
+                      enabledAt
+                    }
+                  }
+                }
+              }
+            `;
+
+            try {
+              await github.graphql(mutation, { pullRequestId: pr.node_id });
+              core.info(`Auto-merge enabled for PR #${pr.number}`);
+            } catch (error) {
+              core.warning(`Could not enable auto-merge: ${error.message}`);
+            }

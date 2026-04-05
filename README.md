@@ -66,3 +66,9 @@ GitHub Actions is expected to run:
 - component tests
 - end-to-end tests
 - production build
+- CodeQL SAST
+- dependency and vulnerability scanning (Dependency Review + Snyk + Trivy in release)
+- release artifact signing and attestations
+- label-gated auto-merge for approved automation PRs (`automerge`, `ai-fix`, `dependencies`)
+- auto-drafted release notes per PR via Release Drafter
+- automated changelog refresh PRs on `main` via git-cliff

@@ -17,6 +17,8 @@ Without it, implementation will drift because different docs say the same thing 
 6. [T9/T10 implementation packet](designs/2026-04-02-personal-health-cockpit-implementation-packet-t9-t10.md)
 7. [integration research](research/2026-04-02-health-integration-options.md)
 8. [landscape notes](research/2026-04-02-health-dashboard-landscape.md)
+9. [CI/CD enterprise audit (2026-04-05)](research/2026-04-05-cicd-enterprise-audit.md)
+10. [CI workflow inventory](ops/ci-workflow-inventory.md)
 
 ## Source Of Truth By Topic
 
@@ -39,6 +41,8 @@ Without it, implementation will drift because different docs say the same thing 
 ### Integrations and standards research
 
 - Primary: [integration options](research/2026-04-02-health-integration-options.md)
+- CI/CD baseline + gap analysis: [CI/CD enterprise audit (2026-04-05)](research/2026-04-05-cicd-enterprise-audit.md)
+- CI/CD live workflow index: [CI workflow inventory](ops/ci-workflow-inventory.md)
 
 ## Doc Status
 

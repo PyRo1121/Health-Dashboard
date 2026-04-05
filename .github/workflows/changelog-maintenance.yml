@@ -1,0 +1,49 @@
+name: Changelog Maintenance
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: changelog-maintenance-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  update-changelog:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Generate changelog
+        uses: orhun/git-cliff-action@v4
+        with:
+          config: cliff.toml
+          args: --verbose --output CHANGELOG.md
+        env:
+          OUTPUT: CHANGELOG.md
+
+      - name: Create changelog PR
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: 'docs(changelog): update generated changelog'
+          title: 'docs(changelog): refresh CHANGELOG.md'
+          body: |
+            Automated changelog refresh generated from conventional commits.
+          branch: chore/changelog-refresh
+          delete-branch: true
+          labels: |
+            documentation
+            changelog
+            automerge
