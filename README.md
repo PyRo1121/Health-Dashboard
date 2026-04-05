@@ -47,6 +47,7 @@ The app runs without external APIs for most flows. These variables are optional 
 - `HEALTH_DB_PATH` to override the local SQLite database path
 - `XAI_API_KEY` for Grok review, auto-fix, PR management, and threat monitoring
 - `XAI_COLLECTION_IDS` for optional repo-policy / internal-doc grounding in Grok automation
+- `XAI_MANAGEMENT_API_KEY` for the collections bootstrap workflow
 
 ## Repo Map
 
@@ -73,6 +74,9 @@ GitHub Actions is expected to run:
 - label-gated Grok CI surgeon for failed PR checks on trusted same-repo branches
 - PR manager label/comment sync for docs, automation, dependency, and large PRs
 - 6-hour Grok dependency / CVE / threat monitor issue updates
+- rolling PR portfolio issue updates
+- branch protection drift auditing
+- xAI collection bootstrap for repo policy grounding
 - CodeQL SAST
 - dependency and vulnerability scanning (Dependency Review + Snyk + Trivy in release)
 - release artifact signing and attestations

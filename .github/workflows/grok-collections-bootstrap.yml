@@ -1,0 +1,44 @@
+name: 📚 Grok Collections Bootstrap
+
+on:
+  workflow_dispatch:
+    inputs:
+      collection_name:
+        description: Collection name override
+        required: false
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  bootstrap:
+    name: Bootstrap xAI Collections
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Bootstrap collection
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          XAI_MANAGEMENT_API_KEY: ${{ secrets.XAI_MANAGEMENT_API_KEY }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          XAI_COLLECTION_NAME: ${{ github.event.inputs.collection_name }}
+          COLLECTION_SOURCE_FILES: |
+            SECURITY.md
+            README.md
+            docs/ops/grok-pr-automation.md
+            docs/ops/ci-workflow-inventory.md
+            docs/README.md
+        run: node .github/scripts/grok-collections-bootstrap.mjs | tee "$RUNNER_TEMP/collection-bootstrap.txt"
+
+      - name: Upload bootstrap summary
+        uses: actions/upload-artifact@v4
+        with:
+          name: grok-collections-bootstrap
+          path: ${{ runner.temp }}/collection-bootstrap.txt

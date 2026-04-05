@@ -1,0 +1,78 @@
+name: 🔐 Branch Protection Audit
+
+on:
+  schedule:
+    - cron: '30 1 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  issues: write
+
+jobs:
+  audit:
+    name: Branch Protection Audit
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Generate branch protection audit
+        env:
+          GITHUB_TOKEN: ${{ secrets.BRANCH_PROTECTION_AUDIT_TOKEN || secrets.GITHUB_TOKEN }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          AUDIT_BRANCH: main
+          BRANCH_AUDIT_MARKDOWN_PATH: ${{ runner.temp }}/branch-protection-audit.md
+        run: node .github/scripts/branch-protection-audit.mjs
+
+      - name: Upsert branch protection audit issue
+        uses: actions/github-script@v7
+        env:
+          BRANCH_AUDIT_MARKDOWN_PATH: ${{ runner.temp }}/branch-protection-audit.md
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- branch-protection-audit -->';
+            const body = `${marker}\n${fs.readFileSync(process.env.BRANCH_AUDIT_MARKDOWN_PATH, 'utf8')}`;
+            const labels = ['automation'];
+            if (body.includes('Missing:') || body.includes('Extra:')) {
+              labels.push('needs-review');
+            }
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              per_page: 100,
+            });
+            const existing = issues.find((issue) => issue.body?.includes(marker));
+            const title = 'Branch Protection Audit';
+
+            if (existing) {
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existing.number,
+                title,
+                body,
+                labels,
+              });
+            } else {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title,
+                body,
+                labels,
+              });
+            }
+
+      - name: Upload branch protection audit
+        uses: actions/upload-artifact@v4
+        with:
+          name: branch-protection-audit
+          path: ${{ runner.temp }}/branch-protection-audit.md

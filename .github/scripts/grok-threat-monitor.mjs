@@ -156,6 +156,8 @@ async function callThreatMonitor({ dependencies, actions, advisoryHits }) {
                   'package',
                   'ecosystem',
                   'severity',
+                  'confidence',
+                  'auto_fix_ready',
                   'why_now',
                   'evidence',
                   'recommended_action',
@@ -163,11 +165,18 @@ async function callThreatMonitor({ dependencies, actions, advisoryHits }) {
                 properties: {
                   package: { type: 'string' },
                   ecosystem: { type: 'string' },
+                  scope: { type: 'string' },
                   severity: {
                     type: 'string',
                     enum: ['critical', 'high', 'medium', 'low'],
                   },
+                  confidence: {
+                    type: 'string',
+                    enum: ['high', 'medium', 'low'],
+                  },
+                  auto_fix_ready: { type: 'boolean' },
                   version: { type: 'string' },
+                  target_version: { type: 'string' },
                   advisory: { type: 'string' },
                   why_now: { type: 'string' },
                   evidence: { type: 'string' },
@@ -190,7 +199,8 @@ async function callThreatMonitor({ dependencies, actions, advisoryHits }) {
           'You are an enterprise dependency and supply-chain threat analyst. ' +
           'Use web_search and x_search to evaluate the current threat context for direct dependencies and GitHub Actions. ' +
           'Prioritize packages with OSV advisories plus high-leverage build/runtime components. ' +
-          'Only report actionable current threats, active exploitation, maintainer warnings, or urgent upgrade pressure.',
+          'Only report actionable current threats, active exploitation, maintainer warnings, or urgent upgrade pressure. ' +
+          'Set auto_fix_ready=true only when upgrading the package is a straightforward dependency update and target_version is high-confidence.',
       },
       {
         role: 'user',
@@ -239,7 +249,7 @@ ${
     ? result.findings
         .map(
           (finding) =>
-            `- **${finding.severity.toUpperCase()}** \`${finding.package}\`${finding.version ? ` (${finding.version})` : ''} — ${finding.why_now}\n  Evidence: ${finding.evidence}\n  Action: ${finding.recommended_action}`
+            `- **${finding.severity.toUpperCase()}** \`${finding.package}\`${finding.version ? ` (${finding.version})` : ''} — ${finding.why_now}\n  Confidence: ${finding.confidence || 'unknown'}${finding.auto_fix_ready ? ' · auto-fix ready' : ''}\n  Evidence: ${finding.evidence}\n  Action: ${finding.recommended_action}`
         )
         .join('\n')
     : '✅ No actionable threats detected in this run.'

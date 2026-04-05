@@ -20,12 +20,16 @@ export function buildOptionalCollectionTool() {
   };
 }
 
-export function buildSearchTools({ includeCodeInterpreter = false, xHandles = [] } = {}) {
+export function buildSearchTools({
+  includeCodeInterpreter = false,
+  xHandles = [],
+  allowedDomains = ['docs.github.com', 'docs.x.ai', 'docs.mergify.com'],
+} = {}) {
   const tools = [
     {
       type: 'web_search',
       filters: {
-        allowed_domains: ['docs.github.com', 'docs.x.ai', 'docs.mergify.com'],
+        allowed_domains: allowedDomains,
       },
     },
   ];
