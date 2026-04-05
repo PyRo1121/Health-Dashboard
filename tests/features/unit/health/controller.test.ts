@@ -29,6 +29,7 @@ describe('health controller', () => {
     });
     expect(state.saveNotice).toBe('Symptom logged.');
     expect(state.snapshot?.events.some((event) => event.eventType === 'symptom')).toBe(true);
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     state = await saveAnxietyPage(db, {
       ...state,
@@ -40,6 +41,7 @@ describe('health controller', () => {
       },
     });
     expect(state.saveNotice).toBe('Anxiety episode logged.');
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     state = await saveSleepNotePage(db, {
       ...state,
@@ -50,6 +52,7 @@ describe('health controller', () => {
       },
     });
     expect(state.saveNotice).toBe('Sleep context logged.');
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     state = await saveTemplatePage(db, {
       ...state,
@@ -63,12 +66,14 @@ describe('health controller', () => {
     });
     expect(state.saveNotice).toBe('Template saved.');
     expect(state.snapshot?.templates).toHaveLength(1);
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     state = await quickLogTemplatePage(db, state, state.snapshot?.templates[0]?.id ?? '');
     expect(state.saveNotice).toBe('Template logged.');
     expect(state.snapshot?.events.some((event) => event.eventType === 'supplement-dose')).toBe(
       true
     );
+    expect(await db.reviewSnapshots.count()).toBe(1);
   });
 
   it('guards required symptom and sleep-note fields', async () => {

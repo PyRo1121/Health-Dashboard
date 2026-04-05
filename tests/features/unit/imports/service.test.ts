@@ -130,6 +130,7 @@ describe('import service', () => {
     expect(first.summary).toEqual({ adds: 2, duplicates: 0, warnings: 0 });
     await commitImportBatch(db, first.id);
     expect(await db.healthEvents.count()).toBe(2);
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     const second = await previewImport(db, {
       sourceType: 'apple-health-xml',
@@ -154,6 +155,7 @@ describe('import service', () => {
     expect(first.summary).toEqual({ adds: 3, duplicates: 0, warnings: 0 });
 
     await commitImportBatch(db, first.id);
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     const events = await db.healthEvents.toArray();
     expect(events).toHaveLength(3);

@@ -8,6 +8,7 @@ import {
   saveAssessmentProgress,
   submitAssessment,
 } from '$lib/features/assessments/service';
+import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
 
 export interface AssessmentsPageState {
   loading: boolean;
@@ -98,6 +99,7 @@ export async function saveAssessmentsProgressPage(
     instrument: state.instrument,
     itemResponses: state.draftResponses.filter((value) => value >= 0),
   });
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
 
   return withClearedAssessmentValidation(state, {
     saveNotice: 'Progress saved.',
@@ -114,6 +116,7 @@ export async function submitAssessmentsPage(
       instrument: state.instrument,
       itemResponses: state.draftResponses,
     });
+    await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
 
     return withClearedAssessmentValidation(state, {
       latest,

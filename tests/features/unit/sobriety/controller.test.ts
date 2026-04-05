@@ -17,6 +17,7 @@ describe('sobriety controller', () => {
     state = await markSobrietyStatus(db, state, 'sober', 'Marked sober for today.');
     expect(state.saveNotice).toBe('Marked sober for today.');
     expect(state.summary.streak).toBe(1);
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     state = await saveSobrietyCraving(db, {
       ...state,
@@ -25,6 +26,7 @@ describe('sobriety controller', () => {
     });
     expect(state.saveNotice).toBe('Craving logged.');
     expect(state.cravingNote).toBe('');
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     state = await saveSobrietyLapse(db, {
       ...state,
@@ -33,5 +35,6 @@ describe('sobriety controller', () => {
     });
     expect(state.saveNotice).toBe('Lapse context logged.');
     expect(state.summary.todayEvents.length).toBeGreaterThanOrEqual(3);
+    expect(await db.reviewSnapshots.count()).toBe(1);
   });
 });

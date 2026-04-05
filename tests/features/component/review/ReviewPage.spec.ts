@@ -1,12 +1,23 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
-import { beforeEach, describe, expect, it } from 'vitest';
-import ReviewPage from '../../../../src/routes/review/+page.svelte';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetRouteDb, expectHeading, waitForText } from '../../../support/component/routeHarness';
 import { seedReviewSnapshotInputs } from '../../../support/component/routeSeeds';
 import { getHealthDb } from '$lib/core/db/client';
 import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import { createFoodEntry, saveFoodCatalogItem } from '$lib/features/nutrition/service';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
+
+vi.mock('$lib/features/review/client', async () => {
+  const actual = await vi.importActual<typeof import('$lib/features/review/client')>(
+    '$lib/features/review/client'
+  );
+  return {
+    ...actual,
+    loadReviewPage: () => actual.loadReviewPage('2026-04-04'),
+  };
+});
+
+import ReviewPage from '../../../../src/routes/review/+page.svelte';
 
 describe('Review route', () => {
   beforeEach(async () => {
