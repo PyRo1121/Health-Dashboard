@@ -33,9 +33,9 @@ This document fixes that.
 
 Inside this project:
 
-- [docs/README.md](/home/pyro1121/Documents/Health/docs/README.md)
-- [2026-04-02-personal-health-cockpit-starter-plan.md](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-starter-plan.md) (historical only)
-- [2026-04-02-health-dashboard-landscape.md](/home/pyro1121/Documents/Health/docs/research/2026-04-02-health-dashboard-landscape.md)
+- [docs/README.md](../README.md)
+- [2026-04-02-personal-health-cockpit-starter-plan.md](2026-04-02-personal-health-cockpit-starter-plan.md) (historical only)
+- [2026-04-02-health-dashboard-landscape.md](../research/2026-04-02-health-dashboard-landscape.md)
 
 Outside the project, but strategically important:
 
@@ -76,9 +76,11 @@ The mistake would be building all connectors in the first slice.
 ### Persistence
 
 Recommendation:
+
 - Use Dexie over PGlite for v1.
 
 Why:
+
 - Dexie is built on standard browser IndexedDB and has a Svelte path.
 - PGlite is powerful, but it adds a WASM Postgres layer and more moving parts than this v1 needs.
 - This product should spend zero innovation tokens on local database novelty.
@@ -86,18 +88,22 @@ Why:
 ### Health data aggregation
 
 Recommendation:
+
 - Prefer Apple Health and Health Connect as upstream aggregators.
 
 Why:
+
 - They already do the ugly device/app merge work.
 - Direct vendor integrations are optional, not foundational.
 
 ### Clinical data interoperability
 
 Recommendation:
+
 - Design for SMART on FHIR, but do not block v1 on live patient portal integration.
 
 Why:
+
 - That is the correct standard.
 - It is also setup-heavy and institution-dependent.
 
@@ -272,7 +278,7 @@ Integrations
 
 ## Design System Alignment
 
-UI implementation should follow [DESIGN.md](/home/pyro1121/Documents/Health/DESIGN.md).
+UI implementation should follow [DESIGN.md](../../DESIGN.md).
 
 The important design constraints are:
 
@@ -285,7 +291,7 @@ The important design constraints are:
 
 ## Interaction State Coverage
 
-Implementation must include the feature-state coverage defined in [DESIGN.md](/home/pyro1121/Documents/Health/DESIGN.md), especially for:
+Implementation must include the feature-state coverage defined in [DESIGN.md](../../DESIGN.md), especially for:
 
 - Today
 - Journal
@@ -449,36 +455,44 @@ Source file or OAuth response
 ### Apple Health XML import
 
 Failure:
+
 - timezone parsing shifts midnight entries into the wrong day
 
 Mitigation:
+
 - store both source timestamp and normalized local day
 - build import preview before commit
 
 ### Day One import
 
 Failure:
+
 - imported journal entries lose media linkage or duplicate on re-import
 
 Mitigation:
+
 - content-hash dedupe
 - preserve source identifiers and asset manifests
 
 ### FHIR clinical import
 
 Failure:
+
 - records from multiple patients or institutions merge incorrectly
 
 Mitigation:
+
 - require explicit patient identity mapping and source isolation
 - do not auto-merge clinical persons silently
 
 ### USDA enrichment
 
 Failure:
+
 - branded food match is wrong, nutrient summary becomes nonsense
 
 Mitigation:
+
 - keep user-selected matches editable
 - preserve source confidence and manual overrides
 
@@ -630,6 +644,7 @@ Critical paths:
 Choose Dexie now.
 
 Reason:
+
 - standard browser storage
 - mature
 - Svelte-friendly
@@ -648,16 +663,16 @@ Those are later moves, not starter moves.
 
 ## Failure Modes
 
-| Codepath | Failure mode | Test? | Error handling? | User sees? | Severity |
-|---|---|---|---|---|---|
-| Apple import | duplicate import causes duplicate events | required | yes | import warning | High |
-| Apple import | malformed XML | required | yes | import failure with row count | Medium |
-| Day One import | duplicate journal replay | required | yes | duplicate warning | Medium |
-| Assessments | missing answers still scored | required | yes | inline validation | High |
-| PHQ-9 flow | item 9 flagged with no crisis message | required | yes | urgent support panel | Critical |
-| Review engine | timezone skew assigns data to wrong day | required | yes | reconciliation banner | High |
-| FHIR import | records from wrong person merged | required | yes | import blocked | Critical |
-| Nutrient lookup | wrong branded match | required | yes | confidence and manual override | Medium |
+| Codepath        | Failure mode                             | Test?    | Error handling? | User sees?                     | Severity |
+| --------------- | ---------------------------------------- | -------- | --------------- | ------------------------------ | -------- |
+| Apple import    | duplicate import causes duplicate events | required | yes             | import warning                 | High     |
+| Apple import    | malformed XML                            | required | yes             | import failure with row count  | Medium   |
+| Day One import  | duplicate journal replay                 | required | yes             | duplicate warning              | Medium   |
+| Assessments     | missing answers still scored             | required | yes             | inline validation              | High     |
+| PHQ-9 flow      | item 9 flagged with no crisis message    | required | yes             | urgent support panel           | Critical |
+| Review engine   | timezone skew assigns data to wrong day  | required | yes             | reconciliation banner          | High     |
+| FHIR import     | records from wrong person merged         | required | yes             | import blocked                 | Critical |
+| Nutrient lookup | wrong branded match                      | required | yes             | confidence and manual override | Medium   |
 
 Critical gaps if omitted:
 
@@ -677,15 +692,15 @@ Critical gaps if omitted:
 
 ## Parallelization Strategy
 
-| Step | Modules touched | Depends on |
-|---|---|---|
-| app shell + routing | routes/, ui-shell/, navigation/ | — |
-| local schema + services | db/, domain/, projections/ | — |
-| journal + assessments | journal/, assessments/, safety/ | local schema |
-| sobriety + daily check-in | today/, sobriety/, domain/ | local schema |
-| food logging + USDA integration | nutrition/, integrations/usda/, domain/ | local schema |
-| imports pipeline | imports/, connectors/, workers/ | local schema |
-| weekly review | review/, projections/, analytics/ | local schema, journal, sobriety, nutrition, imports |
+| Step                            | Modules touched                         | Depends on                                          |
+| ------------------------------- | --------------------------------------- | --------------------------------------------------- |
+| app shell + routing             | routes/, ui-shell/, navigation/         | —                                                   |
+| local schema + services         | db/, domain/, projections/              | —                                                   |
+| journal + assessments           | journal/, assessments/, safety/         | local schema                                        |
+| sobriety + daily check-in       | today/, sobriety/, domain/              | local schema                                        |
+| food logging + USDA integration | nutrition/, integrations/usda/, domain/ | local schema                                        |
+| imports pipeline                | imports/, connectors/, workers/         | local schema                                        |
+| weekly review                   | review/, projections/, analytics/       | local schema, journal, sobriety, nutrition, imports |
 
 ### Parallel lanes
 
@@ -740,4 +755,4 @@ That is the world-class path that still ships.
 
 For the tranche-by-tranche execution detail, use:
 
-- [2026-04-02-personal-health-cockpit-tranche-plan.md](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md)
+- [2026-04-02-personal-health-cockpit-tranche-plan.md](2026-04-02-personal-health-cockpit-tranche-plan.md)

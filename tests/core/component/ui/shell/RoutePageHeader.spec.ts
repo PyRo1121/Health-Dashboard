@@ -1,28 +1,30 @@
 import { describe, expect, it } from 'vitest';
 import { render, screen } from '@testing-library/svelte';
 import RoutePageHeader from '$lib/core/ui/shell/RoutePageHeader.svelte';
+import { APP_SECTIONS } from '$lib/core/ui/shell/section-metadata';
 
 describe('RoutePageHeader', () => {
-	it('renders section metadata for a standard route', () => {
-		render(RoutePageHeader, {
-			props: {
-				href: '/today'
-			}
-		});
+  it('renders metadata-driven headings and titles for every real section', () => {
+    const sections = APP_SECTIONS.filter((section) => section.title !== 'More');
 
-		expect(screen.getByText('Daily Loop')).toBeTruthy();
-		expect(screen.getByRole('heading', { name: 'Today' })).toBeTruthy();
-		expect(document.title).toBe('Personal Health Cockpit · Today');
-	});
+    for (const section of sections) {
+      const { unmount } = render(RoutePageHeader, {
+        props: {
+          href: section.href,
+        },
+      });
 
-	it('uses the custom overview heading while keeping the overview document title', () => {
-		render(RoutePageHeader, {
-			props: {
-				href: '/'
-			}
-		});
+      if (section.pageEyebrow) {
+        expect(screen.getByText(section.pageEyebrow)).toBeTruthy();
+      }
+      expect(
+        screen.getByRole('heading', {
+          name: section.pageHeadingTitle ?? section.title,
+        })
+      ).toBeTruthy();
+      expect(document.title).toBe(`Personal Health Cockpit · ${section.title}`);
 
-		expect(screen.getByRole('heading', { name: 'Personal Health Cockpit' })).toBeTruthy();
-		expect(document.title).toBe('Personal Health Cockpit · Overview');
-	});
+      unmount();
+    }
+  });
 });

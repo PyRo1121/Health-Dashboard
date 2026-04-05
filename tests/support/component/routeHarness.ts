@@ -4,19 +4,19 @@ import { expect } from 'vitest';
 import type { Component } from 'svelte';
 
 export async function resetRouteDb() {
-	await resetHealthDb();
+  await resetHealthDb();
 }
 
 export function renderRoute(component: Component) {
-	render(component);
+  render(component);
 }
 
 export function expectHeading(name: string) {
-	expect(screen.getByRole('heading', { name })).toBeTruthy();
+  expect(screen.getByRole('heading', { name })).toBeTruthy();
 }
 
 export async function waitForText(pattern: string | RegExp) {
-	await waitFor(() => {
-		expect(screen.getByText(pattern)).toBeTruthy();
-	});
+  await waitFor(() => {
+    expect(screen.getByText(pattern)).toBeTruthy();
+  });
 }

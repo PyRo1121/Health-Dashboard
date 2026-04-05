@@ -1,22 +1,22 @@
 export function toLocalDay(value: Date | string, timeZone = 'UTC'): string {
-	const date = value instanceof Date ? value : new Date(value);
+  const date = value instanceof Date ? value : new Date(value);
 
-	return new Intl.DateTimeFormat('en-CA', {
-		timeZone,
-		year: 'numeric',
-		month: '2-digit',
-		day: '2-digit'
-	}).format(date);
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(date);
 }
 
 export function nowIso(value: Date | string = new Date()): string {
-	const date = value instanceof Date ? value : new Date(value);
-	return date.toISOString();
+  const date = value instanceof Date ? value : new Date(value);
+  return date.toISOString();
 }
 
 export function currentLocalDay(
-	value: Date | string = new Date(),
-	timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  value: Date | string = new Date(),
+  timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
 ): string {
-	return toLocalDay(value, timeZone);
+  return toLocalDay(value, timeZone);
 }

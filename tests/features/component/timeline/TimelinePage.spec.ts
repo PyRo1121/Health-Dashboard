@@ -5,20 +5,20 @@ import { expectHeading, resetRouteDb } from '../../../support/component/routeHar
 import { seedHealthkitImport } from '../../../support/component/routeSeeds';
 
 describe('Timeline route', () => {
-	beforeEach(async () => {
-		await resetRouteDb();
-	});
+  beforeEach(async () => {
+    await resetRouteDb();
+  });
 
-	it('shows imported native companion events with provenance', async () => {
-		await seedHealthkitImport();
+  it('shows imported native companion events with provenance', async () => {
+    await seedHealthkitImport();
 
-		render(TimelinePage);
-		expectHeading('Timeline');
+    render(TimelinePage);
+    expectHeading('Timeline');
 
-		await waitFor(() => {
-			expect(screen.getByText(/Resting heart rate/i)).toBeTruthy();
-			expect(screen.getAllByText(/HealthKit Companion · Pyro iPhone/i)).toHaveLength(3);
-			expect(screen.getByText(/57 bpm/i)).toBeTruthy();
-		});
-	});
+    await waitFor(() => {
+      expect(screen.getByText(/Resting heart rate/i)).toBeTruthy();
+      expect(screen.getAllByText(/HealthKit Companion · Pyro iPhone/i)).toHaveLength(3);
+      expect(screen.getByText(/57 bpm/i)).toBeTruthy();
+    });
+  });
 });

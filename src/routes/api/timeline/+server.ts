@@ -4,5 +4,5 @@ import { loadTimelinePage, type TimelinePageState } from '$lib/features/timeline
 type TimelineRequest = { action: 'load'; state: TimelinePageState };
 
 export const POST = createDbActionPostHandler<TimelineRequest, TimelinePageState>({
-	load: (db, body) => loadTimelinePage(db, body.state)
+  load: (db, body) => loadTimelinePage(db, body.state),
 });

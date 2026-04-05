@@ -3,9 +3,9 @@ export { describeImportPayload } from './analyze';
 export { inferImportSourceType } from './detect';
 export { parseAppleHealthXml, parseDayOneExport } from './parsers';
 export {
-	commitImportBatch,
-	createImportBatch,
-	dedupeImportedEvents,
-	listImportBatches,
-	previewImport
+  commitImportBatch,
+  createImportBatch,
+  dedupeImportedEvents,
+  listImportBatches,
+  previewImport,
 } from './store';

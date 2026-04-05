@@ -9,51 +9,51 @@ Without it, implementation will drift because different docs say the same thing 
 
 ## Read Order
 
-1. [DESIGN.md](/home/pyro1121/Documents/Health/DESIGN.md)
-2. [engineering plan](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md)
-3. [tranche plan](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md)
-4. [visual spec](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-visual-spec.md)
-5. [T0/T1 implementation packet](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t0-t1.md)
-6. [T9/T10 implementation packet](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t9-t10.md)
-7. [integration research](/home/pyro1121/Documents/Health/docs/research/2026-04-02-health-integration-options.md)
-8. [landscape notes](/home/pyro1121/Documents/Health/docs/research/2026-04-02-health-dashboard-landscape.md)
+1. [DESIGN.md](../DESIGN.md)
+2. [engineering plan](designs/2026-04-02-personal-health-cockpit-engineering-plan.md)
+3. [tranche plan](designs/2026-04-02-personal-health-cockpit-tranche-plan.md)
+4. [visual spec](designs/2026-04-02-personal-health-cockpit-visual-spec.md)
+5. [T0/T1 implementation packet](designs/2026-04-02-personal-health-cockpit-implementation-packet-t0-t1.md)
+6. [T9/T10 implementation packet](designs/2026-04-02-personal-health-cockpit-implementation-packet-t9-t10.md)
+7. [integration research](research/2026-04-02-health-integration-options.md)
+8. [landscape notes](research/2026-04-02-health-dashboard-landscape.md)
 
 ## Source Of Truth By Topic
 
 ### Product direction
 
-- Primary: [engineering plan](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md)
-- Supporting: [landscape notes](/home/pyro1121/Documents/Health/docs/research/2026-04-02-health-dashboard-landscape.md)
+- Primary: [engineering plan](designs/2026-04-02-personal-health-cockpit-engineering-plan.md)
+- Supporting: [landscape notes](research/2026-04-02-health-dashboard-landscape.md)
 
 ### Execution order
 
-- Primary: [tranche plan](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md)
-- First build packet: [T0/T1 implementation packet](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t0-t1.md)
-- Next integration packet: [T9/T10 implementation packet](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t9-t10.md)
+- Primary: [tranche plan](designs/2026-04-02-personal-health-cockpit-tranche-plan.md)
+- First build packet: [T0/T1 implementation packet](designs/2026-04-02-personal-health-cockpit-implementation-packet-t0-t1.md)
+- Next integration packet: [T9/T10 implementation packet](designs/2026-04-02-personal-health-cockpit-implementation-packet-t9-t10.md)
 
 ### Visual and UX rules
 
-- Primary: [DESIGN.md](/home/pyro1121/Documents/Health/DESIGN.md)
-- Screen-level companion: [visual spec](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-visual-spec.md)
+- Primary: [DESIGN.md](../DESIGN.md)
+- Screen-level companion: [visual spec](designs/2026-04-02-personal-health-cockpit-visual-spec.md)
 
 ### Integrations and standards research
 
-- Primary: [integration options](/home/pyro1121/Documents/Health/docs/research/2026-04-02-health-integration-options.md)
+- Primary: [integration options](research/2026-04-02-health-integration-options.md)
 
 ## Doc Status
 
-- [starter plan](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-starter-plan.md)
+- [starter plan](designs/2026-04-02-personal-health-cockpit-starter-plan.md)
   - archived summary only
   - keep for historical context, not implementation
-- [engineering plan](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md)
+- [engineering plan](designs/2026-04-02-personal-health-cockpit-engineering-plan.md)
   - current product and architecture source of truth
-- [tranche plan](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md)
+- [tranche plan](designs/2026-04-02-personal-health-cockpit-tranche-plan.md)
   - current delivery source of truth
-- [visual spec](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-visual-spec.md)
+- [visual spec](designs/2026-04-02-personal-health-cockpit-visual-spec.md)
   - current screen and component vocabulary source of truth
-- [T0/T1 implementation packet](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t0-t1.md)
+- [T0/T1 implementation packet](designs/2026-04-02-personal-health-cockpit-implementation-packet-t0-t1.md)
   - current first-build source of truth
-- [T9/T10 implementation packet](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t9-t10.md)
+- [T9/T10 implementation packet](designs/2026-04-02-personal-health-cockpit-implementation-packet-t9-t10.md)
   - current native / clinical next-step source of truth
 
 ## Before Implementation
@@ -67,9 +67,11 @@ Do these before serious build work starts:
 
 ## Generated Design Boards
 
-- Today: [design-board.html](/home/pyro1121/.gstack/projects/Health/designs/today-20260402/design-board.html)
-- Journal: [design-board.html](/home/pyro1121/.gstack/projects/Health/designs/journal-20260402/design-board.html)
-- Review: [design-board.html](/home/pyro1121/.gstack/projects/Health/designs/review-20260402/design-board.html)
+These boards were generated locally outside the repo and should be treated as local artifacts, not source-of-truth files:
+
+- Today: `.gstack/projects/Health/designs/today-20260402/design-board.html`
+- Journal: `.gstack/projects/Health/designs/journal-20260402/design-board.html`
+- Review: `.gstack/projects/Health/designs/review-20260402/design-board.html`
 
 ## Approved Visual Directions
 

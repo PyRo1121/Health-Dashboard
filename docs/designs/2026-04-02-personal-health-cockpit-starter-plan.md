@@ -12,10 +12,10 @@ Do not implement from this file.
 
 Use these instead:
 
-- [engineering plan](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md)
-- [tranche plan](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md)
-- [visual spec](/home/pyro1121/Documents/Health/docs/designs/2026-04-02-personal-health-cockpit-visual-spec.md)
-- [DESIGN.md](/home/pyro1121/Documents/Health/DESIGN.md)
+- [engineering plan](2026-04-02-personal-health-cockpit-engineering-plan.md)
+- [tranche plan](2026-04-02-personal-health-cockpit-tranche-plan.md)
+- [visual spec](2026-04-02-personal-health-cockpit-visual-spec.md)
+- [DESIGN.md](../../DESIGN.md)
 
 ## What This Starter Plan Got Right
 

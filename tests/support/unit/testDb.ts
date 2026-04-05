@@ -4,22 +4,22 @@ import { afterEach, beforeEach } from 'vitest';
 import { createHealthDb, type HealthDatabase } from '$lib/core/db/client';
 
 export function useTestHealthDb(prefix: string): () => HealthDatabase {
-	let db: HealthDatabase;
+  let db: HealthDatabase;
 
-	beforeEach(() => {
-		db = createHealthDb(`${prefix}-${crypto.randomUUID()}`);
-	});
+  beforeEach(() => {
+    db = createHealthDb(`${prefix}-${crypto.randomUUID()}`);
+  });
 
-	afterEach(async () => {
-		db.close();
-		await db.delete();
-	});
+  afterEach(async () => {
+    db.close();
+    await db.delete();
+  });
 
-	return () => db;
+  return () => db;
 }
 
 export async function deleteNamedHealthDb(name: string): Promise<void> {
-	const db = createHealthDb(name);
-	db.close();
-	await db.delete();
+  const db = createHealthDb(name);
+  db.close();
+  await db.delete();
 }

@@ -3,14 +3,16 @@
 This is the no-Mac primary path for `T9`.
 
 Goal:
+
 - export a local JSON file from iPhone Shortcuts
 - keep the payload identical to the existing `healthkit-companion` import contract
 - import that file into `/imports` in the web app
 
 The bundle contract it targets lives in:
-- `/src/lib/domain/types.ts`
-- `/src/lib/integrations/bridge/schema.ts`
-- `/src/lib/integrations/bridge/validate.ts`
+
+- [types.ts](../../src/lib/core/domain/types.ts)
+- [schema.ts](../../src/lib/features/integrations/bridge/schema.ts)
+- [validate.ts](../../src/lib/features/integrations/bridge/validate.ts)
 
 ## Why this path
 
@@ -19,6 +21,7 @@ If you do not have a Mac, Shortcuts is the cleanest iPhone-native automation sur
 Use this first.
 
 Keep these as fallback or later options:
+
 - Apple Health XML export
 - cloud iOS builds
 
@@ -31,15 +34,18 @@ Keep these as fallback or later options:
 ## Output
 
 The downloadable template and blueprint now ship from the app itself:
+
 - `/downloads/ios-shortcuts/healthkit-companion-template.json`
 - `/downloads/ios-shortcuts/shortcut-blueprint.md`
 
 Canonical source lives in:
-- `/src/lib/integrations/shortcut-kit.ts`
+
+- [shortcut-kit.ts](../../src/lib/features/integrations/shortcut-kit.ts)
 
 ## Shortcut recipe
 
 Detailed action-by-action recipe:
+
 - `/downloads/ios-shortcuts/shortcut-blueprint.md`
 
 ## Import flow

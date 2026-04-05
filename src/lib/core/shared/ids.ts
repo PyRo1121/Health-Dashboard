@@ -1,3 +1,3 @@
 export function createRecordId(prefix: string): string {
-	return `${prefix}-${crypto.randomUUID()}`;
+  return `${prefix}-${crypto.randomUUID()}`;
 }

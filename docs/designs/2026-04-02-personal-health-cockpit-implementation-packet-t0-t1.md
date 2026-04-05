@@ -3,6 +3,7 @@
 Status: Active
 Date: 2026-04-02
 Parent:
+
 - `docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md`
 - `docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md`
 - `DESIGN.md`
@@ -319,7 +320,7 @@ interface BaseRecord {
 }
 
 interface Provenance {
-  sourceType: "manual" | "import" | "derived" | "native-companion";
+  sourceType: 'manual' | 'import' | 'derived' | 'native-companion';
   sourceApp: string;
   sourceRecordId?: string;
   sourceTimestamp?: IsoDateTime;
@@ -349,14 +350,14 @@ interface DailyRecord extends BaseRecord {
 ```ts
 interface JournalEntry extends BaseRecord {
   entryType:
-    | "freeform"
-    | "morning_intention"
-    | "evening_review"
-    | "craving_reflection"
-    | "lapse_reflection"
-    | "symptom_note"
-    | "experiment_note"
-    | "provider_visit_note";
+    | 'freeform'
+    | 'morning_intention'
+    | 'evening_review'
+    | 'craving_reflection'
+    | 'lapse_reflection'
+    | 'symptom_note'
+    | 'experiment_note'
+    | 'provider_visit_note';
   localDay: LocalDay;
   title?: string;
   body: string;
@@ -397,15 +398,15 @@ Do not let pages call Dexie tables directly.
 
 ```ts
 db.version(1).stores({
-  dailyRecords: "id, date, updatedAt",
-  journalEntries: "id, localDay, entryType, updatedAt",
-  foodEntries: "id, localDay, mealType, updatedAt",
-  healthEvents: "id, localDay, eventType, sourceType, updatedAt",
-  sobrietyEvents: "id, localDay, eventType, updatedAt",
-  assessmentResults: "id, localDay, instrument, updatedAt",
-  importBatches: "id, sourceType, status, createdAt",
-  importArtifacts: "id, batchId, artifactType, createdAt",
-  reviewSnapshots: "id, weekStart, updatedAt"
+  dailyRecords: 'id, date, updatedAt',
+  journalEntries: 'id, localDay, entryType, updatedAt',
+  foodEntries: 'id, localDay, mealType, updatedAt',
+  healthEvents: 'id, localDay, eventType, sourceType, updatedAt',
+  sobrietyEvents: 'id, localDay, eventType, updatedAt',
+  assessmentResults: 'id, localDay, instrument, updatedAt',
+  importBatches: 'id, sourceType, status, createdAt',
+  importArtifacts: 'id, batchId, artifactType, createdAt',
+  reviewSnapshots: 'id, weekStart, updatedAt',
 });
 ```
 
@@ -489,13 +490,13 @@ Use a dev-only seed path. Do not auto-seed production.
 
 ## Failure Modes
 
-| Area | Failure | Mitigation |
-|---|---|---|
-| layout shell | route-specific layout drift | single shell owner in `+layout.svelte` |
-| db schema | schema impossible to evolve | versioned migration file from day one |
-| timestamps | events assigned to wrong day | source timestamp + local day stored together |
-| repositories | pages reach into tables directly | repository-only data access rule |
-| seeds | fake fixture shape diverges from real contracts | typed fixture builders |
+| Area         | Failure                                         | Mitigation                                   |
+| ------------ | ----------------------------------------------- | -------------------------------------------- |
+| layout shell | route-specific layout drift                     | single shell owner in `+layout.svelte`       |
+| db schema    | schema impossible to evolve                     | versioned migration file from day one        |
+| timestamps   | events assigned to wrong day                    | source timestamp + local day stored together |
+| repositories | pages reach into tables directly                | repository-only data access rule             |
+| seeds        | fake fixture shape diverges from real contracts | typed fixture builders                       |
 
 ## What Good Looks Like
 

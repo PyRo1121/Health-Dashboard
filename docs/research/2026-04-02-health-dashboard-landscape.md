@@ -25,6 +25,7 @@ That is the whole game.
 Recent health products keep moving toward local processing and privacy-preserving analysis. That is not aesthetic. Health data is unusually sensitive, and users know it.
 
 Implication:
+
 - Build local-first from day one.
 - Treat cloud sync as optional and late, not foundational.
 - Keep raw data exportable and user-owned.
@@ -34,6 +35,7 @@ Implication:
 The best nutrition products are not "inspirational." They are reliable. Users come back when search is fast, recurring meals are easy, and nutrient data is trustworthy.
 
 Implication:
+
 - Favor a clean recurring-meal workflow over fancy meal AI first.
 - Support both quick macros and deeper micronutrient views.
 - Preserve source provenance for imported food data.
@@ -43,6 +45,7 @@ Implication:
 Successful mood apps reduce input burden hard. Tap-based mood capture, tags, and short notes beat big journaling prompts for daily adherence.
 
 Implication:
+
 - Daily mental-health capture should be 10 seconds or less.
 - Separate "quick check-in" from "long-form reflection."
 - Make streaks and consistency visible without becoming gamified sludge.
@@ -52,6 +55,7 @@ Implication:
 The useful patterns are simple: daily pledge/check-in, streak visibility, trigger logging, lapse journaling without shame, and immediate context after a rough day.
 
 Implication:
+
 - Track sobriety as a behavior system, not just a counter.
 - Log cravings, triggers, and recovery actions, not only lapse/no-lapse.
 - Preserve context around a lapse so the system is useful the next morning.
@@ -65,6 +69,7 @@ Users do not actually want five separate trackers. They want to know things like
 - Does caffeine after noon hurt sleep enough to affect sobriety risk?
 
 Implication:
+
 - The product needs a unified daily timeline.
 - Weekly review and cross-domain correlation are core, not polish.
 - Imported data matters only if it feeds decisions.

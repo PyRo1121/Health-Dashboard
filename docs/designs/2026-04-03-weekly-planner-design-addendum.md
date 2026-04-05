@@ -93,9 +93,9 @@ This is a health operating system, not a content feed.
 
 The current primitives are too uniform:
 
-- [Card.svelte](/home/pyro1121/Documents/Health/src/lib/core/ui/primitives/Card.svelte)
-- [Button.svelte](/home/pyro1121/Documents/Health/src/lib/core/ui/primitives/Button.svelte)
-- [Field.svelte](/home/pyro1121/Documents/Health/src/lib/core/ui/primitives/Field.svelte)
+- [Card.svelte](../../src/lib/core/ui/primitives/Card.svelte)
+- [Button.svelte](../../src/lib/core/ui/primitives/Button.svelte)
+- [Field.svelte](../../src/lib/core/ui/primitives/Field.svelte)
 
 Recommendation:
 

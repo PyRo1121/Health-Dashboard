@@ -81,6 +81,7 @@ Why:
 - `Manrope`
 
 Why:
+
 - clear, modern, low-drama, good numerals, strong for dense UI
 
 ### Reflective / editorial font
@@ -88,11 +89,13 @@ Why:
 - `Newsreader`
 
 Use for:
+
 - major section headings
 - journal prompts
 - weekly review summaries
 
 Why:
+
 - adds humanity and thoughtfulness without turning the app into a magazine
 
 ### Monospace
@@ -100,6 +103,7 @@ Why:
 - `IBM Plex Mono`
 
 Use for:
+
 - metric labels when needed
 - import diagnostics
 - provenance/source IDs
@@ -305,27 +309,27 @@ It follows the user loop:
 
 ## Interaction State Coverage
 
-| Feature | Loading | Empty | Error | Success | Partial |
-|---|---|---|---|---|---|
-| Today | subtle skeleton, never full-screen block | warm first-use setup with one clear next action | inline retry + preserve entered data | quiet confirmation, no confetti | show saved sections and unsaved sections clearly |
-| Journal | load recent entries quickly | prompt-led blank state, not "no entries" | draft preserved, retry affordance | entry appears in stream immediately | linked events missing handled gracefully |
-| Sobriety | immediate local optimistic update | first-use explanation of streak logic | never shame, just clear save failure | show streak and context update | craving saved but notes failed |
-| Assessments | step progress visible | explain why and when to take each instrument | validation and safety state clearly separated | score + context + next recommended cadence | partially answered resume state |
-| Nutrition | recent meals first, search second | recurring meal creation prompt | bad match is editable, not terminal | nutrient summary updates immediately | meal saved but enrichment pending |
-| Imports | staged progress, file size and phase visible | explain supported sources | line-item warnings with action | diff summary + commit success | partial parse results, commit blocked until reviewed |
-| Review | narrative skeleton, not spinner wall | explain minimum data needed for first review | show which upstream data failed | weekly briefing generated with drilldown | some metrics unavailable but review still usable |
+| Feature     | Loading                                      | Empty                                           | Error                                         | Success                                    | Partial                                              |
+| ----------- | -------------------------------------------- | ----------------------------------------------- | --------------------------------------------- | ------------------------------------------ | ---------------------------------------------------- |
+| Today       | subtle skeleton, never full-screen block     | warm first-use setup with one clear next action | inline retry + preserve entered data          | quiet confirmation, no confetti            | show saved sections and unsaved sections clearly     |
+| Journal     | load recent entries quickly                  | prompt-led blank state, not "no entries"        | draft preserved, retry affordance             | entry appears in stream immediately        | linked events missing handled gracefully             |
+| Sobriety    | immediate local optimistic update            | first-use explanation of streak logic           | never shame, just clear save failure          | show streak and context update             | craving saved but notes failed                       |
+| Assessments | step progress visible                        | explain why and when to take each instrument    | validation and safety state clearly separated | score + context + next recommended cadence | partially answered resume state                      |
+| Nutrition   | recent meals first, search second            | recurring meal creation prompt                  | bad match is editable, not terminal           | nutrient summary updates immediately       | meal saved but enrichment pending                    |
+| Imports     | staged progress, file size and phase visible | explain supported sources                       | line-item warnings with action                | diff summary + commit success              | partial parse results, commit blocked until reviewed |
+| Review      | narrative skeleton, not spinner wall         | explain minimum data needed for first review    | show which upstream data failed               | weekly briefing generated with drilldown   | some metrics unavailable but review still usable     |
 
 ## User Journey And Emotional Arc
 
-| Step | User does | User feels | Design response |
-|---|---|---|---|
-| 1 | opens Today | guarded, distracted | one strong primary area, low noise |
-| 2 | logs quick state | relief if fast | 30-second check-in, no heavy forms |
-| 3 | logs something hard, like craving or lapse | vulnerable | warm tone, zero shame, contextual support |
-| 4 | writes journal entry | reflective | generous writing space, quiet typography |
-| 5 | imports data | cautious | preview diff, provenance, reversible commit |
-| 6 | opens weekly review | curious, maybe anxious | calm briefing, explainable findings |
-| 7 | chooses next experiment | motivated | one clear next step, not ten |
+| Step | User does                                  | User feels             | Design response                             |
+| ---- | ------------------------------------------ | ---------------------- | ------------------------------------------- |
+| 1    | opens Today                                | guarded, distracted    | one strong primary area, low noise          |
+| 2    | logs quick state                           | relief if fast         | 30-second check-in, no heavy forms          |
+| 3    | logs something hard, like craving or lapse | vulnerable             | warm tone, zero shame, contextual support   |
+| 4    | writes journal entry                       | reflective             | generous writing space, quiet typography    |
+| 5    | imports data                               | cautious               | preview diff, provenance, reversible commit |
+| 6    | opens weekly review                        | curious, maybe anxious | calm briefing, explainable findings         |
+| 7    | chooses next experiment                    | motivated              | one clear next step, not ten                |
 
 ## Empty State Principles
 

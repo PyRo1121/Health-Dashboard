@@ -3,6 +3,7 @@
 Status: Active
 Date: 2026-04-02
 Parent docs:
+
 - `DESIGN.md`
 - `docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md`
 - `docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md`
@@ -40,11 +41,11 @@ These artifact sets were generated for design review on 2026-04-02:
 
 ## Approved Mockups
 
-| Screen | Approved variant | Path | Why |
-|---|---|---|---|
-| Today | B | `/home/pyro1121/.gstack/projects/Health/designs/today-20260402/variant-B.png` | strongest hierarchy, calmest operational tone, least card-soup risk |
-| Journal | A | `/home/pyro1121/.gstack/projects/Health/designs/journal-20260402/variant-A.png` | best writing-room feel, strongest editorial restraint, cleanest journaling affordance |
-| Review | B | `/home/pyro1121/.gstack/projects/Health/designs/review-20260402/variant-B.png` | best briefing hierarchy, clearest narrative flow, strongest 2026 premium app feel |
+| Screen  | Approved variant | Path                                                                            | Why                                                                                   |
+| ------- | ---------------- | ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Today   | B                | `/home/pyro1121/.gstack/projects/Health/designs/today-20260402/variant-B.png`   | strongest hierarchy, calmest operational tone, least card-soup risk                   |
+| Journal | A                | `/home/pyro1121/.gstack/projects/Health/designs/journal-20260402/variant-A.png` | best writing-room feel, strongest editorial restraint, cleanest journaling affordance |
+| Review  | B                | `/home/pyro1121/.gstack/projects/Health/designs/review-20260402/variant-B.png`  | best briefing hierarchy, clearest narrative flow, strongest 2026 premium app feel     |
 
 These are now the canonical visual references unless a later design pass explicitly supersedes them.
 
