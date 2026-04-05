@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { saveAssessmentProgress, submitAssessment } from '$lib/features/assessments/service';
 import { deriveWeeklyGroceries, setGroceryItemState } from '$lib/features/groceries/service';
 import { commitImportBatch, previewImport } from '$lib/features/imports/service';
+import { saveJournalEntry } from '$lib/features/journal/service';
 import { saveFoodCatalogItem, upsertRecipeCatalogItem } from '$lib/features/nutrition/service';
 import {
   ensureWeeklyPlan,
@@ -122,6 +123,28 @@ describe('review service', () => {
     expect(weekly.experimentOptions).toHaveLength(3);
     expect(weekly.assessmentSummary[0]).toContain('WHO-5');
     expect(weekly.deviceHighlights.some((line) => line.includes('Sleep'))).toBe(true);
+  });
+
+  it('threads journal excerpts and context signals into the weekly snapshot', async () => {
+    const db = getDb();
+    await seedWeek();
+    await saveJournalEntry(db, {
+      localDay: '2026-03-30',
+      entryType: 'evening_review',
+      title: 'Rough afternoon',
+      body: 'Crowded store and headache drained the afternoon.',
+      tags: [],
+      linkedEventIds: [],
+    });
+
+    const weekly = await buildWeeklySnapshot(db, '2026-04-02');
+
+    expect(weekly.contextSignals).toContain(
+      'Low sleep and a written reflection both landed on 2026-03-30.'
+    );
+    expect(weekly.journalHighlights).toContain(
+      'Evening review on 2026-03-30: Crowded store and headache drained the afternoon.'
+    );
   });
 
   it('threads adherence scores and grocery signals through the weekly snapshot', async () => {

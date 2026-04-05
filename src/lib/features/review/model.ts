@@ -148,6 +148,16 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
           emptyMessage: 'Keep logging health context to unlock more useful weekly patterns.',
         },
         {
+          title: 'Context signals',
+          items: weekly.contextSignals,
+          emptyMessage: 'Journal and health context need more overlap before this section becomes useful.',
+        },
+        {
+          title: 'Journal excerpts',
+          items: weekly.journalHighlights,
+          emptyMessage: 'Write one useful reflection this week and Review will surface it here.',
+        },
+        {
           title: 'Food adherence highlights',
           items: weekly.nutritionHighlights,
           emptyMessage: 'Nutrition needs a few more logged meals before highlights mean much.',

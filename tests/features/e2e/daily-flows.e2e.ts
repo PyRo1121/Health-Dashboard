@@ -117,6 +117,121 @@ test('weekly review flow', async ({ page }) => {
   await expect(page.getByText(/Experiment saved\./i)).toBeVisible();
 });
 
+test('weekly review surfaces journal context signals', async ({ page }) => {
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        dailyRecords: [
+          {
+            id: 'daily:2026-03-31',
+            createdAt: '2026-03-31T08:00:00.000Z',
+            updatedAt: '2026-03-31T08:00:00.000Z',
+            date: '2026-03-31',
+            mood: 3,
+            energy: 2,
+            stress: 3,
+            focus: 3,
+            sleepHours: 6,
+            sleepQuality: 3,
+          },
+          {
+            id: 'daily:2026-04-02',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            date: '2026-04-02',
+            mood: 5,
+            energy: 4,
+            stress: 2,
+            focus: 4,
+            sleepHours: 8,
+            sleepQuality: 4,
+          },
+        ],
+        journalEntries: [
+          {
+            id: 'journal-1',
+            createdAt: '2026-03-31T21:00:00.000Z',
+            updatedAt: '2026-03-31T21:00:00.000Z',
+            localDay: '2026-03-31',
+            entryType: 'evening_review',
+            title: 'Rough afternoon',
+            body: 'Crowded store and headache drained the afternoon.',
+            tags: [],
+            linkedEventIds: [],
+          },
+        ],
+        foodEntries: [
+          {
+            id: 'food-entry-1',
+            createdAt: '2026-04-02T09:00:00.000Z',
+            updatedAt: '2026-04-02T09:00:00.000Z',
+            localDay: '2026-04-02',
+            mealType: 'breakfast',
+            name: 'Protein breakfast',
+            calories: 420,
+            protein: 90,
+            fiber: 7,
+            carbs: 32,
+            fat: 12,
+          },
+        ],
+        foodCatalogItems: [],
+        recipeCatalogItems: [],
+        weeklyPlans: [],
+        planSlots: [],
+        derivedGroceryItems: [],
+        manualGroceryItems: [],
+        workoutTemplates: [],
+        exerciseCatalogItems: [],
+        favoriteMeals: [],
+        healthEvents: [
+          {
+            id: 'anxiety-1',
+            createdAt: '2026-03-31T14:00:00.000Z',
+            updatedAt: '2026-03-31T14:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'anxiety:1',
+            sourceTimestamp: '2026-03-31T14:00:00.000Z',
+            localDay: '2026-03-31',
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'anxiety-episode',
+            value: 4,
+            payload: {
+              kind: 'anxiety',
+              intensity: 4,
+              trigger: 'Crowded store',
+              durationMinutes: 20,
+              note: 'Walked it off',
+            },
+          },
+        ],
+        healthTemplates: [],
+        sobrietyEvents: [],
+        assessmentResults: [],
+        importBatches: [],
+        importArtifacts: [],
+        reviewSnapshots: [],
+        adherenceMatches: [],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/review');
+  await expect(page.getByText('Context signals')).toBeVisible();
+  await expect(page.getByText('Journal excerpts')).toBeVisible();
+  await expect(
+    page.getByText('Low sleep and a written reflection both landed on 2026-03-31.')
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      'Evening review on 2026-03-31: Crowded store and headache drained the afternoon.'
+    )
+  ).toBeVisible();
+});
+
 test('planned meal flows from nutrition into today logging', async ({ page }) => {
   await page.goto('/nutrition');
   await page.getByLabel('Food search').fill('oatmeal');

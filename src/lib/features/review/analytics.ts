@@ -24,6 +24,8 @@ export {
 export { buildNutritionStrategy } from './analytics-nutrition';
 export {
   buildAssessmentSummary,
+  buildContextSignals,
   buildDeviceHighlights,
   buildHealthHighlights,
+  buildJournalHighlights,
 } from './analytics-health';

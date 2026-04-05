@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetRouteDb, expectHeading, waitForText } from '../../../support/component/routeHarness';
 import { seedReviewSnapshotInputs } from '../../../support/component/routeSeeds';
 import { getHealthDb } from '$lib/core/db/client';
+import { saveJournalEntry } from '$lib/features/journal/service';
 import { createFoodEntry, saveFoodCatalogItem } from '$lib/features/nutrition/service';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 
@@ -164,5 +165,26 @@ describe('Review route', () => {
     await waitFor(() => {
       expect(screen.getByRole('link', { name: 'Review recipe' })).toBeTruthy();
     });
+  });
+
+  it('shows context signals and journal excerpts inside review', async () => {
+    await seedReviewSnapshotInputs();
+    const db = getHealthDb();
+    await saveJournalEntry(db, {
+      localDay: '2026-03-31',
+      entryType: 'evening_review',
+      title: 'Rough afternoon',
+      body: 'Crowded store and headache drained the afternoon.',
+      tags: [],
+      linkedEventIds: [],
+    });
+
+    render(ReviewPage);
+    expectHeading('Review');
+
+    await waitForText('Context signals');
+    await waitForText('Journal excerpts');
+    await waitForText(/Low sleep and a written reflection both landed on 2026-03-31\./i);
+    await waitForText(/Evening review on 2026-03-31: Crowded store and headache drained the afternoon\./i);
   });
 });

@@ -9,10 +9,12 @@ import {
   buildAdherenceScores,
   buildAdherenceSignals,
   buildAssessmentSummary,
+  buildContextSignals,
   buildDeviceHighlights,
   buildGrocerySignals,
   buildHealthHighlights,
   buildHeadline,
+  buildJournalHighlights,
   buildNutritionHighlights,
   buildNutritionStrategy,
   buildPlanningHighlights,
@@ -58,6 +60,7 @@ export async function buildWeeklySnapshot(
     sobrietyEvents,
     assessments,
     healthEvents,
+    journalEntries,
     foodCatalogItems,
     recipeCatalogItems,
     weeklyPlans,
@@ -68,6 +71,7 @@ export async function buildWeeklySnapshot(
     db.sobrietyEvents.toArray(),
     db.assessmentResults.toArray(),
     db.healthEvents.toArray(),
+    db.journalEntries.toArray(),
     db.foodCatalogItems.toArray(),
     db.recipeCatalogItems.toArray(),
     db.weeklyPlans.toArray(),
@@ -79,6 +83,7 @@ export async function buildWeeklySnapshot(
   const weekSobriety = filterByDays(sobrietyEvents, (event) => event.localDay, days);
   const weekAssessments = filterByDays(assessments, (assessment) => assessment.localDay, days);
   const weekHealthEvents = filterByDays(healthEvents, (event) => event.localDay, days);
+  const weekJournalEntries = filterByDays(journalEntries, (entry) => entry.localDay, days);
   const weeklyPlan = weeklyPlans.find((plan) => plan.weekStart === weekStart) ?? null;
   const weekPlanSlots = weeklyPlan
     ? planSlots.filter((slot) => slot.weeklyPlanId === weeklyPlan.id)
@@ -134,6 +139,8 @@ export async function buildWeeklySnapshot(
     deviceHighlights: buildDeviceHighlights(weekHealthEvents),
     assessmentSummary: buildAssessmentSummary(weekAssessments),
     healthHighlights: buildHealthHighlights(weekRecords, weekHealthEvents),
+    contextSignals: buildContextSignals(weekRecords, weekHealthEvents, weekJournalEntries),
+    journalHighlights: buildJournalHighlights(weekJournalEntries),
     experimentOptions: [...REVIEW_EXPERIMENT_OPTIONS],
   };
 }
