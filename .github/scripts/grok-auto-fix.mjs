@@ -1,0 +1,195 @@
+#!/usr/bin/env node
+
+import { readFileSync, writeFileSync } from 'node:fs';
+
+const DEFAULT_MODEL = 'grok-4-1-fast-reasoning';
+const DEFAULT_MAX_DIFF_CHARS = 250_000;
+const FORBIDDEN_PREFIXES = ['.github/', 'tests/', 'docs/'];
+const FORBIDDEN_FILES = new Set([
+  '.mergify.yml',
+  'package.json',
+  'bun.lock',
+  'bun.lockb',
+  'package-lock.json',
+  'pnpm-lock.yaml',
+  'yarn.lock',
+  'tsconfig.json',
+  'svelte.config.js',
+  'vite.config.ts',
+]);
+
+function requiredEnv(name) {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`Missing required environment variable: ${name}`);
+  }
+  return value;
+}
+
+function optionalEnv(name, fallback = '') {
+  return process.env[name] ?? fallback;
+}
+
+function parseJsonResponse(content) {
+  try {
+    return JSON.parse(content);
+  } catch {
+    const first = content.indexOf('{');
+    const last = content.lastIndexOf('}');
+    if (first >= 0 && last > first) {
+      return JSON.parse(content.slice(first, last + 1));
+    }
+    throw new Error('xAI auto-fix response did not contain valid JSON.');
+  }
+}
+
+function extractMessageText(payload) {
+  const choiceContent = payload?.choices?.[0]?.message?.content;
+  if (typeof choiceContent === 'string') {
+    return choiceContent;
+  }
+  if (Array.isArray(choiceContent)) {
+    return choiceContent
+      .map((item) => {
+        if (typeof item?.text === 'string') return item.text;
+        if (typeof item?.content === 'string') return item.content;
+        return '';
+      })
+      .join('\n');
+  }
+  throw new Error('xAI auto-fix completion did not return message content.');
+}
+
+function parsePatchTouchedFiles(patch) {
+  const touched = new Set();
+  for (const line of patch.split('\n')) {
+    if (line.startsWith('+++ b/')) {
+      touched.add(line.slice('+++ b/'.length).trim());
+    }
+  }
+  return [...touched];
+}
+
+function isForbiddenFile(file) {
+  return FORBIDDEN_FILES.has(file) || FORBIDDEN_PREFIXES.some((prefix) => file.startsWith(prefix));
+}
+
+async function callXaiFix({ title, changedFiles, diff }) {
+  const apiKey = requiredEnv('XAI_API_KEY');
+  const model = optionalEnv('XAI_MODEL', DEFAULT_MODEL);
+
+  const payload = {
+    model,
+    temperature: 0.05,
+    max_tokens: 3500,
+    response_format: {
+      type: 'json_schema',
+      json_schema: {
+        name: 'grok_pr_fix',
+        strict: true,
+        schema: {
+          type: 'object',
+          additionalProperties: false,
+          required: ['summary', 'reasoning', 'patch'],
+          properties: {
+            summary: { type: 'string' },
+            reasoning: { type: 'string' },
+            patch: { type: 'string' },
+          },
+        },
+      },
+    },
+    tools: [
+      {
+        type: 'web_search',
+        filters: {
+          allowed_domains: ['docs.github.com', 'docs.x.ai', 'docs.mergify.com'],
+        },
+      },
+      {
+        type: 'x_search',
+        allowed_x_handles: ['github', 'xai'],
+      },
+    ],
+    messages: [
+      {
+        role: 'system',
+        content:
+          'You are an elite TypeScript/SvelteKit patch generator for a local-first health dashboard. ' +
+          'Use web_search and x_search only when current vendor behavior is needed. ' +
+          'Return a minimal unified diff patch or an empty string when no safe fix exists. ' +
+          'Do not modify workflows, tests, documentation, config files, package manifests, or lockfiles. ' +
+          'Do not invent speculative refactors.',
+      },
+      {
+        role: 'user',
+        content: [
+          `PR Title: ${title}`,
+          '',
+          'Changed Files:',
+          changedFiles.join('\n') || '(none)',
+          '',
+          'Unified Diff:',
+          diff,
+        ].join('\n'),
+      },
+    ],
+  };
+
+  const response = await fetch('https://api.x.ai/v1/chat/completions', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      authorization: `Bearer ${apiKey}`,
+    },
+    body: JSON.stringify(payload),
+  });
+
+  if (!response.ok) {
+    throw new Error(`xAI auto-fix request failed with ${response.status}: ${await response.text()}`);
+  }
+
+  const data = await response.json();
+  return parseJsonResponse(extractMessageText(data));
+}
+
+async function main() {
+  const diffPath = requiredEnv('PR_DIFF_PATH');
+  const filesPath = requiredEnv('PR_FILES_PATH');
+  const resultJsonPath = requiredEnv('FIX_JSON_PATH');
+  const patchPath = requiredEnv('PATCH_PATH');
+
+  const title = optionalEnv('PR_TITLE', 'Untitled PR');
+  const diff = readFileSync(diffPath, 'utf8').slice(0, DEFAULT_MAX_DIFF_CHARS);
+  const changedFiles = readFileSync(filesPath, 'utf8')
+    .split('\n')
+    .map((line) => line.trim())
+    .filter(Boolean);
+  const changedFileSet = new Set(changedFiles);
+
+  const rawResult = await callXaiFix({ title, changedFiles, diff });
+  let patch = typeof rawResult.patch === 'string' ? rawResult.patch : '';
+  let reasoning =
+    typeof rawResult.reasoning === 'string' ? rawResult.reasoning : 'No reasoning returned.';
+  const summary = typeof rawResult.summary === 'string' ? rawResult.summary : 'No summary returned.';
+
+  const touchedFiles = patch ? parsePatchTouchedFiles(patch) : [];
+
+  if (
+    patch &&
+    (touchedFiles.length === 0 ||
+      touchedFiles.some((file) => !changedFileSet.has(file) || isForbiddenFile(file)))
+  ) {
+    patch = '';
+    reasoning =
+      'Rejected suggested patch because it touched forbidden paths or files outside the current PR diff.';
+  }
+
+  writeFileSync(resultJsonPath, JSON.stringify({ summary, reasoning, patch, touchedFiles }, null, 2));
+  writeFileSync(patchPath, patch);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exitCode = 1;
+});
