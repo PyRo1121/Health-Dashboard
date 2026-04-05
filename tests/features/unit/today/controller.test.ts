@@ -39,6 +39,7 @@ describe('today controller', () => {
     expect(state.saveNotice).toBe('Saved for today.');
     expect(state.snapshot?.dailyRecord?.mood).toBe(4);
     expect(state.snapshot?.events).toHaveLength(6);
+    expect(await db.reviewSnapshots.count()).toBe(1);
   });
 
   it('migrates a legacy planned meal into a canonical slot when today loads', async () => {
@@ -82,6 +83,8 @@ describe('today controller', () => {
     expect(state.saveNotice).toBe('Planned meal logged.');
     expect(state.snapshot?.plannedMeal).toBeNull();
     expect(state.snapshot?.foodEntries).toHaveLength(1);
+    expect(await db.adherenceMatches.count()).toBe(1);
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     await savePlannedMeal(db, {
       name: 'Lentil soup',
@@ -97,6 +100,7 @@ describe('today controller', () => {
     state = await clearTodayPlannedMealPage(db, state);
     expect(state.saveNotice).toBe('Planned meal cleared.');
     expect(state.snapshot?.plannedMeal).toBeNull();
+    expect(await db.reviewSnapshots.count()).toBe(1);
   });
 
   it('clears a canonical planned meal slot from the today page state', async () => {
@@ -128,5 +132,6 @@ describe('today controller', () => {
     expect(state.saveNotice).toBe('Planned meal cleared.');
     expect(state.snapshot?.plannedMeal).toBeNull();
     expect(await db.planSlots.count()).toBe(0);
+    expect(await db.reviewSnapshots.count()).toBe(1);
   });
 });

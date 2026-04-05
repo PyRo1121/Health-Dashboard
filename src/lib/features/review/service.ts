@@ -3,7 +3,7 @@ import { nowIso } from '$lib/core/domain/time';
 import type { ReviewSnapshot } from '$lib/core/domain/types';
 import { updateRecordMeta } from '$lib/core/shared/records';
 import { buildWeekAdherenceMatches } from '$lib/features/adherence/service';
-import { listMergedWeeklyGroceries } from '$lib/features/groceries/service';
+import { deriveWeeklyGroceriesWithWarnings } from '$lib/features/groceries/service';
 import {
   buildAdherenceScores,
   buildAdherenceSignals,
@@ -82,7 +82,11 @@ export async function buildWeeklySnapshot(
   const weekPlanSlots = weeklyPlan
     ? planSlots.filter((slot) => slot.weeklyPlanId === weeklyPlan.id)
     : [];
-  const weekGroceries = weeklyPlan ? await listMergedWeeklyGroceries(db, weeklyPlan.id) : [];
+  const weekGroceries = weeklyPlan
+    ? (
+        await deriveWeeklyGroceriesWithWarnings(db, weeklyPlan.id, recipeCatalogItems)
+      ).items
+    : [];
   const adherenceMatches = await buildWeekAdherenceMatches(
     db,
     weekStart,
@@ -151,4 +155,13 @@ export async function saveNextWeekExperiment(
 
   await db.reviewSnapshots.put(snapshot);
   return snapshot;
+}
+
+export async function refreshWeeklyReviewArtifacts(
+  db: HealthDatabase,
+  anchorDay: string
+): Promise<WeeklyReviewData> {
+  const weekly = await buildWeeklySnapshot(db, anchorDay);
+  await db.reviewSnapshots.put(weekly.snapshot);
+  return weekly;
 }

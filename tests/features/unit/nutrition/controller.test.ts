@@ -40,6 +40,7 @@ describe('nutrition controller', () => {
     });
     expect(state.saveNotice).toBe('Meal saved.');
     expect(state.summary.calories).toBe(320);
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     state = await saveNutritionRecurringMeal(db, state, {
       name: state.form.name,
@@ -74,12 +75,14 @@ describe('nutrition controller', () => {
     expect(state.plannedMealSlotId).toBeTruthy();
     expect(await db.plannedMeals.count()).toBe(0);
     expect(await db.planSlots.count()).toBe(1);
+    expect(await db.adherenceMatches.count()).toBe(1);
     expect((await db.planSlots.toArray())[0]?.mealType).toBe('breakfast');
 
     state = await clearNutritionPlannedMeal(db, state);
     expect(state.saveNotice).toBe('Planned meal cleared.');
     expect(state.plannedMeal).toBeNull();
     expect(await db.planSlots.count()).toBe(0);
+    expect(await db.reviewSnapshots.count()).toBe(1);
   });
 
   it('applies USDA search results and notices explicitly', () => {

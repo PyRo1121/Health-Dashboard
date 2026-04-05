@@ -52,6 +52,7 @@ describe('groceries controller', () => {
       checked: true,
       onHand: true,
     });
+    expect(await db.reviewSnapshots.count()).toBe(1);
     expect(createGroceriesPageState()).toMatchObject({
       loading: true,
       groceryItems: [],
@@ -72,6 +73,7 @@ describe('groceries controller', () => {
       manual: true,
       label: 'Paper towels',
     });
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     const itemId = state.groceryItems.find((item) => item.ingredientKey === 'paper towels')!.id;
     state = await removeManualGroceryItemPage(db, state, itemId);
@@ -79,5 +81,6 @@ describe('groceries controller', () => {
     expect(
       state.groceryItems.find((item) => item.ingredientKey === 'paper towels')
     ).toBeUndefined();
+    expect(await db.reviewSnapshots.count()).toBe(1);
   });
 });

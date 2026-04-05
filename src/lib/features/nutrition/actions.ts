@@ -10,6 +10,7 @@ import {
   listStalePlannedFoodSlotIds,
 } from './planned-meal-resolution';
 import { deletePlanSlot, ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
+import { refreshWeeklyReviewArtifacts } from '$lib/features/review/service';
 import { type NutritionPageState, reloadNutritionPageState } from './state';
 
 interface NutritionMacroDraft {
@@ -87,6 +88,7 @@ export async function saveNutritionMeal(
   draft: NutritionMealDraft
 ): Promise<NutritionPageState> {
   await createFoodEntry(db, draft);
+  await refreshWeeklyReviewArtifacts(db, draft.localDay);
   return await reloadNutritionPageState(db, state, {
     saveNotice: 'Meal saved.',
   });
@@ -169,6 +171,7 @@ export async function planNutritionMeal(
     title: draft.name.trim(),
     notes: draft.notes.trim() || undefined,
   });
+  await refreshWeeklyReviewArtifacts(db, state.localDay);
 
   return await reloadNutritionPageState(db, state, {
     saveNotice: 'Planned next meal saved.',
@@ -181,6 +184,7 @@ export async function clearNutritionPlannedMeal(
 ): Promise<NutritionPageState> {
   if (state.plannedMealSlotId) {
     await deletePlanSlot(db, state.plannedMealSlotId);
+    await refreshWeeklyReviewArtifacts(db, state.localDay);
   }
 
   return await reloadNutritionPageState(db, state, {
@@ -194,6 +198,7 @@ export async function reuseNutritionMeal(
   favoriteMealId: string
 ): Promise<NutritionPageState> {
   await reuseRecurringMeal(db, { favoriteMealId, localDay: state.localDay });
+  await refreshWeeklyReviewArtifacts(db, state.localDay);
   return await reloadNutritionPageState(db, state, {
     saveNotice: 'Recurring meal reused.',
   });
