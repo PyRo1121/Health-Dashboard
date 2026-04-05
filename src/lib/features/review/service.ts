@@ -83,9 +83,7 @@ export async function buildWeeklySnapshot(
     ? planSlots.filter((slot) => slot.weeklyPlanId === weeklyPlan.id)
     : [];
   const weekGroceries = weeklyPlan
-    ? (
-        await deriveWeeklyGroceriesWithWarnings(db, weeklyPlan.id, recipeCatalogItems)
-      ).items
+    ? (await deriveWeeklyGroceriesWithWarnings(db, weeklyPlan.id, recipeCatalogItems)).items
     : [];
   const adherenceMatches = await buildWeekAdherenceMatches(
     db,
