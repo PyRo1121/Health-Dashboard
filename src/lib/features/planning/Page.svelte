@@ -2,23 +2,19 @@
   import PlanningGroceryDraft from '$lib/features/planning/components/PlanningGroceryDraft.svelte';
   import PlanningSlotComposer from '$lib/features/planning/components/PlanningSlotComposer.svelte';
   import PlanningBoard from '$lib/features/planning/components/PlanningBoard.svelte';
-  import WorkoutTemplateStudio from '$lib/features/movement/components/WorkoutTemplateStudio.svelte';
+  import WorkoutTemplateStudioShell from '$lib/features/movement/components/WorkoutTemplateStudioShell.svelte';
   import {
     addManualPlanningGroceryItemPage,
-    addEmptyExerciseToWorkoutTemplate,
-    addExerciseToWorkoutTemplate,
     createPlanningPageState,
     deletePlanningSlotPage,
     loadPlanningPage,
     markPlanningSlotStatusPage,
     movePlanningSlotPage,
     removeManualPlanningGroceryItemPage,
-    removeWorkoutTemplateExercise,
     savePlanningSlotPage,
     saveWorkoutTemplatePage,
     searchPlanningExercises,
     togglePlanningGroceryStatePage,
-    updateWorkoutTemplateExerciseField,
   } from '$lib/features/planning/client';
   import { createPlanningBoardDays } from '$lib/features/planning/model';
   import { onBrowserRouteMount } from '$lib/core/ui/route-runtime';
@@ -35,14 +31,6 @@
 
   async function saveSlot() {
     page = await savePlanningSlotPage(page);
-  }
-
-  async function saveTemplate() {
-    page = await saveWorkoutTemplatePage(page);
-  }
-
-  async function searchExercises() {
-    page = await searchPlanningExercises(page);
   }
 
   async function markSlot(slotId: string, status: 'planned' | 'done' | 'skipped') {
@@ -91,28 +79,6 @@
     };
   }
 
-  function addExercise(exerciseId: string) {
-    const exercise = page.exerciseSearchResults.find((item) => item.id === exerciseId);
-    if (!exercise) return;
-    page = addExerciseToWorkoutTemplate(page, exercise);
-  }
-
-  function addExerciseRow() {
-    page = addEmptyExerciseToWorkoutTemplate(page);
-  }
-
-  function updateExerciseField(
-    index: number,
-    field: 'name' | 'sets' | 'reps' | 'restSeconds',
-    value: string
-  ) {
-    page = updateWorkoutTemplateExerciseField(page, index, field, value);
-  }
-
-  function removeExerciseRow(index: number) {
-    page = removeWorkoutTemplateExercise(page, index);
-  }
-
   onBrowserRouteMount(refreshData);
 </script>
 
@@ -145,36 +111,28 @@
       onSaveSlot={saveSlot}
     />
 
-    <WorkoutTemplateStudio
+    <WorkoutTemplateStudioShell
+      {page}
       title="Workout templates"
-      workoutTemplateForm={page.workoutTemplateForm}
-      exerciseSearchQuery={page.exerciseSearchQuery}
-      exerciseSearchResults={page.exerciseSearchResults}
-      workoutTemplates={page.workoutTemplates}
       saveNotice={page.workoutTemplateNotice}
       emptyStateTitle="No workout templates yet."
       emptyStateMessage="Build a reusable template here, then add it to your week."
-      onUpdateWorkoutTemplateMeta={(field, value) => {
+      onPageChange={(nextPage) => {
         page = {
           ...page,
-          workoutTemplateForm: {
-            ...page.workoutTemplateForm,
-            [field]: value,
-          },
+          ...nextPage,
         };
       }}
-      onSearchQueryChange={(value) => {
-        page = {
+      onSearchExercises={async (studioPage) =>
+        await searchPlanningExercises({
           ...page,
-          exerciseSearchQuery: value,
-        };
-      }}
-      onSearchExercises={searchExercises}
-      onSaveTemplate={saveTemplate}
-      onAddExercise={addExercise}
-      onAddExerciseRow={addExerciseRow}
-      onUpdateExerciseField={updateExerciseField}
-      onRemoveExerciseRow={removeExerciseRow}
+          ...studioPage,
+        })}
+      onSaveTemplate={async (studioPage) =>
+        await saveWorkoutTemplatePage({
+          ...page,
+          ...studioPage,
+        })}
     />
 
     <PlanningBoard
