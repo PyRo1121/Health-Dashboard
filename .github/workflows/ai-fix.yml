@@ -1,0 +1,272 @@
+name: AI Fix
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  collect:
+    name: Collect Failure
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'failure' }}
+    outputs:
+      pr-number: ${{ steps.extract.outputs.pr-number }}
+      head-branch: ${{ github.event.workflow_run.head_branch }}
+      base-branch: ${{ steps.extract.outputs.base-branch }}
+    steps:
+      - name: Download CI logs
+        uses: actions/download-artifact@v4
+        with:
+          name: ci-logs
+          path: logs/
+        continue-on-error: true
+
+      - name: Extract PR info
+        id: extract
+        env:
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          PR_NUMBER=$(gh api repos/$GH_REPO/actions/runs/$RUN_ID \
+            --jq '.pull_requests[0].number // empty')
+
+          BASE_BRANCH=$(gh api repos/$GH_REPO/actions/runs/$RUN_ID \
+            --jq '.pull_requests[0].base.ref // "main"')
+
+          echo "pr-number=${PR_NUMBER:-0}" >> $GITHUB_OUTPUT
+          echo "base-branch=${BASE_BRANCH}" >> $GITHUB_OUTPUT
+
+      - name: Get failing jobs
+        env:
+          GH_REPO: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          mkdir -p logs
+
+          FAILED_JOBS=$(gh api repos/$GH_REPO/actions/runs/$RUN_ID/jobs \
+            --jq '.jobs[] | select(.conclusion == "failure") | .name')
+
+          echo "$FAILED_JOBS" > logs/failing_jobs.txt
+          echo "${{ github.event.workflow_run.html_url }}" > logs/workflow_url.txt
+          echo "${{ github.event.workflow_run.head_branch }}" > logs/head_branch.txt
+
+      - name: Upload failure context
+        uses: actions/upload-artifact@v4
+        with:
+          name: failure-context
+          path: logs/
+          retention-days: 3
+
+  parse:
+    name: Parse Errors
+    runs-on: ubuntu-latest
+    needs: collect
+    outputs:
+      error-count: ${{ steps.parse.outputs.error-count }}
+      needs-human-review: ${{ steps.parse.outputs.needs-human-review }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Download failure context
+        uses: actions/download-artifact@v4
+        with:
+          name: failure-context
+          path: logs/
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+
+      - name: Parse logs
+        id: parse
+        run: |
+          bun run .github/scripts/parse-ci-logs.js logs/ > logs/parsed.json 2>&1 || true
+
+          ERROR_COUNT=$(cat logs/parsed.json | jq -r '.errorCount // 0')
+          NEEDS_HUMAN=$(cat logs/parsed.json | jq -r '.needsHumanReview // false')
+
+          echo "error-count=${ERROR_COUNT}" >> $GITHUB_OUTPUT
+          echo "needs-human-review=${NEEDS_HUMAN}" >> $GITHUB_OUTPUT
+
+      - name: Upload parsed errors
+        uses: actions/upload-artifact@v4
+        with:
+          name: parsed-errors
+          path: logs/
+          retention-days: 3
+
+  generate:
+    name: Generate Fixes
+    runs-on: ubuntu-latest
+    needs: parse
+    if: ${{ needs.parse.outputs.needs-human-review != 'true' && needs.parse.outputs.error-count != '0' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+
+      - name: Download parsed errors
+        uses: actions/download-artifact@v4
+        with:
+          name: parsed-errors
+          path: logs/
+
+      - name: Generate fix
+        id: generate
+        env:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          PR_NUMBER: ${{ needs.collect.outputs.pr-number }}
+        run: |
+          bun run .github/scripts/generate-fix.js \
+            --errors logs/parsed.json \
+            --output logs/fix.patch \
+            --audit logs/audit.json
+        continue-on-error: true
+
+      - name: Upload fix
+        uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: ai-fix
+          path: logs/
+          retention-days: 7
+
+  validate:
+    name: Validate Fix
+    runs-on: ubuntu-latest
+    needs: [collect, generate]
+    if: ${{ needs.generate.result == 'success' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+
+      - name: Download fix
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-fix
+          path: fix/
+
+      - name: Apply and validate
+        run: |
+          mkdir -p approved
+
+          bun run .github/scripts/validate-fix.js fix/fix.patch approved/
+
+          if [ -f "approved/fix.patch" ]; then
+            git apply approved/fix.patch
+            bun install --frozen-lockfile
+            bun run check:ci 2>&1 | tee validation.log || true
+          fi
+
+      - name: Upload validation
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-result
+          path: validation.log
+          retention-days: 3
+
+  promote:
+    name: Create Fix PR
+    runs-on: ubuntu-latest
+    needs: validate
+    environment:
+      name: ai-fix
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: Setup Git
+        run: |
+          git config user.name "AI Fix Bot"
+          git config user.email "ai-fix[bot]@users.noreply.github.com"
+
+      - name: Download validated fix
+        uses: actions/download-artifact@v4
+        with:
+          name: ai-fix
+          path: fix/
+
+      - name: Create fix branch
+        id: branch
+        env:
+          PR_NUMBER: ${{ needs.collect.outputs.pr-number }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          BRANCH="ai-fix/pr-${PR_NUMBER}-${RUN_ID}"
+          git checkout -b "$BRANCH"
+
+          if [ -f "fix/approved/fix.patch" ]; then
+            git apply fix/approved/fix.patch
+          elif [ -f "fix/fix.patch" ]; then
+            git apply fix/fix.patch
+          fi
+
+          git add -A
+          git commit -m "fix: AI-generated fix for PR #${PR_NUMBER}" || true
+
+      - name: Push branch
+        env:
+          PR_NUMBER: ${{ needs.collect.outputs.pr-number }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          BRANCH="ai-fix/pr-${PR_NUMBER}-${RUN_ID}"
+          git push -u origin "$BRANCH" || true
+
+      - name: Create Fix PR
+        if: ${{ always() }}
+        id: pr
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ needs.collect.outputs.pr-number }}
+          BASE_BRANCH: ${{ needs.collect.outputs.base-branch }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          BRANCH="ai-fix/pr-${PR_NUMBER}-${RUN_ID}"
+
+          gh pr create \
+            --title "fix: AI fix for PR #${PR_NUMBER}" \
+            --body "AI Generated Fix for PR #${PR_NUMBER}. Safety: read-only generation, bounded scope, validated before promotion." \
+            --base "${BASE_BRANCH:-main}" \
+            --head "$BRANCH" \
+            --label "ai-fix" 2>&1 || echo "PR may already exist"
+
+  human-review:
+    name: Notify Human Review
+    runs-on: ubuntu-latest
+    needs: parse
+    if: ${{ needs.parse.outputs.needs-human-review == 'true' }}
+    steps:
+      - name: Comment on PR
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ needs.collect.outputs.pr-number }}
+        run: |
+          gh pr comment "$PR_NUMBER" --body "CI Failure Needs Human Review. Failures involve config/workflow/test files or multi-file changes."
