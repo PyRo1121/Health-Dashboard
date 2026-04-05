@@ -150,7 +150,8 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
         {
           title: 'Context signals',
           items: weekly.contextSignals,
-          emptyMessage: 'Journal and health context need more overlap before this section becomes useful.',
+          emptyMessage:
+            'Journal and health context need more overlap before this section becomes useful.',
         },
         {
           title: 'Journal excerpts',

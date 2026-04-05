@@ -1,4 +1,9 @@
-import type { AssessmentResult, DailyRecord, HealthEvent, JournalEntry } from '$lib/core/domain/types';
+import type {
+  AssessmentResult,
+  DailyRecord,
+  HealthEvent,
+  JournalEntry,
+} from '$lib/core/domain/types';
 import { buildHealthEventDisplay } from '$lib/core/shared/health-events';
 import { MIN_SLEEP_HOURS } from './analytics-shared';
 
@@ -82,7 +87,9 @@ export function buildJournalHighlights(entries: JournalEntry[]): string[] {
   return [...entries]
     .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
     .slice(0, 3)
-    .map((entry) => `${formatJournalEntryLabel(entry)} on ${entry.localDay}: ${excerpt(entry.body)}`);
+    .map(
+      (entry) => `${formatJournalEntryLabel(entry)} on ${entry.localDay}: ${excerpt(entry.body)}`
+    );
 }
 
 export function buildContextSignals(

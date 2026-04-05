@@ -95,7 +95,9 @@ describe('review model', () => {
       assessmentSummary: ['WHO-5: Strong wellbeing (17)'],
       healthHighlights: [],
       contextSignals: ['Low sleep and a written reflection both landed on 2026-04-02.'],
-      journalHighlights: ['Evening review on 2026-04-02: Crowded store and headache drained the afternoon.'],
+      journalHighlights: [
+        'Evening review on 2026-04-02: Crowded store and headache drained the afternoon.',
+      ],
       experimentOptions: ['Increase hydration tracking'],
     };
 
@@ -181,7 +183,9 @@ describe('review model', () => {
       assessmentSummary: [],
       healthHighlights: ['Low sleep lined up with higher anxiety on 2026-04-02.'],
       contextSignals: ['Low sleep and a written reflection both landed on 2026-04-02.'],
-      journalHighlights: ['Evening review on 2026-04-02: Crowded store and headache drained the afternoon.'],
+      journalHighlights: [
+        'Evening review on 2026-04-02: Crowded store and headache drained the afternoon.',
+      ],
       experimentOptions: ['Increase hydration tracking'],
     };
 

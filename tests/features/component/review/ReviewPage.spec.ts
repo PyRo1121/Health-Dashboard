@@ -185,6 +185,8 @@ describe('Review route', () => {
     await waitForText('Context signals');
     await waitForText('Journal excerpts');
     await waitForText(/Low sleep and a written reflection both landed on 2026-03-31\./i);
-    await waitForText(/Evening review on 2026-03-31: Crowded store and headache drained the afternoon\./i);
+    await waitForText(
+      /Evening review on 2026-03-31: Crowded store and headache drained the afternoon\./i
+    );
   });
 });
