@@ -12,6 +12,7 @@ import {
   createSymptomForm,
   createTemplateForm,
 } from './model';
+import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
 import { type HealthPageState, reloadHealthPageState } from './state';
 
 function parseOptionalNumber(value: string | number | undefined): number | undefined {
@@ -39,6 +40,7 @@ export async function saveSymptomPage(
     severity: Number(state.symptomForm.severity),
     note: state.symptomForm.note,
   });
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
 
   return await reloadHealthPageState(db, state, {
     saveNotice: 'Symptom logged.',
@@ -57,6 +59,7 @@ export async function saveAnxietyPage(
     durationMinutes: parseOptionalNumber(state.anxietyForm.durationMinutes),
     note: state.anxietyForm.note,
   });
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
 
   return await reloadHealthPageState(db, state, {
     saveNotice: 'Anxiety episode logged.',
@@ -81,6 +84,7 @@ export async function saveSleepNotePage(
     restfulness: parseOptionalNumber(state.sleepNoteForm.restfulness),
     context: state.sleepNoteForm.context,
   });
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
 
   return await reloadHealthPageState(db, state, {
     saveNotice: 'Sleep context logged.',
@@ -106,6 +110,7 @@ export async function saveTemplatePage(
     defaultUnit: state.templateForm.defaultUnit,
     note: state.templateForm.note,
   });
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
 
   return await reloadHealthPageState(db, state, {
     saveNotice: 'Template saved.',
@@ -122,6 +127,7 @@ export async function quickLogTemplatePage(
     localDay: state.localDay,
     templateId,
   });
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
 
   return await reloadHealthPageState(db, state, {
     saveNotice: 'Template logged.',

@@ -27,6 +27,7 @@ describe('assessments controller', () => {
     };
     state = await saveAssessmentsProgressPage(db, state);
     expect(state.saveNotice).toBe('Progress saved.');
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     state = setAssessmentsInstrument(state, 'PHQ-9');
     state = await loadAssessmentsPage(db, '2026-04-02', state);
@@ -37,6 +38,7 @@ describe('assessments controller', () => {
     state = await submitAssessmentsPage(db, state);
     expect(state.latest?.totalScore).toBe(9);
     expect(state.safetyMessage).toMatch(/need more support/i);
+    expect(await db.reviewSnapshots.count()).toBe(1);
   });
 
   it('surfaces validation errors for incomplete submissions', async () => {

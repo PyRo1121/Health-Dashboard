@@ -1,6 +1,7 @@
 import type { HealthDatabase } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
 import type { ReviewSnapshot } from '$lib/core/domain/types';
+import { startOfWeek } from '$lib/core/shared/dates';
 import { updateRecordMeta } from '$lib/core/shared/records';
 import { buildWeekAdherenceMatches } from '$lib/features/adherence/service';
 import { deriveWeeklyGroceriesWithWarnings } from '$lib/features/groceries/service';
@@ -181,5 +182,26 @@ export async function refreshWeeklyReviewArtifactsSafely(
     if (!isDatabaseClosedError(error)) {
       throw error;
     }
+  }
+}
+
+export async function refreshWeeklyReviewArtifactsForDaysSafely(
+  db: HealthDatabase,
+  anchorDays: string[]
+): Promise<void> {
+  const refreshedWeeks = new Set<string>();
+
+  for (const anchorDay of anchorDays) {
+    if (!anchorDay) {
+      continue;
+    }
+
+    const weekStart = startOfWeek(anchorDay);
+    if (refreshedWeeks.has(weekStart)) {
+      continue;
+    }
+    refreshedWeeks.add(weekStart);
+
+    await refreshWeeklyReviewArtifactsSafely(db, anchorDay);
   }
 }

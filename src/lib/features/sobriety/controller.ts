@@ -11,6 +11,7 @@ import {
   logLapseEvent,
   setSobrietyStatusForDay,
 } from '$lib/features/sobriety/service';
+import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
 
 export interface SobrietyPageState {
   loading: boolean;
@@ -75,6 +76,7 @@ export async function markSobrietyStatus(
   notice: string
 ): Promise<SobrietyPageState> {
   await setSobrietyStatusForDay(db, { localDay: state.localDay, status });
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   return await reloadSobrietyPageState(db, state, {
     saveNotice: notice,
   });
@@ -89,6 +91,7 @@ export async function saveSobrietyCraving(
     cravingScore: Number(state.cravingScore),
     note: state.cravingNote.trim(),
   });
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   return await reloadSobrietyPageState(db, state, {
     saveNotice: 'Craving logged.',
     cravingNote: '',
@@ -104,6 +107,7 @@ export async function saveSobrietyLapse(
     note: state.lapseNote.trim(),
     recoveryAction: state.recoveryAction.trim(),
   });
+  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
   return await reloadSobrietyPageState(db, state, {
     saveNotice: 'Lapse context logged.',
   });

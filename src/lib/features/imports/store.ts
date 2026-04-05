@@ -17,6 +17,7 @@ import type {
 import { resolveClinicalPatientMatch } from '$lib/features/integrations/identity/patient-match';
 import { createRecordId } from '$lib/core/shared/ids';
 import { createRecordMeta, updateRecordMeta } from '$lib/core/shared/records';
+import { refreshWeeklyReviewArtifactsForDaysSafely } from '$lib/features/review/service';
 import { type ImportPayloadAnalysis, textFingerprint, warningCount } from './core';
 import { analyzeImportPayload } from './analyze';
 import { parseAppleHealthXml, parseDayOneExport } from './parsers';
@@ -190,10 +191,13 @@ export async function commitImportBatch(db: HealthDatabase, batchId: string): Pr
   if (!batch) throw new Error('Import batch not found');
 
   const artifacts = await db.importArtifacts.where('batchId').equals(batchId).toArray();
+  const affectedDays = new Set<string>();
 
   for (const artifact of artifacts) {
     if (artifact.artifactType === 'healthEvent' && artifact.payload) {
-      await db.healthEvents.put(structuredClone(artifact.payload) as unknown as HealthEvent);
+      const event = structuredClone(artifact.payload) as unknown as HealthEvent;
+      await db.healthEvents.put(event);
+      affectedDays.add(event.localDay);
     }
     if (artifact.artifactType === 'journalEntry' && artifact.payload) {
       await db.journalEntries.put(structuredClone(artifact.payload) as unknown as JournalEntry);
@@ -207,6 +211,7 @@ export async function commitImportBatch(db: HealthDatabase, batchId: string): Pr
   };
 
   await db.importBatches.put(committed);
+  await refreshWeeklyReviewArtifactsForDaysSafely(db, [...affectedDays]);
   return committed;
 }
 
