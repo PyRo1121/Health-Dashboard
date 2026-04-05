@@ -1,0 +1,23 @@
+.github/CODEOWNERS
+  34e40b7d8a46cf9d 1-22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "b20357bb3c78775fb3af11a074a87024337a03ce",
+  "prompts": {
+    "34e40b7d8a46cf9d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-913c6cf7-b161-4527-a8c3-9e0ab4fddfe2",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 22,
+      "total_deletions": 0,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  }
+}
