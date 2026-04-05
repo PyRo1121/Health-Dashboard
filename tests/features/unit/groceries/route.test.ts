@@ -24,12 +24,18 @@ describe('groceries route', () => {
     vi.doMock('$lib/server/http/action-route', () => ({
       ...actual,
       createDbActionPostHandler: (
-        handlers: Parameters<typeof actual.createDbActionPostHandler>[0]
+        handlers: Parameters<typeof actual.createDbActionPostHandler>[0],
+        _deps: Parameters<typeof actual.createDbActionPostHandler>[1],
+        options: Parameters<typeof actual.createDbActionPostHandler>[2]
       ) =>
-        actual.createDbActionPostHandler(handlers, {
-          withDb: async (run) => await run(db),
-          toResponse: (body) => Response.json(body),
-        }),
+        actual.createDbActionPostHandler(
+          handlers,
+          {
+            withDb: async (run) => await run(db),
+            toResponse: (body) => Response.json(body),
+          },
+          options
+        ),
     }));
     vi.doMock('$lib/features/groceries/controller', () => ({
       loadGroceriesPage:
@@ -224,5 +230,21 @@ describe('groceries route', () => {
       })
     );
     expect(removeManualGroceryItemPage).toHaveBeenCalledWith(db, state, 'grocery-1');
+  });
+
+  it('returns 400 for invalid grocery action payloads', async () => {
+    const loadGroceriesPage = vi.fn();
+    const { POST } = await importRoute({ loadGroceriesPage });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/groceries', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'toggle', localDay: '2026-04-07' }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid groceries request payload.');
+    expect(loadGroceriesPage).not.toHaveBeenCalled();
   });
 });
