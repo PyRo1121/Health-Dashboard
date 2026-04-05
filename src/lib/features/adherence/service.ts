@@ -27,9 +27,14 @@ function normalizeLabel(value: string | undefined): string {
     .trim();
 }
 
-function createWeekFingerprint(planSlots: PlanSlot[], foodEntries: FoodEntry[]): string {
+function createWeekFingerprint(
+  planSlots: PlanSlot[],
+  foodEntries: FoodEntry[],
+  anchorDay: string
+): string {
   return textFingerprint(
     JSON.stringify({
+      anchorDay,
       slots: sortPlanSlots(planSlots).map((slot) => ({
         id: slot.id,
         localDay: slot.localDay,
@@ -159,7 +164,7 @@ export async function buildWeekAdherenceMatches(
   foodEntries: FoodEntry[],
   anchorDay: string
 ): Promise<AdherenceMatch[]> {
-  const fingerprint = createWeekFingerprint(planSlots, foodEntries);
+  const fingerprint = createWeekFingerprint(planSlots, foodEntries, anchorDay);
   const existingMatches = await db.adherenceMatches.where('weekStart').equals(weekStart).toArray();
   const existingById = new Map(existingMatches.map((match) => [match.id, match]));
 

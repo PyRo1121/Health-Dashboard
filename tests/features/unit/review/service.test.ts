@@ -308,6 +308,42 @@ describe('review service', () => {
     expect(matches[0]!.fingerprint).not.toBe(firstFingerprint);
   });
 
+  it('rebuilds pending adherence matches when the anchor day advances', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const slot = await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-03',
+      slotType: 'workout',
+      itemType: 'freeform',
+      title: 'Recovery walk',
+    });
+
+    await buildWeeklySnapshot(db, '2026-04-02');
+    let matches = await db.adherenceMatches.toArray();
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toMatchObject({
+      planSlotId: slot.id,
+      outcome: 'pending',
+      matchSource: 'pending',
+      confidence: 'inferred',
+      weekStart: '2026-03-30',
+    });
+    const firstFingerprint = matches[0]!.fingerprint;
+
+    await buildWeeklySnapshot(db, '2026-04-04');
+    matches = await db.adherenceMatches.toArray();
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toMatchObject({
+      planSlotId: slot.id,
+      outcome: 'miss',
+      matchSource: 'inferred-none',
+      confidence: 'inferred',
+      weekStart: '2026-03-30',
+    });
+    expect(matches[0]!.fingerprint).not.toBe(firstFingerprint);
+  });
+
   it('keeps partial assessments out of the assessment summary', async () => {
     const db = getDb();
     await seedWeek();
