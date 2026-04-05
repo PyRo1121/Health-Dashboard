@@ -2,8 +2,13 @@ pull_request_rules:
   - name: Merge automerge PRs after required checks
     conditions:
       - label=automerge
+      - label=merge-ready
       - -label=do-not-merge
       - -label=work-in-progress
+      - -label=blocked-ci
+      - -label=blocked-review
+      - -label=blocked-author
+      - -label=stale-review
       - -draft
       - conflict=false
       - check-success=AI Code Review

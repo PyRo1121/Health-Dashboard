@@ -85,6 +85,31 @@
     "description": "PR changes more than 20 files."
   },
   {
+    "name": "blocked-ci",
+    "color": "d93f0b",
+    "description": "PR is waiting on failed or pending CI."
+  },
+  {
+    "name": "blocked-review",
+    "color": "fbca04",
+    "description": "PR is waiting on current human review or approval."
+  },
+  {
+    "name": "blocked-author",
+    "color": "b60205",
+    "description": "PR needs author action before it can merge."
+  },
+  {
+    "name": "merge-ready",
+    "color": "0e8a16",
+    "description": "PR is operationally ready for merge automation."
+  },
+  {
+    "name": "stale-review",
+    "color": "fbca04",
+    "description": "Prior approvals are stale on an older head commit."
+  },
+  {
     "name": "do-not-merge",
     "color": "b60205",
     "description": "Explicitly block merge automation."

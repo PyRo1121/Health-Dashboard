@@ -1,21 +1,6 @@
 #!/usr/bin/env node
 
-import { writeFileSync } from 'node:fs';
-
-const REQUIRED_CHECKS = [
-  'AI Code Review',
-  'Analyze (javascript-typescript)',
-  'Build',
-  'Component Tests',
-  'Danger PR Checks',
-  'Dependency Review',
-  'Lint',
-  'PR Manager',
-  'Reviewdog PR Comments',
-  'Type Check',
-  'Unit Tests',
-  'playwright',
-];
+import { readFileSync, writeFileSync } from 'node:fs';
 
 function requiredEnv(name) {
   const value = process.env[name];
@@ -44,10 +29,16 @@ async function github(path, init = {}) {
   return await response.json();
 }
 
+function loadRequiredChecksFromMergify() {
+  const mergify = readFileSync('.mergify.yml', 'utf8');
+  return [...new Set([...mergify.matchAll(/check-success=([^\n]+)/g)].map((match) => match[1].trim()))];
+}
+
 async function main() {
   const [owner, repo] = requiredEnv('GITHUB_REPOSITORY').split('/');
   const branch = requiredEnv('AUDIT_BRANCH');
   const outputPath = requiredEnv('BRANCH_AUDIT_MARKDOWN_PATH');
+  const requiredChecks = loadRequiredChecksFromMergify();
   let currentContexts = [];
   let liveAuditStatus = 'not-run';
 
@@ -61,8 +52,8 @@ async function main() {
     liveAuditStatus = `unavailable: ${error.message}`;
   }
 
-  const missing = REQUIRED_CHECKS.filter((check) => !currentContexts.includes(check));
-  const extra = currentContexts.filter((check) => !REQUIRED_CHECKS.includes(check));
+  const missing = requiredChecks.filter((check) => !currentContexts.includes(check));
+  const extra = currentContexts.filter((check) => !requiredChecks.includes(check));
 
   const markdown = [
     '# Branch Protection Audit',
@@ -71,7 +62,7 @@ async function main() {
     `- Live audit: ${liveAuditStatus}`,
     '',
     '## Required checks from repo policy',
-    ...REQUIRED_CHECKS.map((check) => `- ${check}`),
+    ...requiredChecks.map((check) => `- ${check}`),
     '',
     '## Live required checks',
     ...(currentContexts.length ? currentContexts.map((check) => `- ${check}`) : ['- unavailable']),

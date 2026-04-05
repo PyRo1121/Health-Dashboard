@@ -48,6 +48,8 @@ The app runs without external APIs for most flows. These variables are optional 
 - `XAI_API_KEY` for Grok review, auto-fix, PR management, and threat monitoring
 - `XAI_COLLECTION_IDS` for optional repo-policy / internal-doc grounding in Grok automation
 - `XAI_MANAGEMENT_API_KEY` for the collections bootstrap workflow
+- `XAI_ENABLE_DOCS_MCP=false` if you need to disable the default xAI docs MCP tool in automation
+- `XAI_REMOTE_MCP_TOOLS_JSON` for optional extra Remote MCP tool definitions in Grok automation
 
 ## Repo Map
 
@@ -72,11 +74,13 @@ GitHub Actions is expected to run:
 - Grok PR review with structured findings and labels
 - label-gated Grok auto-fix for same-repo trusted branches
 - label-gated Grok CI surgeon for failed PR checks on trusted same-repo branches
-- PR manager label/comment sync for docs, automation, dependency, and large PRs
+- PR manager label/comment sync for docs, automation, dependency, large PRs, and merge-readiness state
 - 6-hour Grok dependency / CVE / threat monitor issue updates
+- threat-monitor-generated dependency fix PRs for high-confidence updates
 - rolling PR portfolio issue updates
 - branch protection drift auditing
 - xAI collection bootstrap for repo policy grounding
+- xAI docs MCP and function-calling safe-action loops in the PR manager and threat monitor
 - CodeQL SAST
 - dependency and vulnerability scanning (Dependency Review + Snyk + Trivy in release)
 - release artifact signing and attestations

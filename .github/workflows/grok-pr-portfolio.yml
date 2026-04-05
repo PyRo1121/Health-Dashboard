@@ -36,6 +36,13 @@ jobs:
               `Open PRs: ${prs.length}`,
               '',
             ];
+            const buckets = {
+              'merge-ready': [],
+              'blocked-ci': [],
+              'blocked-review': [],
+              'blocked-author': [],
+              other: [],
+            };
 
             for (const pr of prs.slice(0, 25)) {
               const checks = await github.rest.checks.listForRef({
@@ -46,14 +53,44 @@ jobs:
               });
               const failed = checks.data.check_runs.filter((run) => run.conclusion === 'failure');
               const pending = checks.data.check_runs.filter((run) => run.status !== 'completed');
-              const labels = (pr.labels || []).map((label) => label.name).join(', ') || 'none';
-              lines.push(
-                `- #${pr.number} ${pr.title}`,
-                `  - labels: ${labels}`,
-                `  - failed checks: ${failed.length ? failed.map((run) => run.name).join(', ') : 'none'}`,
-                `  - pending checks: ${pending.length ? pending.map((run) => run.name).join(', ') : 'none'}`,
-                ''
-              );
+              const labels = (pr.labels || []).map((label) => label.name);
+              const status =
+                labels.includes('merge-ready')
+                  ? 'merge-ready'
+                  : labels.includes('blocked-ci')
+                    ? 'blocked-ci'
+                    : labels.includes('blocked-review')
+                      ? 'blocked-review'
+                      : labels.includes('blocked-author')
+                        ? 'blocked-author'
+                        : 'other';
+
+              buckets[status].push({
+                number: pr.number,
+                title: pr.title,
+                labels: labels.join(', ') || 'none',
+                failed: failed.length ? failed.map((run) => run.name).join(', ') : 'none',
+                pending: pending.length ? pending.map((run) => run.name).join(', ') : 'none',
+              });
+            }
+
+            lines.push('## Queue by state', '');
+            for (const [heading, entries] of Object.entries(buckets)) {
+              lines.push(`### ${heading}`, '');
+              if (!entries.length) {
+                lines.push('- none', '');
+                continue;
+              }
+
+              for (const entry of entries) {
+                lines.push(
+                  `- #${entry.number} ${entry.title}`,
+                  `  - labels: ${entry.labels}`,
+                  `  - failed checks: ${entry.failed}`,
+                  `  - pending checks: ${entry.pending}`,
+                  ''
+                );
+              }
             }
 
             const body = lines.join('\n');
