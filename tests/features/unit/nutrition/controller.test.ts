@@ -125,7 +125,6 @@ describe('nutrition controller', () => {
     const state = await loadNutritionPage(db, '2026-04-02', createNutritionPageState());
 
     expect(state.plannedMeal?.name).toBe('Greek yogurt bowl');
-    expect(state.plannedMealCompatibilityNotice).toBe('');
     expect(state.plannedMealSlotId).toBeTruthy();
     expect(state.saveNotice).toBe('Legacy planned meal moved into today’s weekly plan.');
     expect(await db.plannedMeals.count()).toBe(0);

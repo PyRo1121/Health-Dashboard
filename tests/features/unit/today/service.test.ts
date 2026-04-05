@@ -173,7 +173,7 @@ describe('today service', () => {
     expect(snapshot.plannedMealIssue).toBeNull();
   });
 
-  it('surfaces a compatibility notice when today falls back to a legacy planned meal', async () => {
+  it('migrates a legacy planned meal into a canonical planned slot before building today snapshot', async () => {
     const db = getDb();
 
     await savePlannedMeal(db, {
@@ -193,9 +193,8 @@ describe('today service', () => {
       name: 'Legacy oats',
     });
     expect(snapshot.plannedMealIssue).toBeNull();
-    expect(snapshot.plannedMealCompatibilityNotice).toBe(
-      'This planned meal is using the legacy fallback flow. Weekly plan slots take priority when they exist.'
-    );
+    expect(await db.plannedMeals.count()).toBe(0);
+    expect(await db.planSlots.count()).toBe(1);
   });
 
   it('does not fall back to legacy planned meals when a canonical slot exists but is stale', async () => {

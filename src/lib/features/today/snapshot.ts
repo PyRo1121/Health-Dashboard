@@ -10,10 +10,10 @@ import type {
 } from '$lib/core/domain/types';
 import {
   buildDailyNutritionSummary,
-  getPlannedMeal,
   listFoodCatalogItems,
   listRecipeCatalogItems,
 } from '$lib/features/nutrition/service';
+import { migrateLegacyPlannedMealToPlanSlot } from '$lib/features/nutrition/migration';
 import {
   getNutritionPlannedMealResolution,
   resolveNutritionPlannedMeal,
@@ -49,7 +49,6 @@ export interface TodaySnapshot {
     fat: number;
   };
   plannedMeal: PlannedMeal | null;
-  plannedMealCompatibilityNotice: string | null;
   plannedMealIssue: string | null;
   plannedWorkout: TodayPlannedWorkout | null;
   plannedWorkoutIssue: string | null;
@@ -134,14 +133,15 @@ export async function getTodayPlannedMealResolution(
   db: HealthDatabase,
   date: string
 ): Promise<NutritionPlannedMealResolution> {
+  await migrateLegacyPlannedMealToPlanSlot(db, date);
   return await getNutritionPlannedMealResolution(db, date);
 }
 
 export async function getTodaySnapshot(db: HealthDatabase, date: string): Promise<TodaySnapshot> {
+  await migrateLegacyPlannedMealToPlanSlot(db, date);
   const [
     dailyRecord,
     nutritionSummary,
-    plannedMeal,
     planSlots,
     foodCatalogItems,
     recipeCatalogItems,
@@ -152,7 +152,6 @@ export async function getTodaySnapshot(db: HealthDatabase, date: string): Promis
   ] = await Promise.all([
     db.dailyRecords.where('date').equals(date).first(),
     buildDailyNutritionSummary(db, date),
-    getPlannedMeal(db),
     listPlanSlotsForDay(db, date),
     listFoodCatalogItems(db),
     listRecipeCatalogItems(db),
@@ -182,11 +181,7 @@ export async function getTodaySnapshot(db: HealthDatabase, date: string): Promis
     workoutTemplates,
     exerciseCatalogItems
   );
-  const plannedMealResolution = resolveNutritionPlannedMeal(
-    plannedMeal,
-    planSlots,
-    foodCatalogItems
-  );
+  const plannedMealResolution = resolveNutritionPlannedMeal(planSlots, foodCatalogItems);
   const plannedWorkoutIssue = plannedWorkout
     ? null
     : deriveTodayPlannedWorkoutIssue(planSlots, workoutTemplates);
@@ -203,7 +198,6 @@ export async function getTodaySnapshot(db: HealthDatabase, date: string): Promis
       fat: nutritionSummary.fat,
     },
     plannedMeal: plannedMealResolution.candidate?.meal ?? null,
-    plannedMealCompatibilityNotice: plannedMealResolution.compatibilityNotice,
     plannedMealIssue: plannedMealResolution.issue,
     plannedWorkout,
     plannedWorkoutIssue,

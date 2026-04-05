@@ -57,7 +57,6 @@ describe('today controller', () => {
 
     expect(state.saveNotice).toBe('Legacy planned meal moved into today’s weekly plan.');
     expect(state.snapshot?.plannedMeal?.name).toBe('Greek yogurt bowl');
-    expect(state.snapshot?.plannedMealCompatibilityNotice).toBeNull();
     expect(await db.plannedMeals.count()).toBe(0);
     expect(await db.planSlots.count()).toBe(1);
   });

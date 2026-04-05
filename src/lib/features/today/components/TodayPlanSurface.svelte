@@ -8,7 +8,6 @@
     todayDate,
     dailyRecordRows,
     plannedMeal,
-    plannedMealCompatibilityNotice,
     plannedMealIssue,
     plannedMealRows,
     plannedWorkout,
@@ -23,7 +22,6 @@
     todayDate: string;
     dailyRecordRows: string[];
     plannedMeal: PlannedMeal | null;
-    plannedMealCompatibilityNotice?: string;
     plannedMealIssue?: string;
     plannedMealRows: string[];
     plannedWorkout: TodayPlannedWorkout | null;
@@ -63,9 +61,6 @@
     </ul>
     {#if plannedMeal.sourceName}
       <p class="status-copy">Source: {plannedMeal.sourceName}</p>
-    {/if}
-    {#if plannedMealCompatibilityNotice}
-      <p class="status-copy">{plannedMealCompatibilityNotice}</p>
     {/if}
     {#if plannedMeal.notes}
       <p class="status-copy">{plannedMeal.notes}</p>

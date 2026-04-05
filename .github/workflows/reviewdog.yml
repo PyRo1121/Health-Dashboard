@@ -33,7 +33,7 @@ jobs:
         run: bun install --frozen-lockfile
 
       - name: Setup reviewdog
-        uses: reviewdog/action-setup@v2
+        uses: reviewdog/action-setup@v1.5.0
 
       - name: Run ESLint with reviewdog
         env:

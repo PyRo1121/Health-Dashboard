@@ -4,14 +4,12 @@
 
   let {
     plannedMeal,
-    plannedMealCompatibilityNotice,
     plannedMealIssue,
     plannedMealRows,
     onLoadPlannedMeal,
     onClearPlannedMeal,
   }: {
     plannedMeal: PlannedMeal | null;
-    plannedMealCompatibilityNotice?: string;
     plannedMealIssue?: string;
     plannedMealRows: string[];
     onLoadPlannedMeal: () => void;
@@ -30,9 +28,6 @@
       </ul>
       {#if plannedMeal.sourceName}
         <p class="status-copy">Source: {plannedMeal.sourceName}</p>
-      {/if}
-      {#if plannedMealCompatibilityNotice}
-        <p class="status-copy">{plannedMealCompatibilityNotice}</p>
       {/if}
       {#if plannedMeal.notes}
         <p class="status-copy">{plannedMeal.notes}</p>
