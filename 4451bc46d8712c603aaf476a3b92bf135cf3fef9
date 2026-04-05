@@ -1,0 +1,51 @@
+.github/workflows/ci.yml
+  f5853c7eb5f09f04 15,23-25,29-30,51-52,57-58,76-79,84-85,98-99,104-105,123-125,129-130,148-152,156-157,170-174
+.github/workflows/codeql.yml
+  3713cab10cc65e7c 1-46
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "4451bc46d8712c603aaf476a3b92bf135cf3fef9",
+  "prompts": {
+    "3713cab10cc65e7c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-d2a2bfb6-73a1-4395-8de8-83e6a43835cd",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 46,
+      "overriden_lines": 0
+    },
+    "a0bc162da2b9568c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-fea5eca0-f2e6-4358-b159-301933ebb13b",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "f5853c7eb5f09f04": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-3f780cbd-8f43-4546-9000-470adfe96a2c",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 12,
+      "accepted_lines": 41,
+      "overriden_lines": 0
+    }
+  }
+}
