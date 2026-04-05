@@ -32,7 +32,7 @@ jobs:
           fetch-depth: 0
 
       - name: AI Code Review with MiniMax
-        uses: tarmojussila/minimax-code-review@6b8aeefaf69cba00f4d36ee01a362971916f211c
+        uses: tarmojussila/minimax-code-review@v0.3.0
         with:
           MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
           MINIMAX_MODEL: MiniMax-M2.5

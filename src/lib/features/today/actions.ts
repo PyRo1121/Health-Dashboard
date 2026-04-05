@@ -3,7 +3,7 @@ import { nowIso } from '$lib/core/domain/time';
 import type { FoodEntry, HealthEvent, PlanSlot } from '$lib/core/domain/types';
 import { upsertDailyRecord } from '$lib/core/shared/daily-records';
 import { createRecordMeta } from '$lib/core/shared/records';
-import { clearPlannedMeal, createFoodEntry } from '$lib/features/nutrition/service';
+import { createFoodEntry } from '$lib/features/nutrition/service';
 import { deletePlanSlot, updatePlanSlotStatus } from '$lib/features/planning/service';
 import { getTodayPlannedMealResolution } from './snapshot';
 
@@ -99,11 +99,7 @@ export async function logPlannedMealForToday(
     notes: candidate.meal.notes,
   });
 
-  if (candidate.kind === 'standalone') {
-    await clearPlannedMeal(db);
-  }
-
-  if (candidate.kind === 'plan-slot-food' && candidate.slotId) {
+  if (candidate.slotId) {
     await updatePlanSlotStatus(db, candidate.slotId, 'done');
   }
 
@@ -112,12 +108,9 @@ export async function logPlannedMealForToday(
 
 export async function clearTodayPlannedMeal(db: HealthDatabase, date: string): Promise<void> {
   const resolution = await getTodayPlannedMealResolution(db, date);
-  if (resolution.candidate?.kind === 'plan-slot-food' && resolution.candidate.slotId) {
+  if (resolution.candidate?.slotId) {
     await deletePlanSlot(db, resolution.candidate.slotId);
-    return;
   }
-
-  await clearPlannedMeal(db);
 }
 
 export async function updateTodayPlanSlotStatus(

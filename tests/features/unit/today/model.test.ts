@@ -38,7 +38,6 @@ describe('today model', () => {
         fat: 8,
       },
       plannedMeal: null,
-      plannedMealCompatibilityNotice: null,
       plannedMealIssue: null,
       plannedWorkout: {
         id: 'slot-1',

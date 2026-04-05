@@ -41,7 +41,15 @@ jobs:
         run: bun run format:check
 
       - name: Lint
-        run: bun run lint
+        run: bun run lint 2>&1 | tee lint-output.txt
+
+      - name: Upload CI logs
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ci-logs
+          path: lint-output.txt
+          retention-days: 3
 
   typecheck:
     name: Type Check

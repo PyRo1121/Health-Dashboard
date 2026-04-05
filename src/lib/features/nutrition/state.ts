@@ -48,7 +48,6 @@ export interface NutritionPageState {
   catalogItems: FoodCatalogItem[];
   recipeCatalogItems: RecipeCatalogItem[];
   plannedMeal: PlannedMeal | null;
-  plannedMealCompatibilityNotice: string;
   plannedMealIssue: string;
   plannedMealSlotId: string | null;
   searchQuery: string;
@@ -101,7 +100,6 @@ export function createNutritionPageState(): NutritionPageState {
     catalogItems: [],
     recipeCatalogItems: [],
     plannedMeal: null,
-    plannedMealCompatibilityNotice: '',
     plannedMealIssue: '',
     plannedMealSlotId: null,
     searchQuery: '',
@@ -149,7 +147,6 @@ export async function loadNutritionPage(
     catalogItems,
     recipeCatalogItems,
     plannedMeal: plannedMeal.candidate?.meal ?? null,
-    plannedMealCompatibilityNotice: plannedMeal.compatibilityNotice ?? '',
     plannedMealIssue: plannedMeal.issue ?? '',
     plannedMealSlotId:
       plannedMeal.candidate?.kind === 'plan-slot-food'
