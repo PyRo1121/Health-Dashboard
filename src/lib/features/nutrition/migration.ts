@@ -93,3 +93,15 @@ export async function migrateLegacyPlannedMealToPlanSlot(
 
   return { notice: LEGACY_PLANNED_MEAL_NOTICE };
 }
+
+export async function loadWithLegacyPlannedMealMigration<T>(
+  db: HealthDatabase,
+  localDay: string,
+  loadData: () => Promise<T>
+): Promise<{ data: T; notice: string | null }> {
+  const migration = await migrateLegacyPlannedMealToPlanSlot(db, localDay);
+  return {
+    data: await loadData(),
+    notice: migration.notice,
+  };
+}

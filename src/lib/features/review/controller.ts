@@ -1,5 +1,5 @@
 import type { HealthDatabase } from '$lib/core/db/types';
-import { migrateLegacyPlannedMealToPlanSlot } from '$lib/features/nutrition/migration';
+import { loadWithLegacyPlannedMealMigration } from '$lib/features/nutrition/migration';
 import type { WeeklyReviewData } from '$lib/features/review/service';
 import { buildWeeklySnapshot, saveNextWeekExperiment } from '$lib/features/review/service';
 
@@ -27,14 +27,17 @@ export async function loadReviewPage(
   db: HealthDatabase,
   localDay: string
 ): Promise<ReviewPageState> {
-  const migration = await migrateLegacyPlannedMealToPlanSlot(db, localDay);
-  const weekly = await buildWeeklySnapshot(db, localDay);
+  const { data: weekly, notice } = await loadWithLegacyPlannedMealMigration(
+    db,
+    localDay,
+    async () => await buildWeeklySnapshot(db, localDay)
+  );
   return {
     loading: false,
     localDay,
     weekly,
     selectedExperiment: weekly.experimentOptions[0] ?? '',
-    loadNotice: migration.notice ?? '',
+    loadNotice: notice ?? '',
     saveNotice: '',
   };
 }
