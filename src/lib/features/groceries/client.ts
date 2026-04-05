@@ -2,6 +2,7 @@ import { currentLocalDay } from '$lib/core/domain/time';
 import { createFeatureActionClient } from '$lib/core/http/feature-client';
 import {
   addManualGroceryItemPage as addManualGroceryItemPageController,
+  createGroceryDraftState,
   createGroceriesPageState,
   loadGroceriesPage as loadGroceriesPageController,
   removeManualGroceryItemPage as removeManualGroceryItemPageController,
@@ -10,7 +11,7 @@ import {
   type GroceriesPageState,
 } from './controller';
 
-export { createGroceriesPageState };
+export { createGroceryDraftState, createGroceriesPageState };
 
 const groceriesClient = createFeatureActionClient('/api/groceries');
 
