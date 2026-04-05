@@ -216,3 +216,61 @@ test('grocery checklist merges duplicate ingredients across recipes', async ({ p
   await expect(page.getByText(/Pantry · 3\/4 cup \+ 1 tbsp/i)).toBeVisible();
   await expect(page.getByText(/Teriyaki Chicken Casserole, Soy glazed bowl/i)).toBeVisible();
 });
+
+test('manual grocery items persist after weekly plan recompute', async ({ page }) => {
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        ...emptySnapshot(),
+        recipeCatalogItems: [
+          {
+            id: 'themealdb:52772',
+            createdAt: '2026-04-03T00:00:00.000Z',
+            updatedAt: '2026-04-03T00:00:00.000Z',
+            title: 'Teriyaki Chicken Casserole',
+            sourceType: 'themealdb',
+            sourceName: 'TheMealDB',
+            externalId: '52772',
+            mealType: 'dinner',
+            cuisine: 'Japanese',
+            ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
+          },
+          {
+            id: 'themealdb:52773',
+            createdAt: '2026-04-03T00:00:00.000Z',
+            updatedAt: '2026-04-03T00:00:00.000Z',
+            title: 'Lentil soup',
+            sourceType: 'themealdb',
+            sourceName: 'TheMealDB',
+            externalId: '52773',
+            mealType: 'dinner',
+            cuisine: 'Mediterranean',
+            ingredients: ['1 can lentils'],
+          },
+        ],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/plan');
+  await page.getByLabel('Recipe').selectOption('themealdb:52772');
+  await page.getByRole('button', { name: 'Add to week' }).click();
+  await expect(page.getByText(/Plan slot saved\./i)).toBeVisible();
+
+  await page.goto('/groceries');
+  await page.getByLabel('Manual grocery item').fill('Paper towels');
+  await page.getByRole('button', { name: 'Add manual item' }).click();
+  await expect(page.getByText(/Manual grocery item added\./i)).toBeVisible();
+  await expect(page.getByText('Paper towels')).toBeVisible();
+
+  await page.goto('/plan');
+  await page.getByLabel('Recipe').selectOption('themealdb:52773');
+  await page.getByRole('button', { name: 'Add to week' }).click();
+  await expect(page.getByText(/Plan slot saved\./i)).toBeVisible();
+
+  await page.goto('/groceries');
+  await expect(page.getByText('Paper towels')).toBeVisible();
+  await expect(page.locator('.entry-list').getByText('Manual item', { exact: true })).toBeVisible();
+  await expect(page.getByText('lentils')).toBeVisible();
+});
