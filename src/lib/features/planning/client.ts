@@ -1,4 +1,5 @@
 import { currentLocalDay } from '$lib/core/domain/time';
+import { createGroceryDraftState } from '$lib/features/groceries/controller';
 import {
   createFeatureActionClient,
   createFeatureRequestClient,
@@ -24,7 +25,7 @@ import {
 } from './controller';
 import { searchExerciseCatalog } from '$lib/features/movement/service';
 
-export { createPlanningPageState };
+export { createGroceryDraftState, createPlanningPageState };
 
 const planningClient = createFeatureActionClient('/api/plan');
 const movementSearchClient = createFeatureRequestClient('/api/movement/search-exercises');

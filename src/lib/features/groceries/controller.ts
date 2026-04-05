@@ -14,6 +14,11 @@ export interface ManualGroceryDraft {
   quantityText: string;
 }
 
+export interface GroceryDraftState {
+  manualLabel: string;
+  manualQuantityText: string;
+}
+
 export interface GroceriesPageState {
   loading: boolean;
   localDay: string;
@@ -33,6 +38,13 @@ export function createGroceriesPageState(): GroceriesPageState {
     groceryItems: [],
     groceryWarnings: [],
     recipeCatalogItems: [],
+  };
+}
+
+export function createGroceryDraftState(): GroceryDraftState {
+  return {
+    manualLabel: '',
+    manualQuantityText: '',
   };
 }
 
