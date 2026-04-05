@@ -14,6 +14,7 @@
     "preview": "bun ./node_modules/vite/bin/vite.js preview",
     "prepare": "husky",
     "check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+    "check:ci": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:unit": "node ./scripts/run-vitest.mjs --config vitest.unit.config.ts",
     "test:component": "node ./scripts/run-vitest.mjs --config vitest.component.config.ts",
