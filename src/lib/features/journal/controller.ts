@@ -7,7 +7,7 @@ import {
 import type { JournalEntry } from '$lib/core/domain/types';
 import {
   createEmptyJournalDraft,
-  createJournalLinkedContextRows,
+  createJournalContextRows,
   normalizeJournalDraft,
   type JournalLinkedContextRow,
 } from './model';
@@ -40,10 +40,11 @@ export function createJournalPageState(): JournalPageState {
 
 async function listLinkedJournalEvents(
   db: HealthDatabase,
-  linkedEventIds: string[]
+  localDay: string
 ): Promise<import('$lib/core/domain/types').HealthEvent[]> {
-  const events = await Promise.all(linkedEventIds.map((id) => db.healthEvents.get(id)));
-  return events.filter((event): event is NonNullable<typeof event> => Boolean(event));
+  return (
+    await db.healthEvents.where('localDay').equals(localDay).toArray()
+  ).sort((left, right) => (right.sourceTimestamp ?? right.updatedAt).localeCompare(left.sourceTimestamp ?? left.updatedAt));
 }
 
 export async function loadJournalPage(
@@ -51,7 +52,7 @@ export async function loadJournalPage(
   localDay: string,
   state: JournalPageState
 ): Promise<JournalPageState> {
-  return await loadLocalDayPageState(
+  const loaded = await loadLocalDayPageState(
     state,
     localDay,
     (day) => listJournalEntriesForDay(db, day),
@@ -67,6 +68,14 @@ export async function loadJournalPage(
       },
     })
   );
+
+  return {
+    ...loaded,
+    linkedContextRows: createJournalContextRows(
+      await listLinkedJournalEvents(db, localDay),
+      loaded.draft.linkedEventIds
+    ),
+  };
 }
 
 export function beginJournalSave(state: JournalPageState): JournalPageState {
@@ -82,7 +91,7 @@ async function refreshJournalEntries(
   state: JournalPageState,
   overrides: Partial<JournalPageState> = {}
 ): Promise<JournalPageState> {
-  return await reloadLocalDayPageState(
+  const next = await reloadLocalDayPageState(
     state,
     (localDay) => listJournalEntriesForDay(db, localDay),
     (current, entries) => ({
@@ -91,6 +100,14 @@ async function refreshJournalEntries(
     }),
     overrides
   );
+
+  return {
+    ...next,
+    linkedContextRows: createJournalContextRows(
+      await listLinkedJournalEvents(db, next.localDay),
+      next.draft.linkedEventIds
+    ),
+  };
 }
 
 export async function saveJournalPage(
@@ -120,7 +137,7 @@ export async function hydrateJournalIntentPage(
   state: JournalPageState,
   intent: JournalIntent
 ): Promise<JournalPageState> {
-  const linkedEvents = await listLinkedJournalEvents(db, intent.linkedEventIds);
+  const linkedEvents = await listLinkedJournalEvents(db, intent.localDay);
 
   return {
     ...state,
@@ -138,6 +155,26 @@ export async function hydrateJournalIntentPage(
       body: intent.body,
       linkedEventIds: [...intent.linkedEventIds],
     },
-    linkedContextRows: createJournalLinkedContextRows(linkedEvents),
+    linkedContextRows: createJournalContextRows(linkedEvents, intent.linkedEventIds),
+  };
+}
+
+export function toggleJournalContextEvent(
+  state: JournalPageState,
+  eventId: string
+): JournalPageState {
+  const linkedEventIds = state.draft.linkedEventIds.includes(eventId)
+    ? state.draft.linkedEventIds.filter((id) => id !== eventId)
+    : [...state.draft.linkedEventIds, eventId];
+
+  return {
+    ...state,
+    draft: {
+      ...state.draft,
+      linkedEventIds,
+    },
+    linkedContextRows: state.linkedContextRows.map((row) =>
+      row.id === eventId ? { ...row, selected: !row.selected } : row
+    ),
   };
 }

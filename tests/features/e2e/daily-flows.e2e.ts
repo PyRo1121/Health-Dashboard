@@ -382,6 +382,72 @@ test('today recovery links into a prefilled journal note', async ({ page }) => {
   await expect(page.getByText(/Linked context: 2 events\./i)).toBeVisible();
 });
 
+test('journal lets the user link a same-day signal and save it', async ({ page }) => {
+  const localDay = new Intl.DateTimeFormat('en-CA', {
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        dailyRecords: [],
+        journalEntries: [],
+        foodEntries: [],
+        foodCatalogItems: [],
+        recipeCatalogItems: [],
+        weeklyPlans: [],
+        planSlots: [],
+        derivedGroceryItems: [],
+        manualGroceryItems: [],
+        workoutTemplates: [],
+        exerciseCatalogItems: [],
+        favoriteMeals: [],
+        healthEvents: [
+          {
+            id: 'symptom-1',
+            createdAt: '2026-04-05T09:00:00.000Z',
+            updatedAt: '2026-04-05T09:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'symptom:1',
+            sourceTimestamp: '2026-04-05T09:00:00.000Z',
+            localDay,
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'symptom',
+            value: 4,
+            payload: {
+              kind: 'symptom',
+              symptom: 'Headache',
+              severity: 4,
+            },
+          },
+        ],
+        healthTemplates: [],
+        sobrietyEvents: [],
+        assessmentResults: [],
+        importBatches: [],
+        importArtifacts: [],
+        reviewSnapshots: [],
+        adherenceMatches: [],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/journal');
+  await expect(page.getByText('Available context')).toBeVisible();
+  await page.getByRole('button', { name: 'Link signal Symptom' }).click();
+  await expect(page.getByText(/Linked context: 1 events\./i)).toBeVisible();
+  await page.getByLabel('Body').fill('Headache tracked after lunch.');
+  await page.getByRole('button', { name: 'Save entry' }).click();
+  await expect(page.getByText(/Entry saved\./i)).toBeVisible();
+  await expect(page.getByText(/1 linked signal/i)).toBeVisible();
+});
+
 test('planned meal flows from nutrition into today logging', async ({ page }) => {
   await page.goto('/nutrition');
   await page.getByLabel('Food search').fill('oatmeal');
