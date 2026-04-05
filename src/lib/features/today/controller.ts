@@ -1,4 +1,5 @@
 import type { HealthDatabase } from '$lib/core/db/types';
+import { migrateLegacyPlannedMealToPlanSlot } from '$lib/features/nutrition/migration';
 import {
   createDailyCheckinPayload,
   createTodayForm,
@@ -62,8 +63,11 @@ async function reloadTodayPageState(
 }
 
 export async function loadTodayPage(db: HealthDatabase, localDay: string): Promise<TodayPageState> {
+  const migration = await migrateLegacyPlannedMealToPlanSlot(db, localDay);
   const snapshot = await getTodaySnapshot(db, localDay);
-  return createLoadedTodayPageState(createTodayPageState(), localDay, snapshot);
+  return createLoadedTodayPageState(createTodayPageState(), localDay, snapshot, {
+    saveNotice: migration.notice ?? '',
+  });
 }
 
 export function beginTodaySave(state: TodayPageState): TodayPageState {

@@ -101,14 +101,14 @@ describe('Today route', () => {
     expectHeading('Today');
 
     await waitFor(() => {
-      expect(screen.getByText('Greek yogurt bowl')).toBeTruthy();
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
       expect(screen.getByText(/Meal type: breakfast/i)).toBeTruthy();
       expect(
-        screen.getByText(
-          /This planned meal is using the legacy fallback flow\. Weekly plan slots take priority when they exist\./i
-        )
+        screen.getByText(/Legacy planned meal moved into today’s weekly plan\./i)
       ).toBeTruthy();
     });
+    expect(await db.plannedMeals.count()).toBe(0);
+    expect(await db.planSlots.count()).toBe(1);
 
     await fireEvent.click(screen.getByRole('button', { name: 'Log planned meal' }));
     await waitFor(() => {

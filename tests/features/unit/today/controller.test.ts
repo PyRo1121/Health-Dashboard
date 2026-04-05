@@ -40,6 +40,28 @@ describe('today controller', () => {
     expect(state.snapshot?.events).toHaveLength(6);
   });
 
+  it('migrates a legacy planned meal into a canonical slot when today loads', async () => {
+    const db = getDb();
+    await savePlannedMeal(db, {
+      name: 'Greek yogurt bowl',
+      mealType: 'breakfast',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+      sourceName: 'Legacy planner',
+    });
+
+    const state = await loadTodayPage(db, '2026-04-02');
+
+    expect(state.saveNotice).toBe('Legacy planned meal moved into today’s weekly plan.');
+    expect(state.snapshot?.plannedMeal?.name).toBe('Greek yogurt bowl');
+    expect(state.snapshot?.plannedMealCompatibilityNotice).toBeNull();
+    expect(await db.plannedMeals.count()).toBe(0);
+    expect(await db.planSlots.count()).toBe(1);
+  });
+
   it('logs and clears a planned meal from the today page state', async () => {
     const db = getDb();
     await savePlannedMeal(db, {

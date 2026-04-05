@@ -7,6 +7,7 @@ import type {
   RecipeCatalogItem,
 } from '$lib/core/domain/types';
 import { createNutritionForm, mergeNutritionFormWithDraft, type NutritionFormState } from './model';
+import { migrateLegacyPlannedMealToPlanSlot } from './migration';
 import { getNutritionPlannedMealResolution } from './planned-meal-resolution';
 import {
   attachNutrientsToFoodEntry,
@@ -121,6 +122,7 @@ export async function loadNutritionPage(
   localDay: string,
   state: NutritionPageState
 ): Promise<NutritionPageState> {
+  const migration = await migrateLegacyPlannedMealToPlanSlot(db, localDay);
   const [
     summary,
     favoriteMeals,
@@ -141,6 +143,7 @@ export async function loadNutritionPage(
     ...state,
     loading: false,
     localDay,
+    saveNotice: migration.notice ?? state.saveNotice,
     summary,
     favoriteMeals,
     catalogItems,

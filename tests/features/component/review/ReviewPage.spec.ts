@@ -4,6 +4,7 @@ import ReviewPage from '../../../../src/routes/review/+page.svelte';
 import { resetRouteDb, expectHeading, waitForText } from '../../../support/component/routeHarness';
 import { seedReviewSnapshotInputs } from '../../../support/component/routeSeeds';
 import { getHealthDb } from '$lib/core/db/client';
+import { savePlannedMeal } from '$lib/features/nutrition/service';
 
 describe('Review route', () => {
   beforeEach(async () => {
@@ -14,6 +15,27 @@ describe('Review route', () => {
     render(ReviewPage);
     expectHeading('Review');
     await waitForText(/Need more data to build your first weekly briefing/i);
+  });
+
+  it('migrates a legacy planned meal into the weekly plan when review loads', async () => {
+    const db = getHealthDb();
+    await savePlannedMeal(db, {
+      name: 'Greek yogurt bowl',
+      mealType: 'breakfast',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+      sourceName: 'Legacy planner',
+    });
+
+    render(ReviewPage);
+    expectHeading('Review');
+
+    await waitForText(/Legacy planned meal moved into today’s weekly plan\./i);
+    expect(await db.plannedMeals.count()).toBe(0);
+    expect(await db.planSlots.count()).toBe(1);
   });
 
   it('shows a weekly briefing and saves an experiment', async () => {

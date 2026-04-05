@@ -1,4 +1,5 @@
 import type { HealthDatabase } from '$lib/core/db/types';
+import { migrateLegacyPlannedMealToPlanSlot } from '$lib/features/nutrition/migration';
 import type { WeeklyReviewData } from '$lib/features/review/service';
 import { buildWeeklySnapshot, saveNextWeekExperiment } from '$lib/features/review/service';
 
@@ -7,6 +8,7 @@ export interface ReviewPageState {
   localDay: string;
   weekly: WeeklyReviewData | null;
   selectedExperiment: string;
+  loadNotice: string;
   saveNotice: string;
 }
 
@@ -16,6 +18,7 @@ export function createReviewPageState(): ReviewPageState {
     localDay: '',
     weekly: null,
     selectedExperiment: '',
+    loadNotice: '',
     saveNotice: '',
   };
 }
@@ -24,12 +27,14 @@ export async function loadReviewPage(
   db: HealthDatabase,
   localDay: string
 ): Promise<ReviewPageState> {
+  const migration = await migrateLegacyPlannedMealToPlanSlot(db, localDay);
   const weekly = await buildWeeklySnapshot(db, localDay);
   return {
     loading: false,
     localDay,
     weekly,
     selectedExperiment: weekly.experimentOptions[0] ?? '',
+    loadNotice: migration.notice ?? '',
     saveNotice: '',
   };
 }

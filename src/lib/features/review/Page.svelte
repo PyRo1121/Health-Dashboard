@@ -42,6 +42,9 @@
 {#if page.loading}
   <p class="status-copy">Building weekly briefing…</p>
 {:else if page.weekly}
+  {#if page.loadNotice}
+    <p class="status-copy">{page.loadNotice}</p>
+  {/if}
   <div class="page-grid review-grid">
     <ReviewHeadlineSection
       headline={page.weekly.snapshot.headline}
