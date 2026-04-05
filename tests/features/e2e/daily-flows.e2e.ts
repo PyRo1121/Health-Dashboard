@@ -151,7 +151,10 @@ test('planned meal flows from nutrition into today logging', async ({ page }) =>
   await expect(page.getByText(/Planned next meal saved\./i)).toBeVisible();
 
   await page.goto('/today');
-  await expect(page.getByText('Oatmeal with berries')).toBeVisible();
+  const plannedMealSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Planned next meal' }),
+  });
+  await expect(plannedMealSection.getByText('Oatmeal with berries')).toBeVisible();
   await expect(page.getByText('Projected calories: 320')).toBeVisible();
   await expect(page.getByText('Protein pace')).toBeVisible();
   await page.getByRole('button', { name: 'Log planned meal' }).click();
