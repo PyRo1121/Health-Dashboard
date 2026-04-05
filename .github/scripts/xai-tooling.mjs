@@ -49,7 +49,7 @@ export function buildOptionalCollectionTool() {
 }
 
 export function buildXaiDocsMcpTool() {
-  if (optionalEnv('XAI_ENABLE_DOCS_MCP', 'true').trim().toLowerCase() === 'false') {
+  if (!isTruthyEnv('XAI_ENABLE_DOCS_MCP', true)) {
     return null;
   }
 
@@ -73,12 +73,19 @@ export function buildOptionalRemoteMcpTools() {
       return [];
     }
 
-    return parsed.filter(
-      (tool) =>
-        tool &&
-        typeof tool === 'object' &&
-        (tool.type === 'mcp' || tool.type === 'remote_mcp')
-    );
+    return parsed
+      .filter(
+        (tool) =>
+          tool &&
+          typeof tool === 'object' &&
+          (tool.type === 'mcp' || tool.type === 'remote_mcp') &&
+          typeof tool.server_label === 'string' &&
+          typeof tool.server_url === 'string'
+      )
+      .map((tool) => ({
+        ...tool,
+        type: 'mcp',
+      }));
   } catch {
     return [];
   }
@@ -215,8 +222,15 @@ export async function runResponsesFunctionLoop({
       if (!handler) {
         output = JSON.stringify({ ok: false, error: `Unknown function: ${call.name}` });
       } else {
-        const args = call.arguments ? JSON.parse(call.arguments) : {};
-        output = JSON.stringify(await handler(args, call));
+        try {
+          const args = call.arguments ? JSON.parse(call.arguments) : {};
+          output = JSON.stringify(await handler(args, call));
+        } catch (error) {
+          output = JSON.stringify({
+            ok: false,
+            error: `Function arguments for ${call.name} could not be parsed or handled: ${String(error?.message ?? error)}`,
+          });
+        }
       }
 
       outputs.push({

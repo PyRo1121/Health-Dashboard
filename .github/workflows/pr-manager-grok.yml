@@ -22,7 +22,7 @@ jobs:
 
     steps:
       - name: Check out base repository automation config
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           ref: ${{ github.event.pull_request.base.sha || github.sha }}
           persist-credentials: false
@@ -34,7 +34,7 @@ jobs:
 
       - name: Collect PR context
         id: pr_context
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const fs = require('fs');
@@ -99,7 +99,7 @@ jobs:
         run: node .github/scripts/pr-manager.mjs
 
       - name: Upsert PR manager comment
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_MANAGER_MARKDOWN_PATH: ${{ runner.temp }}/pr-manager.md
         with:
@@ -131,7 +131,7 @@ jobs:
             }
 
       - name: Sync manager labels
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           PR_MANAGER_JSON_PATH: ${{ runner.temp }}/pr-manager.json
         with:
@@ -162,7 +162,7 @@ jobs:
             }
 
       - name: Upload PR manager artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: pr-manager-artifact
           path: |

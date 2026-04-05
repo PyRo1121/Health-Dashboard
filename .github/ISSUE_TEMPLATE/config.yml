@@ -1,5 +1,5 @@
 blank_issues_enabled: false
 contact_links:
   - name: Grok PR automation docs
-    url: ../../docs/ops/grok-pr-automation.md
+    url: https://github.com/PyRo1121/Health-Dashboard/blob/main/docs/ops/grok-pr-automation.md
     about: Review the current PR manager, auto-fix, CI surgeon, and threat monitor operating model.

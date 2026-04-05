@@ -2,6 +2,17 @@
 
 This repo uses Grok as the primary PR manager and AI review/fix engine.
 
+## 2026 Standards Alignment
+
+- GitHub official actions are pinned to current Node 24-capable majors:
+  - `actions/checkout@v6`
+  - `actions/github-script@v8`
+  - `actions/upload-artifact@v7`
+  - `actions/download-artifact@v8`
+  - `actions/setup-node@v6`
+- Grok automation uses the xAI Responses API with `store: false`, official xAI docs MCP enabled by default, optional collections search, and optional extra Remote MCP tools.
+- Issue-form contact links should use repository or external absolute URLs, not relative markdown paths.
+
 ## What Runs Automatically
 
 - `ai-review-grok-super.yml`
@@ -95,6 +106,7 @@ Canonical definitions live in [`.github/labels.json`](../../.github/labels.json)
 - Optional repo-policy grounding can be enabled by setting `XAI_COLLECTION_IDS`.
 - Official xAI docs MCP is enabled by default. Disable it with `XAI_ENABLE_DOCS_MCP=false`.
 - Optional extra Remote MCP tools can be enabled by setting `XAI_REMOTE_MCP_TOOLS_JSON`.
+- Remote MCP tool definitions are normalized to the current xAI `mcp` tool shape before use.
 - Collections bootstrap requires `XAI_MANAGEMENT_API_KEY`.
 - Search is restricted to official documentation and selected X accounts where possible.
 

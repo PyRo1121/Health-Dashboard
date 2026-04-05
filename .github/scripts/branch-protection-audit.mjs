@@ -27,18 +27,25 @@ async function github(path, init = {}) {
   }
 
   return await response.json();
- }
-
- function loadRequiredChecksFromMergify() {
-   const mergify = readFileSync('.mergify.yml', 'utf8');
-   // Capture the check name up to the first whitespace or '#' (inline comment)
-   const regex = /check-success=([^\s#]+)/g;
-   return [...new Set([...mergify.matchAll(regex)].map((match) => match[1].trim()))];
- }
+}
 
 function loadRequiredChecksFromMergify() {
   const mergify = readFileSync('.mergify.yml', 'utf8');
-  return [...new Set([...mergify.matchAll(/check-success=([^\n]+)/g)].map((match) => match[1].trim()))];
+  const checks = [];
+
+  for (const line of mergify.split('\n')) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith('#') || !trimmed.includes('check-success=')) {
+      continue;
+    }
+
+    const match = trimmed.match(/check-success=(.+?)\s*(?:#.*)?$/);
+    if (match?.[1]) {
+      checks.push(match[1].trim().replace(/^["']|["']$/g, ''));
+    }
+  }
+
+  return [...new Set(checks)];
 }
 
 async function main() {

@@ -89,3 +89,11 @@ GitHub Actions is expected to run:
 - automated changelog refresh PRs on `main` via git-cliff
 
 Automation details live in [docs/ops/grok-pr-automation.md](docs/ops/grok-pr-automation.md).
+
+## 2026 Automation Baseline
+
+This repo tracks the 2026 GitHub Actions Node 24 transition and current xAI Responses API tool guidance:
+
+- official GitHub actions are on current Node 24-capable majors (`checkout@v6`, `github-script@v8`, `upload-artifact@v7`, `download-artifact@v8`, `setup-node@v6`)
+- Grok automation uses the xAI Responses API with `store: false`
+- xAI docs MCP is enabled by default, with optional repo collections and extra Remote MCP tools layered on top
