@@ -1,10 +1,12 @@
 import { createDbActionPostHandler, type DbActionHandlers } from '$lib/server/http/action-route';
 import {
+  addManualPlanningGroceryItemPage,
   createPlanningPageState,
   deletePlanningSlotPage,
   loadPlanningPage,
   markPlanningSlotStatusPage,
   movePlanningSlotPage,
+  removeManualPlanningGroceryItemPage,
   savePlanningSlotPage,
   saveWorkoutTemplatePage,
   togglePlanningGroceryStatePage,
@@ -22,6 +24,9 @@ const handlers: DbActionHandlers<PlanningRequest, PlanningPageState> = {
   deleteSlot: (db, body) => deletePlanningSlotPage(db, body.state, body.slotId),
   toggleGrocery: (db, body) =>
     togglePlanningGroceryStatePage(db, body.state, body.itemId, body.patch),
+  addManualGrocery: (db, body) => addManualPlanningGroceryItemPage(db, body.state, body.draft),
+  removeManualGrocery: (db, body) =>
+    removeManualPlanningGroceryItemPage(db, body.state, body.itemId),
 };
 
 export const POST = createDbActionPostHandler(handlers, undefined, {

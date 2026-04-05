@@ -6,11 +6,13 @@ import {
   upsertRecipeCatalogItem,
 } from '$lib/features/nutrition/service';
 import {
+  addManualPlanningGroceryItemPage,
   createPlanningPageState,
   deletePlanningSlotPage,
   loadPlanningPage,
   markPlanningSlotStatusPage,
   movePlanningSlotPage,
+  removeManualPlanningGroceryItemPage,
   savePlanningSlotPage,
   saveWorkoutTemplatePage,
   togglePlanningGroceryStatePage,
@@ -236,5 +238,27 @@ describe('planning controller', () => {
       mealType: 'breakfast',
     });
     expect(await db.plannedMeals.count()).toBe(0);
+  });
+
+  it('adds and removes a manual grocery item from the planning grocery draft', async () => {
+    const db = getDb();
+    let state = await loadPlanningPage(db, '2026-04-07', createPlanningPageState());
+
+    state = await addManualPlanningGroceryItemPage(db, state, {
+      label: 'Paper towels',
+      quantityText: '',
+    });
+    expect(state.groceryNotice).toBe('Manual grocery item added.');
+    expect(state.groceryItems.find((item) => item.ingredientKey === 'paper towels')).toMatchObject({
+      manual: true,
+      label: 'Paper towels',
+    });
+
+    const itemId = state.groceryItems.find((item) => item.ingredientKey === 'paper towels')!.id;
+    state = await removeManualPlanningGroceryItemPage(db, state, itemId);
+    expect(state.groceryNotice).toBe('Manual grocery item removed.');
+    expect(
+      state.groceryItems.find((item) => item.ingredientKey === 'paper towels')
+    ).toBeUndefined();
   });
 });

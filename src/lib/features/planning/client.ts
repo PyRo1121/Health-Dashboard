@@ -4,6 +4,7 @@ import {
   createFeatureRequestClient,
 } from '$lib/core/http/feature-client';
 import {
+  addManualPlanningGroceryItemPage as addManualPlanningGroceryItemPageController,
   addEmptyExerciseToWorkoutTemplate,
   addExerciseToWorkoutTemplate,
   applyExerciseSearchResults,
@@ -12,6 +13,7 @@ import {
   loadPlanningPage as loadPlanningPageController,
   markPlanningSlotStatusPage as markPlanningSlotStatusPageController,
   movePlanningSlotPage as movePlanningSlotPageController,
+  removeManualPlanningGroceryItemPage as removeManualPlanningGroceryItemPageController,
   removeWorkoutTemplateExercise,
   savePlanningSlotPage as savePlanningSlotPageController,
   saveWorkoutTemplatePage as saveWorkoutTemplatePageController,
@@ -101,6 +103,30 @@ export async function togglePlanningGroceryStatePage(
     state,
     (db) => togglePlanningGroceryStatePageController(db, state, itemId, patch),
     { itemId, patch }
+  );
+}
+
+export async function addManualPlanningGroceryItemPage(
+  state: PlanningPageState,
+  draft: { label: string; quantityText: string }
+): Promise<PlanningPageState> {
+  return await planningClient.stateAction(
+    'addManualGrocery',
+    state,
+    (db) => addManualPlanningGroceryItemPageController(db, state, draft),
+    { draft }
+  );
+}
+
+export async function removeManualPlanningGroceryItemPage(
+  state: PlanningPageState,
+  itemId: string
+): Promise<PlanningPageState> {
+  return await planningClient.stateAction(
+    'removeManualGrocery',
+    state,
+    (db) => removeManualPlanningGroceryItemPageController(db, state, itemId),
+    { itemId }
   );
 }
 

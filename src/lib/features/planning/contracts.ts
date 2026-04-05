@@ -88,6 +88,19 @@ export const planningRequestSchema = z.discriminatedUnion('action', [
       onHand: z.boolean(),
     }),
   }),
+  z.object({
+    action: z.literal('addManualGrocery'),
+    state: planningPageStateSchema,
+    draft: z.object({
+      label: z.string(),
+      quantityText: z.string(),
+    }),
+  }),
+  z.object({
+    action: z.literal('removeManualGrocery'),
+    state: planningPageStateSchema,
+    itemId: z.string(),
+  }),
 ]);
 
 export type PlanningRequest = z.infer<typeof planningRequestSchema>;

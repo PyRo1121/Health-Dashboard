@@ -341,4 +341,27 @@ describe('Plan route', () => {
     expect(await db.plannedMeals.count()).toBe(0);
     expect(await db.planSlots.count()).toBe(1);
   });
+
+  it('adds and removes a manual grocery item from the planning grocery draft', async () => {
+    render(PlanPage);
+    expectHeading('Plan');
+
+    await screen.findByLabelText('Manual grocery item');
+    await fireEvent.input(screen.getByLabelText('Manual grocery item'), {
+      target: { value: 'Paper towels' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Add manual item' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Manual grocery item added\./i)).toBeTruthy();
+      expect(screen.getByText('Paper towels')).toBeTruthy();
+      expect(screen.getByText('Manual item')).toBeTruthy();
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Remove manual' }));
+    await waitFor(() => {
+      expect(screen.getByText(/Manual grocery item removed\./i)).toBeTruthy();
+      expect(screen.queryByText('Paper towels')).toBeNull();
+    });
+  });
 });

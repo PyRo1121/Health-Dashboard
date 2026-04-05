@@ -4,6 +4,7 @@
   import PlanningBoard from '$lib/features/planning/components/PlanningBoard.svelte';
   import WorkoutTemplateStudio from '$lib/features/movement/components/WorkoutTemplateStudio.svelte';
   import {
+    addManualPlanningGroceryItemPage,
     addEmptyExerciseToWorkoutTemplate,
     addExerciseToWorkoutTemplate,
     createPlanningPageState,
@@ -11,6 +12,7 @@
     loadPlanningPage,
     markPlanningSlotStatusPage,
     movePlanningSlotPage,
+    removeManualPlanningGroceryItemPage,
     removeWorkoutTemplateExercise,
     savePlanningSlotPage,
     saveWorkoutTemplatePage,
@@ -24,6 +26,8 @@
 
   let page = $state(createPlanningPageState());
   let boardDays = $derived(createPlanningBoardDays(page.weekDays, page.slots));
+  let manualLabel = $state('');
+  let manualQuantityText = $state('');
 
   async function refreshData() {
     page = await loadPlanningPage(undefined, page);
@@ -60,6 +64,21 @@
     onHand: boolean
   ) {
     page = await togglePlanningGroceryStatePage(page, itemId, { checked, excluded, onHand });
+  }
+
+  async function addManualGroceryItem() {
+    page = await addManualPlanningGroceryItemPage(page, {
+      label: manualLabel,
+      quantityText: manualQuantityText,
+    });
+    if (page.groceryNotice === 'Manual grocery item added.') {
+      manualLabel = '';
+      manualQuantityText = '';
+    }
+  }
+
+  async function removeManualGroceryItem(itemId: string) {
+    page = await removeManualPlanningGroceryItemPage(page, itemId);
   }
 
   function updatePlanningSlotForm(patch: Partial<typeof page.slotForm>) {
@@ -174,6 +193,16 @@
       groceryWarnings={page.groceryWarnings}
       groceryItems={page.groceryItems}
       recipeCatalogItems={page.recipeCatalogItems}
+      {manualLabel}
+      {manualQuantityText}
+      onManualLabelChange={(value) => {
+        manualLabel = value;
+      }}
+      onManualQuantityChange={(value) => {
+        manualQuantityText = value;
+      }}
+      onAddManualItem={addManualGroceryItem}
+      onRemoveManualItem={removeManualGroceryItem}
       onToggleItem={(itemId, patch) =>
         toggleGrocery(itemId, patch.checked, patch.excluded, patch.onHand)}
     />

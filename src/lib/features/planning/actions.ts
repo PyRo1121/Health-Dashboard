@@ -1,6 +1,10 @@
 import type { HealthDatabase } from '$lib/core/db/types';
 import type { GroceryItem, PlanSlot } from '$lib/core/domain/types';
-import { setGroceryItemState } from '$lib/features/groceries/service';
+import {
+  removeManualGroceryItem,
+  saveManualGroceryItem,
+  setGroceryItemState,
+} from '$lib/features/groceries/service';
 import { createWorkoutTemplateForm, normalizeExerciseDrafts } from '$lib/features/movement/model';
 import { saveWorkoutTemplate } from '$lib/features/movement/service';
 import { deletePlanSlot, movePlanSlot, savePlanSlot, updatePlanSlotStatus } from './service';
@@ -161,5 +165,40 @@ export async function togglePlanningGroceryStatePage(
   await setGroceryItemState(db, itemId, patch);
   return await reloadPlanningPageState(db, state, {
     groceryNotice: 'Grocery item updated.',
+  });
+}
+
+export async function addManualPlanningGroceryItemPage(
+  db: HealthDatabase,
+  state: PlanningPageState,
+  draft: { label: string; quantityText: string }
+): Promise<PlanningPageState> {
+  if (!state.weeklyPlan) {
+    return state;
+  }
+
+  if (!draft.label.trim()) {
+    return {
+      ...state,
+      groceryNotice: 'Manual grocery label is required.',
+    };
+  }
+
+  await saveManualGroceryItem(db, state.weeklyPlan.id, {
+    rawLabel: [draft.quantityText.trim(), draft.label.trim()].filter(Boolean).join(' '),
+  });
+  return await reloadPlanningPageState(db, state, {
+    groceryNotice: 'Manual grocery item added.',
+  });
+}
+
+export async function removeManualPlanningGroceryItemPage(
+  db: HealthDatabase,
+  state: PlanningPageState,
+  itemId: string
+): Promise<PlanningPageState> {
+  await removeManualGroceryItem(db, itemId);
+  return await reloadPlanningPageState(db, state, {
+    groceryNotice: 'Manual grocery item removed.',
   });
 }
