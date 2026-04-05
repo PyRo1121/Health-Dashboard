@@ -6,17 +6,31 @@ import {
   updateExerciseDraftField,
 } from './model';
 
-type WithExerciseSearchQuery = {
+export type WithExerciseSearchQuery = {
   exerciseSearchQuery: string;
 };
 
-type WithExerciseSearchResults = {
+export type WithExerciseSearchResults = {
   exerciseSearchResults: ExerciseCatalogItem[];
 };
 
-type WithWorkoutTemplateForm = {
+export type WithWorkoutTemplateForm = {
   workoutTemplateForm: WorkoutTemplateFormState;
 };
+
+export function updateWorkoutTemplateMetaState<State extends WithWorkoutTemplateForm>(
+  state: State,
+  field: 'title' | 'goal',
+  value: string
+): State {
+  return {
+    ...state,
+    workoutTemplateForm: {
+      ...state.workoutTemplateForm,
+      [field]: value,
+    },
+  };
+}
 
 export function updateExerciseSearchQueryState<State extends WithExerciseSearchQuery>(
   state: State,
@@ -49,6 +63,17 @@ export function addExerciseToWorkoutTemplateState<State extends WithWorkoutTempl
       exercises: addExerciseDraft(state.workoutTemplateForm.exercises, exercise),
     },
   };
+}
+
+export function addExerciseSearchResultToWorkoutTemplateState<
+  State extends WithExerciseSearchResults & WithWorkoutTemplateForm,
+>(state: State, exerciseId: string): State {
+  const exercise = state.exerciseSearchResults.find((item) => item.id === exerciseId);
+  if (!exercise) {
+    return state;
+  }
+
+  return addExerciseToWorkoutTemplateState(state, exercise);
 }
 
 export function addEmptyExerciseToWorkoutTemplateState<State extends WithWorkoutTemplateForm>(
