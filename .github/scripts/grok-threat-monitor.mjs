@@ -291,7 +291,7 @@ async function callThreatMonitor({ dependencies, actions, advisoryHits }) {
       },
     });
   } catch (error) {
-    state.summary = `Threat monitor fell back to OSV-only mode: ${error.message}`;
+    state.summary = `Threat monitor fell back to OSV-only mode: ${String(error?.message ?? error)}`;
     state.severity = advisoryHits.length ? 'medium' : 'low';
   }
 
