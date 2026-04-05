@@ -1,0 +1,53 @@
+.github/workflows/danger.yml
+  717f4fa4d69ccb1f 19
+.github/workflows/reviewdog.yml
+  2c55ea5f4e558fbb 22
+.github/workflows/snyk.yml
+  5f4d3aa7226304c6 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "277e7dc7d524343aa3c1744a0ea1d8132e7e8741",
+  "prompts": {
+    "2c55ea5f4e558fbb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-ffcd2fb9-4321-466c-bfd9-18db858b504c",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "5f4d3aa7226304c6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-1887d04e-0469-4976-881c-25648c3be64d",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "717f4fa4d69ccb1f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-41990758-9a9f-48d0-b729-26069be2a76b",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
