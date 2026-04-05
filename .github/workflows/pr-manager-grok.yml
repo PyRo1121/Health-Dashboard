@@ -72,12 +72,14 @@ jobs:
                 additions: file.additions,
                 deletions: file.deletions,
               })),
-              reviews: reviews.map((review) => ({
-                user: { login: review.user?.login || 'unknown' },
-                state: review.state,
-                submitted_at: review.submitted_at,
-                commit_id: review.commit_id,
-              })),
+              reviews: reviews
+                .filter(Boolean)
+                .map((review) => ({
+                  user: { login: review?.user?.login || 'unknown' },
+                  state: review?.state,
+                  submitted_at: review?.submitted_at,
+                  commit_id: review?.commit_id,
+                })),
               checkRuns: (checks.data.check_runs || []).map((run) => ({
                 name: run.name,
                 status: run.status,

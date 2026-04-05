@@ -16,6 +16,7 @@ describe('today route', () => {
     logTodayPlannedMealPage?: ReturnType<typeof vi.fn>;
     clearTodayPlannedMealPage?: ReturnType<typeof vi.fn>;
     markTodayPlanSlotStatusPage?: ReturnType<typeof vi.fn>;
+    applyTodayRecoveryActionPage?: ReturnType<typeof vi.fn>;
   }) {
     const db = overrides.db ?? ({} as HealthDatabase);
     const actual = await vi.importActual<typeof import('$lib/server/http/action-route')>(
@@ -80,6 +81,12 @@ describe('today route', () => {
         vi.fn(async (database: HealthDatabase, state: unknown) => ({
           ...(state as object),
           saveNotice: 'Plan item marked done.',
+        })),
+      applyTodayRecoveryActionPage:
+        overrides.applyTodayRecoveryActionPage ??
+        vi.fn(async (database: HealthDatabase, state: unknown, actionId: string) => ({
+          ...(state as object),
+          saveNotice: `Recovery action applied: ${actionId}`,
         })),
     }));
 
@@ -154,12 +161,17 @@ describe('today route', () => {
       ...state,
       saveNotice: 'Plan item marked done.',
     }));
+    const applyTodayRecoveryActionPage = vi.fn(async (_db, _state, actionId: string) => ({
+      ...state,
+      saveNotice: `Recovery action applied: ${actionId}`,
+    }));
     const { POST } = await importRoute({
       db,
       saveTodayPage,
       logTodayPlannedMealPage,
       clearTodayPlannedMealPage,
       markTodayPlanSlotStatusPage,
+      applyTodayRecoveryActionPage,
     });
 
     const saveResponse = await POST({
@@ -210,6 +222,21 @@ describe('today route', () => {
       expect.objectContaining({ saveNotice: 'Plan item marked done.' })
     );
     expect(markTodayPlanSlotStatusPage).toHaveBeenCalledWith(db, state, 'slot-1', 'done');
+
+    const recoveryResponse = await POST({
+      request: new Request('http://health.test/api/today', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'applyRecoveryAction',
+          state,
+          actionId: 'apply-recovery-meal',
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+    expect(await recoveryResponse.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Recovery action applied: apply-recovery-meal' })
+    );
+    expect(applyTodayRecoveryActionPage).toHaveBeenCalledWith(db, state, 'apply-recovery-meal');
   });
 
   it('returns 400 for invalid today action payloads', async () => {

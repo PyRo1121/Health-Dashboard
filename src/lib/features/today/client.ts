@@ -1,6 +1,7 @@
 import { currentLocalDay } from '$lib/core/domain/time';
 import { createFeatureActionClient } from '$lib/core/http/feature-client';
 import {
+  applyTodayRecoveryActionPage as applyTodayRecoveryActionPageController,
   beginTodaySave,
   clearTodayPlannedMealPage as clearTodayPlannedMealPageController,
   createTodayPageState,
@@ -34,6 +35,18 @@ export async function logTodayPlannedMealPage(state: TodayPageState): Promise<To
 export async function clearTodayPlannedMealPage(state: TodayPageState): Promise<TodayPageState> {
   return await todayClient.stateAction('clearPlannedMeal', state, (db) =>
     clearTodayPlannedMealPageController(db, state)
+  );
+}
+
+export async function applyTodayRecoveryActionPage(
+  state: TodayPageState,
+  actionId: 'apply-recovery-meal' | 'apply-recovery-workout'
+): Promise<TodayPageState> {
+  return await todayClient.stateAction(
+    'applyRecoveryAction',
+    state,
+    (db) => applyTodayRecoveryActionPageController(db, state, actionId),
+    { actionId }
   );
 }
 

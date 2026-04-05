@@ -6,6 +6,7 @@ import {
   type TodayFormState,
 } from './model';
 import {
+  applyTodayRecoveryAction,
   clearTodayPlannedMeal,
   getTodaySnapshot,
   logPlannedMealForToday,
@@ -116,5 +117,20 @@ export async function markTodayPlanSlotStatusPage(
   await updateTodayPlanSlotStatus(db, slotId, status);
   return await reloadTodayPageState(db, state, {
     saveNotice: `Plan item marked ${status}.`,
+  });
+}
+
+export async function applyTodayRecoveryActionPage(
+  db: HealthDatabase,
+  state: TodayPageState,
+  actionId: 'apply-recovery-meal' | 'apply-recovery-workout'
+): Promise<TodayPageState> {
+  const applied = await applyTodayRecoveryAction(db, state.todayDate, actionId);
+  return await reloadTodayPageState(db, state, {
+    saveNotice: applied
+      ? actionId === 'apply-recovery-meal'
+        ? 'Recovery meal applied.'
+        : 'Recovery workout applied.'
+      : 'Recovery action unavailable.',
   });
 }

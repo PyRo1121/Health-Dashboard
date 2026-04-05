@@ -9,6 +9,10 @@ import type {
   PlannedMeal,
 } from '$lib/core/domain/types';
 import {
+  buildNutritionRecommendations,
+  type NutritionRecommendation,
+} from '$lib/features/nutrition/recommend';
+import {
   buildDailyNutritionSummary,
   listFoodCatalogItems,
   listRecipeCatalogItems,
@@ -42,8 +46,22 @@ export interface TodayRecoveryAdaptation {
   reasons: string[];
   mealFallback: string[];
   workoutFallback: string[];
+  mealRecommendation: {
+    title: string;
+    subtitle: string;
+    reasons: string[];
+    actionId: 'apply-recovery-meal';
+    actionLabel: string;
+  } | null;
+  workoutRecommendation: {
+    title: string;
+    subtitle: string;
+    reasons: string[];
+    actionId: 'apply-recovery-workout';
+    actionLabel: string;
+  } | null;
   actions: Array<{
-    id: 'skip-workout' | 'clear-planned-meal';
+    id: 'skip-workout' | 'clear-planned-meal' | 'apply-recovery-meal' | 'apply-recovery-workout';
     label: string;
   }>;
 }
@@ -255,23 +273,93 @@ function buildRecoveryWorkoutFallback(
   ];
 }
 
+function toTodayMealRecommendation(
+  recommendation: NutritionRecommendation | undefined
+): TodayRecoveryAdaptation['mealRecommendation'] {
+  if (!recommendation || recommendation.kind !== 'food') {
+    return null;
+  }
+
+  return {
+    title: recommendation.title,
+    subtitle: recommendation.subtitle,
+    reasons: recommendation.reasons,
+    actionId: 'apply-recovery-meal',
+    actionLabel: 'Swap to recovery meal',
+  };
+}
+
+function deriveRecoveryMealRecommendation(
+  dailyRecord: DailyRecord | null,
+  events: HealthEvent[],
+  plannedMeal: TodaySnapshot['plannedMeal'],
+  foodCatalogItems: FoodCatalogItem[]
+): TodayRecoveryAdaptation['mealRecommendation'] {
+  if (!plannedMeal) {
+    return null;
+  }
+
+  return toTodayMealRecommendation(
+    buildNutritionRecommendations({
+      context: {
+        mealType: plannedMeal.mealType || 'meal',
+        sleepHours: dailyRecord?.sleepHours,
+        sleepQuality: dailyRecord?.sleepQuality,
+        anxietyCount: events.filter((event) => event.eventType === 'anxiety-episode').length,
+        symptomCount: events.filter((event) => event.eventType === 'symptom').length,
+      },
+      foods: foodCatalogItems.filter((item) => item.name !== plannedMeal.name),
+      recipes: [],
+      limit: 1,
+    })[0]
+  );
+}
+
+function deriveRecoveryWorkoutRecommendation(
+  plannedWorkout: TodayPlannedWorkout | null
+): TodayRecoveryAdaptation['workoutRecommendation'] {
+  if (!plannedWorkout) {
+    return null;
+  }
+
+  return {
+    title: 'Recovery walk',
+    subtitle: '10-20 minutes · easy pace · optional mobility',
+    reasons: ['Keeps movement without asking for intensity.'],
+    actionId: 'apply-recovery-workout',
+    actionLabel: 'Swap to recovery walk',
+  };
+}
+
 function buildRecoveryActions(
   plannedMeal: TodaySnapshot['plannedMeal'],
-  plannedWorkout: TodayPlannedWorkout | null
+  plannedWorkout: TodayPlannedWorkout | null,
+  mealRecommendation: TodayRecoveryAdaptation['mealRecommendation'],
+  workoutRecommendation: TodayRecoveryAdaptation['workoutRecommendation']
 ): TodayRecoveryAdaptation['actions'] {
   const actions: TodayRecoveryAdaptation['actions'] = [];
 
-  if (plannedWorkout && plannedWorkout.status === 'planned') {
+  if (mealRecommendation) {
     actions.push({
-      id: 'skip-workout',
-      label: 'Skip workout for today',
+      id: mealRecommendation.actionId,
+      label: mealRecommendation.actionLabel,
     });
-  }
-
-  if (plannedMeal) {
+  } else if (plannedMeal) {
     actions.push({
       id: 'clear-planned-meal',
       label: 'Clear meal plan',
+    });
+  }
+
+  if (workoutRecommendation) {
+    actions.push({
+      id: workoutRecommendation.actionId,
+      label: workoutRecommendation.actionLabel,
+    });
+  } else if (plannedWorkout && plannedWorkout.status === 'planned') {
+    actions.push({
+      id: 'skip-workout',
+      label: 'Skip workout for today',
     });
   }
 
@@ -282,12 +370,21 @@ function deriveTodayRecoveryAdaptation(
   dailyRecord: DailyRecord | null,
   events: HealthEvent[],
   plannedMeal: TodaySnapshot['plannedMeal'],
-  plannedWorkout: TodayPlannedWorkout | null
+  plannedWorkout: TodayPlannedWorkout | null,
+  foodCatalogItems: FoodCatalogItem[]
 ): TodayRecoveryAdaptation | null {
   const recoverySummary = summarizeRecoveryReasons(dailyRecord, events);
   if (!recoverySummary) {
     return null;
   }
+
+  const mealRecommendation = deriveRecoveryMealRecommendation(
+    dailyRecord,
+    events,
+    plannedMeal,
+    foodCatalogItems
+  );
+  const workoutRecommendation = deriveRecoveryWorkoutRecommendation(plannedWorkout);
 
   return {
     level: recoverySummary.level,
@@ -298,7 +395,14 @@ function deriveTodayRecoveryAdaptation(
     reasons: recoverySummary.reasons,
     mealFallback: buildRecoveryMealFallback(plannedMeal, recoverySummary.level),
     workoutFallback: buildRecoveryWorkoutFallback(plannedWorkout, recoverySummary.level),
-    actions: buildRecoveryActions(plannedMeal, plannedWorkout),
+    mealRecommendation,
+    workoutRecommendation,
+    actions: buildRecoveryActions(
+      plannedMeal,
+      plannedWorkout,
+      mealRecommendation,
+      workoutRecommendation
+    ),
   };
 }
 
@@ -360,7 +464,8 @@ async function buildTodaySnapshotData(db: HealthDatabase, date: string): Promise
     dailyRecord ?? null,
     events,
     plannedMealResolution.candidate?.meal ?? null,
-    plannedWorkout
+    plannedWorkout,
+    foodCatalogItems
   );
 
   return {
