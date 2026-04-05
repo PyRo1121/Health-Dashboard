@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { buildSearchTools } from './xai-tooling.mjs';
 
 const DEFAULT_MODEL = 'grok-4-1-fast-reasoning';
 const DEFAULT_MAX_DIFF_CHARS = 250_000;
@@ -113,18 +114,9 @@ async function callXaiFix({ title, changedFiles, diff }) {
         },
       },
     },
-    tools: [
-      {
-        type: 'web_search',
-        filters: {
-          allowed_domains: ['docs.github.com', 'docs.x.ai', 'docs.mergify.com'],
-        },
-      },
-      {
-        type: 'x_search',
-        allowed_x_handles: ['github', 'xai'],
-      },
-    ],
+    tools: buildSearchTools({
+      xHandles: ['github', 'xai'],
+    }),
     input: [
       {
         role: 'system',

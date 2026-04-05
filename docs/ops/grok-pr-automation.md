@@ -20,13 +20,20 @@ This repo uses Grok as the primary PR manager and AI review/fix engine.
 - `grok-threat-monitor.yml`
   - runs every 6 hours
   - reviews dependency and workflow-action risk
-  - uses xAI `web_search` and `x_search`
+  - uses xAI `web_search`, `x_search`, and `code_interpreter`
   - updates a rolling threat-monitor issue
+- `grok-ci-surgeon.yml`
+  - listens for failed `CI` / `E2E` workflow runs on trusted same-repo PRs
+  - requires `ai-autopilot`
+  - ingests failing job logs
+  - asks Grok for a bounded repair patch
+  - validates before pushing a fix back to the PR branch
 
 ## Managed Labels
 
 - `ai-auto-fix`
 - `ai-fix-applied`
+- `ai-autopilot`
 - `automerge`
 - `grok-reviewed`
 - `grok-approved`
@@ -34,6 +41,8 @@ This repo uses Grok as the primary PR manager and AI review/fix engine.
 - `needs-review`
 - `security-issue`
 - `threat-monitor`
+- `threat-high`
+- `threat-medium`
 - `dependencies`
 - `automation`
 - `docs-only`
@@ -49,8 +58,9 @@ Canonical definitions live in [`.github/labels.json`](../../.github/labels.json)
 2. Grok review runs automatically.
 3. If a patch is available, add `ai-auto-fix`.
 4. If Grok pushes a fix, the PR gets `ai-fix-applied` and the patch label is cleared.
-5. If the PR is ready to merge after checks and human approval, add `automerge`.
-6. Use `do-not-merge` or `work-in-progress` to stop automation immediately.
+5. If you want Grok to attempt repair on later CI/E2E failures, add `ai-autopilot`.
+6. If the PR is ready to merge after checks and human approval, add `automerge`.
+7. Use `do-not-merge` or `work-in-progress` to stop automation immediately.
 
 ## Guardrails
 
@@ -58,6 +68,7 @@ Canonical definitions live in [`.github/labels.json`](../../.github/labels.json)
 - Auto-fix refuses workflows, tests, docs, lockfiles, config files, and package manifests.
 - Auto-fix runs on labeled `pull_request` events instead of `pull_request_target`.
 - Grok review and fix scripts use xAI Responses API with `store: false`.
+- Optional repo-policy grounding can be enabled by setting `XAI_COLLECTION_IDS`.
 - Search is restricted to official documentation and selected X accounts where possible.
 
 ## Threat Monitor
@@ -71,5 +82,6 @@ It combines:
 - OSV advisory lookups
 - xAI `web_search`
 - xAI `x_search`
+- xAI `code_interpreter`
 
 It runs every 6 hours and updates one open issue labeled `threat-monitor`.

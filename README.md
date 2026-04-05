@@ -45,6 +45,8 @@ The app runs without external APIs for most flows. These variables are optional 
 
 - `USDA_FDC_API_KEY` or `FDC_API_KEY` for USDA nutrition enrichment
 - `HEALTH_DB_PATH` to override the local SQLite database path
+- `XAI_API_KEY` for Grok review, auto-fix, PR management, and threat monitoring
+- `XAI_COLLECTION_IDS` for optional repo-policy / internal-doc grounding in Grok automation
 
 ## Repo Map
 
@@ -68,6 +70,7 @@ GitHub Actions is expected to run:
 - production build
 - Grok PR review with structured findings and labels
 - label-gated Grok auto-fix for same-repo trusted branches
+- label-gated Grok CI surgeon for failed PR checks on trusted same-repo branches
 - PR manager label/comment sync for docs, automation, dependency, and large PRs
 - 6-hour Grok dependency / CVE / threat monitor issue updates
 - CodeQL SAST

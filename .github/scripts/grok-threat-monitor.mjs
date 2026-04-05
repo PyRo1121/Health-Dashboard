@@ -2,6 +2,7 @@
 
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { buildSearchTools } from './xai-tooling.mjs';
 
 const DEFAULT_MODEL = 'grok-4-1-fast-reasoning';
 const MARKER = '<!-- grok-threat-monitor -->';
@@ -178,25 +179,10 @@ async function callThreatMonitor({ dependencies, actions, advisoryHits }) {
         },
       },
     },
-    tools: [
-      {
-        type: 'web_search',
-        filters: {
-          allowed_domains: [
-            'docs.github.com',
-            'docs.x.ai',
-            'github.com',
-            'osv.dev',
-            'nvd.nist.gov',
-            'security.snyk.io',
-          ],
-        },
-      },
-      {
-        type: 'x_search',
-        allowed_x_handles: ['github', 'xai', 'CISAgov'],
-      },
-    ],
+    tools: buildSearchTools({
+      includeCodeInterpreter: true,
+      xHandles: ['github', 'xai', 'CISAgov'],
+    }),
     input: [
       {
         role: 'system',
