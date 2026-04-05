@@ -6,6 +6,7 @@ import { buildSearchTools } from './xai-tooling.mjs';
 const DEFAULT_MODEL = 'grok-4-1-fast-reasoning';
 const DEFAULT_MAX_DIFF_CHARS = 250_000;
 const FORBIDDEN_PREFIXES = ['.github/', 'tests/', 'docs/'];
+const FIX_MARKER = '<!-- grok-auto-fix -->';
 const FORBIDDEN_FILES = new Set([
   'package.json',
   'bun.lock',
@@ -190,7 +191,22 @@ async function main() {
       'Rejected suggested patch because it touched forbidden paths or files outside the current PR diff.';
   }
 
-  writeFileSync(resultJsonPath, JSON.stringify({ summary, reasoning, patch, touchedFiles }, null, 2));
+  const fixResult = { summary, reasoning, patch, touchedFiles };
+  writeFileSync(resultJsonPath, JSON.stringify(fixResult, null, 2));
+
+  // Write markdown comment for pr-manager detection
+  const fixMarkdownPath = optionalEnv('FIX_MARKDOWN_PATH', '/tmp/grok-fix.md');
+  const patchLines = patch ? patch.split('\n').length : 0;
+  const fixMarkdown = `${FIX_MARKER}
+## Grok Auto-Fix Result
+
+**Status:** ${patch ? '✅ Patch generated' : '⚠️ No patch (too risky or not applicable)'}
+**Summary:** ${summary}
+**Reasoning:** ${reasoning}
+**Files touched:** ${touchedFiles.length ? touchedFiles.join(', ') : 'none'}
+**Patch lines:** ${patchLines}
+`;
+  writeFileSync(fixMarkdownPath, fixMarkdown);
   writeFileSync(patchPath, patch);
 }
 

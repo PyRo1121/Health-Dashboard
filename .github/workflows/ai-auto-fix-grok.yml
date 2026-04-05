@@ -83,6 +83,7 @@ jobs:
           PR_DIFF_PATH: ${{ steps.diff.outputs.diff_path }}
           PR_FILES_PATH: ${{ steps.diff.outputs.files_path }}
           FIX_JSON_PATH: ${{ runner.temp }}/grok-fix.json
+          FIX_MARKDOWN_PATH: ${{ runner.temp }}/grok-fix.md
           PATCH_PATH: ${{ runner.temp }}/grok-fix.patch
         run: node .github/scripts/grok-auto-fix.mjs
 
@@ -100,6 +101,39 @@ jobs:
           git apply --check "$PATCH_PATH"
           git apply "$PATCH_PATH"
           echo "fix_applied=true" >> "$GITHUB_OUTPUT"
+
+      - name: Upsert auto-fix comment
+        if: steps.guard.outputs.skip_reason == '' && steps.path_guard.outputs.skip_reason == ''
+        uses: actions/github-script@v8
+        env:
+          FIX_MARKDOWN_PATH: ${{ runner.temp }}/grok-fix.md
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- grok-auto-fix -->';
+            const fixMarkdown = fs.readFileSync(process.env.FIX_MARKDOWN_PATH, 'utf8');
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body: fixMarkdown,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body: fixMarkdown,
+              });
+            }
 
       - name: Validate patched branch
         if: steps.guard.outputs.skip_reason == '' && steps.path_guard.outputs.skip_reason == '' && steps.apply.outputs.fix_applied == 'true'
@@ -180,16 +214,3 @@ jobs:
               inputs: { pr_number: String(context.issue.number) },
             });
 
-      - name: Remove ai-auto-fix label
-        if: always()
-        uses: actions/github-script@v8
-        with:
-          script: |
-            try {
-              await github.rest.issues.removeLabel({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                name: 'ai-auto-fix'
-              });
-            } catch {}
