@@ -164,3 +164,55 @@ test('weekly plan loop connects plan, today, and review', async ({ page }) => {
   await expect(page.getByText('Skip', { exact: true })).toBeVisible();
   await expect(page.getByRole('link', { name: 'Review recipe' })).toBeVisible();
 });
+
+test('grocery checklist merges duplicate ingredients across recipes', async ({ page }) => {
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        ...emptySnapshot(),
+        recipeCatalogItems: [
+          {
+            id: 'themealdb:52772',
+            createdAt: '2026-04-03T00:00:00.000Z',
+            updatedAt: '2026-04-03T00:00:00.000Z',
+            title: 'Teriyaki Chicken Casserole',
+            sourceType: 'themealdb',
+            sourceName: 'TheMealDB',
+            externalId: '52772',
+            mealType: 'dinner',
+            cuisine: 'Japanese',
+            ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
+          },
+          {
+            id: 'themealdb:52773',
+            createdAt: '2026-04-03T00:00:00.000Z',
+            updatedAt: '2026-04-03T00:00:00.000Z',
+            title: 'Soy glazed bowl',
+            sourceType: 'themealdb',
+            sourceName: 'TheMealDB',
+            externalId: '52773',
+            mealType: 'dinner',
+            cuisine: 'Japanese',
+            ingredients: ['1 tbsp soy sauce'],
+          },
+        ],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/plan');
+  await page.getByLabel('Recipe').selectOption('themealdb:52772');
+  await page.getByRole('button', { name: 'Add to week' }).click();
+  await expect(page.getByText(/Plan slot saved\./i)).toBeVisible();
+
+  await page.getByLabel('Recipe').selectOption('themealdb:52773');
+  await page.getByRole('button', { name: 'Add to week' }).click();
+  await expect(page.getByText(/Plan slot saved\./i)).toBeVisible();
+
+  await page.goto('/groceries');
+  const soySauceRows = page.locator('.entry-list strong', { hasText: 'soy sauce' });
+  await expect(soySauceRows).toHaveCount(1);
+  await expect(page.getByText(/Pantry · 3\/4 cup \+ 1 tbsp/i)).toBeVisible();
+  await expect(page.getByText(/Teriyaki Chicken Casserole, Soy glazed bowl/i)).toBeVisible();
+});
