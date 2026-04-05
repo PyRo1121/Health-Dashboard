@@ -84,6 +84,7 @@ export async function buildWeeklySnapshot(
   const weekAssessments = filterByDays(assessments, (assessment) => assessment.localDay, days);
   const weekHealthEvents = filterByDays(healthEvents, (event) => event.localDay, days);
   const weekJournalEntries = filterByDays(journalEntries, (entry) => entry.localDay, days);
+  const journalDays = new Set(weekJournalEntries.map((entry) => entry.localDay));
   const weeklyPlan = weeklyPlans.find((plan) => plan.weekStart === weekStart) ?? null;
   const weekPlanSlots = weeklyPlan
     ? planSlots.filter((slot) => slot.weeklyPlanId === weeklyPlan.id)
@@ -141,7 +142,12 @@ export async function buildWeeklySnapshot(
     assessmentSummary: buildAssessmentSummary(weekAssessments),
     healthHighlights: buildHealthHighlights(weekRecords, weekHealthEvents),
     contextSignals: buildContextSignals(weekRecords, weekHealthEvents, weekJournalEntries),
+    contextCaptureLinkedEventIds: weekHealthEvents
+      .filter((event) => journalDays.has(event.localDay))
+      .map((event) => event.id)
+      .slice(0, 5),
     journalHighlights: buildJournalHighlights(weekJournalEntries),
+    journalReflectionLinkedEventIds: weekJournalEntries.flatMap((entry) => entry.linkedEventIds).slice(0, 5),
     experimentOptions: [...REVIEW_EXPERIMENT_OPTIONS],
   };
 }

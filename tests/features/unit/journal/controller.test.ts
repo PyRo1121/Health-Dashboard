@@ -4,6 +4,7 @@ import {
   beginJournalSave,
   createJournalPageState,
   deleteJournalPageEntry,
+  hydrateJournalIntentPage,
   loadJournalPage,
   saveJournalPage,
 } from '$lib/features/journal/controller';
@@ -30,5 +31,48 @@ describe('journal controller', () => {
 
     state = await deleteJournalPageEntry(db, state, state.entries[0]!.id);
     expect(state.entries).toEqual([]);
+  });
+
+  it('hydrates a journal intent with linked context rows', async () => {
+    const db = getDb();
+    await db.healthEvents.put({
+      id: 'symptom-1',
+      createdAt: '2026-04-04T09:00:00.000Z',
+      updatedAt: '2026-04-04T09:00:00.000Z',
+      sourceType: 'manual',
+      sourceApp: 'personal-health-cockpit',
+      sourceRecordId: 'symptom:1',
+      sourceTimestamp: '2026-04-04T09:00:00.000Z',
+      localDay: '2026-04-04',
+      timezone: 'UTC',
+      confidence: 1,
+      eventType: 'symptom',
+      value: 4,
+      payload: {
+        kind: 'symptom',
+        symptom: 'Headache',
+        severity: 4,
+      },
+    });
+
+    const loaded = await loadJournalPage(db, '2026-04-04', createJournalPageState());
+    const state = await hydrateJournalIntentPage(db, loaded, {
+      source: 'today-recovery',
+      localDay: '2026-04-04',
+      entryType: 'symptom_note',
+      title: 'Recovery note',
+      body: 'Crowded store and headache drained the afternoon.',
+      linkedEventIds: ['symptom-1'],
+    });
+
+    expect(state.saveNotice).toBe('Loaded from today recovery.');
+    expect(state.draft.title).toBe('Recovery note');
+    expect(state.linkedContextRows).toEqual([
+      expect.objectContaining({
+        id: 'symptom-1',
+        label: 'Symptom',
+        valueLabel: '4',
+      }),
+    ]);
   });
 });

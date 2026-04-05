@@ -53,6 +53,7 @@ function createReviewJournalIntentHref(
     entryType: 'evening_review' | 'symptom_note';
     title: string;
     body: string;
+    linkedEventIds: string[];
   }
 ): JournalIntentHref {
   return buildJournalIntentHref({
@@ -61,7 +62,7 @@ function createReviewJournalIntentHref(
     entryType: input.entryType,
     title: input.title,
     body: input.body,
-    linkedEventIds: [],
+    linkedEventIds: input.linkedEventIds,
   });
 }
 
@@ -185,6 +186,7 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
                   '',
                   'What happened behind these signals? What should you watch next week?',
                 ].join('\n'),
+                linkedEventIds: weekly.contextCaptureLinkedEventIds,
               })
             : undefined,
         },
@@ -204,6 +206,7 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
                   '',
                   'What felt true? What should you carry forward next week?',
                 ].join('\n'),
+                linkedEventIds: weekly.journalReflectionLinkedEventIds,
               })
             : undefined,
         },

@@ -12,6 +12,7 @@ describe('journal route', () => {
   async function importRoute(overrides: {
     db?: HealthDatabase;
     loadJournalPage?: ReturnType<typeof vi.fn>;
+    hydrateJournalIntentPage?: ReturnType<typeof vi.fn>;
     saveJournalPage?: ReturnType<typeof vi.fn>;
     deleteJournalPageEntry?: ReturnType<typeof vi.fn>;
   }) {
@@ -39,6 +40,7 @@ describe('journal route', () => {
           localDay: '2026-04-04',
           saveNotice: '',
           entries: [],
+          linkedContextRows: [],
           draft: {
             localDay: '2026-04-04',
             entryType: 'freeform',
@@ -53,6 +55,12 @@ describe('journal route', () => {
         vi.fn(async (_db: HealthDatabase, state: unknown) => ({
           ...(state as object),
           saveNotice: 'Entry saved.',
+        })),
+      hydrateJournalIntentPage:
+        overrides.hydrateJournalIntentPage ??
+        vi.fn(async (_db: HealthDatabase, state: unknown) => ({
+          ...(state as object),
+          saveNotice: 'Loaded from today recovery.',
         })),
       deleteJournalPageEntry:
         overrides.deleteJournalPageEntry ??
@@ -90,6 +98,7 @@ describe('journal route', () => {
       localDay: '',
       saveNotice: '',
       entries: [],
+      linkedContextRows: [],
       draft: {
         localDay: '',
         entryType: 'freeform',
@@ -124,6 +133,7 @@ describe('journal route', () => {
       localDay: '2026-04-04',
       saveNotice: '',
       entries: [],
+      linkedContextRows: [],
       draft: {
         localDay: '2026-04-04',
         entryType: 'freeform',
@@ -162,5 +172,59 @@ describe('journal route', () => {
     } as Parameters<typeof POST>[0]);
     expect(await deleteResponse.json()).toEqual(expect.objectContaining({ entries: [] }));
     expect(deleteJournalPageEntry).toHaveBeenCalledWith(db, state, 'journal-entry-1');
+  });
+
+  it('dispatches journal intent hydration through the action route', async () => {
+    const db = {} as HealthDatabase;
+    const state = {
+      loading: false,
+      saving: false,
+      localDay: '2026-04-04',
+      saveNotice: '',
+      entries: [],
+      draft: {
+        localDay: '2026-04-04',
+        entryType: 'freeform',
+        title: '',
+        body: '',
+        tags: [],
+        linkedEventIds: [],
+      },
+    };
+    const hydrateJournalIntentPage = vi.fn(async () => ({
+      ...state,
+      saveNotice: 'Loaded from today recovery.',
+    }));
+    const { POST } = await importRoute({ db, hydrateJournalIntentPage });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/journal', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'hydrateIntent',
+          state,
+          intent: {
+            source: 'today-recovery',
+            localDay: '2026-04-04',
+            entryType: 'symptom_note',
+            title: 'Recovery note',
+            body: 'Crowded store and headache drained the afternoon.',
+            linkedEventIds: ['symptom-1', 'anxiety-1'],
+          },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Loaded from today recovery.' })
+    );
+    expect(hydrateJournalIntentPage).toHaveBeenCalledWith(db, state, {
+      source: 'today-recovery',
+      localDay: '2026-04-04',
+      entryType: 'symptom_note',
+      title: 'Recovery note',
+      body: 'Crowded store and headache drained the afternoon.',
+      linkedEventIds: ['symptom-1', 'anxiety-1'],
+    });
   });
 });

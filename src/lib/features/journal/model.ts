@@ -1,4 +1,5 @@
-import type { JournalEntry } from '$lib/core/domain/types';
+import type { HealthEvent, JournalEntry } from '$lib/core/domain/types';
+import { buildHealthEventDisplay } from '$lib/core/shared/health-events';
 import type { JournalDraft } from '$lib/features/journal/service';
 
 export const journalEntryTypeOptions = [
@@ -14,6 +15,14 @@ export type JournalEntryRow = {
   id: string;
   title: string;
   body: string;
+  contextLabel: string;
+};
+
+export type JournalLinkedContextRow = {
+  id: string;
+  label: string;
+  valueLabel: string;
+  sourceLabel: string;
 };
 
 export function createEmptyJournalDraft(localDay: string): JournalDraft {
@@ -43,5 +52,16 @@ export function createJournalEntryRows(entries: JournalEntry[]): JournalEntryRow
     id: entry.id,
     title: entry.title || 'Untitled entry',
     body: entry.body,
+    contextLabel:
+      entry.linkedEventIds.length > 0
+        ? `${entry.linkedEventIds.length} linked signal${entry.linkedEventIds.length === 1 ? '' : 's'}`
+        : '',
+  }));
+}
+
+export function createJournalLinkedContextRows(events: HealthEvent[]): JournalLinkedContextRow[] {
+  return events.map((event) => ({
+    id: event.id,
+    ...buildHealthEventDisplay(event),
   }));
 }
