@@ -7,7 +7,6 @@ import type {
   FavoriteMeal,
   FoodCatalogItem,
   FoodEntry,
-  GroceryItem,
   HealthEvent,
   HealthTemplate,
   ImportArtifact,
