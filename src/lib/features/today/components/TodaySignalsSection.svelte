@@ -16,7 +16,13 @@
     todayNutritionGuidance: string[];
     todayNutritionRows: string[];
     plannedMealProjectionRows: string[];
-    onRecoveryAction: (actionId: 'skip-workout' | 'clear-planned-meal') => void;
+    onRecoveryAction: (
+      actionId:
+        | 'skip-workout'
+        | 'clear-planned-meal'
+        | 'apply-recovery-meal'
+        | 'apply-recovery-workout'
+    ) => void;
   } = $props();
 </script>
 
@@ -36,6 +42,28 @@
         <li>{line}</li>
       {/each}
     </ul>
+    {#if snapshot.recoveryAdaptation.mealRecommendation}
+      <div class="recovery-recommendation">
+        <strong>{snapshot.recoveryAdaptation.mealRecommendation.title}</strong>
+        <p class="status-copy">{snapshot.recoveryAdaptation.mealRecommendation.subtitle}</p>
+        <ul class="summary-list compact-list">
+          {#each snapshot.recoveryAdaptation.mealRecommendation.reasons as line (line)}
+            <li>{line}</li>
+          {/each}
+        </ul>
+      </div>
+    {/if}
+    {#if snapshot.recoveryAdaptation.workoutRecommendation}
+      <div class="recovery-recommendation">
+        <strong>{snapshot.recoveryAdaptation.workoutRecommendation.title}</strong>
+        <p class="status-copy">{snapshot.recoveryAdaptation.workoutRecommendation.subtitle}</p>
+        <ul class="summary-list compact-list">
+          {#each snapshot.recoveryAdaptation.workoutRecommendation.reasons as line (line)}
+            <li>{line}</li>
+          {/each}
+        </ul>
+      </div>
+    {/if}
     {#if snapshot.recoveryAdaptation.actions.length}
       <div class="recovery-actions">
         {#each snapshot.recoveryAdaptation.actions as action (action.id)}
@@ -110,6 +138,16 @@
     flex-wrap: wrap;
     gap: 0.6rem;
     margin-top: 0.9rem;
+  }
+
+  .recovery-recommendation {
+    margin-top: 0.9rem;
+    padding-top: 0.9rem;
+    border-top: 1px solid rgba(31, 29, 26, 0.08);
+  }
+
+  .compact-list {
+    margin-top: 0.45rem;
   }
 
   .recovery-action-button {

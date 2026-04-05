@@ -303,6 +303,14 @@ describe('Today route', () => {
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     const food = await saveFoodCatalogItem(db, {
+      name: 'Toast and jam',
+      calories: 260,
+      protein: 6,
+      fiber: 2,
+      carbs: 42,
+      fat: 6,
+    });
+    await saveFoodCatalogItem(db, {
       name: 'Greek yogurt bowl',
       calories: 310,
       protein: 24,
@@ -376,16 +384,27 @@ describe('Today route', () => {
           'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
         )
       ).toBeTruthy();
-      expect(screen.getByRole('button', { name: 'Skip workout for today' })).toBeTruthy();
-      expect(screen.getByRole('button', { name: 'Clear meal plan' })).toBeTruthy();
+      expect(screen.getByText('Greek yogurt bowl')).toBeTruthy();
+      expect(screen.getByText(/310 kcal/i)).toBeTruthy();
+      expect(screen.getByText('Recovery walk')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Swap to recovery meal' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Swap to recovery walk' })).toBeTruthy();
     });
   });
 
-  it('lets recovery mode clear the planned meal and skip the workout', async () => {
+  it('lets recovery mode swap the meal and workout to fallback suggestions', async () => {
     const db = getHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     const food = await saveFoodCatalogItem(db, {
+      name: 'Toast and jam',
+      calories: 260,
+      protein: 6,
+      fiber: 2,
+      carbs: 42,
+      fat: 6,
+    });
+    await saveFoodCatalogItem(db, {
       name: 'Greek yogurt bowl',
       calories: 310,
       protein: 24,
@@ -446,20 +465,20 @@ describe('Today route', () => {
     expectHeading('Today');
 
     await waitFor(() => {
-      expect(screen.getByRole('button', { name: 'Skip workout for today' })).toBeTruthy();
-      expect(screen.getByRole('button', { name: 'Clear meal plan' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Swap to recovery meal' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Swap to recovery walk' })).toBeTruthy();
     });
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Skip workout for today' }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Swap to recovery meal' }));
     await waitFor(() => {
-      expect(screen.getByText(/Plan item marked skipped\./i)).toBeTruthy();
-      expect(screen.queryByRole('button', { name: 'Skip workout for today' })).toBeNull();
+      expect(screen.getByText(/Recovery meal applied\./i)).toBeTruthy();
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
     });
 
-    await fireEvent.click(screen.getByRole('button', { name: 'Clear meal plan' }));
+    await fireEvent.click(screen.getByRole('button', { name: 'Swap to recovery walk' }));
     await waitFor(() => {
-      expect(screen.getByText(/Planned meal cleared\./i)).toBeTruthy();
-      expect(screen.queryByRole('button', { name: 'Clear meal plan' })).toBeNull();
+      expect(screen.getByText(/Recovery workout applied\./i)).toBeTruthy();
+      expect(screen.getAllByText('Recovery walk').length).toBeGreaterThan(0);
     });
   });
 });

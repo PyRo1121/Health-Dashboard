@@ -1,5 +1,6 @@
 <script lang="ts">
   import {
+    applyTodayRecoveryActionPage,
     beginTodaySave,
     clearTodayPlannedMealPage,
     createTodayPageState,
@@ -60,7 +61,13 @@
     page = await markTodayPlanSlotStatusPage(page, slotId, status);
   }
 
-  async function handleRecoveryAction(actionId: 'skip-workout' | 'clear-planned-meal') {
+  async function handleRecoveryAction(
+    actionId:
+      | 'skip-workout'
+      | 'clear-planned-meal'
+      | 'apply-recovery-meal'
+      | 'apply-recovery-workout'
+  ) {
     if (actionId === 'skip-workout' && page.snapshot?.plannedWorkout) {
       page = await markTodayPlanSlotStatusPage(page, page.snapshot.plannedWorkout.id, 'skipped');
       return;
@@ -68,6 +75,11 @@
 
     if (actionId === 'clear-planned-meal') {
       page = await clearTodayPlannedMealPage(page);
+      return;
+    }
+
+    if (actionId === 'apply-recovery-meal' || actionId === 'apply-recovery-workout') {
+      page = await applyTodayRecoveryActionPage(page, actionId);
     }
   }
 

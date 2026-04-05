@@ -247,6 +247,14 @@ describe('today service', () => {
     const db = getDb();
     const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
     const food = await saveFoodCatalogItem(db, {
+      name: 'Toast and jam',
+      calories: 260,
+      protein: 6,
+      fiber: 2,
+      carbs: 42,
+      fat: 6,
+    });
+    await saveFoodCatalogItem(db, {
       name: 'Greek yogurt bowl',
       calories: 310,
       protein: 24,
@@ -315,9 +323,15 @@ describe('today service', () => {
     expect(snapshot.recoveryAdaptation?.workoutFallback).toContain(
       'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
     );
-    expect(snapshot.recoveryAdaptation?.actions).toEqual([
-      { id: 'skip-workout', label: 'Skip workout for today' },
-      { id: 'clear-planned-meal', label: 'Clear meal plan' },
-    ]);
+    expect(snapshot.recoveryAdaptation?.mealRecommendation).toMatchObject({
+      title: 'Greek yogurt bowl',
+      actionId: 'apply-recovery-meal',
+      actionLabel: 'Swap to recovery meal',
+    });
+    expect(snapshot.recoveryAdaptation?.workoutRecommendation).toMatchObject({
+      title: 'Recovery walk',
+      actionId: 'apply-recovery-workout',
+      actionLabel: 'Swap to recovery walk',
+    });
   });
 });

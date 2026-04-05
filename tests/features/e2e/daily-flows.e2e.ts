@@ -175,6 +175,19 @@ test('today shows recovery-aware fallback when sleep and symptoms are rough', as
             id: 'food-catalog-1',
             createdAt: '2026-04-02T08:00:00.000Z',
             updatedAt: '2026-04-02T08:00:00.000Z',
+            name: 'Toast and jam',
+            sourceType: 'custom',
+            sourceName: 'Local catalog',
+            calories: 260,
+            protein: 6,
+            fiber: 2,
+            carbs: 42,
+            fat: 6,
+          },
+          {
+            id: 'food-catalog-2',
+            createdAt: '2026-04-02T08:05:00.000Z',
+            updatedAt: '2026-04-02T08:05:00.000Z',
             name: 'Greek yogurt bowl',
             sourceType: 'custom',
             sourceName: 'Local catalog',
@@ -206,7 +219,7 @@ test('today shows recovery-aware fallback when sleep and symptoms are rough', as
             itemType: 'food',
             itemId: 'food-catalog-1',
             mealType: 'breakfast',
-            title: 'Greek yogurt bowl',
+            title: 'Toast and jam',
             status: 'planned',
             order: 0,
           },
@@ -293,6 +306,9 @@ test('today shows recovery-aware fallback when sleep and symptoms are rough', as
   expect(seedResponse.ok()).toBe(true);
 
   await page.goto('/today');
+  const recoverySection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Recovery today' }),
+  });
   await expect(page.getByText('Recovery today')).toBeVisible();
   await expect(page.getByText('Recovery mode: simplify the day.')).toBeVisible();
   await expect(page.getByText('Sleep landed under 6 hours.')).toBeVisible();
@@ -306,11 +322,14 @@ test('today shows recovery-aware fallback when sleep and symptoms are rough', as
       'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
     )
   ).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Skip workout for today' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Clear meal plan' })).toBeVisible();
+  await expect(recoverySection.getByText('Greek yogurt bowl')).toBeVisible();
+  await expect(recoverySection.getByText(/310 kcal/i)).toBeVisible();
+  await expect(recoverySection.locator('strong', { hasText: 'Recovery walk' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Swap to recovery meal' })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Swap to recovery walk' })).toBeVisible();
 });
 
-test('today recovery actions simplify the day in place', async ({ page }) => {
+test('today recovery actions swap in the fallback suggestions', async ({ page }) => {
   const localDay = new Intl.DateTimeFormat('en-CA', {
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
     year: 'numeric',
@@ -343,6 +362,19 @@ test('today recovery actions simplify the day in place', async ({ page }) => {
             id: 'food-catalog-1',
             createdAt: '2026-04-02T08:00:00.000Z',
             updatedAt: '2026-04-02T08:00:00.000Z',
+            name: 'Toast and jam',
+            sourceType: 'custom',
+            sourceName: 'Local catalog',
+            calories: 260,
+            protein: 6,
+            fiber: 2,
+            carbs: 42,
+            fat: 6,
+          },
+          {
+            id: 'food-catalog-2',
+            createdAt: '2026-04-02T08:05:00.000Z',
+            updatedAt: '2026-04-02T08:05:00.000Z',
             name: 'Greek yogurt bowl',
             sourceType: 'custom',
             sourceName: 'Local catalog',
@@ -374,7 +406,7 @@ test('today recovery actions simplify the day in place', async ({ page }) => {
             itemType: 'food',
             itemId: 'food-catalog-1',
             mealType: 'breakfast',
-            title: 'Greek yogurt bowl',
+            title: 'Toast and jam',
             status: 'planned',
             order: 0,
           },
@@ -461,14 +493,19 @@ test('today recovery actions simplify the day in place', async ({ page }) => {
   expect(seedResponse.ok()).toBe(true);
 
   await page.goto('/today');
-  await page.getByRole('button', { name: 'Skip workout for today' }).click();
-  await expect(page.getByText(/Plan item marked skipped\./i)).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Clear meal plan' })).toBeVisible();
+  const plannedMealSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Planned next meal' }),
+  });
+  await page.getByRole('button', { name: 'Swap to recovery meal' }).click();
+  await expect(page.getByText(/Recovery meal applied\./i)).toBeVisible();
+  await expect(plannedMealSection.getByText('Greek yogurt bowl')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Clear meal plan' }).click();
-  await expect(page.getByText(/Planned meal cleared\./i)).toBeVisible();
-  await expect(page.getByText(/No meal queued up\./i)).toBeVisible();
-  await expect(page.getByText(/No workout lined up\./i)).toBeVisible();
+  const plannedWorkoutSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Planned workout' }),
+  });
+  await page.getByRole('button', { name: 'Swap to recovery walk' }).click();
+  await expect(page.getByText(/Recovery workout applied\./i)).toBeVisible();
+  await expect(plannedWorkoutSection.getByText('Recovery walk')).toBeVisible();
 });
 
 test('weekly plan workout flows into today execution', async ({ page }) => {

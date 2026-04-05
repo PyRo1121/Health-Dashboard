@@ -3,10 +3,17 @@ import { nowIso } from '$lib/core/domain/time';
 import type { FoodEntry, HealthEvent, PlanSlot } from '$lib/core/domain/types';
 import { upsertDailyRecord } from '$lib/core/shared/daily-records';
 import { createRecordMeta } from '$lib/core/shared/records';
-import { createFoodEntry } from '$lib/features/nutrition/service';
-import { deletePlanSlot, updatePlanSlotStatus } from '$lib/features/planning/service';
+import { createFoodEntry, listFoodCatalogItems } from '$lib/features/nutrition/service';
+import {
+  deletePlanSlot,
+  ensureWeeklyPlan,
+  listPlanSlotsForDay,
+  savePlanSlot,
+  updatePlanSlot,
+  updatePlanSlotStatus,
+} from '$lib/features/planning/service';
 import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
-import { getTodayPlannedMealResolution } from './snapshot';
+import { getTodayPlannedMealResolution, getTodaySnapshot } from './snapshot';
 
 export interface DailyCheckinInput {
   date: string;
@@ -125,4 +132,71 @@ export async function updateTodayPlanSlotStatus(
   const slot = await updatePlanSlotStatus(db, slotId, status);
   await refreshWeeklyReviewArtifactsSafely(db, slot.localDay);
   return slot;
+}
+
+export async function applyTodayRecoveryAction(
+  db: HealthDatabase,
+  date: string,
+  actionId: 'apply-recovery-meal' | 'apply-recovery-workout'
+): Promise<boolean> {
+  const snapshot = await getTodaySnapshot(db, date);
+  const adaptation = snapshot.recoveryAdaptation;
+  if (!adaptation) {
+    return false;
+  }
+
+  if (actionId === 'apply-recovery-meal') {
+    const recommendation = adaptation.mealRecommendation;
+    if (!recommendation) {
+      return false;
+    }
+
+    const food = (await listFoodCatalogItems(db)).find((item) => item.name === recommendation.title);
+    if (!food) {
+      return false;
+    }
+
+    const currentMealSlot = (await listPlanSlotsForDay(db, date)).find(
+      (slot) => slot.slotType === 'meal' && slot.status === 'planned'
+    );
+
+    if (currentMealSlot) {
+      await updatePlanSlot(db, currentMealSlot.id, {
+        itemType: 'food',
+        itemId: food.id,
+        mealType: currentMealSlot.mealType ?? snapshot.plannedMeal?.mealType ?? 'meal',
+        title: food.name,
+      });
+    } else {
+      const weeklyPlan = await ensureWeeklyPlan(db, date);
+      await savePlanSlot(db, {
+        weeklyPlanId: weeklyPlan.id,
+        localDay: date,
+        slotType: 'meal',
+        itemType: 'food',
+        itemId: food.id,
+        mealType: snapshot.plannedMeal?.mealType ?? 'meal',
+        title: food.name,
+      });
+    }
+
+    await refreshWeeklyReviewArtifactsSafely(db, date);
+    return true;
+  }
+
+  const currentWorkoutSlot = (await listPlanSlotsForDay(db, date)).find(
+    (slot) => slot.slotType === 'workout' && slot.status === 'planned'
+  );
+  if (!currentWorkoutSlot) {
+    return false;
+  }
+
+  await updatePlanSlot(db, currentWorkoutSlot.id, {
+    itemType: 'freeform',
+    itemId: undefined,
+    title: 'Recovery walk',
+    notes: '10-20 minutes easy walk or mobility reset.',
+  });
+  await refreshWeeklyReviewArtifactsSafely(db, date);
+  return true;
 }

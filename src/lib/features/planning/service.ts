@@ -148,6 +148,43 @@ export async function updatePlanSlotStatus(
   return slot;
 }
 
+export async function updatePlanSlot(
+  db: HealthDatabase,
+  slotId: string,
+  updates: {
+    itemType?: PlanSlot['itemType'];
+    itemId?: string;
+    mealType?: string;
+    title?: string;
+    notes?: string;
+    status?: PlanSlot['status'];
+  }
+): Promise<PlanSlot> {
+  const existing = await db.planSlots.get(slotId);
+  if (!existing) {
+    throw new Error('Plan slot not found');
+  }
+
+  const nextTitle = updates.title !== undefined ? updates.title.trim() : existing.title;
+  if (!nextTitle) {
+    throw new Error('Plan slot title is required');
+  }
+
+  const slot: PlanSlot = {
+    ...existing,
+    ...updateRecordMeta(existing, existing.id),
+    itemType: updates.itemType ?? existing.itemType,
+    itemId: updates.itemId,
+    mealType: existing.slotType === 'meal' ? (updates.mealType ?? existing.mealType) : undefined,
+    title: nextTitle,
+    notes: updates.notes !== undefined ? updates.notes.trim() || undefined : existing.notes,
+    status: updates.status ?? existing.status,
+  };
+
+  await db.planSlots.put(slot);
+  return slot;
+}
+
 export async function deletePlanSlot(db: HealthDatabase, slotId: string): Promise<void> {
   const existing = await db.planSlots.get(slotId);
   await db.planSlots.delete(slotId);

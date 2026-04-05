@@ -1,5 +1,6 @@
 import { createDbActionPostHandler } from '$lib/server/http/action-route';
 import {
+  applyTodayRecoveryActionPage,
   clearTodayPlannedMealPage,
   loadTodayPage,
   logTodayPlannedMealPage,
@@ -15,6 +16,7 @@ export const POST = createDbActionPostHandler<TodayRequest, TodayPageState>(
     save: (db, body) => saveTodayPage(db, body.state),
     logPlannedMeal: (db, body) => logTodayPlannedMealPage(db, body.state),
     clearPlannedMeal: (db, body) => clearTodayPlannedMealPage(db, body.state),
+    applyRecoveryAction: (db, body) => applyTodayRecoveryActionPage(db, body.state, body.actionId),
     markPlanSlotStatus: (db, body) =>
       markTodayPlanSlotStatusPage(db, body.state, body.slotId, body.status),
   },

@@ -45,6 +45,11 @@ export const todayRequestSchema = z.discriminatedUnion('action', [
     state: todayPageStateSchema,
   }),
   z.object({
+    action: z.literal('applyRecoveryAction'),
+    state: todayPageStateSchema,
+    actionId: z.enum(['apply-recovery-meal', 'apply-recovery-workout']),
+  }),
+  z.object({
     action: z.literal('markPlanSlotStatus'),
     state: todayPageStateSchema,
     slotId: z.string(),
