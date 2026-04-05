@@ -104,7 +104,7 @@ export async function logPlannedMealForToday(
   if (candidate.slotId) {
     await updatePlanSlotStatus(db, candidate.slotId, 'done');
   }
-  await refreshWeeklyReviewArtifacts(db, date);
+  await refreshWeeklyReviewArtifacts(db, date).catch(() => undefined);
 
   return entry;
 }
