@@ -27,7 +27,14 @@ async function github(path, init = {}) {
   }
 
   return await response.json();
-}
+ }
+
+ function loadRequiredChecksFromMergify() {
+   const mergify = readFileSync('.mergify.yml', 'utf8');
+   // Capture the check name up to the first whitespace or '#' (inline comment)
+   const regex = /check-success=([^\s#]+)/g;
+   return [...new Set([...mergify.matchAll(regex)].map((match) => match[1].trim()))];
+ }
 
 function loadRequiredChecksFromMergify() {
   const mergify = readFileSync('.mergify.yml', 'utf8');
