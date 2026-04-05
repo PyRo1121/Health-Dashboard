@@ -4,11 +4,8 @@ import ReviewPage from '../../../../src/routes/review/+page.svelte';
 import { resetRouteDb, expectHeading, waitForText } from '../../../support/component/routeHarness';
 import { seedReviewSnapshotInputs } from '../../../support/component/routeSeeds';
 import { getHealthDb } from '$lib/core/db/client';
-import {
-  createFoodEntry,
-  saveFoodCatalogItem,
-  savePlannedMeal,
-} from '$lib/features/nutrition/service';
+import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
+import { createFoodEntry, saveFoodCatalogItem } from '$lib/features/nutrition/service';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 
 describe('Review route', () => {

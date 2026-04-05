@@ -2,7 +2,6 @@ import type {
   FavoriteMeal,
   FoodCatalogItem,
   FoodEntry,
-  PlannedMeal,
   RecipeCatalogItem,
 } from '$lib/core/domain/types';
 import type { HealthDatabase } from '$lib/core/db/types';
@@ -12,8 +11,6 @@ import { createRecordMeta, updateRecordMeta } from '$lib/core/shared/records';
 import type { FoodEntryDraft } from './types';
 
 const LOCAL_CATALOG_SOURCE_NAME = 'Local catalog';
-const NEXT_PLANNED_MEAL_ID = 'planned-meal:next';
-
 function buildFoodEntryRecord(draft: FoodEntryDraft): FoodEntry {
   const timestamp = nowIso();
   return {
@@ -152,37 +149,6 @@ export async function listRecipeCatalogItems(db: HealthDatabase): Promise<Recipe
   return (await db.recipeCatalogItems.toArray()).sort((left, right) =>
     left.title.localeCompare(right.title)
   );
-}
-
-export async function getPlannedMeal(db: HealthDatabase): Promise<PlannedMeal | null> {
-  return (await db.plannedMeals.get(NEXT_PLANNED_MEAL_ID)) ?? null;
-}
-
-export async function savePlannedMeal(
-  db: HealthDatabase,
-  input: Omit<PlannedMeal, 'id' | 'createdAt' | 'updatedAt'>
-): Promise<PlannedMeal> {
-  const timestamp = nowIso();
-  const existing = await getPlannedMeal(db);
-  const meal: PlannedMeal = {
-    ...updateRecordMeta(existing, NEXT_PLANNED_MEAL_ID, timestamp),
-    name: input.name,
-    mealType: input.mealType,
-    calories: input.calories,
-    protein: input.protein,
-    fiber: input.fiber,
-    carbs: input.carbs,
-    fat: input.fat,
-    sourceName: input.sourceName,
-    notes: input.notes,
-  };
-
-  await db.plannedMeals.put(meal);
-  return meal;
-}
-
-export async function clearPlannedMeal(db: HealthDatabase): Promise<void> {
-  await db.plannedMeals.delete(NEXT_PLANNED_MEAL_ID);
 }
 
 export async function listFavoriteMeals(db: HealthDatabase): Promise<FavoriteMeal[]> {
