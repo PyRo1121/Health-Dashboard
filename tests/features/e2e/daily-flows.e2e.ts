@@ -232,6 +232,156 @@ test('weekly review surfaces journal context signals', async ({ page }) => {
   ).toBeVisible();
 });
 
+test('today recovery links into a prefilled journal note', async ({ page }) => {
+  const localDay = new Intl.DateTimeFormat('en-CA', {
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        dailyRecords: [
+          {
+            id: `daily:${localDay}`,
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            date: localDay,
+            mood: 3,
+            energy: 2,
+            stress: 4,
+            focus: 3,
+            sleepHours: 5.5,
+            sleepQuality: 2,
+            freeformNote: 'Dragging today.',
+          },
+        ],
+        journalEntries: [],
+        foodEntries: [],
+        foodCatalogItems: [
+          {
+            id: 'food-catalog-1',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            name: 'Toast and jam',
+            sourceType: 'custom',
+            sourceName: 'Local catalog',
+            calories: 260,
+            protein: 6,
+            fiber: 2,
+            carbs: 42,
+            fat: 6,
+          },
+          {
+            id: 'food-catalog-2',
+            createdAt: '2026-04-02T08:05:00.000Z',
+            updatedAt: '2026-04-02T08:05:00.000Z',
+            name: 'Greek yogurt bowl',
+            sourceType: 'custom',
+            sourceName: 'Local catalog',
+            calories: 310,
+            protein: 24,
+            fiber: 6,
+            carbs: 34,
+            fat: 8,
+          },
+        ],
+        recipeCatalogItems: [],
+        weeklyPlans: [
+          {
+            id: 'weekly-plan-1',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            weekStart: localDay,
+            title: `Week of ${localDay}`,
+          },
+        ],
+        planSlots: [
+          {
+            id: 'slot-meal-1',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            weeklyPlanId: 'weekly-plan-1',
+            localDay,
+            slotType: 'meal',
+            itemType: 'food',
+            itemId: 'food-catalog-1',
+            mealType: 'breakfast',
+            title: 'Toast and jam',
+            status: 'planned',
+            order: 0,
+          },
+        ],
+        derivedGroceryItems: [],
+        manualGroceryItems: [],
+        workoutTemplates: [],
+        exerciseCatalogItems: [],
+        favoriteMeals: [],
+        healthEvents: [
+          {
+            id: 'symptom-1',
+            createdAt: '2026-04-02T09:00:00.000Z',
+            updatedAt: '2026-04-02T09:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'symptom:1',
+            sourceTimestamp: '2026-04-02T09:00:00.000Z',
+            localDay,
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'symptom',
+            value: 4,
+            payload: {
+              kind: 'symptom',
+              symptom: 'Headache',
+              severity: 4,
+              note: 'Heavy pressure behind the eyes.',
+            },
+          },
+          {
+            id: 'anxiety-1',
+            createdAt: '2026-04-02T10:00:00.000Z',
+            updatedAt: '2026-04-02T10:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'anxiety:1',
+            sourceTimestamp: '2026-04-02T10:00:00.000Z',
+            localDay,
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'anxiety-episode',
+            value: 7,
+            payload: {
+              kind: 'anxiety',
+              intensity: 7,
+              trigger: 'Cramped schedule',
+              durationMinutes: 25,
+            },
+          },
+        ],
+        healthTemplates: [],
+        sobrietyEvents: [],
+        assessmentResults: [],
+        importBatches: [],
+        importArtifacts: [],
+        reviewSnapshots: [],
+        adherenceMatches: [],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/today');
+  await page.getByRole('link', { name: 'Capture recovery note' }).click();
+  await expect(page).toHaveURL(/\/journal/);
+  await expect(page.getByLabel('Title')).toHaveValue('Recovery note');
+  await expect(page.getByLabel('Body')).toHaveValue(/sleep landed under 6 hours/i);
+  await expect(page.getByText(/Loaded from today recovery\./i)).toBeVisible();
+  await expect(page.getByText(/Linked context: 2 events\./i)).toBeVisible();
+});
+
 test('planned meal flows from nutrition into today logging', async ({ page }) => {
   await page.goto('/nutrition');
   await page.getByLabel('Food search').fill('oatmeal');

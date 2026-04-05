@@ -11,6 +11,7 @@ import {
 describe('review model', () => {
   it('builds trend rows and review sections', () => {
     const weekly: WeeklyReviewData = {
+      anchorDay: '2026-04-02',
       snapshot: {
         id: 'review:2026-03-31',
         createdAt: '2026-04-02T08:00:00.000Z',
@@ -157,6 +158,7 @@ describe('review model', () => {
 
   it('surfaces a dedicated health highlights section when weekly health signals are available', () => {
     const weekly: WeeklyReviewData = {
+      anchorDay: '2026-04-02',
       snapshot: {
         id: 'review:2026-03-31',
         createdAt: '2026-04-02T08:00:00.000Z',

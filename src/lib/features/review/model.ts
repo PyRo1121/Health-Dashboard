@@ -1,4 +1,5 @@
 import type { WeeklyReviewData } from '$lib/features/review/service';
+import { buildJournalIntentHref, type JournalIntentHref } from '$lib/features/journal/navigation';
 import {
   buildNutritionIntentHref,
   type NutritionIntentHref,
@@ -10,6 +11,8 @@ export type ReviewSection = {
   emptyTitle?: string;
   emptyMessage?: string;
   emphasis?: 'default' | 'strategy';
+  actionHref?: JournalIntentHref;
+  actionLabel?: string;
 };
 
 export type ReviewNutritionStrategyCard = {
@@ -42,6 +45,24 @@ function normalizeStrategyDetail(detail: string): string {
 function createNutritionStrategyLine(item: WeeklyReviewData['nutritionStrategy'][number]): string {
   const prefix = item.kind === 'repeat' ? 'Repeat' : item.kind === 'rotate' ? 'Rotate in' : 'Skip';
   return `${prefix}: ${item.title} — ${normalizeStrategyDetail(item.detail)}`;
+}
+
+function createReviewJournalIntentHref(
+  weekly: WeeklyReviewData,
+  input: {
+    entryType: 'evening_review' | 'symptom_note';
+    title: string;
+    body: string;
+  }
+): JournalIntentHref {
+  return buildJournalIntentHref({
+    source: 'review-context',
+    localDay: weekly.anchorDay,
+    entryType: input.entryType,
+    title: input.title,
+    body: input.body,
+    linkedEventIds: [],
+  });
 }
 
 export function createReviewTrendRows(weekly: WeeklyReviewData | null): string[] {
@@ -152,11 +173,39 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
           items: weekly.contextSignals,
           emptyMessage:
             'Journal and health context need more overlap before this section becomes useful.',
+          actionLabel: weekly.contextSignals.length ? 'Capture context note' : undefined,
+          actionHref: weekly.contextSignals.length
+            ? createReviewJournalIntentHref(weekly, {
+                entryType: 'symptom_note',
+                title: 'Weekly context note',
+                body: [
+                  'Weekly context note.',
+                  '',
+                  ...weekly.contextSignals.map((line) => `- ${line}`),
+                  '',
+                  'What happened behind these signals? What should you watch next week?',
+                ].join('\n'),
+              })
+            : undefined,
         },
         {
           title: 'Journal excerpts',
           items: weekly.journalHighlights,
           emptyMessage: 'Write one useful reflection this week and Review will surface it here.',
+          actionLabel: weekly.journalHighlights.length ? 'Write reflection' : undefined,
+          actionHref: weekly.journalHighlights.length
+            ? createReviewJournalIntentHref(weekly, {
+                entryType: 'evening_review',
+                title: 'Follow-up reflection',
+                body: [
+                  'Follow-up reflection.',
+                  '',
+                  weekly.journalHighlights[0] ?? '',
+                  '',
+                  'What felt true? What should you carry forward next week?',
+                ].join('\n'),
+              })
+            : undefined,
         },
         {
           title: 'Food adherence highlights',

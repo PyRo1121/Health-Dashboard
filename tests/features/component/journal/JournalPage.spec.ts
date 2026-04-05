@@ -32,4 +32,26 @@ describe('Journal route', () => {
       expect(screen.getByText(/steady and ready to work/i)).toBeTruthy();
     });
   });
+
+  it('hydrates the journal draft from a query intent and clears the url params', async () => {
+    window.history.replaceState(
+      {},
+      '',
+      '/journal?source=today-recovery&localDay=2026-04-05&entryType=symptom_note&title=Recovery%20note&body=Crowded%20store%20and%20headache%20drained%20the%20afternoon.&linkedEventIds=symptom-1%2Canxiety-1'
+    );
+
+    render(JournalPage);
+    expectHeading('Journal');
+
+    await waitFor(() => {
+      expect((screen.getByLabelText('Title') as HTMLInputElement).value).toBe('Recovery note');
+      expect((screen.getByLabelText('Body') as HTMLTextAreaElement).value).toBe(
+        'Crowded store and headache drained the afternoon.'
+      );
+      expect(screen.getByText(/Loaded from today recovery\./i)).toBeTruthy();
+      expect(screen.getByText(/Linked context: 2 events\./i)).toBeTruthy();
+    });
+
+    expect(window.location.search).toBe('');
+  });
 });

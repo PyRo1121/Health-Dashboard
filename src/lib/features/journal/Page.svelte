@@ -7,6 +7,10 @@
     loadJournalPage,
     saveJournalPage,
   } from '$lib/features/journal/client';
+  import {
+    clearJournalIntentFromLocation,
+    readJournalIntentFromSearch,
+  } from '$lib/features/journal/navigation';
   import { createJournalEntryRows, journalEntryTypeOptions } from '$lib/features/journal/model';
   import { onBrowserRouteMount } from '$lib/core/ui/route-runtime';
   import RoutePageHeader from '$lib/core/ui/shell/RoutePageHeader.svelte';
@@ -16,7 +20,30 @@
   let entryRows = $derived(createJournalEntryRows(page.entries));
 
   async function loadEntries() {
-    page = await loadJournalPage(page);
+    const intent = readJournalIntentFromSearch(window.location.search);
+    const loaded = await loadJournalPage(page, intent?.localDay);
+
+    if (!intent) {
+      page = loaded;
+      return;
+    }
+
+    clearJournalIntentFromLocation(window.location, window.history);
+    page = {
+      ...loaded,
+      saveNotice:
+        intent.source === 'today-recovery'
+          ? 'Loaded from today recovery.'
+          : 'Loaded from review context.',
+      draft: {
+        ...loaded.draft,
+        localDay: intent.localDay,
+        entryType: intent.entryType,
+        title: intent.title,
+        body: intent.body,
+        linkedEventIds: intent.linkedEventIds,
+      },
+    };
   }
 
   async function handleSave() {
@@ -67,6 +94,9 @@
 
       {#if page.saveNotice}
         <p class="status-copy">{page.saveNotice}</p>
+      {/if}
+      {#if page.draft.linkedEventIds.length}
+        <p class="status-copy">Linked context: {page.draft.linkedEventIds.length} events.</p>
       {/if}
     </SectionCard>
 

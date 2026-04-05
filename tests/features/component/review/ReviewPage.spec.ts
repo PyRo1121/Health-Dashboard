@@ -188,5 +188,11 @@ describe('Review route', () => {
     await waitForText(
       /Evening review on 2026-03-31: Crowded store and headache drained the afternoon\./i
     );
+    expect(screen.getByRole('link', { name: 'Capture context note' }).getAttribute('href')).toMatch(
+      /^\/journal\?/
+    );
+    expect(screen.getByRole('link', { name: 'Write reflection' }).getAttribute('href')).toMatch(
+      /^\/journal\?/
+    );
   });
 });

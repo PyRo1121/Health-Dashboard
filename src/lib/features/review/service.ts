@@ -116,6 +116,7 @@ export async function buildWeeklySnapshot(
   };
 
   return {
+    anchorDay,
     snapshot,
     averageMood: trends.averageMood,
     averageSleep: trends.averageSleep,

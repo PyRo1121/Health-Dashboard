@@ -32,6 +32,7 @@ export interface ReviewAdherenceScore {
 }
 
 export interface WeeklyReviewData {
+  anchorDay: string;
   snapshot: ReviewSnapshot;
   averageMood: number;
   averageSleep: number;
