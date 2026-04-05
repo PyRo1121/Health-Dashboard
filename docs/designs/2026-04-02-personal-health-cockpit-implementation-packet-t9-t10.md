@@ -3,6 +3,7 @@
 Status: Active
 Date: 2026-04-02
 Parent:
+
 - `docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md`
 - `docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md`
 - `docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t0-t1.md`
@@ -39,10 +40,10 @@ The app already has:
 
 Key files:
 
-- [client.ts](/home/pyro1121/Documents/Health/src/lib/db/client.ts)
-- [types.ts](/home/pyro1121/Documents/Health/src/lib/domain/types.ts)
-- [imports.ts](/home/pyro1121/Documents/Health/src/lib/services/imports.ts)
-- [review.ts](/home/pyro1121/Documents/Health/src/lib/services/review.ts)
+- [db client](../../src/lib/core/db/client.ts)
+- [domain types](../../src/lib/core/domain/types.ts)
+- [imports service](../../src/lib/features/imports/service.ts)
+- [review service](../../src/lib/features/review/service.ts)
 
 ## What is missing for T9/T10
 
@@ -141,7 +142,7 @@ Add a **device-and-clinical bridge layer** instead of letting T9/T10 talk straig
 New top-level module family:
 
 ```text
-src/lib/integrations/
+src/lib/features/integrations/
   bridge/
   connectors/
   normalization/
@@ -223,7 +224,7 @@ apps/
   ios-companion/      (if Apple-first)
   android-companion/  (if Android-first)
 
-src/lib/integrations/
+src/lib/features/integrations/
   bridge/
     schema.ts
     validate.ts
@@ -313,12 +314,12 @@ It validates the companion data path without spending early complexity on backgr
 
 ## T9 failure modes
 
-| Failure | Impact | Mitigation |
-|---|---|---|
-| permission denied in native app | no data arrives | explicit setup UX and status surface |
-| duplicate companion import | trust erosion | source record dedupe |
-| native payload version mismatch | bad import or silent miss | connectorVersion gate |
-| timezone mismatch | wrong day assignment | preserve source timestamp + normalize once |
+| Failure                         | Impact                    | Mitigation                                 |
+| ------------------------------- | ------------------------- | ------------------------------------------ |
+| permission denied in native app | no data arrives           | explicit setup UX and status surface       |
+| duplicate companion import      | trust erosion             | source record dedupe                       |
+| native payload version mismatch | bad import or silent miss | connectorVersion gate                      |
+| timezone mismatch               | wrong day assignment      | preserve source timestamp + normalize once |
 
 ## T9 acceptance criteria
 
@@ -369,7 +370,7 @@ Recommended starter resources:
 ## New modules
 
 ```text
-src/lib/integrations/
+src/lib/features/integrations/
   connectors/
     smart-fhir.ts
     blue-button.ts
@@ -415,12 +416,12 @@ That means:
 
 ## T10 failure modes
 
-| Failure | Impact | Mitigation |
-|---|---|---|
-| wrong patient merge | catastrophic trust break | explicit identity gate |
-| partial resource support | confusing clinical gaps | capability matrix |
-| OAuth flow drift | connector breaks silently | integration tests + status surface |
-| ambiguous terminology mapping | misleading timeline | resource-type-specific normalization |
+| Failure                       | Impact                    | Mitigation                           |
+| ----------------------------- | ------------------------- | ------------------------------------ |
+| wrong patient merge           | catastrophic trust break  | explicit identity gate               |
+| partial resource support      | confusing clinical gaps   | capability matrix                    |
+| OAuth flow drift              | connector breaks silently | integration tests + status surface   |
+| ambiguous terminology mapping | misleading timeline       | resource-type-specific normalization |
 
 ## T10 acceptance criteria
 
@@ -527,21 +528,21 @@ USER FLOWS
 
 ## What already exists
 
-- current local import staging pattern in `src/lib/services/imports.ts`
-- provenance-aware health events in `src/lib/domain/types.ts`
-- review snapshots in `src/lib/services/review.ts`
+- current local import staging pattern in `src/lib/features/imports/service.ts`
+- provenance-aware health events in `src/lib/core/domain/types.ts`
+- review snapshots in `src/lib/features/review/service.ts`
 - strong browser-level coverage for all current user flows
 
 ## Parallelization strategy
 
-| Step | Modules touched | Depends on |
-|---|---|---|
-| bridge contract | `src/lib/integrations/bridge`, `src/lib/domain` | — |
-| native companion POC | `apps/ios-companion` or `apps/android-companion`, `src/lib/integrations/connectors` | bridge contract |
-| local companion import path | `src/lib/services/imports.ts`, `src/lib/integrations/normalization` | bridge contract |
-| SMART auth + fetch | `src/lib/integrations/auth`, `src/lib/integrations/connectors` | bridge contract |
-| FHIR normalization + identity gate | `src/lib/integrations/normalization`, `src/lib/integrations/identity` | SMART auth + fetch |
-| review/timeline surfacing | `src/routes/timeline`, `src/routes/review`, `src/lib/services/review.ts` | local companion import path and/or FHIR normalization |
+| Step                               | Modules touched                                                                              | Depends on                                            |
+| ---------------------------------- | -------------------------------------------------------------------------------------------- | ----------------------------------------------------- |
+| bridge contract                    | `src/lib/features/integrations/bridge`, `src/lib/core/domain`                                | —                                                     |
+| native companion POC               | `apps/ios-companion` or `apps/android-companion`, `src/lib/features/integrations/connectors` | bridge contract                                       |
+| local companion import path        | `src/lib/features/imports/service.ts`, `src/lib/features/integrations/normalization`         | bridge contract                                       |
+| SMART auth + fetch                 | `src/lib/features/integrations/auth`, `src/lib/features/integrations/connectors`             | bridge contract                                       |
+| FHIR normalization + identity gate | `src/lib/features/integrations/normalization`, `src/lib/features/integrations/identity`      | SMART auth + fetch                                    |
+| review/timeline surfacing          | `src/routes/timeline`, `src/routes/review`, `src/lib/features/review/service.ts`             | local companion import path and/or FHIR normalization |
 
 ### Parallel lanes
 

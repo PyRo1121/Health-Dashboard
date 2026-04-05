@@ -1,142 +1,150 @@
 import { currentLocalDay } from '$lib/core/domain/time';
-import { postFeatureRequest } from '$lib/core/http/feature-client';
 import {
-	addEmptyExerciseToWorkoutTemplate,
-	addExerciseToWorkoutTemplate,
-	applyExerciseSearchResults,
-	createPlanningPageState,
-	deletePlanningSlotPage as deletePlanningSlotPageController,
-	loadPlanningPage as loadPlanningPageController,
-	markPlanningSlotStatusPage as markPlanningSlotStatusPageController,
-	movePlanningSlotPage as movePlanningSlotPageController,
-	removeWorkoutTemplateExercise,
-	savePlanningSlotPage as savePlanningSlotPageController,
-	saveWorkoutTemplatePage as saveWorkoutTemplatePageController,
-	togglePlanningGroceryStatePage as togglePlanningGroceryStatePageController,
-	updateWorkoutTemplateExerciseField,
-	updateExerciseSearchQuery,
-	type PlanningPageState
+  createFeatureActionClient,
+  createFeatureRequestClient,
+} from '$lib/core/http/feature-client';
+import {
+  addManualPlanningGroceryItemPage as addManualPlanningGroceryItemPageController,
+  addEmptyExerciseToWorkoutTemplate,
+  addExerciseToWorkoutTemplate,
+  applyExerciseSearchResults,
+  createPlanningPageState,
+  deletePlanningSlotPage as deletePlanningSlotPageController,
+  loadPlanningPage as loadPlanningPageController,
+  markPlanningSlotStatusPage as markPlanningSlotStatusPageController,
+  movePlanningSlotPage as movePlanningSlotPageController,
+  removeManualPlanningGroceryItemPage as removeManualPlanningGroceryItemPageController,
+  removeWorkoutTemplateExercise,
+  savePlanningSlotPage as savePlanningSlotPageController,
+  saveWorkoutTemplatePage as saveWorkoutTemplatePageController,
+  togglePlanningGroceryStatePage as togglePlanningGroceryStatePageController,
+  updateWorkoutTemplateExerciseField,
+  updateExerciseSearchQuery,
+  type PlanningPageState,
 } from './controller';
 import { searchExerciseCatalog } from '$lib/features/movement/service';
 
 export { createPlanningPageState };
 
-export async function loadPlanningPage(localDay = currentLocalDay(), state = createPlanningPageState()): Promise<PlanningPageState> {
-	return await postFeatureRequest(
-		'/api/plan',
-		{
-			action: 'load',
-			localDay,
-			state
-		},
-		(db) => loadPlanningPageController(db, localDay, state)
-	);
+const planningClient = createFeatureActionClient('/api/plan');
+const movementSearchClient = createFeatureRequestClient('/api/movement/search-exercises');
+
+export async function loadPlanningPage(
+  localDay = currentLocalDay(),
+  state = createPlanningPageState()
+): Promise<PlanningPageState> {
+  return await planningClient.stateAction(
+    'load',
+    state,
+    (db) => loadPlanningPageController(db, localDay, state),
+    { localDay }
+  );
 }
 
 export async function savePlanningSlotPage(state: PlanningPageState): Promise<PlanningPageState> {
-	return await postFeatureRequest(
-		'/api/plan',
-		{
-			action: 'saveSlot',
-			state
-		},
-		(db) => savePlanningSlotPageController(db, state)
-	);
+  return await planningClient.stateAction('saveSlot', state, (db) =>
+    savePlanningSlotPageController(db, state)
+  );
 }
 
-export async function saveWorkoutTemplatePage(state: PlanningPageState): Promise<PlanningPageState> {
-	return await postFeatureRequest(
-		'/api/plan',
-		{
-			action: 'saveWorkoutTemplate',
-			state
-		},
-		(db) => saveWorkoutTemplatePageController(db, state)
-	);
+export async function saveWorkoutTemplatePage(
+  state: PlanningPageState
+): Promise<PlanningPageState> {
+  return await planningClient.stateAction('saveWorkoutTemplate', state, (db) =>
+    saveWorkoutTemplatePageController(db, state)
+  );
 }
 
 export async function markPlanningSlotStatusPage(
-	state: PlanningPageState,
-	slotId: string,
-	status: 'planned' | 'done' | 'skipped'
+  state: PlanningPageState,
+  slotId: string,
+  status: 'planned' | 'done' | 'skipped'
 ): Promise<PlanningPageState> {
-	return await postFeatureRequest(
-		'/api/plan',
-		{
-			action: 'markSlotStatus',
-			state,
-			slotId,
-			status
-		},
-		(db) => markPlanningSlotStatusPageController(db, state, slotId, status)
-	);
+  return await planningClient.stateAction(
+    'markSlotStatus',
+    state,
+    (db) => markPlanningSlotStatusPageController(db, state, slotId, status),
+    { slotId, status }
+  );
 }
 
 export async function deletePlanningSlotPage(
-	state: PlanningPageState,
-	slotId: string
+  state: PlanningPageState,
+  slotId: string
 ): Promise<PlanningPageState> {
-	return await postFeatureRequest(
-		'/api/plan',
-		{
-			action: 'deleteSlot',
-			state,
-			slotId
-		},
-		(db) => deletePlanningSlotPageController(db, state, slotId)
-	);
+  return await planningClient.stateAction(
+    'deleteSlot',
+    state,
+    (db) => deletePlanningSlotPageController(db, state, slotId),
+    { slotId }
+  );
 }
 
 export async function movePlanningSlotPage(
-	state: PlanningPageState,
-	slotId: string,
-	direction: 'up' | 'down'
+  state: PlanningPageState,
+  slotId: string,
+  direction: 'up' | 'down'
 ): Promise<PlanningPageState> {
-	return await postFeatureRequest(
-		'/api/plan',
-		{
-			action: 'moveSlot',
-			state,
-			slotId,
-			direction
-		},
-		(db) => movePlanningSlotPageController(db, state, slotId, direction)
-	);
+  return await planningClient.stateAction(
+    'moveSlot',
+    state,
+    (db) => movePlanningSlotPageController(db, state, slotId, direction),
+    { slotId, direction }
+  );
 }
 
 export async function togglePlanningGroceryStatePage(
-	state: PlanningPageState,
-	itemId: string,
-	patch: { checked: boolean; excluded: boolean; onHand: boolean }
+  state: PlanningPageState,
+  itemId: string,
+  patch: { checked: boolean; excluded: boolean; onHand: boolean }
 ): Promise<PlanningPageState> {
-	return await postFeatureRequest(
-		'/api/plan',
-		{
-			action: 'toggleGrocery',
-			state,
-			itemId,
-			patch
-		},
-		(db) => togglePlanningGroceryStatePageController(db, state, itemId, patch)
-	);
+  return await planningClient.stateAction(
+    'toggleGrocery',
+    state,
+    (db) => togglePlanningGroceryStatePageController(db, state, itemId, patch),
+    { itemId, patch }
+  );
+}
+
+export async function addManualPlanningGroceryItemPage(
+  state: PlanningPageState,
+  draft: { label: string; quantityText: string }
+): Promise<PlanningPageState> {
+  return await planningClient.stateAction(
+    'addManualGrocery',
+    state,
+    (db) => addManualPlanningGroceryItemPageController(db, state, draft),
+    { draft }
+  );
+}
+
+export async function removeManualPlanningGroceryItemPage(
+  state: PlanningPageState,
+  itemId: string
+): Promise<PlanningPageState> {
+  return await planningClient.stateAction(
+    'removeManualGrocery',
+    state,
+    (db) => removeManualPlanningGroceryItemPageController(db, state, itemId),
+    { itemId }
+  );
 }
 
 export {
-	addEmptyExerciseToWorkoutTemplate,
-	addExerciseToWorkoutTemplate,
-	removeWorkoutTemplateExercise,
-	updateWorkoutTemplateExerciseField,
-	updateExerciseSearchQuery
+  addEmptyExerciseToWorkoutTemplate,
+  addExerciseToWorkoutTemplate,
+  removeWorkoutTemplateExercise,
+  updateWorkoutTemplateExerciseField,
+  updateExerciseSearchQuery,
 };
 
-export async function searchPlanningExercises(state: PlanningPageState): Promise<PlanningPageState> {
-	const results = await postFeatureRequest(
-		'/api/movement/search-exercises',
-		{
-			query: state.exerciseSearchQuery
-		},
-		async () => searchExerciseCatalog(state.exerciseSearchQuery, state.exerciseCatalogItems)
-	);
+export async function searchPlanningExercises(
+  state: PlanningPageState
+): Promise<PlanningPageState> {
+  const results = await movementSearchClient.request(
+    { query: state.exerciseSearchQuery },
+    async () => searchExerciseCatalog(state.exerciseSearchQuery, state.exerciseCatalogItems)
+  );
 
-	return applyExerciseSearchResults(state, results);
+  return applyExerciseSearchResults(state, results);
 }

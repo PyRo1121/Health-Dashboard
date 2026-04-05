@@ -1,51 +1,42 @@
 import { currentLocalDay } from '$lib/core/domain/time';
-import { postFeatureRequest } from '$lib/core/http/feature-client';
+import { createFeatureActionClient } from '$lib/core/http/feature-client';
 import {
-	createAssessmentsPageState,
-	loadAssessmentsPage as loadAssessmentsPageController,
-	saveAssessmentsProgressPage as saveAssessmentsProgressPageController,
-	setAssessmentsInstrument,
-	submitAssessmentsPage as submitAssessmentsPageController,
-	type AssessmentsPageState
+  createAssessmentsPageState,
+  loadAssessmentsPage as loadAssessmentsPageController,
+  saveAssessmentsProgressPage as saveAssessmentsProgressPageController,
+  setAssessmentsInstrument,
+  submitAssessmentsPage as submitAssessmentsPageController,
+  type AssessmentsPageState,
 } from './controller';
 
 export { createAssessmentsPageState, setAssessmentsInstrument };
 
+const assessmentsClient = createFeatureActionClient('/api/assessments');
+
 export async function loadAssessmentsPage(
-	state: AssessmentsPageState,
-	localDay = currentLocalDay()
+  state: AssessmentsPageState,
+  localDay = currentLocalDay()
 ): Promise<AssessmentsPageState> {
-	return await postFeatureRequest(
-		'/api/assessments',
-		{
-			action: 'load',
-			localDay,
-			state
-		},
-		(db) => loadAssessmentsPageController(db, localDay, state)
-	);
+  return await assessmentsClient.stateAction(
+    'load',
+    state,
+    (db) => loadAssessmentsPageController(db, localDay, state),
+    { localDay }
+  );
 }
 
 export async function saveAssessmentsProgressPage(
-	state: AssessmentsPageState
+  state: AssessmentsPageState
 ): Promise<AssessmentsPageState> {
-	return await postFeatureRequest(
-		'/api/assessments',
-		{
-			action: 'saveProgress',
-			state
-		},
-		(db) => saveAssessmentsProgressPageController(db, state)
-	);
+  return await assessmentsClient.stateAction('saveProgress', state, (db) =>
+    saveAssessmentsProgressPageController(db, state)
+  );
 }
 
-export async function submitAssessmentsPage(state: AssessmentsPageState): Promise<AssessmentsPageState> {
-	return await postFeatureRequest(
-		'/api/assessments',
-		{
-			action: 'submit',
-			state
-		},
-		(db) => submitAssessmentsPageController(db, state)
-	);
+export async function submitAssessmentsPage(
+  state: AssessmentsPageState
+): Promise<AssessmentsPageState> {
+  return await assessmentsClient.stateAction('submit', state, (db) =>
+    submitAssessmentsPageController(db, state)
+  );
 }

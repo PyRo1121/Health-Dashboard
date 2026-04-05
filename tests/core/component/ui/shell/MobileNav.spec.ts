@@ -1,15 +1,17 @@
 import { describe, expect, it } from 'vitest';
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, within } from '@testing-library/svelte';
+import { MOBILE_NAV_ROUTES } from '$lib/core/ui/shell/navigation';
 import MobileNav from '$lib/core/ui/shell/MobileNav.svelte';
 
 describe('MobileNav', () => {
-	it('renders the locked mobile navigation items', async () => {
-		render(MobileNav);
+  it('renders the mobile navigation from route metadata in order', async () => {
+    render(MobileNav);
 
-		expect(screen.getByRole('navigation', { name: 'Mobile' })).toBeTruthy();
-		expect(screen.getByRole('link', { name: 'Today' })).toBeTruthy();
-		expect(screen.getByRole('link', { name: 'Plan' })).toBeTruthy();
-		expect(screen.getByRole('link', { name: 'Review' })).toBeTruthy();
-		expect(screen.getByRole('link', { name: 'More' })).toBeTruthy();
-	});
+    const nav = screen.getByRole('navigation', { name: 'Mobile' });
+    const labels = within(nav)
+      .getAllByRole('link')
+      .map((link) => link.textContent?.trim());
+
+    expect(labels).toEqual(MOBILE_NAV_ROUTES.map((route) => route.label));
+  });
 });

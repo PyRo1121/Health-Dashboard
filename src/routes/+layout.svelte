@@ -1,9 +1,9 @@
 <script lang="ts">
-	import AppLayout from '$lib/core/ui/AppLayout.svelte';
+  import AppLayout from '$lib/core/ui/AppLayout.svelte';
 
-	let { children } = $props();
+  let { children } = $props();
 </script>
 
 <AppLayout>
-	{@render children?.()}
+  {@render children?.()}
 </AppLayout>

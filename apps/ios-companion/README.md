@@ -3,6 +3,7 @@
 This workspace is the iPhone-first `T9` proof of concept for the Personal Health Cockpit.
 
 Scope:
+
 - request HealthKit read access
 - export a local JSON bundle for the web app
 - only include the first three passive metrics:
@@ -14,15 +15,18 @@ Scope:
   - `Changes since last export`
 
 The generated bundle matches the web bridge contract in:
-- `/src/lib/domain/types.ts`
-- `/src/lib/integrations/bridge/schema.ts`
-- `/src/lib/integrations/bridge/validate.ts`
+
+- [types.ts](../../src/lib/core/domain/types.ts)
+- [schema.ts](../../src/lib/features/integrations/bridge/schema.ts)
+- [validate.ts](../../src/lib/features/integrations/bridge/validate.ts)
 
 Current query approach:
+
 - snapshot exports use Swift-concurrency HealthKit descriptors for one-shot reads
 - incremental exports use anchored object query descriptors so the app can export only new samples after the previous export
 
 Why:
+
 - Apple’s HealthKit docs recommend sample queries for snapshots and anchored object queries for changes
 - the anchored path is the right production lane for keeping bundle exports small as the user keeps using the app
 

@@ -1,50 +1,48 @@
-import { json } from '@sveltejs/kit';
-import { withServerHealthDb } from '$lib/server/db/client';
+import { createDbQueryPostHandler } from '$lib/server/http/action-route';
 import {
-	listFoodCatalogItems,
-	searchFoodData,
-	searchLocalFoodCatalog,
-	type FoodLookupResult
+  listFoodCatalogItems,
+  searchFoodData,
+  searchLocalFoodCatalog,
+  type FoodLookupResult,
 } from '$lib/features/nutrition/service';
 import { searchUsdaFoods } from '$lib/server/nutrition/usda';
 
 type SearchUsdaResponse = {
-	matches: FoodLookupResult[];
-	notice?: string;
+  matches: FoodLookupResult[];
+  notice?: string;
 };
 
-export async function POST({ request }) {
-	const { query } = (await request.json()) as { query?: string };
-	const normalizedQuery = query?.trim() ?? '';
+type SearchUsdaRequest = { query?: string };
 
-	if (!normalizedQuery) {
-		return json({ matches: [] } satisfies SearchUsdaResponse);
-	}
-
-	return json(
-		await withServerHealthDb(async (db) => {
-			const catalogItems = await listFoodCatalogItems(db);
-			const localMatches = searchLocalFoodCatalog(normalizedQuery, catalogItems);
-			const apiKey = process.env.USDA_FDC_API_KEY ?? process.env.FDC_API_KEY;
-
-			if (!apiKey) {
-				return {
-					matches: searchFoodData(normalizedQuery, catalogItems),
-					notice: 'USDA live search unavailable, using local fallback foods.'
-				} satisfies SearchUsdaResponse;
-			}
-
-			const remoteMatches = await searchUsdaFoods(normalizedQuery, apiKey);
-			const deduped = new Map<string, FoodLookupResult>();
-
-			for (const match of [...localMatches, ...remoteMatches]) {
-				deduped.set(match.id, match);
-			}
-
-			return {
-				matches: [...deduped.values()],
-				notice: remoteMatches.length ? '' : 'No USDA matches found, showing local results only.'
-			} satisfies SearchUsdaResponse;
-		})
-	);
+function dedupeLookupResults(items: FoodLookupResult[]): FoodLookupResult[] {
+  const deduped = new Map<string, FoodLookupResult>();
+  for (const item of items) {
+    deduped.set(item.id, item);
+  }
+  return [...deduped.values()];
 }
+
+export const POST = createDbQueryPostHandler<SearchUsdaRequest, SearchUsdaResponse>(
+  async (db, query) => {
+    const catalogItems = await listFoodCatalogItems(db);
+    const localMatches = searchLocalFoodCatalog(query, catalogItems);
+    const apiKey = process.env.USDA_FDC_API_KEY ?? process.env.FDC_API_KEY;
+
+    if (!apiKey) {
+      return {
+        matches: searchFoodData(query, catalogItems),
+        notice: 'USDA live search unavailable, using local fallback foods.',
+      } satisfies SearchUsdaResponse;
+    }
+
+    const remoteMatches = await searchUsdaFoods(query, apiKey);
+    return {
+      matches: dedupeLookupResults([...localMatches, ...remoteMatches]),
+      notice: remoteMatches.length ? '' : 'No USDA matches found, showing local results only.',
+    } satisfies SearchUsdaResponse;
+  },
+  undefined,
+  {
+    emptyResult: { matches: [] },
+  }
+);

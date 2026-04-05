@@ -134,11 +134,11 @@ src/
 
 ### Failure modes
 
-| Failure | Why it matters | Mitigation |
-|---|---|---|
-| route structure drifts immediately | later tranches collide | lock folder conventions now |
-| testing setup is deferred | coverage becomes fake later | install test harness in T0 |
-| UI shell becomes bespoke per page | future polish cost explodes | build one shared shell now |
+| Failure                            | Why it matters              | Mitigation                  |
+| ---------------------------------- | --------------------------- | --------------------------- |
+| route structure drifts immediately | later tranches collide      | lock folder conventions now |
+| testing setup is deferred          | coverage becomes fake later | install test harness in T0  |
+| UI shell becomes bespoke per page  | future polish cost explodes | build one shared shell now  |
 
 ### Tests
 
@@ -230,11 +230,11 @@ Use a hybrid:
 
 ### Failure modes
 
-| Failure | Why it matters | Mitigation |
-|---|---|---|
-| timestamp/day mismatch | review summaries become untrustworthy | persist both source timestamp and normalized day |
-| schema too rigid | imports become impossible | flexible payload fields with typed projections |
-| schema too loose | app logic becomes stringly-typed chaos | typed repositories and validators |
+| Failure                | Why it matters                         | Mitigation                                       |
+| ---------------------- | -------------------------------------- | ------------------------------------------------ |
+| timestamp/day mismatch | review summaries become untrustworthy  | persist both source timestamp and normalized day |
+| schema too rigid       | imports become impossible              | flexible payload fields with typed projections   |
+| schema too loose       | app logic becomes stringly-typed chaos | typed repositories and validators                |
 
 ### Tests
 
@@ -313,11 +313,11 @@ Today
 
 ### Failure modes
 
-| Failure | User sees | Test? |
-|---|---|---|
-| stale day after midnight | wrong day header / wrong write target | yes |
-| duplicate click saves twice | duplicated events | yes |
-| empty first-use state looks broken | abandonment | yes |
+| Failure                            | User sees                             | Test? |
+| ---------------------------------- | ------------------------------------- | ----- |
+| stale day after midnight           | wrong day header / wrong write target | yes   |
+| duplicate click saves twice        | duplicated events                     | yes   |
+| empty first-use state looks broken | abandonment                           | yes   |
 
 ### Tests
 
@@ -387,11 +387,11 @@ You can write what happened, not just what was measured.
 
 ### Failure modes
 
-| Failure | Why it matters | Mitigation |
-|---|---|---|
-| journal is just a string field | cannot support import, linking, or search | dedicated entity |
-| event links break on delete | dangling context | soft-delete or link cleanup |
-| prompt UX is noisy | journaling becomes avoidance | prompts optional, not mandatory |
+| Failure                        | Why it matters                            | Mitigation                      |
+| ------------------------------ | ----------------------------------------- | ------------------------------- |
+| journal is just a string field | cannot support import, linking, or search | dedicated entity                |
+| event links break on delete    | dangling context                          | soft-delete or link cleanup     |
+| prompt UX is noisy             | journaling becomes avoidance              | prompts optional, not mandatory |
 
 ### Tests
 
@@ -458,11 +458,11 @@ You can log sober days, lapses, cravings, triggers, and recovery actions without
 
 ### Failure modes
 
-| Failure | User impact | Test? |
-|---|---|---|
-| streak breaks on edits | trust destroyed | yes |
-| lapse note not linked to date | review insight becomes useless | yes |
-| craving logging is too heavy | user stops using it | yes |
+| Failure                       | User impact                    | Test? |
+| ----------------------------- | ------------------------------ | ----- |
+| streak breaks on edits        | trust destroyed                | yes   |
+| lapse note not linked to date | review insight becomes useless | yes   |
+| craving logging is too heavy  | user stops using it            | yes   |
 
 ### Tests
 
@@ -532,11 +532,11 @@ If PHQ-9 item 9 is non-zero:
 
 ### Failure modes
 
-| Failure | Severity | Mitigation |
-|---|---|---|
-| wrong score band | High | table-driven scoring tests |
-| partial responses scored as final | High | validation gate |
-| item 9 response buried | Critical | dedicated safety component |
+| Failure                           | Severity | Mitigation                 |
+| --------------------------------- | -------- | -------------------------- |
+| wrong score band                  | High     | table-driven scoring tests |
+| partial responses scored as final | High     | validation gate            |
+| item 9 response buried            | Critical | dedicated safety component |
 
 ### Tests
 
@@ -598,11 +598,11 @@ You can log food quickly enough to keep doing it, and the nutrition data is deep
 
 ### Failure modes
 
-| Failure | Why it matters | Mitigation |
-|---|---|---|
-| wrong food match | destroys trust | user-selectable override |
-| recurring meal drift | macros become stale silently | version recurring meals |
-| excessive search latency | logging becomes annoying | cache recent lookups locally |
+| Failure                  | Why it matters               | Mitigation                   |
+| ------------------------ | ---------------------------- | ---------------------------- |
+| wrong food match         | destroys trust               | user-selectable override     |
+| recurring meal drift     | macros become stale silently | version recurring meals      |
+| excessive search latency | logging becomes annoying     | cache recent lookups locally |
 
 ### Tests
 
@@ -668,12 +668,12 @@ You can import prior health and journal history, preview the changes, and trust 
 
 ### Failure modes
 
-| Failure | Severity | Mitigation |
-|---|---|---|
-| XML timezone shift | High | preserve source timestamp + normalized day |
-| duplicate imports replay data | High | content hash + source ids |
-| malformed archive half-imports | High | staged batch commit, not streaming writes |
-| Day One media links break | Medium | preserve manifest refs even if media missing |
+| Failure                        | Severity | Mitigation                                   |
+| ------------------------------ | -------- | -------------------------------------------- |
+| XML timezone shift             | High     | preserve source timestamp + normalized day   |
+| duplicate imports replay data  | High     | content hash + source ids                    |
+| malformed archive half-imports | High     | staged batch commit, not streaming writes    |
+| Day One media links break      | Medium   | preserve manifest refs even if media missing |
 
 ### Tests
 
@@ -736,11 +736,11 @@ At the end of the week, the app tells you what moved, what drifted, and what to 
 
 ### Failure modes
 
-| Failure | User impact | Mitigation |
-|---|---|---|
+| Failure                 | User impact          | Mitigation                         |
+| ----------------------- | -------------------- | ---------------------------------- |
 | noisy fake correlations | product feels stupid | thresholding + minimum sample size |
-| recompute too slow | review page drags | materialized snapshots |
-| insight not traceable | trust collapses | source-linked drilldown |
+| recompute too slow      | review page drags    | materialized snapshots             |
+| insight not traceable   | trust collapses      | source-linked drilldown            |
 
 ### Tests
 
@@ -844,11 +844,11 @@ Do not auto-merge clinical persons or institutions casually.
 
 ### Failure modes
 
-| Failure | Severity | Mitigation |
-|---|---|---|
-| wrong person merge | Critical | explicit identity mapping gate |
-| partial FHIR support across institutions | High | connector capability matrix |
-| OAuth onboarding pain | Medium | staged setup UX and institution docs |
+| Failure                                  | Severity | Mitigation                           |
+| ---------------------------------------- | -------- | ------------------------------------ |
+| wrong person merge                       | Critical | explicit identity mapping gate       |
+| partial FHIR support across institutions | High     | connector capability matrix          |
+| OAuth onboarding pain                    | Medium   | staged setup UX and institution docs |
 
 ### Tests
 

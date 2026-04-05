@@ -1,32 +1,32 @@
-import { json } from '@sveltejs/kit';
-import { withServerHealthDb } from '$lib/server/db/client';
+import type { RecipeCatalogItem } from '$lib/core/domain/types';
+import { createDbQueryPostHandler } from '$lib/server/http/action-route';
 import { listRecipeCatalogItems, upsertRecipeCatalogItem } from '$lib/features/nutrition/service';
 import { searchThemealdbRecipes } from '$lib/server/nutrition/themealdb';
 
-export async function POST({ request }) {
-	const { query } = (await request.json()) as { query?: string };
-	const normalizedQuery = query?.trim() ?? '';
+type RecipeSearchRequest = { query?: string };
 
-	if (!normalizedQuery) {
-		return json([]);
-	}
-
-	return json(
-		await withServerHealthDb(async (db) => {
-			const localMatches = (await listRecipeCatalogItems(db)).filter((recipe) =>
-				recipe.title.toLowerCase().includes(normalizedQuery.toLowerCase())
-			);
-			const remoteMatches = await searchThemealdbRecipes(normalizedQuery);
-			const cachedRemoteMatches = await Promise.all(
-				remoteMatches.map((recipe) => upsertRecipeCatalogItem(db, recipe))
-			);
-
-			const deduped = new Map<string, (typeof cachedRemoteMatches)[number]>();
-			for (const recipe of [...localMatches, ...cachedRemoteMatches]) {
-				deduped.set(recipe.id, recipe);
-			}
-
-			return [...deduped.values()];
-		})
-	);
+function dedupeRecipesById(items: RecipeCatalogItem[]): RecipeCatalogItem[] {
+  const deduped = new Map<string, RecipeCatalogItem>();
+  for (const item of items) {
+    deduped.set(item.id, item);
+  }
+  return [...deduped.values()];
 }
+
+export const POST = createDbQueryPostHandler<RecipeSearchRequest, RecipeCatalogItem[]>(
+  async (db, query) => {
+    const localMatches = (await listRecipeCatalogItems(db)).filter((recipe) =>
+      recipe.title.toLowerCase().includes(query.toLowerCase())
+    );
+    const remoteMatches = await searchThemealdbRecipes(query);
+    const cachedRemoteMatches = await Promise.all(
+      remoteMatches.map((recipe) => upsertRecipeCatalogItem(db, recipe))
+    );
+
+    return dedupeRecipesById([...localMatches, ...cachedRemoteMatches]);
+  },
+  undefined,
+  {
+    emptyResult: [],
+  }
+);

@@ -1,0 +1,48 @@
+name: AI Code Review (MiniMax)
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number for manual review'
+        required: false
+        type: number
+
+concurrency:
+  group: ai-review-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  ai-review:
+    name: AI Code Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+
+      - name: AI Code Review with MiniMax
+        uses: tarmojussila/minimax-code-review@v0.3.0
+        with:
+          MINIMAX_API_KEY: ${{ secrets.MINIMAX_API_KEY }}
+          MINIMAX_MODEL: MiniMax-M2.5
+          MINIMAX_REVIEWER_NAME: 'MiniMax AI Review'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: AI Code Review Summary
+        if: always()
+        run: |
+          echo "## MiniMax AI Code Review Complete" >> $GITHUB_STEP_SUMMARY
+          echo "Review ran on: ${{ github.event.pull_request.title || 'manual trigger' }}" >> $GITHUB_STEP_SUMMARY
+          echo "Review mode: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY

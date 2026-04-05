@@ -50,38 +50,42 @@ These are useful, but they are optional if Apple Health or Health Connect alread
 
 ## Integration Matrix
 
-| Source | Access path | What you get | Web-only? | Friction | MVP recommendation |
-|---|---|---|---|---|---|
-| Apple Health | XML export import | workouts, vitals, sleep, meds, state of mind, more | Yes | Low | Yes |
-| Apple Health | HealthKit native companion | structured read/write with permissions | No, iOS native required | Medium | Later |
-| Apple Health Records | via HealthKit clinical records | meds, labs, immunizations, notes, vitals, coverage as FHIR-backed records | No, iOS native required | High | Later |
-| Apple Health Share with Provider | Apple-managed provider sharing | provider-facing sharing, not your app data ownership | No | High | Reference only |
-| Android Health Connect | native Android SDK | wellness, mindfulness, medical records in FHIR | No, Android native required | Medium | Later |
-| MyChart / Epic | SMART on FHIR patient app | patient-authorized clinical data via OAuth + FHIR | Yes | High | Later, but design now |
-| Blue Button 2.0 | Medicare patient OAuth + FHIR | Medicare claims, coverage, prescriptions | Yes | Medium | Nice optional later |
-| USDA FoodData Central | REST API / downloads | nutrient search and enrichment | Yes | Low | Yes |
-| Day One | JSON export import | journal entries + media metadata | Yes | Low | Yes |
-| Garmin | approved developer program APIs | steps, sleep, stress, activities, women’s health | Yes | Medium/High | Optional later |
-| Fitbit | OAuth API | activity, sleep, heart, body | Yes | Medium | Optional later |
-| WHOOP | OAuth API | sleep, recovery, strain, workouts | Yes | Medium | Optional later |
-| Withings | public API / SDK | scale, BP, sleep, biometrics | Yes | Medium | Optional later |
+| Source                           | Access path                     | What you get                                                              | Web-only?                   | Friction    | MVP recommendation    |
+| -------------------------------- | ------------------------------- | ------------------------------------------------------------------------- | --------------------------- | ----------- | --------------------- |
+| Apple Health                     | XML export import               | workouts, vitals, sleep, meds, state of mind, more                        | Yes                         | Low         | Yes                   |
+| Apple Health                     | HealthKit native companion      | structured read/write with permissions                                    | No, iOS native required     | Medium      | Later                 |
+| Apple Health Records             | via HealthKit clinical records  | meds, labs, immunizations, notes, vitals, coverage as FHIR-backed records | No, iOS native required     | High        | Later                 |
+| Apple Health Share with Provider | Apple-managed provider sharing  | provider-facing sharing, not your app data ownership                      | No                          | High        | Reference only        |
+| Android Health Connect           | native Android SDK              | wellness, mindfulness, medical records in FHIR                            | No, Android native required | Medium      | Later                 |
+| MyChart / Epic                   | SMART on FHIR patient app       | patient-authorized clinical data via OAuth + FHIR                         | Yes                         | High        | Later, but design now |
+| Blue Button 2.0                  | Medicare patient OAuth + FHIR   | Medicare claims, coverage, prescriptions                                  | Yes                         | Medium      | Nice optional later   |
+| USDA FoodData Central            | REST API / downloads            | nutrient search and enrichment                                            | Yes                         | Low         | Yes                   |
+| Day One                          | JSON export import              | journal entries + media metadata                                          | Yes                         | Low         | Yes                   |
+| Garmin                           | approved developer program APIs | steps, sleep, stress, activities, women’s health                          | Yes                         | Medium/High | Optional later        |
+| Fitbit                           | OAuth API                       | activity, sleep, heart, body                                              | Yes                         | Medium      | Optional later        |
+| WHOOP                            | OAuth API                       | sleep, recovery, strain, workouts                                         | Yes                         | Medium      | Optional later        |
+| Withings                         | public API / SDK                | scale, BP, sleep, biometrics                                              | Yes                         | Medium      | Optional later        |
 
 ## Best Option By Category
 
 ### Apple users
 
 Best starter option:
+
 - Import Apple Health XML first
 
 Best long-term option:
+
 - iOS companion app with HealthKit
 
 Why:
+
 - Apple already aggregates device and app data
 - export path exists now
 - native HealthKit path is powerful but not available to a pure web app
 
 Evidence:
+
 - Apple Support says Health data can be exported in XML format from the Health app.
 - Apple Developer docs show HealthKit requires native app entitlements and fine-grained authorization.
 - HealthKit clinical records are read-only and backed by FHIR resources.
@@ -89,35 +93,43 @@ Evidence:
 ### Android users
 
 Best starter option:
+
 - file import if available, plus manual logging
 
 Best long-term option:
+
 - Android companion app using Health Connect
 
 Why:
+
 - Health Connect is the Android-native aggregation point
 - it now covers wellness, mindfulness, and medical records in FHIR
 - pure web cannot talk to it directly
 
 Evidence:
+
 - Android Developers say Health Connect stores structured health data and provides mindfulness plus medical records support.
 - Medical Records in Health Connect use FHIR R4 / R4B and support patient, observation, immunization, condition, procedure, and related resources.
 
 ### Clinical records / patient portals
 
 Best starter option:
+
 - import clinical files if the user can export them
 - treat provider data as read-only timeline evidence
 
 Best long-term option:
+
 - SMART on FHIR patient-facing app connection, starting with Epic / MyChart-compatible flows
 
 Why:
+
 - this is the right standard
 - this is also a setup and approval swamp if you start here
 - patient portal interop is worth designing for, but not worth blocking v1 on
 
 Evidence:
+
 - Epic documents patient-facing consumer health apps using OAuth2 with MyChart credentials and FHIR APIs.
 - Epic also says apps must register, receive client records, and distribute client IDs to customer environments.
 - Some write workflows such as Observation.Create require active MyChart accounts and specific app registration.
@@ -125,30 +137,37 @@ Evidence:
 ### Claims / payer data
 
 Best starter option:
+
 - skip unless you personally have a Medicare use case
 
 Best long-term option:
+
 - Blue Button 2.0 if relevant
 
 Why:
+
 - It is high-value for longitudinal claims history, but only for a subset of users.
 
 Evidence:
+
 - CMS Blue Button 2.0 exposes Medicare claims through FHIR and OAuth.
 - CMS explicitly describes ongoing personal health aggregator apps with 13-month user authorization windows.
 
 ### Food data
 
 Best starter option:
+
 - USDA FoodData Central for nutrient enrichment
 - your own recurring-meal layer on top
 
 Why:
+
 - public-domain data
 - strong source quality
 - enough for real nutrition tracking without getting cute
 
 Evidence:
+
 - USDA FoodData Central offers API and downloadable JSON/CSV data.
 - Default rate limit is 1,000 requests per hour per IP.
 
@@ -194,15 +213,18 @@ Once a food is resolved, the app should normalize it locally, cache it locally, 
 ### Journaling
 
 Best starter option:
+
 - first-party journaling inside your app
 - optional Day One JSON import
 
 Why:
+
 - journaling is not a side table, it is part of the causal graph
 - you want entries linked to sleep, food, cravings, mood, and experiments
 - importing existing history reduces cold start pain
 
 Evidence:
+
 - Day One supports JSON exports with entry payloads and optional media folders.
 
 ## What World-Class Looks Like
