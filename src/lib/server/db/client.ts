@@ -214,6 +214,7 @@ function createTableMap(
   | 'importBatches'
   | 'importArtifacts'
   | 'reviewSnapshots'
+  | 'adherenceMatches'
 > {
   return {
     dailyRecords: new SqliteTable(
@@ -306,6 +307,11 @@ function createTableMap(
       database,
       'reviewSnapshots',
       parseIndexedColumns(SCHEMA_STORES.reviewSnapshots)
+    ),
+    adherenceMatches: new SqliteTable(
+      database,
+      'adherenceMatches',
+      parseIndexedColumns(SCHEMA_STORES.adherenceMatches)
     ),
   };
 }

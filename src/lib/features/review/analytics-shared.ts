@@ -21,6 +21,7 @@ export interface ReviewAdherenceScore {
   completed: number;
   missed: number;
   pending: number;
+  inferredCount: number;
   tone: 'steady' | 'mixed' | 'attention';
   detail: string;
 }

@@ -2,6 +2,7 @@ import type { HealthDatabase } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
 import type { ReviewSnapshot } from '$lib/core/domain/types';
 import { updateRecordMeta } from '$lib/core/shared/records';
+import { buildWeekAdherenceMatches } from '$lib/features/adherence/service';
 import {
   buildAdherenceScores,
   buildAdherenceSignals,
@@ -85,6 +86,13 @@ export async function buildWeeklySnapshot(
   const weekGroceries = weeklyPlan
     ? groceryItems.filter((item) => item.weeklyPlanId === weeklyPlan.id)
     : [];
+  const adherenceMatches = await buildWeekAdherenceMatches(
+    db,
+    weekStart,
+    weekPlanSlots,
+    weekFood,
+    anchorDay
+  );
 
   const trends = computeTrendComparisonsFromData(weekStart, weekRecords, weekFood);
   const correlations = computeCorrelations(weekRecords, weekFood);
@@ -119,8 +127,8 @@ export async function buildWeeklySnapshot(
       weekGroceries
     ),
     planningHighlights: buildPlanningHighlights(weeklyPlan, weekPlanSlots, weekGroceries),
-    adherenceScores: buildAdherenceScores(weekPlanSlots, anchorDay),
-    adherenceSignals: buildAdherenceSignals(weekPlanSlots, anchorDay),
+    adherenceScores: buildAdherenceScores(adherenceMatches),
+    adherenceSignals: buildAdherenceSignals(adherenceMatches),
     grocerySignals: buildGrocerySignals(weekPlanSlots, weekGroceries, anchorDay),
     deviceHighlights: buildDeviceHighlights(weekHealthEvents),
     assessmentSummary: buildAssessmentSummary(weekAssessments),

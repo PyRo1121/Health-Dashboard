@@ -2,6 +2,7 @@ import Dexie, { type EntityTable } from 'dexie';
 import { browser } from '$app/environment';
 import type { HealthDbSnapshot } from '$lib/core/db/types';
 import type {
+  AdherenceMatch,
   AssessmentResult,
   DailyRecord,
   ExerciseCatalogItem,
@@ -44,6 +45,7 @@ export class HealthDatabase extends Dexie {
   importBatches!: EntityTable<ImportBatch, 'id'>;
   importArtifacts!: EntityTable<ImportArtifact, 'id'>;
   reviewSnapshots!: EntityTable<ReviewSnapshot, 'id'>;
+  adherenceMatches!: EntityTable<AdherenceMatch, 'id'>;
 
   constructor(name = DB_NAME) {
     super(name);
@@ -98,6 +100,7 @@ export async function exportHealthDbSnapshot(db = getHealthDb()): Promise<Health
     importBatches,
     importArtifacts,
     reviewSnapshots,
+    adherenceMatches,
   ] = await Promise.all([
     db.dailyRecords.toArray(),
     db.journalEntries.toArray(),
@@ -118,6 +121,7 @@ export async function exportHealthDbSnapshot(db = getHealthDb()): Promise<Health
     db.importBatches.toArray(),
     db.importArtifacts.toArray(),
     db.reviewSnapshots.toArray(),
+    db.adherenceMatches.toArray(),
   ]);
 
   return {
@@ -140,6 +144,7 @@ export async function exportHealthDbSnapshot(db = getHealthDb()): Promise<Health
     importBatches,
     importArtifacts,
     reviewSnapshots,
+    adherenceMatches,
   };
 }
 

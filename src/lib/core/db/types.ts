@@ -1,4 +1,5 @@
 import type {
+  AdherenceMatch,
   AssessmentResult,
   DailyRecord,
   ExerciseCatalogItem,
@@ -60,6 +61,7 @@ export interface HealthDatabase {
   importBatches: HealthDbTable<ImportBatch>;
   importArtifacts: HealthDbTable<ImportArtifact>;
   reviewSnapshots: HealthDbTable<ReviewSnapshot>;
+  adherenceMatches: HealthDbTable<AdherenceMatch>;
   close(): void;
   delete(): Promise<void>;
 }
@@ -84,4 +86,5 @@ export interface HealthDbSnapshot {
   importBatches: ImportBatch[];
   importArtifacts: ImportArtifact[];
   reviewSnapshots: ReviewSnapshot[];
+  adherenceMatches: AdherenceMatch[];
 }

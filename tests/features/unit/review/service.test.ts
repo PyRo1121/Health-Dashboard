@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { saveAssessmentProgress, submitAssessment } from '$lib/features/assessments/service';
 import { deriveWeeklyGroceries, setGroceryItemState } from '$lib/features/groceries/service';
 import { commitImportBatch, previewImport } from '$lib/features/imports/service';
-import { upsertRecipeCatalogItem } from '$lib/features/nutrition/service';
+import { saveFoodCatalogItem, upsertRecipeCatalogItem } from '$lib/features/nutrition/service';
 import {
   ensureWeeklyPlan,
   savePlanSlot,
@@ -227,6 +227,84 @@ describe('review service', () => {
     );
     expect(snapshot.experiment).toBe('Try 10 min morning mindfulness');
     expect(await db.reviewSnapshots.count()).toBe(1);
+  });
+
+  it('persists inferred adherence matches and rebuilds them when the week fingerprint changes', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+    const slot = await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      title: 'Greek yogurt bowl',
+      mealType: 'breakfast',
+    });
+
+    let weekly = await buildWeeklySnapshot(db, '2026-04-03');
+    expect(weekly.adherenceScores).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Meals',
+          score: 0,
+          completed: 0,
+          missed: 1,
+        }),
+      ])
+    );
+    let matches = await db.adherenceMatches.toArray();
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toMatchObject({
+      planSlotId: slot.id,
+      outcome: 'miss',
+      matchSource: 'inferred-none',
+      confidence: 'inferred',
+      weekStart: '2026-03-30',
+    });
+    const firstFingerprint = matches[0]!.fingerprint;
+
+    await createFoodEntry(db, {
+      localDay: '2026-04-02',
+      mealType: 'breakfast',
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    weekly = await buildWeeklySnapshot(db, '2026-04-03');
+    expect(weekly.adherenceScores).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          label: 'Meals',
+          score: 100,
+          completed: 1,
+          missed: 0,
+          inferredCount: 1,
+        }),
+      ])
+    );
+    matches = await db.adherenceMatches.toArray();
+    expect(matches).toHaveLength(1);
+    expect(matches[0]).toMatchObject({
+      planSlotId: slot.id,
+      outcome: 'hit',
+      matchSource: 'food-entry',
+      confidence: 'inferred',
+      weekStart: '2026-03-30',
+    });
+    expect(matches[0]!.fingerprint).not.toBe(firstFingerprint);
   });
 
   it('keeps partial assessments out of the assessment summary', async () => {

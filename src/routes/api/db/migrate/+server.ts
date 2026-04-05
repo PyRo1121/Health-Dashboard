@@ -30,6 +30,7 @@ export async function POST({ request }) {
   await db.importBatches.bulkAdd(snapshot.importBatches);
   await db.importArtifacts.bulkAdd(snapshot.importArtifacts);
   await db.reviewSnapshots.bulkAdd(snapshot.reviewSnapshots);
+  await db.adherenceMatches.bulkAdd(snapshot.adherenceMatches ?? []);
 
   return json({
     migrated: Object.values(snapshot).reduce((count, records) => count + records.length, 0),

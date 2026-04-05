@@ -333,6 +333,20 @@ export interface ReviewSnapshot extends BaseRecord {
   experiment?: string;
 }
 
+export interface AdherenceMatch extends BaseRecord {
+  weekStart: LocalDay;
+  planSlotId: RecordId;
+  localDay: LocalDay;
+  slotType: PlanSlot['slotType'];
+  slotTitle: string;
+  outcome: 'hit' | 'miss' | 'pending';
+  matchSource: 'slot-status' | 'food-entry' | 'inferred-none' | 'pending';
+  matchedRecordId?: RecordId;
+  confidence: 'explicit' | 'inferred';
+  reason: string;
+  fingerprint: string;
+}
+
 export interface NativeCompanionSummary {
   importedEvents: number;
   deviceNames: string[];

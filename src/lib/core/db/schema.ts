@@ -1,5 +1,5 @@
 export const DB_NAME = 'personal-health-cockpit';
-export const DB_VERSION = 8;
+export const DB_VERSION = 9;
 
 export const SCHEMA_STORES = {
   dailyRecords: 'id, date, updatedAt',
@@ -21,4 +21,5 @@ export const SCHEMA_STORES = {
   importBatches: 'id, sourceType, status, createdAt',
   importArtifacts: 'id, batchId, artifactType, createdAt',
   reviewSnapshots: 'id, weekStart, updatedAt',
+  adherenceMatches: 'id, weekStart, planSlotId, localDay, outcome, fingerprint, updatedAt',
 } as const;

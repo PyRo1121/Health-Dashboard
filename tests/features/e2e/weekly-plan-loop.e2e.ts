@@ -23,6 +23,7 @@ function emptySnapshot() {
     importBatches: [],
     importArtifacts: [],
     reviewSnapshots: [],
+    adherenceMatches: [],
   };
 }
 

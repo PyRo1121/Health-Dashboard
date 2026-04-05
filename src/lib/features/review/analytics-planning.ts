@@ -1,4 +1,4 @@
-import type { GroceryItem, PlanSlot, WeeklyPlan } from '$lib/core/domain/types';
+import type { AdherenceMatch, GroceryItem, PlanSlot, WeeklyPlan } from '$lib/core/domain/types';
 import type { ReviewAdherenceScore } from './analytics-shared';
 import { pluralize } from './analytics-shared';
 
@@ -24,28 +24,29 @@ function createAdherenceTone(
 
 function createAdherenceScore(
   label: ReviewAdherenceScore['label'],
-  slots: PlanSlot[],
-  anchorDay: string
+  matches: AdherenceMatch[]
 ): ReviewAdherenceScore | null {
-  if (!slots.length) {
+  if (!matches.length) {
     return null;
   }
 
   let completed = 0;
   let missed = 0;
   let pending = 0;
+  let inferredCount = 0;
 
-  for (const slot of slots) {
-    const outcome = resolvePlanOutcome(slot, anchorDay);
-    if (outcome === 'hit') {
+  for (const match of matches) {
+    if (match.outcome === 'hit') {
       completed += 1;
-      continue;
-    }
-    if (outcome === 'miss') {
+    } else if (match.outcome === 'miss') {
       missed += 1;
-      continue;
+    } else {
+      pending += 1;
     }
-    pending += 1;
+
+    if (match.confidence === 'inferred' && match.outcome !== 'pending') {
+      inferredCount += 1;
+    }
   }
 
   const resolved = completed + missed;
@@ -57,6 +58,9 @@ function createAdherenceScore(
   if (pending > 0) {
     detailParts.push(`${pending} upcoming`);
   }
+  if (inferredCount > 0) {
+    detailParts.push(`${inferredCount} inferred`);
+  }
 
   return {
     label,
@@ -64,26 +68,24 @@ function createAdherenceScore(
     completed,
     missed,
     pending,
+    inferredCount,
     tone: createAdherenceTone(score, missed, pending),
     detail: detailParts.join(', '),
   };
 }
 
-function createPlanSignal(slot: PlanSlot, anchorDay: string): string | null {
-  const outcome = resolvePlanOutcome(slot, anchorDay);
-  if (outcome === 'pending') {
+function createPlanSignal(match: AdherenceMatch): string | null {
+  if (match.outcome === 'pending') {
     return null;
   }
 
   const slotLabel =
-    slot.slotType === 'meal' ? 'Meal' : slot.slotType === 'workout' ? 'Workout' : 'Note';
-  if (outcome === 'hit') {
-    return `${slotLabel} hit: ${slot.title} was completed as planned.`;
+    match.slotType === 'meal' ? 'Meal' : match.slotType === 'workout' ? 'Workout' : 'Note';
+  if (match.outcome === 'hit') {
+    return `${slotLabel}${match.confidence === 'inferred' ? ' inferred' : ''} hit: ${match.slotTitle} ${match.reason}`;
   }
 
-  return `${slotLabel} miss: ${slot.title} ${
-    slot.status === 'skipped' ? 'was skipped.' : 'slipped past its planned day.'
-  }`;
+  return `${slotLabel}${match.confidence === 'inferred' ? ' inferred' : ''} miss: ${match.slotTitle} ${match.reason}`;
 }
 
 function createPlanCompletionHighlight(weeklyPlan: WeeklyPlan, planSlots: PlanSlot[]): string {
@@ -154,20 +156,15 @@ export function buildPlanningHighlights(
   return highlights.slice(0, 4);
 }
 
-export function buildAdherenceScores(
-  planSlots: PlanSlot[],
-  anchorDay: string
-): ReviewAdherenceScore[] {
-  const overall = createAdherenceScore('Overall', planSlots, anchorDay);
+export function buildAdherenceScores(matches: AdherenceMatch[]): ReviewAdherenceScore[] {
+  const overall = createAdherenceScore('Overall', matches);
   const meals = createAdherenceScore(
     'Meals',
-    planSlots.filter((slot) => slot.slotType === 'meal'),
-    anchorDay
+    matches.filter((match) => match.slotType === 'meal')
   );
   const workouts = createAdherenceScore(
     'Workouts',
-    planSlots.filter((slot) => slot.slotType === 'workout'),
-    anchorDay
+    matches.filter((match) => match.slotType === 'workout')
   );
 
   return [overall, meals, workouts].filter((score): score is ReviewAdherenceScore =>
@@ -175,21 +172,19 @@ export function buildAdherenceScores(
   );
 }
 
-export function buildAdherenceSignals(planSlots: PlanSlot[], anchorDay: string): string[] {
-  const prioritized = [...planSlots].sort((left, right) => {
-    const leftOutcome = resolvePlanOutcome(left, anchorDay);
-    const rightOutcome = resolvePlanOutcome(right, anchorDay);
+export function buildAdherenceSignals(matches: AdherenceMatch[]): string[] {
+  const prioritized = [...matches].sort((left, right) => {
     const outcomeWeight = { miss: 0, hit: 1, pending: 2 } as const;
 
     return (
-      outcomeWeight[leftOutcome] - outcomeWeight[rightOutcome] ||
+      outcomeWeight[left.outcome] - outcomeWeight[right.outcome] ||
       left.localDay.localeCompare(right.localDay) ||
-      left.order - right.order
+      left.slotTitle.localeCompare(right.slotTitle)
     );
   });
 
   return prioritized
-    .map((slot) => createPlanSignal(slot, anchorDay))
+    .map((match) => createPlanSignal(match))
     .filter((signal): signal is string => Boolean(signal))
     .slice(0, 4);
 }

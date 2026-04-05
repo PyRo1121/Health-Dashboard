@@ -4,7 +4,12 @@ import ReviewPage from '../../../../src/routes/review/+page.svelte';
 import { resetRouteDb, expectHeading, waitForText } from '../../../support/component/routeHarness';
 import { seedReviewSnapshotInputs } from '../../../support/component/routeSeeds';
 import { getHealthDb } from '$lib/core/db/client';
-import { savePlannedMeal } from '$lib/features/nutrition/service';
+import {
+  createFoodEntry,
+  saveFoodCatalogItem,
+  savePlannedMeal,
+} from '$lib/features/nutrition/service';
+import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 
 describe('Review route', () => {
   beforeEach(async () => {
@@ -50,9 +55,9 @@ describe('Review route', () => {
     await waitForText('Overall');
     await waitForText('Meals');
     await waitForText('Workouts');
-    await waitForText(/1 hit, 1 miss\./i);
+    await waitForText(/1 hit, 1 miss, 1 inferred\./i);
     await waitForText(/1 hit, 0 misses\./i);
-    await waitForText(/0 hits, 1 miss\./i);
+    await waitForText(/0 hits, 1 miss, 1 inferred\./i);
     await waitForText(/Meal hit: Teriyaki Chicken Casserole was completed as planned\./i);
     await waitForText(/No grocery misses or waste signals surfaced this week\./i);
     await waitForText(/This Week: 1\/2 plan items completed\./i);
@@ -73,6 +78,48 @@ describe('Review route', () => {
     await waitFor(() => {
       expect(screen.getByText(/Experiment saved\./i)).toBeTruthy();
     });
+  });
+
+  it('labels inferred adherence explicitly inside the review audit', async () => {
+    const db = getHealthDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      title: 'Greek yogurt bowl',
+      mealType: 'breakfast',
+    });
+    await createFoodEntry(db, {
+      localDay: '2026-04-02',
+      mealType: 'breakfast',
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    render(ReviewPage);
+    expectHeading('Review');
+
+    await waitFor(() => {
+      expect(screen.getAllByText(/1 hit, 0 misses, 1 inferred\./i).length).toBeGreaterThan(0);
+    });
+    await waitForText(
+      /Meal inferred hit: Greek yogurt bowl matched a logged meal on 2026-04-02\./i
+    );
   });
 
   it('shows actual misses and grocery waste when a planned meal slips', async () => {
