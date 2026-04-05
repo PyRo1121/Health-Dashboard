@@ -10,7 +10,10 @@ concurrency:
 
 permissions:
   contents: write
+<<<<<<< HEAD
   pull-requests: write
+=======
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
   issues: write
 
 jobs:
@@ -68,7 +71,11 @@ jobs:
         env:
           FILES_PATH: ${{ steps.diff.outputs.files_path }}
         run: |
+<<<<<<< HEAD
           if grep -Eq '^(\.github/|tests/|docs/|package\.json$|bun\.lockb?$|package-lock\.json$|pnpm-lock\.yaml$|yarn\.lock$|tsconfig\.json$|svelte\.config\.js$|vite\.config\.ts$|\.mergify\.yml$)' "$FILES_PATH"; then
+=======
+          if grep -Eq '^(\.github/|tests/|docs/|package\.json$|bun\.lockb?$|package-lock\.json$|pnpm-lock\.yaml$|yarn\.lock$|tsconfig\.json$|svelte\.config\.js$|vite\.config\.ts$)' "$FILES_PATH"; then
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
             echo "skip_reason=protected-paths" >> "$GITHUB_OUTPUT"
           else
             echo "skip_reason=" >> "$GITHUB_OUTPUT"
@@ -112,9 +119,22 @@ jobs:
           FIX_JSON_PATH: ${{ runner.temp }}/grok-fix.json
         run: |
           REASONING=$(node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.env.FIX_JSON_PATH,'utf8')); process.stdout.write((data.reasoning || 'High-confidence minimal patch from Grok.').replace(/\\s+/g,' ').trim());")
+<<<<<<< HEAD
           git config --local user.name "Grok AI"
           git config --local user.email "grok@x.ai"
           git add -A
+=======
+          FILES=$(node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.env.FIX_JSON_PATH,'utf8')); process.stdout.write((data.touchedFiles || []).join('\n'));")
+          if [ -z "$FILES" ]; then
+            echo "No touched files recorded for Grok auto-fix."
+            exit 1
+          fi
+          git config --local user.name "Grok AI"
+          git config --local user.email "grok@x.ai"
+          while IFS= read -r file; do
+            [ -n "$file" ] && git add -- "$file"
+          done <<< "$FILES"
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
           cat > /tmp/grok-commit-message.txt <<EOF
           fix: grok-4-1-fast auto-fix
 
@@ -152,6 +172,7 @@ jobs:
               } catch {}
             }
 
+<<<<<<< HEAD
       - name: Report fix result
         uses: actions/github-script@v8
         env:
@@ -200,6 +221,28 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               per_page: 100,
+=======
+      - name: Upload Grok auto-fix artifact
+        if: always() && steps.guard.outputs.skip_reason == '' && steps.path_guard.outputs.skip_reason == ''
+        uses: actions/upload-artifact@v7
+        with:
+          name: grok-auto-fix-artifact
+          path: |
+            ${{ runner.temp }}/grok-fix.json
+            ${{ runner.temp }}/grok-fix.patch
+
+      - name: Refresh PR manager after auto-fix
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'pr-manager-grok.yml',
+              ref: context.payload.pull_request.base.ref,
+              inputs: { pr_number: String(context.issue.number) },
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
             });
 
             const existing = comments.find((comment) => comment.body?.includes(marker));

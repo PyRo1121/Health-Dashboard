@@ -10,8 +10,12 @@ on:
 permissions:
   actions: write
   contents: write
+<<<<<<< HEAD
   pull-requests: write
   issues: write
+=======
+  pull-requests: read
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
 
 jobs:
   surgeon:
@@ -166,9 +170,22 @@ jobs:
           SURGEON_JSON_PATH: ${{ runner.temp }}/grok-ci-surgeon.json
         run: |
           REASONING=$(node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.env.SURGEON_JSON_PATH,'utf8')); process.stdout.write((data.reasoning || 'High-confidence CI repair from Grok.').replace(/\\s+/g,' ').trim());")
+<<<<<<< HEAD
           git config --local user.name "Grok CI Surgeon"
           git config --local user.email "grok-ci@x.ai"
           git add -A
+=======
+          FILES=$(node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.env.SURGEON_JSON_PATH,'utf8')); process.stdout.write((data.touchedFiles || []).join('\n'));")
+          if [ -z "$FILES" ]; then
+            echo "No touched files recorded for CI surgeon patch."
+            exit 1
+          fi
+          git config --local user.name "Grok CI Surgeon"
+          git config --local user.email "grok-ci@x.ai"
+          while IFS= read -r file; do
+            [ -n "$file" ] && git add -- "$file"
+          done <<< "$FILES"
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
           cat > /tmp/grok-ci-surgeon-commit-message.txt <<EOF
           fix: grok ci surgeon repair
 
@@ -179,6 +196,7 @@ jobs:
           git commit -F /tmp/grok-ci-surgeon-commit-message.txt
           git push
 
+<<<<<<< HEAD
       - name: Report CI surgeon result
         if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
         uses: actions/github-script@v8
@@ -231,3 +249,17 @@ jobs:
                 body,
               });
             }
+=======
+      - name: Refresh PR manager after CI surgery
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'pr-manager-grok.yml',
+              ref: '${{ github.event.workflow_run.head_branch }}',
+              inputs: { pr_number: String('${{ steps.pr.outputs.number }}') },
+            });
+>>>>>>> 8205bca (feat(ci): build grok pr operator)

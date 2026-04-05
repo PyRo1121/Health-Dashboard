@@ -2,6 +2,11 @@
 
 import { readFileSync } from 'node:fs';
 
+<<<<<<< HEAD
+=======
+const LEGACY_LABELS_TO_DELETE = ['automerge', 'grok-reviewed', 'grok-approved'];
+
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
 function requiredEnv(name) {
   const value = process.env[name];
   if (!value) {
@@ -88,6 +93,17 @@ async function main() {
       });
     }
   }
+<<<<<<< HEAD
+=======
+
+  for (const legacyLabel of LEGACY_LABELS_TO_DELETE) {
+    if (byName.has(legacyLabel) && !desiredLabels.some((label) => label.name === legacyLabel)) {
+      await github(`/repos/${owner}/${name}/labels/${encodeURIComponent(legacyLabel)}`, {
+        method: 'DELETE',
+      });
+    }
+  }
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
 }
 
 main().catch((error) => {

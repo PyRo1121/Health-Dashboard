@@ -3,7 +3,20 @@ name: 🧭 Grok PR Manager
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, edited, labeled, unlabeled, ready_for_review]
+<<<<<<< HEAD
   workflow_dispatch:
+=======
+  pull_request_review:
+    types: [submitted, dismissed, edited]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to refresh'
+        required: false
+        type: string
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
 
 concurrency:
   group: grok-pr-manager-${{ github.event.pull_request.number || github.ref }}
@@ -16,6 +29,12 @@ permissions:
 
 jobs:
   manage-pr:
+<<<<<<< HEAD
+=======
+    if: >-
+      github.event_name == 'pull_request_target' ||
+      (github.event.pull_request && github.event.pull_request.head.repo.full_name == github.repository)
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
     name: PR Manager
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -38,22 +57,46 @@ jobs:
         with:
           script: |
             const fs = require('fs');
+<<<<<<< HEAD
             const path = `${process.env.RUNNER_TEMP}/pr-context.json`;
             const files = await github.paginate(github.rest.pulls.listFiles, {
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: context.issue.number,
+=======
+            const marker = '<!-- grok-pr-manager -->';
+            const path = `${process.env.RUNNER_TEMP}/pr-context.json`;
+            const pullNumber =
+              context.payload.pull_request?.number ||
+              context.payload.issue?.number ||
+              Number(context.payload.inputs?.pr_number || 0);
+            const details = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+            });
+            const pr = details.data;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
               per_page: 100,
             });
             const reviews = await github.paginate(github.rest.pulls.listReviews, {
               owner: context.repo.owner,
               repo: context.repo.repo,
+<<<<<<< HEAD
               pull_number: context.issue.number,
+=======
+              pull_number: pullNumber,
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
               per_page: 100,
             });
             const checks = await github.rest.checks.listForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
+<<<<<<< HEAD
               ref: context.payload.pull_request.head.sha,
               per_page: 100,
             });
@@ -66,6 +109,87 @@ jobs:
               mergeStateStatus: context.payload.pull_request.mergeable_state || 'unknown',
               headSha: context.payload.pull_request.head.sha,
               labels: (context.payload.pull_request.labels || []).map((label) => label.name),
+=======
+              ref: pr.head.sha,
+              per_page: 100,
+            });
+            const statuses = await github.rest.repos.getCombinedStatusForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha,
+            });
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: pullNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const previousManagerComment =
+              comments.find((comment) => comment.body?.includes(marker))?.body || '';
+            const autoFixComment =
+              comments.find((comment) => comment.body?.includes('<!-- grok-auto-fix -->'))?.body || '';
+            const ciSurgeonComment =
+              comments.find((comment) => comment.body?.includes('<!-- grok-ci-surgeon -->'))?.body || '';
+            const reviewThreadData = await github.graphql(
+              `
+                query($owner: String!, $repo: String!, $number: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    pullRequest(number: $number) {
+                      commits(last: 1) {
+                        nodes {
+                          commit {
+                            committedDate
+                          }
+                        }
+                      }
+                      reviewThreads(first: 100) {
+                        nodes {
+                          id
+                          isResolved
+                          isOutdated
+                          path
+                          comments(last: 1) {
+                            nodes {
+                              author {
+                                login
+                              }
+                              bodyText
+                              createdAt
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              `,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                number: pullNumber,
+              }
+            );
+
+            const payload = {
+              repository: `${context.repo.owner}/${context.repo.repo}`,
+              number: pr.number,
+              title: pr.title,
+              author: pr.user.login,
+              authorAssociation: pr.author_association,
+              headRef: pr.head.ref,
+              headRepositoryFullName: pr.head.repo?.full_name || '',
+              requestedReviewers: (pr.requested_reviewers || []).map((reviewer) => reviewer.login),
+              headCommittedAt:
+                reviewThreadData?.repository?.pullRequest?.commits?.nodes?.[0]?.commit?.committedDate ||
+                pr.updated_at,
+              isDraft: Boolean(pr.draft),
+              mergeStateStatus: pr.mergeable_state || 'unknown',
+              headSha: pr.head.sha,
+              previousManagerComment,
+              autoFixComment,
+              ciSurgeonComment,
+              labels: (pr.labels || []).map((label) => label.name),
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
               files: files.map((file) => ({
                 filename: file.filename,
                 status: file.status,
@@ -85,6 +209,58 @@ jobs:
                 status: run.status,
                 conclusion: run.conclusion,
               })),
+<<<<<<< HEAD
+=======
+              commitStatuses: (statuses.data.statuses || []).map((status) => ({
+                context: status.context,
+                state: status.state,
+                description: status.description,
+                target_url: status.target_url,
+              })),
+              reviewThreads: (
+                reviewThreadData?.repository?.pullRequest?.reviewThreads?.nodes || []
+              ).map((thread) => ({
+                id: thread.id,
+                isResolved: Boolean(thread.isResolved),
+                isOutdated: Boolean(thread.isOutdated),
+                path: thread.path || 'unknown',
+                lastCommentAuthor:
+                  thread.comments?.nodes?.[0]?.author?.login || 'unknown',
+                lastCommentBodyText:
+                  thread.comments?.nodes?.[0]?.bodyText || '',
+                lastCommentCreatedAt:
+                  thread.comments?.nodes?.[0]?.createdAt || null,
+              })),
+              branchManagerSnapshots: await (async () => {
+                const related = await github.paginate(github.rest.pulls.list, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'all',
+                  head: `${context.repo.owner}:${pr.head.ref}`,
+                  per_page: 100,
+                });
+                const snapshots = [];
+                for (const relatedPr of related) {
+                  if (relatedPr.number === pr.number) continue;
+                  const { data: relatedComments } = await github.rest.issues.listComments({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: relatedPr.number,
+                    per_page: 100,
+                  });
+                  const managerComment =
+                    relatedComments.find((comment) => comment.body?.includes(marker))?.body || '';
+                  if (!managerComment) continue;
+                  snapshots.push({
+                    number: relatedPr.number,
+                    state: relatedPr.state,
+                    mergedAt: relatedPr.merged_at || null,
+                    managerComment,
+                  });
+                }
+                return snapshots;
+              })(),
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
             };
 
             fs.writeFileSync(path, JSON.stringify(payload, null, 2));
@@ -163,6 +339,76 @@ jobs:
               } catch {}
             }
 
+<<<<<<< HEAD
+=======
+      - name: Resolve eligible automation review threads
+        uses: actions/github-script@v8
+        env:
+          PR_MANAGER_JSON_PATH: ${{ runner.temp }}/pr-manager.json
+        with:
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync(process.env.PR_MANAGER_JSON_PATH, 'utf8'));
+            const resolve = Array.isArray(result.reviewThreadActions?.resolve)
+              ? result.reviewThreadActions.resolve
+              : [];
+
+            if (!resolve.length) {
+              core.info('No automation review threads eligible for resolution.');
+              return;
+            }
+
+            const replyMutation = `
+              mutation($threadId: ID!, $body: String!) {
+                addPullRequestReviewThreadReply(
+                  input: {
+                    pullRequestReviewThreadId: $threadId,
+                    body: $body
+                  }
+                ) {
+                  comment {
+                    id
+                  }
+                }
+              }
+            `;
+            const resolveMutation = `
+              mutation($threadId: ID!) {
+                resolveReviewThread(input: { threadId: $threadId }) {
+                  thread {
+                    id
+                    isResolved
+                  }
+                }
+              }
+            `;
+
+            for (const thread of resolve) {
+              const replyBody = [
+                'PR manager rechecked this automation note after newer changes and green gates.',
+                '',
+                `Reason: ${thread.reason}`,
+                '',
+                'Marking this automation thread resolved for final human review.',
+              ].join('\n');
+
+              try {
+                await github.graphql(replyMutation, {
+                  threadId: thread.id,
+                  body: replyBody,
+                });
+              } catch (error) {
+                core.warning(`Could not reply on thread ${thread.id}: ${error.message}`);
+              }
+
+              try {
+                await github.graphql(resolveMutation, { threadId: thread.id });
+              } catch (error) {
+                core.warning(`Could not resolve thread ${thread.id}: ${error.message}`);
+              }
+            }
+
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
       - name: Upload PR manager artifact
         uses: actions/upload-artifact@v7
         with:

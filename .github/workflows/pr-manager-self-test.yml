@@ -1,0 +1,43 @@
+name: 🧪 PR Manager Self-Test
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/ai-review-grok-super.yml'
+      - '.github/workflows/ai-auto-fix-grok.yml'
+      - '.github/workflows/grok-ci-surgeon.yml'
+      - '.github/workflows/grok-pr-commands.yml'
+      - '.github/workflows/pr-manager-grok.yml'
+      - '.github/workflows/danger.yml'
+      - '.github/scripts/**'
+      - '.github/labels.json'
+
+permissions:
+  contents: read
+
+jobs:
+  self-test:
+    name: PR Manager Self-Test
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+
+      - name: Set up Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Check automation scripts
+        run: node --check .github/scripts/xai-tooling.mjs .github/scripts/sync-labels.mjs .github/scripts/grok-review.mjs .github/scripts/grok-auto-fix.mjs .github/scripts/grok-ci-surgeon.mjs .github/scripts/pr-command-router.mjs .github/scripts/pr-meta-check.mjs .github/scripts/pr-manager.mjs
+
+      - name: Check workflow and label formatting
+        run: bunx prettier --check .github/workflows/ai-review-grok-super.yml .github/workflows/ai-auto-fix-grok.yml .github/workflows/grok-ci-surgeon.yml .github/workflows/grok-pr-commands.yml .github/workflows/pr-manager-grok.yml .github/labels.json
+
+      - name: Run PR manager unit tests
+        run: bun run test:unit -- tests/core/unit/github/pr-manager.test.ts tests/core/unit/github/pr-command-router.test.ts tests/core/unit/github/pr-meta-check.test.ts tests/core/unit/github/pr-workflow-surfaces.test.ts

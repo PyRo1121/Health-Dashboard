@@ -95,7 +95,11 @@ export function buildSearchTools({
   includeCodeInterpreter = false,
   includeDocsMcp = true,
   xHandles = [],
+<<<<<<< HEAD
   allowedDomains = ['docs.github.com', 'docs.x.ai', 'docs.mergify.com'],
+=======
+  allowedDomains = ['docs.github.com', 'docs.x.ai'],
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
 } = {}) {
   const tools = [
     {

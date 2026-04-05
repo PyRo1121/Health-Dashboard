@@ -1,0 +1,726 @@
+name: 💬 Grok PR Commands
+
+on:
+  issue_comment:
+    types: [created]
+
+permissions:
+  actions: write
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  handle-command:
+    if: ${{ github.event.issue.pull_request }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository automation config
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Save comment body
+        run: |
+          cat <<'EOF' > "$RUNNER_TEMP/pr-command-body.txt"
+          ${{ github.event.comment.body }}
+          EOF
+
+      - name: Parse command
+        env:
+          PR_COMMAND_BODY_PATH: ${{ runner.temp }}/pr-command-body.txt
+          PR_COMMAND_JSON_PATH: ${{ runner.temp }}/pr-command.json
+        run: node .github/scripts/pr-command-router.mjs
+
+      - name: Stop on non-command comments
+        id: parsed
+        uses: actions/github-script@v8
+        env:
+          PR_COMMAND_JSON_PATH: ${{ runner.temp }}/pr-command.json
+        with:
+          script: |
+            const fs = require('fs');
+            const parsed = JSON.parse(fs.readFileSync(process.env.PR_COMMAND_JSON_PATH, 'utf8'));
+            core.setOutput('kind', parsed.kind || 'none');
+
+      - name: Execute command
+        if: steps.parsed.outputs.kind != 'none'
+        uses: actions/github-script@v8
+        env:
+          COMMAND_KIND: ${{ steps.parsed.outputs.kind }}
+          PR_COMMAND_JSON_PATH: ${{ runner.temp }}/pr-command.json
+        with:
+          script: |
+            const pullNumber = context.issue.number;
+            const kind = process.env.COMMAND_KIND;
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const allowedAssociations = new Set(['OWNER', 'MEMBER', 'COLLABORATOR']);
+            const fs = require('fs');
+            const parsed = JSON.parse(fs.readFileSync(process.env.PR_COMMAND_JSON_PATH, 'utf8'));
+            const commandArgument = String(parsed.argument || '').trim();
+
+            const { data: pr } = await github.rest.pulls.get({
+              owner,
+              repo,
+              pull_number: pullNumber,
+            });
+
+            const labels = new Set((pr.labels || []).map((label) => label.name));
+            const trusted =
+              pr.head.repo?.full_name === `${owner}/${repo}` &&
+              allowedAssociations.has(String(pr.author_association || '').toUpperCase());
+
+            function codeownersMatches(pattern, file) {
+              if (pattern === '*') return true;
+              if (pattern.endsWith('/')) return file.startsWith(pattern);
+              if (pattern.endsWith('/**')) return file.startsWith(pattern.slice(0, -2));
+              if (pattern.includes('/**/')) {
+                const [prefix, suffix] = pattern.split('/**/');
+                return file.startsWith(prefix) && file.endsWith(suffix);
+              }
+              if (pattern.startsWith('**/')) return file.endsWith(pattern.slice(3));
+              if (pattern.includes('*')) {
+                const escaped = pattern
+                  .replace(/[.+?^${}()|[\]\\]/g, '\\$&')
+                  .replace(/\*/g, '.*');
+                return new RegExp(`^${escaped}$`).test(file);
+              }
+              return file === pattern || file.startsWith(`${pattern}/`);
+            }
+
+            function parseCodeowners(content) {
+              return content
+                .split('\n')
+                .map((line) => line.trim())
+                .filter((line) => line && !line.startsWith('#'))
+                .map((line) => {
+                  const parts = line.split(/\s+/).filter(Boolean);
+                  return {
+                    pattern: parts[0],
+                    owners: parts.slice(1).filter((owner) => owner.startsWith('@')),
+                  };
+                })
+                .filter((entry) => entry.pattern && entry.owners.length);
+            }
+
+            async function refreshManager() {
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: 'pr-manager-grok.yml',
+                ref: pr.base.ref,
+                inputs: { pr_number: String(pr.number) },
+              });
+            }
+
+            async function acknowledge(reaction = '+1') {
+              try {
+                await github.rest.reactions.createForIssueComment({
+                  owner,
+                  repo,
+                  comment_id: context.payload.comment.id,
+                  content: reaction,
+                });
+              } catch {}
+            }
+
+            async function getChangedFiles() {
+              const files = await github.paginate(github.rest.pulls.listFiles, {
+                owner,
+                repo,
+                pull_number: pullNumber,
+                per_page: 100,
+              });
+              return files.map((file) => file.filename);
+            }
+
+            async function getSuggestedReviewers() {
+              let codeowners = '';
+              try {
+                const response = await github.rest.repos.getContent({
+                  owner,
+                  repo,
+                  path: '.github/CODEOWNERS',
+                  ref: pr.base.ref,
+                });
+                codeowners = Buffer.from(response.data.content, 'base64').toString('utf8');
+              } catch {
+                return [];
+              }
+
+              const entries = parseCodeowners(codeowners);
+              const changedFiles = await getChangedFiles();
+              const owners = new Set();
+
+              for (const file of changedFiles) {
+                let matchedOwners = [];
+                for (const entry of entries) {
+                  if (codeownersMatches(entry.pattern, file)) {
+                    matchedOwners = entry.owners;
+                  }
+                }
+                for (const matched of matchedOwners) {
+                  owners.add(matched);
+                }
+              }
+
+              const suggested = [...owners].sort();
+              const reviewHistory = await github.paginate(github.rest.pulls.listReviews, {
+                owner,
+                repo,
+                pull_number: pullNumber,
+                per_page: 100,
+              });
+              const requested = new Set((pr.requested_reviewers || []).map((reviewer) => reviewer.login));
+              const approved = new Set();
+              const commented = new Set();
+              const changesRequested = new Set();
+
+              for (const review of reviewHistory) {
+                const login = review?.user?.login;
+                if (!login) continue;
+                if (review.state === 'APPROVED') approved.add(login);
+                if (review.state === 'COMMENTED') commented.add(login);
+                if (review.state === 'CHANGES_REQUESTED') changesRequested.add(login);
+              }
+
+              return suggested.sort((a, b) => {
+                const normalize = (reviewer) => reviewer.replace(/^@/, '');
+                const score = (reviewer) => {
+                  const login = normalize(reviewer);
+                  let value = 0;
+                  if (approved.has(login)) value += 3;
+                  if (commented.has(login)) value += 2;
+                  if (requested.has(login)) value += 1;
+                  if (changesRequested.has(login)) value += 1;
+                  return value;
+                };
+                return score(b) - score(a) || a.localeCompare(b);
+              });
+            }
+
+            async function getReviewThreads() {
+              const data = await github.graphql(
+                `
+                  query($owner: String!, $repo: String!, $number: Int!) {
+                    repository(owner: $owner, name: $repo) {
+                      pullRequest(number: $number) {
+                        reviewThreads(first: 100) {
+                          nodes {
+                            id
+                            isResolved
+                            isOutdated
+                            path
+                            comments(last: 1) {
+                              nodes {
+                                author {
+                                  login
+                                }
+                                bodyText
+                                createdAt
+                              }
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                `,
+                { owner, repo, number: pullNumber }
+              );
+
+              return (data?.repository?.pullRequest?.reviewThreads?.nodes || []).map((thread) => ({
+                id: thread.id,
+                isResolved: Boolean(thread.isResolved),
+                isOutdated: Boolean(thread.isOutdated),
+                path: thread.path || 'unknown',
+                author: thread.comments?.nodes?.[0]?.author?.login || 'unknown',
+                bodyText: thread.comments?.nodes?.[0]?.bodyText || '',
+                createdAt: thread.comments?.nodes?.[0]?.createdAt || null,
+              }));
+            }
+
+            async function getIssueComments() {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number: pullNumber,
+                per_page: 100,
+              });
+              return comments;
+            }
+
+            function parsePatchComment(commentBody, marker) {
+              const body = String(commentBody || '');
+              if (!body.includes(marker)) {
+                return null;
+              }
+
+              const touchedMatch = body.match(/\*\*Touched files:\*\*\s*([^\n]+)/);
+              const statusMatch = body.match(/\*\*Status:\*\*\s*([^\n]+)/);
+
+              return {
+                status: statusMatch ? statusMatch[1].trim() : '',
+                touchedFiles: touchedMatch
+                  ? touchedMatch[1]
+                      .split(',')
+                      .map((value) => value.trim())
+                      .filter(Boolean)
+                  : [],
+              };
+            }
+
+            function basename(file) {
+              const parts = String(file || '').split('/');
+              return parts[parts.length - 1] || '';
+            }
+
+            function area(file) {
+              const parts = String(file || '').split('/');
+              return parts[0] || '';
+            }
+
+            function patchCoverageForThread(thread, patchSummaries) {
+              const exact = patchSummaries.find((patch) => patch.touchedFiles.includes(thread.path));
+              if (exact) {
+                return { confidence: 'high', reason: 'exact file match', patch: exact };
+              }
+
+              const basenameMatch = patchSummaries.find((patch) =>
+                patch.touchedFiles.some((file) => basename(file) === basename(thread.path))
+              );
+              if (basenameMatch) {
+                return { confidence: 'medium', reason: 'matching basename', patch: basenameMatch };
+              }
+
+              const areaMatch = patchSummaries.find((patch) =>
+                patch.touchedFiles.some((file) => area(file) === area(thread.path))
+              );
+              if (areaMatch) {
+                return { confidence: 'low', reason: 'same top-level area', patch: areaMatch };
+              }
+
+              return null;
+            }
+
+            function isAutomationThread(thread) {
+              const author = String(thread.author || '');
+              const bodyText = String(thread.bodyText || '');
+              return (
+                ['reviewdog[bot]', 'github-actions[bot]', 'coderabbitai[bot]', 'copilot-pull-request-reviewer[bot]', 'claude[bot]', 'grok[bot]'].includes(author) ||
+                (author.endsWith('[bot]') &&
+                  /(reviewdog|coderabbit|copilot|claude|grok|github actions)/i.test(bodyText))
+              );
+            }
+
+            function matchThreads(threads, target) {
+              const needle = String(target || '').trim().toLowerCase();
+              if (!needle) {
+                return [];
+              }
+              return threads.filter((thread) => {
+                const haystack = [thread.id, thread.path, thread.author, thread.bodyText]
+                  .join('\n')
+                  .toLowerCase();
+                return haystack.includes(needle);
+              });
+            }
+
+            async function resolveReviewThread(thread, reason) {
+              const replyMutation = `
+                mutation($threadId: ID!, $body: String!) {
+                  addPullRequestReviewThreadReply(
+                    input: {
+                      pullRequestReviewThreadId: $threadId,
+                      body: $body
+                    }
+                  ) {
+                    comment {
+                      id
+                    }
+                  }
+                }
+              `;
+              const resolveMutation = `
+                mutation($threadId: ID!) {
+                  resolveReviewThread(input: { threadId: $threadId }) {
+                    thread {
+                      id
+                      isResolved
+                    }
+                  }
+                }
+              `;
+
+              await github.graphql(replyMutation, {
+                threadId: thread.id,
+                body: [
+                  'Resolved through `@grok resolve`.',
+                  '',
+                  `Reason: ${reason}`,
+                ].join('\n'),
+              });
+              await github.graphql(resolveMutation, { threadId: thread.id });
+            }
+
+            async function reply(body) {
+              await github.rest.issues.createComment({
+                owner,
+                repo,
+                issue_number: pullNumber,
+                body: `<!-- grok-pr-command -->\n${body}`,
+              });
+            }
+
+            async function reject(message) {
+              await acknowledge('confused');
+              await reply(message);
+            }
+
+            function findManagerComment(comments) {
+              return comments.find((comment) => comment.body?.includes('<!-- grok-pr-manager -->'));
+            }
+
+            async function currentManagerComment() {
+              const { data: comments } = await github.rest.issues.listComments({
+                owner,
+                repo,
+                issue_number: pullNumber,
+                per_page: 100,
+              });
+              return findManagerComment(comments)?.body || '';
+            }
+
+            function extractSection(body, title) {
+              const escaped = title.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+              const match = body.match(new RegExp(`### ${escaped}[\\s\\S]*?(?=\\n### |$)`));
+              return match ? match[0].trim() : '';
+            }
+
+            if (['status', 'summarize', 'full-review', 'plan', 'why-not-merge-ready'].includes(kind)) {
+              await refreshManager();
+              await acknowledge();
+              const managerBody = await currentManagerComment();
+              if (managerBody) {
+                let response = 'Manager refresh triggered.';
+                if (kind === 'summarize') {
+                  const summarySections = [
+                    managerBody.split('### Blockers')[0].trim(),
+                    extractSection(managerBody, 'Branch history'),
+                  ].filter(Boolean);
+                  response = summarySections.join('\n\n');
+                } else if (kind === 'why-not-merge-ready') {
+                  const blockerSection = managerBody.match(/### Blockers[\s\S]*?### Next steps/);
+                  response = [
+                    blockerSection ? blockerSection[0].replace(/### Next steps$/, '').trim() : managerBody,
+                    extractSection(managerBody, 'Branch history'),
+                  ]
+                    .filter(Boolean)
+                    .join('\n\n');
+                } else if (kind === 'plan') {
+                  const nextStepSection = managerBody.match(/### Next steps[\s\S]*?### Automation dispatch/);
+                  response = [
+                    nextStepSection
+                      ? nextStepSection[0].replace(/### Automation dispatch$/, '').trim()
+                      : managerBody,
+                    extractSection(managerBody, 'Branch history'),
+                    extractSection(managerBody, 'Objection patterns'),
+                  ]
+                    .filter(Boolean)
+                    .join('\n\n');
+                } else if (kind === 'full-review') {
+                  const { data: comments } = await github.rest.issues.listComments({
+                    owner,
+                    repo,
+                    issue_number: pullNumber,
+                    per_page: 100,
+                  });
+                  const reviewComment =
+                    comments.find((comment) => comment.body?.includes('<!-- grok-super-review -->'))?.body || '';
+                  response = [managerBody.trim(), reviewComment.trim()].filter(Boolean).join('\n\n');
+                }
+                await reply(response);
+              }
+              return;
+            }
+
+            if (kind === 'explain') {
+              await refreshManager();
+              await acknowledge();
+              const managerBody = await currentManagerComment();
+              if (!managerBody) {
+                await reply('No PR manager comment is available yet.');
+                return;
+              }
+
+              const target = commandArgument.toLowerCase();
+              const reviewThreads = await getReviewThreads();
+              const reviewMemory = extractSection(managerBody, 'Review memory');
+              const threadMap = extractSection(managerBody, 'Thread map');
+              const blockers = extractSection(managerBody, 'Blockers');
+              const gateSnapshot = extractSection(managerBody, 'Gate snapshot');
+              const matchingThreads = target
+                ? reviewThreads.filter((thread) => {
+                    const haystack = [
+                      thread.id,
+                      thread.path,
+                      thread.author,
+                      thread.bodyText,
+                    ]
+                      .join('\n')
+                      .toLowerCase();
+                    return haystack.includes(target);
+                  })
+                : [];
+              const candidateLines = [gateSnapshot, reviewMemory, blockers]
+                .join('\n')
+                .split('\n')
+                .filter((line) => line.trim());
+
+              const matched = target
+                ? candidateLines.filter((line) => line.toLowerCase().includes(target))
+                : [];
+
+              const response = matched.length
+                ? [
+                    `Explanation for \`${commandArgument}\`:`,
+                    '',
+                    ...matched,
+                    ...(matchingThreads.length
+                      ? [
+                          '',
+                          'Matching review threads:',
+                          ...matchingThreads.map((thread) =>
+                            `- \`${thread.path}\` · \`${thread.id}\` · @${thread.author}\n  ${thread.bodyText
+                              .replace(/\s+/g, ' ')
+                              .trim()
+                              .slice(0, 180)}`
+                          ),
+                        ]
+                      : []),
+                  ].join('\n')
+                : [
+                    commandArgument
+                      ? `No specific PR-manager context matched \`${commandArgument}\`.`
+                      : 'No target was provided to `@grok explain`.',
+                    '',
+                    threadMap || blockers || gateSnapshot || reviewMemory || managerBody,
+                  ].join('\n');
+
+              await reply(response.trim());
+              return;
+            }
+
+            if (kind === 'resolve') {
+              const reviewThreads = await getReviewThreads();
+              if (!commandArgument) {
+                await refreshManager();
+                await acknowledge();
+                await reply('No target was provided to `@grok resolve`. Use a thread id or file path.');
+                return;
+              }
+
+              const matches = matchThreads(
+                reviewThreads.filter((thread) => !thread.isResolved && !thread.isOutdated),
+                commandArgument
+              );
+
+              if (!matches.length) {
+                await reject(`No unresolved review thread matched \`${commandArgument}\`.`);
+                return;
+              }
+
+              const automationMatches = matches.filter(isAutomationThread);
+              if (!automationMatches.length) {
+                await reject(
+                  `Matched thread(s) for \`${commandArgument}\`, but they are human review threads. Resolve those manually in GitHub.`
+                );
+                return;
+              }
+
+              const issueComments = await getIssueComments();
+              const patchSummaries = [
+                parsePatchComment(
+                  issueComments.find((comment) => comment.body?.includes('<!-- grok-auto-fix -->'))?.body || '',
+                  '<!-- grok-auto-fix -->'
+                ),
+                parsePatchComment(
+                  issueComments.find((comment) => comment.body?.includes('<!-- grok-ci-surgeon -->'))?.body || '',
+                  '<!-- grok-ci-surgeon -->'
+                ),
+              ].filter(Boolean);
+
+              const unsafeMatches = automationMatches.filter((thread) => {
+                const coverage = patchCoverageForThread(thread, patchSummaries);
+                return !coverage || coverage.confidence !== 'high';
+              });
+
+              if (unsafeMatches.length) {
+                await reject(
+                  `Matched automation thread(s) for \`${commandArgument}\`, but recent patch coverage is not high-confidence yet. Use \`@grok explain ${commandArgument}\` first or resolve manually.`
+                );
+                return;
+              }
+
+              await acknowledge();
+              for (const thread of automationMatches) {
+                await resolveReviewThread(
+                  thread,
+                  'A human explicitly requested resolution and recent patch coverage is high-confidence.'
+                );
+              }
+              await refreshManager();
+              await reply(
+                `Resolved ${automationMatches.length} automation thread(s) matching \`${commandArgument}\`.`
+              );
+              return;
+            }
+
+            if (kind === 'what-changed-since-review') {
+              const { data: reviews } = await github.rest.pulls.listReviews({
+                owner,
+                repo,
+                pull_number: pullNumber,
+                per_page: 100,
+              });
+              const latestApproval = [...reviews]
+                .filter((review) => review.state === 'APPROVED' && review.commit_id)
+                .sort(
+                  (a, b) =>
+                    new Date(b.submitted_at || 0).getTime() - new Date(a.submitted_at || 0).getTime()
+                )[0];
+
+              if (!latestApproval || latestApproval.commit_id === pr.head.sha) {
+                await acknowledge();
+                await reply('No code has changed since the latest approval on the current head.');
+                return;
+              }
+
+              const compare = await github.rest.repos.compareCommits({
+                owner,
+                repo,
+                base: latestApproval.commit_id,
+                head: pr.head.sha,
+              });
+              const changed = (compare.data.files || []).map((file) => file.filename).slice(0, 20);
+              await acknowledge();
+              await reply(
+                [
+                  `Changes since the latest approval by @${latestApproval.user?.login || 'unknown'}:`,
+                  '',
+                  ...changed.map((file) => `- \`${file}\``),
+                ].join('\n')
+              );
+              return;
+            }
+
+            if (kind === 'assign') {
+              const suggested = await getSuggestedReviewers();
+              if (!suggested.length) {
+                await reject('No reviewer suggestions were found from `CODEOWNERS` for the current diff.');
+                return;
+              }
+              const currentRequested = new Set((pr.requested_reviewers || []).map((user) => `@${user.login}`));
+              const missing = suggested.filter((reviewer) => !currentRequested.has(reviewer));
+              if (!missing.length) {
+                await acknowledge();
+                await reply(`Suggested reviewers are already requested: ${suggested.join(', ')}`);
+                return;
+              }
+              await github.rest.pulls.requestReviewers({
+                owner,
+                repo,
+                pull_number: pullNumber,
+                reviewers: missing.map((reviewer) => reviewer.replace(/^@/, '')),
+              });
+              await acknowledge();
+              await reply(`Requested reviewers from \`CODEOWNERS\`: ${missing.join(', ')}`);
+              return;
+            }
+
+            if (kind === 'autopilot-on') {
+              if (!trusted) {
+                await reject('`@grok autopilot on` only works on trusted same-repo PRs.');
+                return;
+              }
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: pullNumber,
+                labels: ['ai-autopilot'],
+              });
+              await refreshManager();
+              await acknowledge();
+              return;
+            }
+
+            if (kind === 'autopilot-off') {
+              try {
+                await github.rest.issues.removeLabel({
+                  owner,
+                  repo,
+                  issue_number: pullNumber,
+                  name: 'ai-autopilot',
+                });
+              } catch {}
+              await refreshManager();
+              await acknowledge();
+              return;
+            }
+
+            if (kind === 'fix') {
+              if (!trusted) {
+                await reject('`@grok fix` only works on trusted same-repo PRs.');
+                return;
+              }
+              if (!labels.has('has-patch')) {
+                await reject('`@grok fix` needs a current `has-patch` label from Grok review first.');
+                return;
+              }
+              await github.rest.issues.addLabels({
+                owner,
+                repo,
+                issue_number: pullNumber,
+                labels: ['ai-auto-fix'],
+              });
+              await refreshManager();
+              await acknowledge();
+              return;
+            }
+
+            if (kind === 'retry') {
+              if (!trusted) {
+                await reject('`@grok retry` only works on trusted same-repo PRs.');
+                return;
+              }
+
+              const { data } = await github.rest.actions.listWorkflowRunsForRepo({
+                owner,
+                repo,
+                branch: pr.head.ref,
+                event: 'pull_request',
+                per_page: 50,
+              });
+              const run = (data.workflow_runs || []).find(
+                (workflowRun) =>
+                  ['CI', 'E2E'].includes(workflowRun.name) &&
+                  workflowRun.head_sha === pr.head.sha &&
+                  workflowRun.conclusion === 'failure'
+              );
+
+              if (!run) {
+                await reject('No failed `CI` or `E2E` run was found on the current PR head.');
+                return;
+              }
+
+              await github.rest.actions.reRunWorkflowFailedJobs({
+                owner,
+                repo,
+                run_id: run.id,
+              });
+              await acknowledge();
+              await reply(`Requested a rerun of failed jobs for \`${run.name}\` on the current PR head.`);
+            }

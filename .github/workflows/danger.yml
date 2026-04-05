@@ -2,11 +2,11 @@ name: Danger PR Automation
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, edited]
 
 permissions:
   contents: read
-  pull-requests: write
+  pull-requests: read
 
 jobs:
   danger:
@@ -15,21 +15,60 @@ jobs:
     timeout-minutes: 10
 
     steps:
+<<<<<<< HEAD
       - name: Check out repository
+=======
+      - name: Check out repository automation config
+>>>>>>> 8205bca (feat(ci): build grok pr operator)
         uses: actions/checkout@v6
         with:
           persist-credentials: false
-          fetch-depth: 0
 
-      - name: Set up Bun
-        uses: oven-sh/setup-bun@v2
+      - name: Collect PR metadata
+        id: pr_meta
+        uses: actions/github-script@v8
         with:
-          bun-version: 1.3.10
+          script: |
+            const fs = require('fs');
+            const path = `${process.env.RUNNER_TEMP}/pr-meta.json`;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: context.issue.number,
+              per_page: 100,
+            });
+            const pr = context.payload.pull_request;
+            const payload = {
+              body: pr.body || '',
+              additions: pr.additions || 0,
+              deletions: pr.deletions || 0,
+              changedFiles: files.map((file) => file.filename),
+            };
+            fs.writeFileSync(path, JSON.stringify(payload, null, 2));
+            core.setOutput('path', path);
 
-      - name: Install dependencies
-        run: bun install --frozen-lockfile
-
-      - name: Run Danger
-        run: bunx danger ci
+      - name: Evaluate PR metadata advisories
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_META_INPUT_PATH: ${{ steps.pr_meta.outputs.path }}
+          PR_META_OUTPUT_PATH: ${{ runner.temp }}/pr-meta-output.json
+        run: node .github/scripts/pr-meta-check.mjs
+
+      - name: Publish advisory summary
+        uses: actions/github-script@v8
+        env:
+          PR_META_OUTPUT_PATH: ${{ runner.temp }}/pr-meta-output.json
+        with:
+          script: |
+            const fs = require('fs');
+            const advisories = JSON.parse(fs.readFileSync(process.env.PR_META_OUTPUT_PATH, 'utf8')).advisories || [];
+            const lines = [
+              '## Danger PR Checks',
+              '',
+              advisories.length
+                ? advisories.map((line) => `- ${line}`).join('\n')
+                : 'No additional PR metadata advisories.',
+            ];
+            await core.summary.addRaw(lines.join('\n')).write();
+            for (const advisory of advisories) {
+              core.warning(advisory);
+            }

@@ -35,17 +35,6 @@ categories:
       - dependencies
 exclude-labels:
   - skip-changelog
-autolabeler:
-  - label: documentation
-    files:
-      - '*.md'
-      - 'docs/**'
-  - label: ci
-    files:
-      - '.github/**'
-  - label: dependencies
-    branch:
-      - '/dependabot\/.+/'
 template: |
   ## What's Changed
 
