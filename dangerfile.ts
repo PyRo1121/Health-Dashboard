@@ -1,8 +1,9 @@
 import { danger, warn, message } from 'danger';
 
 const pr = danger.github.pr;
+const body = pr.body || '';
 
-if (pr.body.length < 10) {
+if (body.length < 10) {
   warn('PR description is empty');
 }
 
@@ -14,10 +15,10 @@ if (pr.additions > 1000) {
   warn('This PR adds more than 1000 lines. Consider breaking it down.');
 }
 
-const hasTests = danger.git.modified_files.some(
-  (f) => f.includes('.test.') || f.includes('.spec.')
-);
-const hasCode = danger.git.modified_files.some(
+const changedFiles = [...danger.git.modified_files, ...danger.git.created_files];
+
+const hasTests = changedFiles.some((f) => f.includes('.test.') || f.includes('.spec.'));
+const hasCode = changedFiles.some(
   (f) => f.endsWith('.ts') || f.endsWith('.js') || f.endsWith('.svelte')
 );
 

@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  security-events: write
 
 jobs:
   snyk:
@@ -34,7 +35,7 @@ jobs:
       - name: Run Snyk Security Scan
         uses: snyk/actions@9adf32b1121593767fc3c057af55b55db032dc04
         with:
-          args: --severity-threshold=high --fail-on=all
+          args: --severity-threshold=high --fail-on=all --sarif-file-output=snyk.sarif
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
