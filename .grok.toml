@@ -47,3 +47,68 @@
 # jira_auto_detect = true         # Detect Jira issue references in PR title/body
 # Linear API (set LINEAR_API_KEY env var)
 # linear_auto_detect = true       # Detect Linear issue references in PR title/body
+
+# =============================================================================
+# TEAM CUSTOM INSTRUCTIONS
+# =============================================================================
+# These instructions are appended to every Grok prompt for this repository.
+# Use this to enforce team-specific standards, terminology, and priorities.
+
+[custom_instructions]
+# Security first: All health data must be encrypted at rest and in transit
+# Privacy: No health data should ever be logged or exposed in error messages  
+# Performance: API responses should target <200ms for cached queries
+# Testing: All new features require test coverage before merge
+# Documentation: All public APIs must have JSDoc comments
+# Commit style: Follow conventional commits (feat, fix, docs, etc.)
+# Code coverage: Maintain >80% coverage for core modules
+
+# Team-specific terminology:
+# - "meal" instead of "food entry"
+# - "snapshot" instead of "daily record"
+# - Use "plan" terminology for scheduled items
+
+# Priority order for reviews:
+# 1. Security and privacy implications
+# 2. Data integrity and consistency
+# 3. Performance and scalability
+# 4. Code maintainability
+# 5. Test coverage
+
+# =============================================================================
+# REVIEW TEMPLATES
+# =============================================================================
+# Define custom review templates for different PR types
+
+[review_templates]
+# Default template applied to all PRs
+default = [
+  "Security implications for health data",
+  "Data privacy considerations",
+  "API contract compatibility",
+  "Test coverage adequacy",
+]
+
+# Template for infrastructure changes
+infra = [
+  "CI/CD pipeline security",
+  "Secrets management",
+  "Rollback procedures",
+  "Monitoring and alerting",
+]
+
+# Template for database/schema changes  
+db = [
+  "Migration safety",
+  "Data integrity checks",
+  "Backward compatibility",
+  "Index performance impact",
+]
+
+# Template for security-related changes
+security = [
+  "Authentication/authorization review",
+  "Input validation",
+  "Output encoding",
+  "Dependency vulnerability scan",
+]

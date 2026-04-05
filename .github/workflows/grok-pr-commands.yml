@@ -731,6 +731,42 @@ jobs:
               return;
             }
 
+            if (kind === 'walkthrough') {
+              await acknowledge();
+              
+              // Trigger the grok-walkthrough workflow
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: 'grok-walkthrough.yml',
+                ref: pr.base.ref,
+                inputs: {
+                  pr_number: String(pullNumber),
+                },
+              });
+              
+              await reply(`🤖 Generating file-by-file walkthrough of this PR...`);
+              return;
+            }
+
+            if (kind === 'timeline') {
+              await acknowledge();
+              
+              // Trigger the grok-timeline workflow
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: 'grok-timeline.yml',
+                ref: pr.base.ref,
+                inputs: {
+                  pr_number: String(pullNumber),
+                },
+              });
+              
+              await reply(`🤖 Generating PR timeline...`);
+              return;
+            }
+
             if (kind === 'retry') {
               if (!trusted) {
                 await reject('`@grok retry` only works on trusted same-repo PRs.');

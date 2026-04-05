@@ -235,22 +235,39 @@ function renderMarkdown(result, ciSystems = []) {
     issuesByFile.get(key).push(issue);
   }
 
-  // Generate inline comments JSON for GitHub review
+  // Generate inline comments with suggestions for GitHub review
   const inlineComments = [];
+  const suggestions = [];
   for (const issue of issues) {
     if (issue.path && issue.line) {
-      inlineComments.push({
+      const comment = {
         path: issue.path,
         line: issue.line,
         side: issue.side || 'RIGHT',
         body: `${severityEmoji[issue.severity]} **${issue.severity.toUpperCase()}:** ${issue.body}`,
-      });
+      };
+      
+      // If there's a suggestion patch, format it as a GitHub suggestion
+      if (issue.suggestion && issue.suggestion !== 'No suggestion.') {
+        comment.body += `\n\n\`\`\`suggestion:${issue.line}
+${issue.suggestion}
+\`\`\``;
+        suggestions.push(comment);
+      } else {
+        inlineComments.push(comment);
+      }
     }
   }
 
-  // Write inline comments to file for workflow
-  if (inlineComments.length) {
-    writeFileSync('/tmp/inline-comments.json', JSON.stringify(inlineComments, null, 2));
+  // Write inline comments and suggestions to file for workflow
+  const allInlineComments = [...inlineComments, ...suggestions];
+  if (allInlineComments.length) {
+    writeFileSync('/tmp/inline-comments.json', JSON.stringify(allInlineComments, null, 2));
+  }
+  
+  // Write suggestions separately for GitHub suggestions feature
+  if (suggestions.length) {
+    writeFileSync('/tmp/code-suggestions.json', JSON.stringify(suggestions, null, 2));
   }
 
   let fileCommentsSection = '';

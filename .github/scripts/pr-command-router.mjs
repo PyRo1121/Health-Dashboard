@@ -56,6 +56,12 @@ export function parsePrCommand(body = '') {
   if (ask) {
     return ask;
   }
+  if (/@grok\s+walkthrough\b/i.test(text)) {
+    return { kind: 'walkthrough', raw: text };
+  }
+  if (/@grok\s+timeline\b/i.test(text)) {
+    return { kind: 'timeline', raw: text };
+  }
 
   return { kind: 'none', raw: text };
 }
