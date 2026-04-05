@@ -39,14 +39,10 @@ jobs:
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          npx eslint . --format=json > eslint_results.json 2>/dev/null || true
-          reviewdog -f=eslint-json -reporter=github-pr-review -level=warning < eslint_results.json
+          npx eslint . --format json 2>&1 | reviewdog -f=eslint -reporter=github-pr-review -level=warning
 
       - name: Run Prettier with reviewdog
         env:
           REVIEWDOG_GITHUB_API_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          bunx prettier --check . 2>&1 | tee prettier_output.txt || true
-          if grep -q "warn" prettier_output.txt || grep -q "error" prettier_output.txt; then
-            echo "Prettier issues found" | reviewdog -f=checkstyle -reporter=github-pr-review -name="prettier"
-          fi
+          bunx prettier --check . 2>&1 | reviewdog -f=checkstyle -reporter=github-pr-review -name="prettier" || true
