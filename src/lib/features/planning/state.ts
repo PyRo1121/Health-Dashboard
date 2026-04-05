@@ -5,7 +5,7 @@ import type {
   WeeklyPlan,
   WorkoutTemplate,
 } from '$lib/core/domain/types';
-import { migrateLegacyPlannedMealToPlanSlot } from '$lib/features/nutrition/migration';
+import { loadWithLegacyPlannedMealMigration } from '$lib/features/nutrition/migration';
 import { createPlanningSlotForm, type PlanningSlotFormState } from './model';
 import { getWeeklyPlanSnapshot } from './service';
 import {
@@ -76,14 +76,17 @@ export async function loadPlanningPage(
   localDay: string,
   state: PlanningPageState
 ): Promise<PlanningPageState> {
-  const migration = await migrateLegacyPlannedMealToPlanSlot(db, localDay);
-  const snapshot = await getWeeklyPlanSnapshot(db, localDay);
+  const { data: snapshot, notice } = await loadWithLegacyPlannedMealMigration(
+    db,
+    localDay,
+    async () => await getWeeklyPlanSnapshot(db, localDay)
+  );
   return {
     ...state,
     ...emptyPlanningNotices(),
     loading: false,
     localDay,
-    planNotice: migration.notice ?? '',
+    planNotice: notice ?? '',
     weeklyPlan: snapshot.weeklyPlan,
     weekDays: snapshot.weekDays,
     slots: snapshot.slots,
