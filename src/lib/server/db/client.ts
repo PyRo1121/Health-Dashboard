@@ -203,7 +203,8 @@ function createTableMap(
   | 'plannedMeals'
   | 'weeklyPlans'
   | 'planSlots'
-  | 'groceryItems'
+  | 'derivedGroceryItems'
+  | 'manualGroceryItems'
   | 'workoutTemplates'
   | 'exerciseCatalogItems'
   | 'favoriteMeals'
@@ -253,10 +254,15 @@ function createTableMap(
       parseIndexedColumns(SCHEMA_STORES.weeklyPlans)
     ),
     planSlots: new SqliteTable(database, 'planSlots', parseIndexedColumns(SCHEMA_STORES.planSlots)),
-    groceryItems: new SqliteTable(
+    derivedGroceryItems: new SqliteTable(
       database,
-      'groceryItems',
-      parseIndexedColumns(SCHEMA_STORES.groceryItems)
+      'derivedGroceryItems',
+      parseIndexedColumns(SCHEMA_STORES.derivedGroceryItems)
+    ),
+    manualGroceryItems: new SqliteTable(
+      database,
+      'manualGroceryItems',
+      parseIndexedColumns(SCHEMA_STORES.manualGroceryItems)
     ),
     workoutTemplates: new SqliteTable(
       database,

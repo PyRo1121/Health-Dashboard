@@ -1,6 +1,12 @@
 import type { HealthDatabase } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
-import type { GroceryItem, PlanSlot, RecipeCatalogItem } from '$lib/core/domain/types';
+import type {
+  DerivedGroceryItem,
+  GroceryItem,
+  ManualGroceryItem,
+  PlanSlot,
+  RecipeCatalogItem,
+} from '$lib/core/domain/types';
 import { updateRecordMeta } from '$lib/core/shared/records';
 import { listRecipeCatalogItems } from '$lib/features/nutrition/service';
 
@@ -113,9 +119,110 @@ function buildGroceryItemId(weeklyPlanId: string, ingredientKey: string): string
   return `grocery:${weeklyPlanId}:${ingredientKey}`;
 }
 
+function buildDerivedGroceryItemId(weeklyPlanId: string, ingredientKey: string): string {
+  return `derived-grocery:${weeklyPlanId}:${ingredientKey}`;
+}
+
+function buildManualGroceryItemId(weeklyPlanId: string, ingredientKey: string): string {
+  return `manual-grocery:${weeklyPlanId}:${ingredientKey}`;
+}
+
 function combineQuantityTexts(...texts: Array<string | undefined>): string | undefined {
   const unique = [...new Set(texts.map((text) => text?.trim()).filter(Boolean) as string[])];
   return unique.length ? unique.join(' + ') : undefined;
+}
+
+function createMergedGroceryItem(
+  weeklyPlanId: string,
+  ingredientKey: string,
+  derivedItem: DerivedGroceryItem | undefined,
+  manualItem: ManualGroceryItem | undefined
+): GroceryItem | null {
+  const base = manualItem ?? derivedItem;
+  if (!base) {
+    return null;
+  }
+
+  return {
+    id: buildGroceryItemId(weeklyPlanId, ingredientKey),
+    createdAt: base.createdAt,
+    updatedAt: base.updatedAt,
+    weeklyPlanId,
+    ingredientKey,
+    label: manualItem?.label ?? derivedItem?.label ?? '',
+    quantityText: combineQuantityTexts(derivedItem?.quantityText, manualItem?.quantityText),
+    derivedQuantityText: derivedItem?.quantityText,
+    manual: Boolean(manualItem),
+    manualQuantityText: manualItem?.quantityText,
+    aisle: manualItem?.aisle ?? derivedItem?.aisle,
+    checked: manualItem?.checked ?? derivedItem?.checked ?? false,
+    excluded: manualItem?.excluded ?? derivedItem?.excluded ?? false,
+    onHand: manualItem?.onHand ?? derivedItem?.onHand ?? false,
+    sourceRecipeIds: derivedItem?.sourceRecipeIds ?? [],
+  };
+}
+
+async function listDerivedWeeklyGroceries(
+  db: HealthDatabase,
+  weeklyPlanId: string
+): Promise<DerivedGroceryItem[]> {
+  return await db.derivedGroceryItems.where('weeklyPlanId').equals(weeklyPlanId).toArray();
+}
+
+async function listManualWeeklyGroceries(
+  db: HealthDatabase,
+  weeklyPlanId: string
+): Promise<ManualGroceryItem[]> {
+  return await db.manualGroceryItems.where('weeklyPlanId').equals(weeklyPlanId).toArray();
+}
+
+export async function listMergedWeeklyGroceries(
+  db: HealthDatabase,
+  weeklyPlanId: string
+): Promise<GroceryItem[]> {
+  const [derivedItems, manualItems] = await Promise.all([
+    listDerivedWeeklyGroceries(db, weeklyPlanId),
+    listManualWeeklyGroceries(db, weeklyPlanId),
+  ]);
+
+  const ingredientKeys = new Set([
+    ...derivedItems.map((item) => item.ingredientKey),
+    ...manualItems.map((item) => item.ingredientKey),
+  ]);
+
+  return [...ingredientKeys]
+    .map((ingredientKey) =>
+      createMergedGroceryItem(
+        weeklyPlanId,
+        ingredientKey,
+        derivedItems.find((item) => item.ingredientKey === ingredientKey),
+        manualItems.find((item) => item.ingredientKey === ingredientKey)
+      )
+    )
+    .filter((item): item is GroceryItem => Boolean(item))
+    .sort(
+      (left, right) =>
+        (left.aisle ?? 'Other').localeCompare(right.aisle ?? 'Other') ||
+        left.label.localeCompare(right.label)
+    );
+}
+
+function parseMergedGroceryItemId(itemId: string): { weeklyPlanId: string; ingredientKey: string } {
+  const prefix = 'grocery:';
+  if (!itemId.startsWith(prefix)) {
+    throw new Error('Grocery item not found');
+  }
+
+  const rest = itemId.slice(prefix.length);
+  const delimiterIndex = rest.indexOf(':');
+  if (delimiterIndex < 0) {
+    throw new Error('Grocery item not found');
+  }
+
+  return {
+    weeklyPlanId: rest.slice(0, delimiterIndex),
+    ingredientKey: rest.slice(delimiterIndex + 1),
+  };
 }
 
 async function listWeeklyPlanSlotsForGroceries(
@@ -142,10 +249,12 @@ export async function deriveWeeklyGroceriesWithWarnings(
   const [slots, recipes, existingItems] = await Promise.all([
     listWeeklyPlanSlotsForGroceries(db, weeklyPlanId),
     Promise.resolve(recipesInput ?? listRecipeCatalogItems(db)),
-    db.groceryItems.where('weeklyPlanId').equals(weeklyPlanId).toArray(),
+    listDerivedWeeklyGroceries(db, weeklyPlanId),
   ]);
   const recipeById = new Map(recipes.map((recipe) => [recipe.id, recipe]));
-  const existingById = new Map(existingItems.map((item) => [item.id, item]));
+  const existingByKey = new Map(existingItems.map((item) => [item.ingredientKey, item]));
+  const manualItems = await listManualWeeklyGroceries(db, weeklyPlanId);
+  const manualByKey = new Map(manualItems.map((item) => [item.ingredientKey, item]));
   const warnings: string[] = [];
   const grouped = new Map<
     string,
@@ -201,52 +310,36 @@ export async function deriveWeeklyGroceriesWithWarnings(
 
   const timestamp = nowIso();
   const nextItems = [...grouped.entries()].map(([ingredientKey, item]) => {
-    const id = buildGroceryItemId(weeklyPlanId, ingredientKey);
-    const existing = existingById.get(id);
+    const existing = existingByKey.get(ingredientKey);
+    const manual = manualByKey.get(ingredientKey);
     const derivedQuantityText = item.quantityParts.join(' + ') || undefined;
-    const groceryItem: GroceryItem = {
-      ...updateRecordMeta(existing, id, timestamp),
+    const groceryItem: DerivedGroceryItem = {
+      ...updateRecordMeta(existing, buildDerivedGroceryItemId(weeklyPlanId, ingredientKey), timestamp),
       weeklyPlanId,
       ingredientKey,
       label: item.label,
-      quantityText: combineQuantityTexts(derivedQuantityText, existing?.manualQuantityText),
-      derivedQuantityText,
-      manual: existing?.manual ?? false,
-      manualQuantityText: existing?.manualQuantityText,
+      quantityText: derivedQuantityText,
       aisle: inferAisle(item.label),
-      checked: existing?.checked ?? false,
-      excluded: existing?.excluded ?? false,
-      onHand: existing?.onHand ?? false,
+      checked: existing?.checked ?? manual?.checked ?? false,
+      excluded: existing?.excluded ?? manual?.excluded ?? false,
+      onHand: existing?.onHand ?? manual?.onHand ?? false,
       sourceRecipeIds: item.sourceRecipeIds,
     };
 
     return groceryItem;
   });
 
-  const carryoverItems = existingItems
-    .filter((item) => item.manual && !grouped.has(item.ingredientKey))
-    .map((item) => ({
-      ...item,
-      ...updateRecordMeta(item, item.id, timestamp),
-      quantityText: combineQuantityTexts(undefined, item.manualQuantityText),
-      derivedQuantityText: undefined,
-      sourceRecipeIds: [],
-    }));
-
-  for (const item of [...nextItems, ...carryoverItems]) {
-    await db.groceryItems.put(item);
+  for (const item of nextItems) {
+    await db.derivedGroceryItems.put(item);
   }
   for (const staleItem of existingItems) {
-    if (![...nextItems, ...carryoverItems].find((item) => item.id === staleItem.id)) {
-      await db.groceryItems.delete(staleItem.id);
+    if (!nextItems.find((item) => item.id === staleItem.id)) {
+      await db.derivedGroceryItems.delete(staleItem.id);
     }
   }
 
   return {
-    items: [...nextItems, ...carryoverItems].sort(
-      (left, right) =>
-        left.aisle!.localeCompare(right.aisle!) || left.label.localeCompare(right.label)
-    ),
+    items: await listMergedWeeklyGroceries(db, weeklyPlanId),
     warnings,
   };
 }
@@ -263,21 +356,60 @@ export async function setGroceryItemState(
   itemId: string,
   patch: Pick<GroceryItem, 'checked' | 'excluded' | 'onHand'>
 ): Promise<GroceryItem> {
-  const existing = await db.groceryItems.get(itemId);
-  if (!existing) {
+  const { weeklyPlanId, ingredientKey } = parseMergedGroceryItemId(itemId);
+  const [derivedItem, manualItem] = await Promise.all([
+    db.derivedGroceryItems.get(buildDerivedGroceryItemId(weeklyPlanId, ingredientKey)),
+    db.manualGroceryItems.get(buildManualGroceryItemId(weeklyPlanId, ingredientKey)),
+  ]);
+
+  if (!derivedItem && !manualItem) {
     throw new Error('Grocery item not found');
   }
 
-  const item: GroceryItem = {
-    ...existing,
-    ...updateRecordMeta(existing, existing.id),
-    checked: patch.checked,
-    excluded: patch.excluded,
-    onHand: patch.onHand,
-  };
+  if (derivedItem) {
+    await db.derivedGroceryItems.put({
+      ...derivedItem,
+      ...updateRecordMeta(derivedItem, derivedItem.id),
+      checked: patch.checked,
+      excluded: patch.excluded,
+      onHand: patch.onHand,
+    });
+  }
 
-  await db.groceryItems.put(item);
-  return item;
+  if (manualItem) {
+    await db.manualGroceryItems.put({
+      ...manualItem,
+      ...updateRecordMeta(manualItem, manualItem.id),
+      checked: patch.checked,
+      excluded: patch.excluded,
+      onHand: patch.onHand,
+    });
+  }
+
+  const merged = createMergedGroceryItem(
+    weeklyPlanId,
+    ingredientKey,
+    derivedItem
+      ? {
+          ...derivedItem,
+          checked: patch.checked,
+          excluded: patch.excluded,
+          onHand: patch.onHand,
+        }
+      : undefined,
+    manualItem
+      ? {
+          ...manualItem,
+          checked: patch.checked,
+          excluded: patch.excluded,
+          onHand: patch.onHand,
+        }
+      : undefined
+  );
+  if (!merged) {
+    throw new Error('Grocery item not found');
+  }
+  return merged;
 }
 
 export async function saveManualGroceryItem(
@@ -290,61 +422,54 @@ export async function saveManualGroceryItem(
     throw new Error('Manual grocery label is required');
   }
 
-  const id = buildGroceryItemId(weeklyPlanId, parsed.ingredientKey);
-  const existing = await db.groceryItems.get(id);
-  const label = existing?.label ?? parsed.label;
-  const manualQuantityText = parsed.quantityText ?? existing?.manualQuantityText;
-  const derivedQuantityText =
-    existing?.derivedQuantityText ??
-    (existing?.sourceRecipeIds.length ? existing.quantityText : undefined);
+  const [existingManual, existingDerived] = await Promise.all([
+    db.manualGroceryItems.get(buildManualGroceryItemId(weeklyPlanId, parsed.ingredientKey)),
+    db.derivedGroceryItems.get(buildDerivedGroceryItemId(weeklyPlanId, parsed.ingredientKey)),
+  ]);
 
-  const item: GroceryItem = {
-    ...updateRecordMeta(existing, id),
+  const label = existingManual?.label ?? existingDerived?.label ?? parsed.label;
+  const item: ManualGroceryItem = {
+    ...updateRecordMeta(
+      existingManual,
+      buildManualGroceryItemId(weeklyPlanId, parsed.ingredientKey)
+    ),
     weeklyPlanId,
     ingredientKey: parsed.ingredientKey,
     label,
-    quantityText: combineQuantityTexts(derivedQuantityText, manualQuantityText),
-    derivedQuantityText,
-    manual: true,
-    manualQuantityText,
-    aisle: existing?.aisle ?? inferAisle(label),
-    checked: existing?.checked ?? false,
-    excluded: existing?.excluded ?? false,
-    onHand: existing?.onHand ?? false,
-    sourceRecipeIds: existing?.sourceRecipeIds ?? [],
+    quantityText: parsed.quantityText ?? existingManual?.quantityText,
+    aisle: existingManual?.aisle ?? existingDerived?.aisle ?? inferAisle(label),
+    checked: existingManual?.checked ?? existingDerived?.checked ?? false,
+    excluded: existingManual?.excluded ?? existingDerived?.excluded ?? false,
+    onHand: existingManual?.onHand ?? existingDerived?.onHand ?? false,
   };
 
-  await db.groceryItems.put(item);
-  return item;
+  await db.manualGroceryItems.put(item);
+  const merged = createMergedGroceryItem(weeklyPlanId, parsed.ingredientKey, existingDerived, item);
+  if (!merged) {
+    throw new Error('Grocery item not found');
+  }
+  return merged;
 }
 
 export async function removeManualGroceryItem(
   db: HealthDatabase,
   itemId: string
 ): Promise<GroceryItem | null> {
-  const existing = await db.groceryItems.get(itemId);
-  if (!existing) {
+  const { weeklyPlanId, ingredientKey } = parseMergedGroceryItemId(itemId);
+  const [manualItem, derivedItem] = await Promise.all([
+    db.manualGroceryItems.get(buildManualGroceryItemId(weeklyPlanId, ingredientKey)),
+    db.derivedGroceryItems.get(buildDerivedGroceryItemId(weeklyPlanId, ingredientKey)),
+  ]);
+
+  if (!manualItem) {
     throw new Error('Grocery item not found');
   }
 
-  if (!existing.manual) {
-    return existing;
-  }
-
-  if (!existing.sourceRecipeIds.length) {
-    await db.groceryItems.delete(itemId);
+  if (!derivedItem) {
+    await db.manualGroceryItems.delete(manualItem.id);
     return null;
   }
 
-  const item: GroceryItem = {
-    ...existing,
-    ...updateRecordMeta(existing, existing.id),
-    quantityText: existing.derivedQuantityText,
-    derivedQuantityText: existing.derivedQuantityText,
-    manual: false,
-    manualQuantityText: undefined,
-  };
-
-  await db.groceryItems.put(item);
-  return item;
+  await db.manualGroceryItems.delete(manualItem.id);
+  return createMergedGroceryItem(weeklyPlanId, ingredientKey, derivedItem, undefined);
 }

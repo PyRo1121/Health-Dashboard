@@ -19,7 +19,8 @@ export async function POST({ request }) {
   await db.plannedMeals.bulkAdd(snapshot.plannedMeals ?? []);
   await db.weeklyPlans.bulkAdd(snapshot.weeklyPlans ?? []);
   await db.planSlots.bulkAdd(snapshot.planSlots ?? []);
-  await db.groceryItems.bulkAdd(snapshot.groceryItems ?? []);
+  await db.derivedGroceryItems.bulkAdd(snapshot.derivedGroceryItems ?? []);
+  await db.manualGroceryItems.bulkAdd(snapshot.manualGroceryItems ?? []);
   await db.workoutTemplates.bulkAdd(snapshot.workoutTemplates ?? []);
   await db.exerciseCatalogItems.bulkAdd(snapshot.exerciseCatalogItems ?? []);
   await db.favoriteMeals.bulkAdd(snapshot.favoriteMeals);
