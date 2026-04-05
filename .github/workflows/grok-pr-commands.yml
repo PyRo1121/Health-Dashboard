@@ -693,6 +693,44 @@ jobs:
               return;
             }
 
+            if (kind === 'ask') {
+              const question = commandArgument;
+              if (!question) {
+                await reject('No question was provided to `@grok ask`. Usage: `@grok ask <your question>`');
+                return;
+              }
+              
+              await acknowledge('eyes');
+              
+              // Extract conversation tracking from PR body
+              let conversationId = '';
+              let previousResponseId = '';
+              
+              const body = String(pr.body || '');
+              const convMatch = body.match(/<!-- grok-conversation:([\w-]+) -->/);
+              if (convMatch) {
+                conversationId = convMatch[1];
+                previousResponseId = convMatch[1]; // Use conversation ID as previous response ID
+              }
+              
+              // Trigger the grok-ask workflow
+              await github.rest.actions.createWorkflowDispatch({
+                owner,
+                repo,
+                workflow_id: 'grok-ask.yml',
+                ref: pr.base.ref,
+                inputs: {
+                  pr_number: String(pullNumber),
+                  question: question,
+                  conversation_id: conversationId || String(Date.now()),
+                  previous_response_id: previousResponseId,
+                },
+              });
+              
+              await reply(`🤖 Grok is thinking about your question about this PR...`);
+              return;
+            }
+
             if (kind === 'retry') {
               if (!trusted) {
                 await reject('`@grok retry` only works on trusted same-repo PRs.');

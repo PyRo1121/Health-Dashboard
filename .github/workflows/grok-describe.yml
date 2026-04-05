@@ -1,0 +1,134 @@
+name: 🤖 Grok PR Description
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to describe'
+        required: false
+        type: string
+
+concurrency:
+  group: grok-describe-${{ github.event.pull_request.number || github.event.inputs.pr_number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  describe:
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Prepare PR context
+        id: diff
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
+        run: |
+          if [ -n "$PR_NUMBER" ]; then
+            BASE_SHA=$(gh pr view $PR_NUMBER --json baseRefOid --jq '.baseRefOid')
+          else
+            BASE_SHA=${{ github.event.pull_request.base.sha }}
+          fi
+          git diff --no-color --unified=3 "${BASE_SHA}...HEAD" > "$RUNNER_TEMP/pr.diff"
+          git diff --name-only "${BASE_SHA}...HEAD" > "$RUNNER_TEMP/pr.files"
+          echo "diff_path=$RUNNER_TEMP/pr.diff" >> "$GITHUB_OUTPUT"
+          echo "files_path=$RUNNER_TEMP/pr.files" >> "$GITHUB_OUTPUT"
+
+      - name: Run Grok describe
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          XAI_MODEL: grok-4-1-fast-reasoning
+          PR_TITLE: ${{ github.event.pull_request.title || 'Untitled PR' }}
+          PR_DIFF_PATH: ${{ steps.diff.outputs.diff_path }}
+          PR_FILES_PATH: ${{ steps.diff.outputs.files_path }}
+          DESCRIBE_JSON_PATH: ${{ runner.temp }}/grok-describe.json
+          DESCRIBE_MARKDOWN_PATH: ${{ runner.temp }}/grok-describe.md
+        run: node .github/scripts/grok-describe.mjs
+
+      - name: Update PR description
+        uses: actions/github-script@v8
+        env:
+          DESCRIBE_JSON_PATH: ${{ runner.temp }}/grok-describe.json
+          DESCRIBE_MARKDOWN_PATH: ${{ runner.temp }}/grok-describe.md
+        with:
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync(process.env.DESCRIBE_JSON_PATH, 'utf8'));
+            const markdown = fs.readFileSync(process.env.DESCRIBE_MARKDOWN_PATH, 'utf8');
+            const prNumber = context.payload.pull_request?.number || context.payload.inputs?.pr_number;
+
+            // Get current PR
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            // Check if PR already has a body
+            const hasExistingBody = pr.body && pr.body.trim().length > 0;
+            const marker = '<!-- grok-describe -->';
+            
+            // If PR has existing description, append our generated one
+            let newBody;
+            if (hasExistingBody && !pr.body.includes(marker)) {
+              newBody = `${pr.body}\n\n---\n${markdown}`;
+            } else if (pr.body?.includes(marker)) {
+              // Replace existing grok description
+              const parts = pr.body.split(marker);
+              newBody = parts[0] + markdown;
+            } else {
+              newBody = markdown;
+            }
+
+            await github.rest.pulls.update({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+              body: newBody,
+            });
+
+            // Add labels for PR type
+            const typeLabels = result.types || [result.type];
+            const labelMap = {
+              feat: 'enhancement',
+              fix: 'bug',
+              docs: 'docs',
+              test: 'test',
+              ci: 'automation',
+              perf: 'performance',
+              security: 'security',
+              breaking: 'breaking',
+            };
+            
+            const labelsToAdd = typeLabels
+              .map(t => labelMap[t])
+              .filter(l => l && !context.payload.pull_request.labels.some(lab => lab.name === l));
+            
+            if (labelsToAdd.length) {
+              await github.rest.issues.addLabels({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                labels: labelsToAdd,
+              });
+            }
+
+      - name: Upload describe artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: grok-describe-artifact
+          path: |
+            ${{ runner.temp }}/grok-describe.json
+            ${{ runner.temp }}/grok-describe.md

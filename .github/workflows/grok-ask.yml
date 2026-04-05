@@ -1,0 +1,163 @@
+name: 💬 Grok Ask
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number'
+        required: true
+        type: string
+      question:
+        description: 'Question to ask'
+        required: true
+        type: string
+      conversation_id:
+        description: 'Conversation ID for context'
+        required: false
+        type: string
+      previous_response_id:
+        description: 'Previous xAI response ID for context'
+        required: false
+        type: string
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  ask:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Get PR details
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          PR_NUMBER=${{ github.event.inputs.pr_number }}
+          
+          # Get base SHA
+          BASE_SHA=$(gh pr view $PR_NUMBER --json baseRefOid --jq '.baseRefOid')
+          echo "base_sha=$BASE_SHA" >> "$GITHUB_OUTPUT"
+          
+          # Get PR title
+          PR_TITLE=$(gh pr view $PR_NUMBER --json title --jq '.title')
+          echo "pr_title=$PR_TITLE" >> "$GITHUB_OUTPUT"
+          
+          # Get PR body
+          PR_BODY=$(gh pr view $PR_NUMBER --json body --jq '.body // empty')
+          echo "pr_body<<EOF" >> "$GITHUB_OUTPUT"
+          echo "$PR_BODY" >> "$GITHUB_OUTPUT"
+          echo "EOF" >> "$GITHUB_OUTPUT"
+
+      - name: Prepare PR diff
+        env:
+          BASE_SHA: ${{ steps.pr.outputs.base_sha }}
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+        run: |
+          git diff --no-color --unified=3 "${BASE_SHA}...HEAD" > "$RUNNER_TEMP/pr.diff"
+          git diff --name-only "${BASE_SHA}...HEAD" > "$RUNNER_TEMP/pr.files"
+          echo "diff_path=$RUNNER_TEMP/pr.diff" >> "$GITHUB_OUTPUT"
+          echo "files_path=$RUNNER_TEMP/pr.files" >> "$GITHUB_OUTPUT"
+
+      - name: Run Grok ask
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          XAI_MODEL: grok-4-1-fast-reasoning
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          PR_TITLE: ${{ steps.pr.outputs.pr_title }}
+          PR_BODY: ${{ steps.pr.outputs.pr_body }}
+          PR_DIFF_PATH: ${{ steps.diff.outputs.diff_path }}
+          PR_FILES_PATH: ${{ steps.diff.outputs.files_path }}
+          ASK_QUESTION: ${{ github.event.inputs.question }}
+          GROK_CONVERSATION_ID: ${{ github.event.inputs.conversation_id }}
+          GROK_PREVIOUS_RESPONSE_ID: ${{ github.event.inputs.previous_response_id }}
+          GROK_ASK_JSON_PATH: ${{ runner.temp }}/grok-ask.json
+          GROK_ASK_MARKDOWN_PATH: ${{ runner.temp }}/grok-ask.md
+        run: node .github/scripts/grok-ask.mjs
+
+      - name: Post answer as PR comment
+        uses: actions/github-script@v8
+        env:
+          GROK_ASK_MARKDOWN_PATH: ${{ runner.temp }}/grok-ask.md
+          GROK_ASK_JSON_PATH: ${{ runner.temp }}/grok-ask.json
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+        with:
+          script: |
+            const fs = require('fs');
+            const markdown = fs.readFileSync(process.env.GROK_ASK_MARKDOWN_PATH, 'utf8');
+            const result = JSON.parse(fs.readFileSync(process.env.GROK_ASK_JSON_PATH, 'utf8'));
+            
+            const prNumber = parseInt(process.env.PR_NUMBER);
+            
+            // Add a reaction to acknowledge the question
+            try {
+              const comments = await github.rest.issues.listComments({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: prNumber,
+                per_page: 100,
+              });
+              // Find the comment with the question (most recent from non-bot)
+              const questionComment = comments.data
+                .filter(c => !c.user.login.endsWith('[bot]'))
+                .sort((a, b) => new Date(b.created_at) - new Date(a.created_at))[0];
+              
+              if (questionComment) {
+                await github.rest.reactions.createForIssueComment({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  comment_id: questionComment.id,
+                  content: 'eyes',
+                });
+              }
+            } catch (e) {
+              console.warn('Could not add reaction:', e.message);
+            }
+            
+            // Post the answer
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: markdown,
+            });
+            
+            // Store conversation ID in PR body if new conversation
+            if (result.conversationId && !result.previousResponseId) {
+              // Update PR body to store conversation ID
+              const { data: pr } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+              });
+              
+              const marker = '<!-- grok-conversation:' + result.conversationId + ' -->';
+              const newBody = pr.body 
+                ? (pr.body.includes('<!-- grok-conversation:') 
+                    ? pr.body.replace(/<!-- grok-conversation:[^>]+>/, marker)
+                    : pr.body + '\n\n' + marker)
+                : marker;
+              
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                body: newBody,
+              });
+            }
+
+      - name: Upload ask artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: grok-ask-artifact
+          path: |
+            ${{ runner.temp }}/grok-ask.json
+            ${{ runner.temp }}/grok-ask.md

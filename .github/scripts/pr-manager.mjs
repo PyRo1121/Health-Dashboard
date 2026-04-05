@@ -1063,6 +1063,29 @@ ${plan.nextSteps.length ? plan.nextSteps.map((line) => `- ${line}`).join('\n') :
 - Auto-fix patch lane: ${labels.dispatch.shouldDispatchAutoFix ? 'dispatching `ai-auto-fix` now' : 'not dispatching'}
 - Legacy automerge: removed from this PR if present
 
+### PR State Flow
+\`\`\`mermaid
+stateDiagram-v2
+    [*] --> opened : PR opened
+    opened --> blocked : Draft/WIP
+    opened --> blocked : Conflicts
+    opened --> blocked : No approval
+    opened --> blocked : Failing CI
+    opened --> blocked : Review changes
+    opened --> blocked : Unresolved threads
+    blocked --> pending : Blockers resolved
+    pending --> mergeReady : All gates green
+    mergeReady --> [*] : Human merges
+    mergeReady --> blocked : New issue found
+    mergeReady --> pending : Approval revoked
+    mergeReady --> blocked : CI fails
+    pending --> blocked : CI fails
+    pending --> mergeReady : CI passes
+    mergeReady --> blocked : Review threads
+    blocked --> mergeReady : Human approves
+    mergeReady --> blocked : Request changes
+\`\`\`
+
 ### Notes
 - \`merge-ready\` means ready for your final review. The PR manager never merges.
 - Workflow and repo-automation changes must pass \`${plan.selfTestContext}\` before \`merge-ready\`.
