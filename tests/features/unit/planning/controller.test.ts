@@ -1,10 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { useTestHealthDb } from '../../../support/unit/testDb';
-import {
-  saveFoodCatalogItem,
-  savePlannedMeal,
-  upsertRecipeCatalogItem,
-} from '$lib/features/nutrition/service';
+import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
+import { saveFoodCatalogItem, upsertRecipeCatalogItem } from '$lib/features/nutrition/service';
 import {
   addManualPlanningGroceryItemPage,
   createPlanningPageState,

@@ -5,12 +5,8 @@ import { createRecordId } from '$lib/core/shared/ids';
 import { createRecordMeta } from '$lib/core/shared/records';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import { listPlanSlotsForDay } from '$lib/features/planning/service';
-import {
-  clearPlannedMeal,
-  getPlannedMeal,
-  listFoodCatalogItems,
-  upsertFoodCatalogItem,
-} from './service';
+import { clearPlannedMeal, getPlannedMeal } from './legacy-planned-meal-store';
+import { listFoodCatalogItems, upsertFoodCatalogItem } from './service';
 
 const LEGACY_PLANNED_MEAL_NOTICE = 'Legacy planned meal moved into today’s weekly plan.';
 

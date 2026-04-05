@@ -1,7 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getHealthDb } from '$lib/core/db/client';
-import { savePlannedMeal } from '$lib/features/nutrition/service';
+import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import PlanPage from '../../../../src/routes/plan/+page.svelte';
 import { expectHeading, resetRouteDb } from '../../../support/component/routeHarness';
 
