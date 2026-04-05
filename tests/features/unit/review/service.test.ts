@@ -328,7 +328,6 @@ describe('review service', () => {
 
     expect(weekly.snapshot.weekStart).toBe('2026-03-30');
     expect(await db.reviewSnapshots.count()).toBe(1);
-    expect(await db.adherenceMatches.count()).toBeGreaterThanOrEqual(0);
     expect(await db.reviewSnapshots.get(weekly.snapshot.id)).toMatchObject({
       weekStart: '2026-03-30',
       headline: weekly.snapshot.headline,
