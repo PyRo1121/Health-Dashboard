@@ -1,0 +1,56 @@
+pull_request_rules:
+  - name: Auto-merge approved PRs when CI passes
+    conditions:
+      - 'check-success~=CI'
+      - 'check-success~=Grok'
+      - 'label=automerge'
+      - 'label!=do-not-merge'
+      - 'label!=work-in-progress'
+      - 'author!=dependabot[bot]'
+      - 'author!=renovate[bot]'
+      - 'author!=github-actions[bot]'
+    actions:
+      merge:
+        method: squash
+        commit_message: |
+          { { subject} }
+
+          Co-authored-by: { { original_author } }
+
+  - name: Request review when PR needs human review
+    conditions:
+      - 'label=needs-review'
+      - 'author!=dependabot[bot]'
+    actions:
+      request_reviews:
+        teams:
+          - code-owners
+
+  - name: Add grok-reviewed label when Grok approves
+    conditions:
+      - 'check-success~=Grok'
+      - 'author!=github-actions[bot]'
+    actions:
+      label:
+        add:
+          - grok-approved
+
+  - name: Post welcome message for new contributors
+    conditions:
+      - author-is-first-time-contributor
+      - action=opened
+    actions:
+      post_check:
+        message: |
+          Welcome! 🎉 Thanks for your first PR!
+
+          Please read our contributing guidelines before submitting.
+          Add label `automerge` if you'd like us to merge when CI passes.
+
+  - name: Notify on large PRs
+    conditions:
+      - 'files>20'
+    actions:
+      label:
+        add:
+          - large-pr
