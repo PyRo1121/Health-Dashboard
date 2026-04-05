@@ -36,6 +36,14 @@ export interface TodayPlannedWorkout {
   status: PlanSlot['status'];
 }
 
+export interface TodayRecoveryAdaptation {
+  level: 'lighter-day' | 'recovery';
+  headline: string;
+  reasons: string[];
+  mealFallback: string[];
+  workoutFallback: string[];
+}
+
 export interface TodaySnapshot {
   date: string;
   dailyRecord: DailyRecord | null;
@@ -51,6 +59,7 @@ export interface TodaySnapshot {
   plannedMealIssue: string | null;
   plannedWorkout: TodayPlannedWorkout | null;
   plannedWorkoutIssue: string | null;
+  recoveryAdaptation: TodayRecoveryAdaptation | null;
   planItems: TodayPlanItem[];
   events: HealthEvent[];
   latestJournalEntry: JournalEntry | null;
@@ -128,6 +137,143 @@ function deriveTodayPlannedWorkoutIssue(
   return null;
 }
 
+function summarizeRecoveryReasons(
+  dailyRecord: DailyRecord | null,
+  events: HealthEvent[]
+): { level: TodayRecoveryAdaptation['level']; reasons: string[] } | null {
+  const recoveryReasons = new Set<string>();
+  const lighterReasons = new Set<string>();
+
+  const sleepHours = dailyRecord?.sleepHours;
+  if (typeof sleepHours === 'number') {
+    if (sleepHours < 6) {
+      recoveryReasons.add('Sleep landed under 6 hours.');
+    } else if (sleepHours < 7) {
+      lighterReasons.add('Sleep landed under 7 hours.');
+    }
+  }
+
+  const sleepQuality = dailyRecord?.sleepQuality;
+  if (typeof sleepQuality === 'number') {
+    if (sleepQuality <= 2) {
+      recoveryReasons.add('Sleep quality is dragging today.');
+    } else if (sleepQuality <= 3) {
+      lighterReasons.add('Sleep quality is softer than usual today.');
+    }
+  }
+
+  for (const event of events) {
+    if (event.eventType === 'symptom') {
+      const severity =
+        typeof event.payload?.severity === 'number'
+          ? event.payload.severity
+          : typeof event.value === 'number'
+            ? event.value
+            : null;
+      if (severity !== null) {
+        if (severity >= 4) {
+          recoveryReasons.add('Symptom load is elevated today.');
+        } else if (severity >= 3) {
+          lighterReasons.add('Symptoms are present enough to simplify the day.');
+        }
+      }
+    }
+
+    if (event.eventType === 'anxiety-episode') {
+      const intensity =
+        typeof event.payload?.intensity === 'number'
+          ? event.payload.intensity
+          : typeof event.value === 'number'
+            ? event.value
+            : null;
+      if (intensity !== null) {
+        if (intensity >= 7) {
+          recoveryReasons.add('Anxiety intensity spiked today.');
+        } else if (intensity >= 5) {
+          lighterReasons.add('Anxiety is elevated enough to lower friction.');
+        }
+      }
+    }
+  }
+
+  if (recoveryReasons.size) {
+    return {
+      level: 'recovery',
+      reasons: [...recoveryReasons],
+    };
+  }
+
+  if (lighterReasons.size) {
+    return {
+      level: 'lighter-day',
+      reasons: [...lighterReasons],
+    };
+  }
+
+  return null;
+}
+
+function buildRecoveryMealFallback(
+  plannedMeal: TodaySnapshot['plannedMeal'],
+  level: TodayRecoveryAdaptation['level']
+): string[] {
+  if (plannedMeal) {
+    return [
+      level === 'recovery'
+        ? 'Meal fallback: keep the next meal familiar, easy, and protein-forward.'
+        : `Meal fallback: keep ${plannedMeal.name} simple and skip any extra decision-making.`,
+    ];
+  }
+
+  return [
+    level === 'recovery'
+      ? 'Meal fallback: repeat one easy meal you already trust instead of improvising.'
+      : 'Meal fallback: pick one familiar meal and keep the rest of the day light.',
+  ];
+}
+
+function buildRecoveryWorkoutFallback(
+  plannedWorkout: TodayPlannedWorkout | null,
+  level: TodayRecoveryAdaptation['level']
+): string[] {
+  if (plannedWorkout) {
+    return [
+      level === 'recovery'
+        ? `Workout fallback: downgrade ${plannedWorkout.title} to a short walk, mobility reset, or full rest.`
+        : `Workout fallback: trim ${plannedWorkout.title} to the first block or swap to easy movement.`,
+    ];
+  }
+
+  return [
+    level === 'recovery'
+      ? 'Workout fallback: skip intensity today and protect recovery.'
+      : 'Workout fallback: keep movement gentle with a walk, mobility, or a short reset.',
+  ];
+}
+
+function deriveTodayRecoveryAdaptation(
+  dailyRecord: DailyRecord | null,
+  events: HealthEvent[],
+  plannedMeal: TodaySnapshot['plannedMeal'],
+  plannedWorkout: TodayPlannedWorkout | null
+): TodayRecoveryAdaptation | null {
+  const recoverySummary = summarizeRecoveryReasons(dailyRecord, events);
+  if (!recoverySummary) {
+    return null;
+  }
+
+  return {
+    level: recoverySummary.level,
+    headline:
+      recoverySummary.level === 'recovery'
+        ? 'Recovery mode: simplify the day.'
+        : 'Lighter day: reduce friction, not momentum.',
+    reasons: recoverySummary.reasons,
+    mealFallback: buildRecoveryMealFallback(plannedMeal, recoverySummary.level),
+    workoutFallback: buildRecoveryWorkoutFallback(plannedWorkout, recoverySummary.level),
+  };
+}
+
 export async function getTodayPlannedMealResolution(
   db: HealthDatabase,
   date: string
@@ -182,6 +328,12 @@ async function buildTodaySnapshotData(db: HealthDatabase, date: string): Promise
   const plannedWorkoutIssue = plannedWorkout
     ? null
     : deriveTodayPlannedWorkoutIssue(planSlots, workoutTemplates);
+  const recoveryAdaptation = deriveTodayRecoveryAdaptation(
+    dailyRecord ?? null,
+    events,
+    plannedMealResolution.candidate?.meal ?? null,
+    plannedWorkout
+  );
 
   return {
     date,
@@ -198,6 +350,7 @@ async function buildTodaySnapshotData(db: HealthDatabase, date: string): Promise
     plannedMealIssue: plannedMealResolution.issue,
     plannedWorkout,
     plannedWorkoutIssue,
+    recoveryAdaptation,
     planItems,
     events,
     latestJournalEntry,

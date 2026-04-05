@@ -46,6 +46,7 @@ describe('today model', () => {
         status: 'planned',
       },
       plannedWorkoutIssue: null,
+      recoveryAdaptation: null,
       planItems: [],
       events: [],
       latestJournalEntry: null,
