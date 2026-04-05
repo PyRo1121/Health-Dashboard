@@ -61,11 +61,7 @@ export interface TodayRecoveryAdaptation {
     actionLabel: string;
   } | null;
   actions: Array<{
-    id:
-      | 'skip-workout'
-      | 'clear-planned-meal'
-      | 'apply-recovery-meal'
-      | 'apply-recovery-workout';
+    id: 'skip-workout' | 'clear-planned-meal' | 'apply-recovery-meal' | 'apply-recovery-workout';
     label: string;
   }>;
 }

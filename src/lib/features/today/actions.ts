@@ -151,7 +151,9 @@ export async function applyTodayRecoveryAction(
       return false;
     }
 
-    const food = (await listFoodCatalogItems(db)).find((item) => item.name === recommendation.title);
+    const food = (await listFoodCatalogItems(db)).find(
+      (item) => item.name === recommendation.title
+    );
     if (!food) {
       return false;
     }

@@ -236,11 +236,7 @@ describe('today route', () => {
     expect(await recoveryResponse.json()).toEqual(
       expect.objectContaining({ saveNotice: 'Recovery action applied: apply-recovery-meal' })
     );
-    expect(applyTodayRecoveryActionPage).toHaveBeenCalledWith(
-      db,
-      state,
-      'apply-recovery-meal'
-    );
+    expect(applyTodayRecoveryActionPage).toHaveBeenCalledWith(db, state, 'apply-recovery-meal');
   });
 
   it('returns 400 for invalid today action payloads', async () => {
