@@ -60,6 +60,17 @@
     page = await markTodayPlanSlotStatusPage(page, slotId, status);
   }
 
+  async function handleRecoveryAction(actionId: 'skip-workout' | 'clear-planned-meal') {
+    if (actionId === 'skip-workout' && page.snapshot?.plannedWorkout) {
+      page = await markTodayPlanSlotStatusPage(page, page.snapshot.plannedWorkout.id, 'skipped');
+      return;
+    }
+
+    if (actionId === 'clear-planned-meal') {
+      page = await clearTodayPlannedMealPage(page);
+    }
+  }
+
   function updateFormField(field: keyof typeof page.form, value: string) {
     page = {
       ...page,
@@ -109,6 +120,7 @@
       {todayNutritionGuidance}
       {todayNutritionRows}
       {plannedMealProjectionRows}
+      onRecoveryAction={handleRecoveryAction}
     />
   </div>
 {/if}

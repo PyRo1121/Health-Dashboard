@@ -42,6 +42,10 @@ export interface TodayRecoveryAdaptation {
   reasons: string[];
   mealFallback: string[];
   workoutFallback: string[];
+  actions: Array<{
+    id: 'skip-workout' | 'clear-planned-meal';
+    label: string;
+  }>;
 }
 
 export interface TodaySnapshot {
@@ -251,6 +255,29 @@ function buildRecoveryWorkoutFallback(
   ];
 }
 
+function buildRecoveryActions(
+  plannedMeal: TodaySnapshot['plannedMeal'],
+  plannedWorkout: TodayPlannedWorkout | null
+): TodayRecoveryAdaptation['actions'] {
+  const actions: TodayRecoveryAdaptation['actions'] = [];
+
+  if (plannedWorkout && plannedWorkout.status === 'planned') {
+    actions.push({
+      id: 'skip-workout',
+      label: 'Skip workout for today',
+    });
+  }
+
+  if (plannedMeal) {
+    actions.push({
+      id: 'clear-planned-meal',
+      label: 'Clear meal plan',
+    });
+  }
+
+  return actions;
+}
+
 function deriveTodayRecoveryAdaptation(
   dailyRecord: DailyRecord | null,
   events: HealthEvent[],
@@ -271,6 +298,7 @@ function deriveTodayRecoveryAdaptation(
     reasons: recoverySummary.reasons,
     mealFallback: buildRecoveryMealFallback(plannedMeal, recoverySummary.level),
     workoutFallback: buildRecoveryWorkoutFallback(plannedWorkout, recoverySummary.level),
+    actions: buildRecoveryActions(plannedMeal, plannedWorkout),
   };
 }
 

@@ -376,6 +376,90 @@ describe('Today route', () => {
           'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
         )
       ).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Skip workout for today' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Clear meal plan' })).toBeTruthy();
+    });
+  });
+
+  it('lets recovery mode clear the planned meal and skip the workout', async () => {
+    const db = getHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+    const template = await saveWorkoutTemplate(db, {
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    });
+
+    await db.dailyRecords.put({
+      id: `daily:${localDay}`,
+      createdAt: '2026-04-02T08:00:00.000Z',
+      updatedAt: '2026-04-02T08:00:00.000Z',
+      date: localDay,
+      mood: 3,
+      energy: 2,
+      stress: 4,
+      focus: 3,
+      sleepHours: 5.5,
+      sleepQuality: 2,
+      freeformNote: 'Dragging today.',
+    });
+    await logSymptomEvent(db, {
+      localDay,
+      symptom: 'Headache',
+      severity: 4,
+      note: 'Heavy pressure behind the eyes.',
+    });
+    await logAnxietyEvent(db, {
+      localDay,
+      intensity: 7,
+      trigger: 'Cramped schedule',
+      durationMinutes: 25,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'breakfast',
+      title: food.name,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: template.id,
+      title: template.title,
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Skip workout for today' })).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Clear meal plan' })).toBeTruthy();
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Skip workout for today' }));
+    await waitFor(() => {
+      expect(screen.getByText(/Plan item marked skipped\./i)).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Skip workout for today' })).toBeNull();
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Clear meal plan' }));
+    await waitFor(() => {
+      expect(screen.getByText(/Planned meal cleared\./i)).toBeTruthy();
+      expect(screen.queryByRole('button', { name: 'Clear meal plan' })).toBeNull();
     });
   });
 });

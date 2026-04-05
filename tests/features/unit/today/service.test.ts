@@ -315,5 +315,9 @@ describe('today service', () => {
     expect(snapshot.recoveryAdaptation?.workoutFallback).toContain(
       'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
     );
+    expect(snapshot.recoveryAdaptation?.actions).toEqual([
+      { id: 'skip-workout', label: 'Skip workout for today' },
+      { id: 'clear-planned-meal', label: 'Clear meal plan' },
+    ]);
   });
 });
