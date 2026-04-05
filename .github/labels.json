@@ -60,6 +60,11 @@
     "description": "Threat monitor found a medium-severity actionable issue."
   },
   {
+    "name": "threat-fix-pr",
+    "color": "b60205",
+    "description": "Dependency fix PR generated from a high-confidence threat monitor finding."
+  },
+  {
     "name": "dependencies",
     "color": "0366d6",
     "description": "Dependency or ecosystem maintenance change."
