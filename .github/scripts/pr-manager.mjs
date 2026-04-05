@@ -167,9 +167,12 @@ function reviewerHistorySummary(context) {
 
 function rankSuggestedReviewers(suggestedReviewers, context) {
   const history = reviewerHistorySummary(context);
+  const authorHandle = `@${context.author}`;
   const scores = new Map();
 
-  for (const reviewer of suggestedReviewers) {
+  const filtered = suggestedReviewers.filter((reviewer) => reviewer !== authorHandle);
+
+  for (const reviewer of filtered) {
     const login = reviewer.replace(/^@/, '');
     let score = 0;
     if (history.approved.includes(login)) score += 3;
@@ -179,7 +182,7 @@ function rankSuggestedReviewers(suggestedReviewers, context) {
     scores.set(reviewer, score);
   }
 
-  return [...suggestedReviewers].sort((a, b) => {
+  return [...filtered].sort((a, b) => {
     const scoreDiff = (scores.get(b) || 0) - (scores.get(a) || 0);
     return scoreDiff || a.localeCompare(b);
   });
