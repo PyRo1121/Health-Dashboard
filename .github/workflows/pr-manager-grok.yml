@@ -3,9 +3,6 @@ name: 🧭 Grok PR Manager
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, edited, labeled, unlabeled, ready_for_review]
-<<<<<<< HEAD
-  workflow_dispatch:
-=======
   pull_request_review:
     types: [submitted, dismissed, edited]
   pull_request_review_comment:
@@ -16,7 +13,6 @@ on:
         description: 'PR number to refresh'
         required: false
         type: string
->>>>>>> 8205bca (feat(ci): build grok pr operator)
 
 concurrency:
   group: grok-pr-manager-${{ github.event.pull_request.number || github.ref }}
@@ -29,12 +25,9 @@ permissions:
 
 jobs:
   manage-pr:
-<<<<<<< HEAD
-=======
     if: >-
       github.event_name == 'pull_request_target' ||
       (github.event.pull_request && github.event.pull_request.head.repo.full_name == github.repository)
->>>>>>> 8205bca (feat(ci): build grok pr operator)
     name: PR Manager
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -57,13 +50,6 @@ jobs:
         with:
           script: |
             const fs = require('fs');
-<<<<<<< HEAD
-            const path = `${process.env.RUNNER_TEMP}/pr-context.json`;
-            const files = await github.paginate(github.rest.pulls.listFiles, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pull_number: context.issue.number,
-=======
             const marker = '<!-- grok-pr-manager -->';
             const path = `${process.env.RUNNER_TEMP}/pr-context.json`;
             const pullNumber =
@@ -80,36 +66,17 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pullNumber,
->>>>>>> 8205bca (feat(ci): build grok pr operator)
               per_page: 100,
             });
             const reviews = await github.paginate(github.rest.pulls.listReviews, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-<<<<<<< HEAD
-              pull_number: context.issue.number,
-=======
               pull_number: pullNumber,
->>>>>>> 8205bca (feat(ci): build grok pr operator)
               per_page: 100,
             });
             const checks = await github.rest.checks.listForRef({
               owner: context.repo.owner,
               repo: context.repo.repo,
-<<<<<<< HEAD
-              ref: context.payload.pull_request.head.sha,
-              per_page: 100,
-            });
-
-            const payload = {
-              number: context.payload.pull_request.number,
-              title: context.payload.pull_request.title,
-              author: context.payload.pull_request.user.login,
-              isDraft: Boolean(context.payload.pull_request.draft),
-              mergeStateStatus: context.payload.pull_request.mergeable_state || 'unknown',
-              headSha: context.payload.pull_request.head.sha,
-              labels: (context.payload.pull_request.labels || []).map((label) => label.name),
-=======
               ref: pr.head.sha,
               per_page: 100,
             });
@@ -189,7 +156,6 @@ jobs:
               autoFixComment,
               ciSurgeonComment,
               labels: (pr.labels || []).map((label) => label.name),
->>>>>>> 8205bca (feat(ci): build grok pr operator)
               files: files.map((file) => ({
                 filename: file.filename,
                 status: file.status,
@@ -209,8 +175,6 @@ jobs:
                 status: run.status,
                 conclusion: run.conclusion,
               })),
-<<<<<<< HEAD
-=======
               commitStatuses: (statuses.data.statuses || []).map((status) => ({
                 context: status.context,
                 state: status.state,
@@ -260,7 +224,6 @@ jobs:
                 }
                 return snapshots;
               })(),
->>>>>>> 8205bca (feat(ci): build grok pr operator)
             };
 
             fs.writeFileSync(path, JSON.stringify(payload, null, 2));
@@ -339,8 +302,6 @@ jobs:
               } catch {}
             }
 
-<<<<<<< HEAD
-=======
       - name: Resolve eligible automation review threads
         uses: actions/github-script@v8
         env:
@@ -408,7 +369,6 @@ jobs:
               }
             }
 
->>>>>>> 8205bca (feat(ci): build grok pr operator)
       - name: Upload PR manager artifact
         uses: actions/upload-artifact@v7
         with:

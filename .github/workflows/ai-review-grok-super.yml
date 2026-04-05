@@ -89,13 +89,8 @@ jobs:
           script: |
             const fs = require('fs');
             const result = JSON.parse(fs.readFileSync(process.env.REVIEW_JSON_PATH, 'utf8'));
-<<<<<<< HEAD
-            const labelsToAdd = ['grok-reviewed'];
-            const labelsToRemove = ['security-issue', 'needs-review', 'has-patch', 'grok-approved'];
-=======
             const labelsToAdd = [];
             const labelsToRemove = ['security-issue', 'needs-review', 'has-patch'];
->>>>>>> 8205bca (feat(ci): build grok pr operator)
             const issues = Array.isArray(result.issues) ? result.issues : [];
 
             if (issues.some((issue) => issue.severity === 'critical')) {
@@ -107,12 +102,6 @@ jobs:
             if (typeof result.patch === 'string' && result.patch.trim()) {
               labelsToAdd.push('has-patch');
             }
-<<<<<<< HEAD
-            if (result.overall_approval === 'approve') {
-              labelsToAdd.push('grok-approved');
-            }
-=======
->>>>>>> 8205bca (feat(ci): build grok pr operator)
 
             const desired = new Set(labelsToAdd);
             const existing = new Set((context.payload.pull_request.labels || []).map((label) => label.name));

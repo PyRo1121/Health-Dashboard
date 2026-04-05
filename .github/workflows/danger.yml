@@ -15,11 +15,7 @@ jobs:
     timeout-minutes: 10
 
     steps:
-<<<<<<< HEAD
-      - name: Check out repository
-=======
       - name: Check out repository automation config
->>>>>>> 8205bca (feat(ci): build grok pr operator)
         uses: actions/checkout@v6
         with:
           persist-credentials: false
