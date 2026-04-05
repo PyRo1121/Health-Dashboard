@@ -13,6 +13,58 @@ This repo uses Grok as the primary PR operator for review, bounded repair, and m
 - `merge-ready` means ready for final human review only. Automation never merges.
 - Mergify has been removed. There is one PR operator path in this repo.
 - Release Drafter no longer auto-labels PRs. Grok owns repo-side PR labels.
+- Multi-platform support: GitHub, GitLab, and Bitbucket (configurable per platform).
+
+## Multi-Platform Support
+
+Grok PR Manager supports multiple code hosting platforms through a unified abstraction layer.
+
+### Supported Platforms
+
+| Platform     | Environment Variable                 | Status          |
+| ------------ | ------------------------------------ | --------------- |
+| GitHub       | `GITHUB_ACTIONS=true`                | ✅ Primary      |
+| GitLab       | `GITLAB_CI=true`                     | ✅ Configurable |
+| Bitbucket    | `BITBUCKET_BUILD_NUMBER`             | ✅ Configurable |
+| Azure DevOps | `SYSTEM_TEAMFOUNDATIONCOLLECTIONURI` | 🔜 Planned      |
+
+### Platform Detection
+
+The system automatically detects the current platform via environment variables:
+
+```javascript
+// GitHub Actions
+if (process.env.GITHUB_ACTIONS === 'true')
+
+// GitLab CI
+if (process.env.GITLAB_CI === 'true')
+
+// Bitbucket Pipelines
+if (process.env.BITBUCKET_BUILD_NUMBER)
+```
+
+### Unified API Abstraction
+
+Each platform implements a common interface:
+
+- `getPR()` - Get current PR/MR
+- `getDiff()` - Get changes diff
+- `postComment()` - Post a comment
+- `postInlineComment()` - Post an inline comment
+- `updateLabels()` - Update labels
+- `getCommits()` - Get commit history
+- `getReviews()` - Get review state
+
+### Configuration
+
+In `.grok.toml`:
+
+```toml
+[platforms]
+github_enabled = true
+gitlab_enabled = false  # Set to true for GitLab
+bitbucket_enabled = false  # Set to true for Bitbucket
+```
 
 ## What Runs Automatically
 
@@ -54,10 +106,12 @@ This repo uses Grok as the primary PR operator for review, bounded repair, and m
   - reports through workflow checks and artifacts instead of another PR-thread status comment
 - `grok-pr-commands.yml`
   - listens for `@grok` commands on PR comments
-  - supports `@grok status`, `@grok summarize`, `@grok full-review`, `@grok plan`, `@grok why-not-merge-ready`, `@grok what-changed-since-review`, `@grok assign`, `@grok fix`, `@grok retry`, `@grok resolve`, `@grok autopilot on`, `@grok autopilot off`, and `@grok ask <question>`
+  - supports `@grok status`, `@grok summarize`, `@grok full-review`, `@grok plan`, `@grok why-not-merge-ready`, `@grok what-changed-since-review`, `@grok assign`, `@grok fix`, `@grok retry`, `@grok resolve`, `@grok autopilot on`, `@grok autopilot off`, `@grok ask <question>`, `@grok walkthrough`, and `@grok timeline`
   - refreshes the PR manager, explains current readiness, requests reviewers from `CODEOWNERS`, or dispatches safe actions without introducing merge authority
   - `@grok explain <thread-id-or-file>` and `@grok resolve <thread-id-or-file>` can target specific review-thread context
   - `@grok ask <question>` provides interactive Q&A about the PR with conversation context
+  - `@grok walkthrough` generates a sequential file-by-file guide
+  - `@grok timeline` shows PR event timeline
 - `grok-ask.yml`
   - triggered by `@grok ask` command for interactive chat about the PR
   - maintains conversation context across multiple questions

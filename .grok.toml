@@ -112,3 +112,29 @@ security = [
   "Output encoding",
   "Dependency vulnerability scan",
 ]
+
+# =============================================================================
+# MULTI-PLATFORM SUPPORT
+# =============================================================================
+# Configure which platforms to support and their specific settings
+
+[platforms]
+# GitHub is always enabled (uses GITHUB_TOKEN from secrets)
+github_enabled = true
+
+# GitLab support (uses GITLAB_TOKEN from secrets)
+gitlab_enabled = false
+# gitlab_url = "https://gitlab.com"
+
+# Bitbucket support (uses BITBUCKET_TOKEN from secrets)  
+bitbucket_enabled = false
+# bitbucket_workspace = "my-workspace"
+
+[platforms.github]
+require_github_actions = true
+
+[platforms.gitlab]
+require_gitlab_ci = true
+
+[platforms.bitbucket]
+require_bitbucket_pipelines = true
