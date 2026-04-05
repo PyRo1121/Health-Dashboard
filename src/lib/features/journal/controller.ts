@@ -42,9 +42,9 @@ async function listLinkedJournalEvents(
   db: HealthDatabase,
   localDay: string
 ): Promise<import('$lib/core/domain/types').HealthEvent[]> {
-  return (
-    await db.healthEvents.where('localDay').equals(localDay).toArray()
-  ).sort((left, right) => (right.sourceTimestamp ?? right.updatedAt).localeCompare(left.sourceTimestamp ?? left.updatedAt));
+  return (await db.healthEvents.where('localDay').equals(localDay).toArray()).sort((left, right) =>
+    (right.sourceTimestamp ?? right.updatedAt).localeCompare(left.sourceTimestamp ?? left.updatedAt)
+  );
 }
 
 export async function loadJournalPage(
