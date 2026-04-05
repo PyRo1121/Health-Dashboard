@@ -142,3 +142,13 @@ export const nutritionRequestSchema = z.discriminatedUnion('action', [
 ]);
 
 export type NutritionRequest = z.infer<typeof nutritionRequestSchema>;
+
+export const nutritionQueryRequestSchema = z.object({
+  query: z.string().optional(),
+});
+
+export type NutritionQueryRequest = z.infer<typeof nutritionQueryRequestSchema>;
+
+export const nutritionEnrichParamsSchema = z.object({
+  fdcId: z.string().trim().regex(/^\d+$/, 'Invalid USDA food id.'),
+});

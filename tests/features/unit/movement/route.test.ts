@@ -17,7 +17,7 @@ describe('movement route', () => {
     const loadMovementPage = vi.fn(async () => ({
       loading: false,
       saveNotice: '',
-      workoutTemplateForm: { title: '', goal: '', exerciseRefs: [] },
+      workoutTemplateForm: { title: '', goal: '', exercises: [] },
       workoutTemplates: [],
       exerciseCatalogItems: [{ id: 'wger:1', title: 'Goblet squat' }],
       exerciseSearchQuery: '',
@@ -31,12 +31,18 @@ describe('movement route', () => {
     vi.doMock('$lib/server/http/action-route', () => ({
       ...actual,
       createDbActionPostHandler: (
-        handlers: Parameters<typeof actual.createDbActionPostHandler>[0]
+        handlers: Parameters<typeof actual.createDbActionPostHandler>[0],
+        _deps: Parameters<typeof actual.createDbActionPostHandler>[1],
+        options: Parameters<typeof actual.createDbActionPostHandler>[2]
       ) =>
-        actual.createDbActionPostHandler(handlers, {
-          withDb: async (run) => await run(db),
-          toResponse: (body) => Response.json(body),
-        }),
+        actual.createDbActionPostHandler(
+          handlers,
+          {
+            withDb: async (run) => await run(db),
+            toResponse: (body) => Response.json(body),
+          },
+          options
+        ),
     }));
     vi.doMock('$lib/features/movement/controller', () => ({
       loadMovementPage,
@@ -69,7 +75,7 @@ describe('movement route', () => {
       workoutTemplateForm: {
         title: 'Full body reset',
         goal: 'Recovery',
-        exerciseRefs: [{ name: 'Goblet squat', sets: 3, reps: '8', restSeconds: 60 }],
+        exercises: [{ name: 'Goblet squat', sets: 3, reps: '8', restSeconds: 60 }],
       },
       workoutTemplates: [],
       exerciseCatalogItems: [],
@@ -89,12 +95,18 @@ describe('movement route', () => {
     vi.doMock('$lib/server/http/action-route', () => ({
       ...actual,
       createDbActionPostHandler: (
-        handlers: Parameters<typeof actual.createDbActionPostHandler>[0]
+        handlers: Parameters<typeof actual.createDbActionPostHandler>[0],
+        _deps: Parameters<typeof actual.createDbActionPostHandler>[1],
+        options: Parameters<typeof actual.createDbActionPostHandler>[2]
       ) =>
-        actual.createDbActionPostHandler(handlers, {
-          withDb: async (run) => await run(db),
-          toResponse: (body) => Response.json(body),
-        }),
+        actual.createDbActionPostHandler(
+          handlers,
+          {
+            withDb: async (run) => await run(db),
+            toResponse: (body) => Response.json(body),
+          },
+          options
+        ),
     }));
     vi.doMock('$lib/features/movement/controller', () => ({
       loadMovementPage,
@@ -118,6 +130,49 @@ describe('movement route', () => {
     );
     expect(saveMovementWorkoutTemplatePage).toHaveBeenCalledWith(db, state);
     expect(loadMovementPage).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for invalid movement action payloads', async () => {
+    const db = {} as HealthDatabase;
+    const loadMovementPage = vi.fn();
+    const saveMovementWorkoutTemplatePage = vi.fn();
+    const actual = await vi.importActual<typeof import('$lib/server/http/action-route')>(
+      '$lib/server/http/action-route'
+    );
+
+    vi.doMock('$lib/server/http/action-route', () => ({
+      ...actual,
+      createDbActionPostHandler: (
+        handlers: Parameters<typeof actual.createDbActionPostHandler>[0],
+        _deps: Parameters<typeof actual.createDbActionPostHandler>[1],
+        options: Parameters<typeof actual.createDbActionPostHandler>[2]
+      ) =>
+        actual.createDbActionPostHandler(
+          handlers,
+          {
+            withDb: async (run) => await run(db),
+            toResponse: (body) => Response.json(body),
+          },
+          options
+        ),
+    }));
+    vi.doMock('$lib/features/movement/controller', () => ({
+      loadMovementPage,
+      saveMovementWorkoutTemplatePage,
+    }));
+
+    const { POST } = await import('../../../../src/routes/api/movement/+server.ts');
+    const response = await POST({
+      request: new Request('http://health.test/api/movement', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'saveWorkoutTemplate' }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid movement request payload.');
+    expect(loadMovementPage).not.toHaveBeenCalled();
+    expect(saveMovementWorkoutTemplatePage).not.toHaveBeenCalled();
   });
 });
 
@@ -191,5 +246,30 @@ describe('movement search route', () => {
     expect(searchWgerExercises).toHaveBeenCalledWith('goblet squat');
     expect(withServerHealthDb).toHaveBeenCalledOnce();
     expect(upsertExerciseCatalogItems).toHaveBeenCalledWith(db, results);
+  });
+
+  it('returns 400 for invalid exercise search payloads', async () => {
+    const searchWgerExercises = vi.fn();
+    const upsertExerciseCatalogItems = vi.fn();
+    const withServerHealthDb = vi.fn();
+
+    vi.doMock('$lib/server/movement/wger', () => ({ searchWgerExercises }));
+    vi.doMock('$lib/features/movement/service', () => ({ upsertExerciseCatalogItems }));
+    vi.doMock('$lib/server/db/client', () => ({ withServerHealthDb }));
+
+    const { POST } =
+      await import('../../../../src/routes/api/movement/search-exercises/+server.ts');
+    const response = await POST({
+      request: new Request('http://health.test/api/movement/search-exercises', {
+        method: 'POST',
+        body: JSON.stringify({ query: 42 }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid exercise search request payload.');
+    expect(searchWgerExercises).not.toHaveBeenCalled();
+    expect(upsertExerciseCatalogItems).not.toHaveBeenCalled();
+    expect(withServerHealthDb).not.toHaveBeenCalled();
   });
 });

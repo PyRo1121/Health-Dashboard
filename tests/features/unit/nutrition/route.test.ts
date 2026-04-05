@@ -135,6 +135,22 @@ describe('nutrition dynamic routes', () => {
     expect(upsertFoodCatalogItem).toHaveBeenCalledWith(db, normalizedProduct);
   });
 
+  it('returns 400 for invalid packaged search payloads', async () => {
+    await mockServerDb();
+
+    const { POST } =
+      await import('../../../../src/routes/api/nutrition/search-packaged/+server.ts');
+    const response = await POST({
+      request: new Request('http://health.test/api/nutrition/search-packaged', {
+        method: 'POST',
+        body: JSON.stringify({ query: 42 }),
+      }),
+    } as unknown as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid packaged search request payload.');
+  });
+
   it('uses local USDA fallback search when no API key is present', async () => {
     const db = await mockServerDb();
     const catalogItems = [{ id: 'local-food-1', name: 'Oatmeal with berries' }];
@@ -171,6 +187,21 @@ describe('nutrition dynamic routes', () => {
     expect(searchUsdaFoods).not.toHaveBeenCalled();
   });
 
+  it('returns 400 for invalid USDA search payloads', async () => {
+    await mockServerDb();
+
+    const { POST } = await import('../../../../src/routes/api/nutrition/search-usda/+server.ts');
+    const response = await POST({
+      request: new Request('http://health.test/api/nutrition/search-usda', {
+        method: 'POST',
+        body: JSON.stringify({ query: 42 }),
+      }),
+    } as unknown as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid USDA search request payload.');
+  });
+
   it('merges cached and remote recipe search results', async () => {
     const db = await mockServerDb();
     const localRecipe = { id: 'themealdb:52772', title: 'Teriyaki Chicken Casserole' };
@@ -203,5 +234,48 @@ describe('nutrition dynamic routes', () => {
     expect(listRecipeCatalogItems).toHaveBeenCalledWith(db);
     expect(searchThemealdbRecipes).toHaveBeenCalledWith('chicken');
     expect(upsertRecipeCatalogItem).toHaveBeenCalledWith(db, remoteRecipe);
+  });
+
+  it('returns 400 for invalid recipe search payloads', async () => {
+    await mockServerDb();
+
+    const { POST } = await import('../../../../src/routes/api/nutrition/search-recipes/+server.ts');
+    const response = await POST({
+      request: new Request('http://health.test/api/nutrition/search-recipes', {
+        method: 'POST',
+        body: JSON.stringify({ query: 42 }),
+      }),
+    } as unknown as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid recipe search request payload.');
+  });
+
+  it('maps invalid USDA ids to a 400 enrich response', async () => {
+    await mockServerDb();
+    const fetchUsdaFoodDetail = vi.fn();
+    const normalizeUsdaFoodDetail = vi.fn();
+
+    vi.doMock('$lib/features/nutrition/service', () => ({
+      foodLookupResultFromCatalogItem: vi.fn(),
+      upsertFoodCatalogItem: vi.fn(),
+    }));
+    vi.doMock('$lib/server/nutrition/usda', () => ({
+      fetchUsdaFoodDetail,
+      normalizeUsdaFoodDetail,
+    }));
+
+    const { POST } = await import('../../../../src/routes/api/nutrition/enrich/[fdcId]/+server.ts');
+    const response = await POST({
+      request: new Request('http://health.test/api/nutrition/enrich/not-a-number', {
+        method: 'POST',
+      }),
+      params: { fdcId: 'not-a-number' },
+    } as unknown as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid USDA food id.');
+    expect(fetchUsdaFoodDetail).not.toHaveBeenCalled();
+    expect(normalizeUsdaFoodDetail).not.toHaveBeenCalled();
   });
 });
