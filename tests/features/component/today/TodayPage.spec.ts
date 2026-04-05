@@ -369,9 +369,7 @@ describe('Today route', () => {
       expect(screen.getByText('Symptom load is elevated today.')).toBeTruthy();
       expect(screen.getByText('Anxiety intensity spiked today.')).toBeTruthy();
       expect(
-        screen.getByText(
-          'Meal fallback: keep the next meal familiar, easy, and protein-forward.'
-        )
+        screen.getByText('Meal fallback: keep the next meal familiar, easy, and protein-forward.')
       ).toBeTruthy();
       expect(
         screen.getByText(
