@@ -7,7 +7,6 @@ const DEFAULT_MODEL = 'grok-4-1-fast-reasoning';
 const DEFAULT_MAX_DIFF_CHARS = 250_000;
 const FORBIDDEN_PREFIXES = ['.github/', 'tests/', 'docs/'];
 const FORBIDDEN_FILES = new Set([
-  '.mergify.yml',
   'package.json',
   'bun.lock',
   'bun.lockb',

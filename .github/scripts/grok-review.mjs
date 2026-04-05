@@ -132,6 +132,7 @@ async function callXaiReview({ title, changedFiles, diff }) {
           'Review only the supplied PR diff. Use web_search and x_search only when current vendor guidance or incidents matter, ' +
           'and prefer official docs over social chatter. Output strict JSON matching the provided schema. ' +
           'Prioritize correctness, privacy for health data, GitHub Actions security, maintainability, performance, and accessibility. ' +
+          'Do not spend issues on pure lint, formatting, or mechanical style noise already enforced by ESLint, Prettier, or existing CI unless it directly causes a correctness, security, or accessibility defect. ' +
           'Only include a patch when the fix is minimal and high-confidence.',
       },
       {
@@ -197,7 +198,7 @@ ${
 ${
   result.patch
     ? `### Auto-Fix Patch Available
-Add label \`ai-auto-fix\` to ask Grok to attempt this patch on the PR branch.`
+The PR manager can dispatch \`ai-auto-fix\` automatically when this patch is safe for a trusted same-repo branch.`
     : '### Auto-Fix Patch Available\nNo high-confidence patch suggested.'
 }
 

@@ -2,6 +2,8 @@
 
 import { readFileSync } from 'node:fs';
 
+const LEGACY_LABELS_TO_DELETE = ['automerge', 'grok-reviewed', 'grok-approved'];
+
 function requiredEnv(name) {
   const value = process.env[name];
   if (!value) {
@@ -85,6 +87,14 @@ async function main() {
           color: label.color,
           description: label.description,
         }),
+      });
+    }
+  }
+
+  for (const legacyLabel of LEGACY_LABELS_TO_DELETE) {
+    if (byName.has(legacyLabel) && !desiredLabels.some((label) => label.name === legacyLabel)) {
+      await github(`/repos/${owner}/${name}/labels/${encodeURIComponent(legacyLabel)}`, {
+        method: 'DELETE',
       });
     }
   }

@@ -95,7 +95,7 @@ export function buildSearchTools({
   includeCodeInterpreter = false,
   includeDocsMcp = true,
   xHandles = [],
-  allowedDomains = ['docs.github.com', 'docs.x.ai', 'docs.mergify.com'],
+  allowedDomains = ['docs.github.com', 'docs.x.ai'],
 } = {}) {
   const tools = [
     {

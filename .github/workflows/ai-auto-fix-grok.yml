@@ -10,7 +10,6 @@ concurrency:
 
 permissions:
   contents: write
-  pull-requests: write
   issues: write
 
 jobs:
@@ -68,7 +67,7 @@ jobs:
         env:
           FILES_PATH: ${{ steps.diff.outputs.files_path }}
         run: |
-          if grep -Eq '^(\.github/|tests/|docs/|package\.json$|bun\.lockb?$|package-lock\.json$|pnpm-lock\.yaml$|yarn\.lock$|tsconfig\.json$|svelte\.config\.js$|vite\.config\.ts$|\.mergify\.yml$)' "$FILES_PATH"; then
+          if grep -Eq '^(\.github/|tests/|docs/|package\.json$|bun\.lockb?$|package-lock\.json$|pnpm-lock\.yaml$|yarn\.lock$|tsconfig\.json$|svelte\.config\.js$|vite\.config\.ts$)' "$FILES_PATH"; then
             echo "skip_reason=protected-paths" >> "$GITHUB_OUTPUT"
           else
             echo "skip_reason=" >> "$GITHUB_OUTPUT"
@@ -112,9 +111,16 @@ jobs:
           FIX_JSON_PATH: ${{ runner.temp }}/grok-fix.json
         run: |
           REASONING=$(node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.env.FIX_JSON_PATH,'utf8')); process.stdout.write((data.reasoning || 'High-confidence minimal patch from Grok.').replace(/\\s+/g,' ').trim());")
+          FILES=$(node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.env.FIX_JSON_PATH,'utf8')); process.stdout.write((data.touchedFiles || []).join('\n'));")
+          if [ -z "$FILES" ]; then
+            echo "No touched files recorded for Grok auto-fix."
+            exit 1
+          fi
           git config --local user.name "Grok AI"
           git config --local user.email "grok@x.ai"
-          git add -A
+          while IFS= read -r file; do
+            [ -n "$file" ] && git add -- "$file"
+          done <<< "$FILES"
           cat > /tmp/grok-commit-message.txt <<EOF
           fix: grok-4-1-fast auto-fix
 
@@ -152,73 +158,6 @@ jobs:
               } catch {}
             }
 
-      - name: Report fix result
-        uses: actions/github-script@v8
-        env:
-          FIX_JSON_PATH: ${{ runner.temp }}/grok-fix.json
-          SKIP_REASON: ${{ steps.guard.outputs.skip_reason || steps.path_guard.outputs.skip_reason }}
-        with:
-          script: |
-            const fs = require('fs');
-            const marker = '<!-- grok-auto-fix -->';
-            const result = fs.existsSync(process.env.FIX_JSON_PATH)
-              ? JSON.parse(fs.readFileSync(process.env.FIX_JSON_PATH, 'utf8'))
-              : {};
-            const fixApplied = '${{ steps.apply.outputs.fix_applied }}' === 'true';
-            const skipReason = process.env.SKIP_REASON;
-            const status = skipReason
-              ? '⚠️ Skipped'
-              : fixApplied
-                ? '✅ Applied and pushed'
-                : result.patch
-                  ? '⚠️ Patch rejected or not applied'
-                  : '✅ No fix needed';
-            const body = [
-              marker,
-              '## Grok Auto-Fix',
-              '',
-              `**Status:** ${status}`,
-              '',
-              `**Summary:** ${result.summary || 'No summary returned.'}`,
-              '',
-              result.reasoning ? `**Reasoning:** ${result.reasoning}` : '',
-              skipReason === 'fork-pr'
-                ? '**Guardrail:** Auto-fix is disabled for fork PRs.'
-                : '',
-              skipReason === 'protected-paths'
-                ? '**Guardrail:** Auto-fix is disabled because this PR touches protected workflow/test/config paths.'
-                : '',
-              '',
-              '---',
-              'Applied by Grok 4.1 Fast via xAI',
-            ]
-              .filter(Boolean)
-              .join('\n');
-
-            const { data: comments } = await github.rest.issues.listComments({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              per_page: 100,
-            });
-
-            const existing = comments.find((comment) => comment.body?.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                comment_id: existing.id,
-                body,
-              });
-            } else {
-              await github.rest.issues.createComment({
-                issue_number: context.issue.number,
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                body,
-              });
-            }
-
       - name: Upload Grok auto-fix artifact
         if: always() && steps.guard.outputs.skip_reason == '' && steps.path_guard.outputs.skip_reason == ''
         uses: actions/upload-artifact@v7
@@ -227,6 +166,19 @@ jobs:
           path: |
             ${{ runner.temp }}/grok-fix.json
             ${{ runner.temp }}/grok-fix.patch
+
+      - name: Refresh PR manager after auto-fix
+        if: always()
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'pr-manager-grok.yml',
+              ref: context.payload.pull_request.base.ref,
+              inputs: { pr_number: String(context.issue.number) },
+            });
 
       - name: Remove ai-auto-fix label
         if: always()

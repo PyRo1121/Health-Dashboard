@@ -63,7 +63,6 @@ function isProtectedPath(file) {
     file.startsWith('docs/') ||
     file.startsWith('tests/') ||
     [
-      '.mergify.yml',
       'package.json',
       'bun.lock',
       'bun.lockb',
@@ -184,6 +183,7 @@ async function main() {
         summary: typeof raw.summary === 'string' ? raw.summary : 'No summary returned.',
         reasoning: typeof raw.reasoning === 'string' ? raw.reasoning : 'No reasoning returned.',
         should_attempt_fix: Boolean(raw.should_attempt_fix),
+        touchedFiles,
         patch,
       },
       null,
