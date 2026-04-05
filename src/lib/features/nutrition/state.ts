@@ -7,7 +7,6 @@ import type {
   RecipeCatalogItem,
 } from '$lib/core/domain/types';
 import { createNutritionForm, mergeNutritionFormWithDraft, type NutritionFormState } from './model';
-import { loadWithLegacyPlannedMealMigration } from './migration';
 import { getNutritionPlannedMealResolution } from './planned-meal-resolution';
 import {
   attachNutrientsToFoodEntry,
@@ -120,19 +119,14 @@ export async function loadNutritionPage(
   localDay: string,
   state: NutritionPageState
 ): Promise<NutritionPageState> {
-  const { data, notice } = await loadWithLegacyPlannedMealMigration(
-    db,
-    localDay,
-    async () =>
-      await Promise.all([
-        buildDailyNutritionSummary(db, localDay),
-        listFavoriteMeals(db),
-        listFoodCatalogItems(db),
-        listRecipeCatalogItems(db),
-        getNutritionPlannedMealResolution(db, localDay),
-        buildNutritionRecommendationContext(db, localDay),
-      ])
-  );
+  const data = await Promise.all([
+    buildDailyNutritionSummary(db, localDay),
+    listFavoriteMeals(db),
+    listFoodCatalogItems(db),
+    listRecipeCatalogItems(db),
+    getNutritionPlannedMealResolution(db, localDay),
+    buildNutritionRecommendationContext(db, localDay),
+  ]);
   const [
     summary,
     favoriteMeals,
@@ -146,7 +140,7 @@ export async function loadNutritionPage(
     ...state,
     loading: false,
     localDay,
-    saveNotice: notice ?? state.saveNotice,
+    saveNotice: state.saveNotice,
     summary,
     favoriteMeals,
     catalogItems,

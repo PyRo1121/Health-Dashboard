@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getHealthDb } from '$lib/core/db/client';
-import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import PlanPage from '../../../../src/routes/plan/+page.svelte';
 import { expectHeading, resetRouteDb } from '../../../support/component/routeHarness';
 
@@ -313,33 +312,6 @@ describe('Plan route', () => {
         screen.getByText('No grocery items could be derived from the current recipe slots.')
       ).toBeTruthy();
     });
-  });
-
-  it('migrates a legacy planned meal into the weekly board when plan loads', async () => {
-    const db = getHealthDb();
-    await savePlannedMeal(db, {
-      name: 'Greek yogurt bowl',
-      mealType: 'breakfast',
-      calories: 310,
-      protein: 24,
-      fiber: 6,
-      carbs: 34,
-      fat: 8,
-      sourceName: 'Legacy planner',
-    });
-
-    render(PlanPage);
-    expectHeading('Plan');
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(/Legacy planned meal moved into today’s weekly plan\./i)
-      ).toBeTruthy();
-      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
-      expect(screen.getByText(/Saved food · Legacy planner · 24g protein/i)).toBeTruthy();
-    });
-    expect(await db.plannedMeals.count()).toBe(0);
-    expect(await db.planSlots.count()).toBe(1);
   });
 
   it('adds and removes a manual grocery item from the planning grocery draft', async () => {

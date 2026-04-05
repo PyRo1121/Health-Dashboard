@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { useTestHealthDb } from '../../../support/unit/testDb';
-import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import {
   applyNutritionSearchMatches,
   clearNutritionPlannedMeal,
@@ -73,7 +72,6 @@ describe('nutrition controller', () => {
     expect(state.saveNotice).toBe('Planned next meal saved.');
     expect(state.plannedMeal?.name).toBe('Oatmeal with berries');
     expect(state.plannedMealSlotId).toBeTruthy();
-    expect(await db.plannedMeals.count()).toBe(0);
     expect(await db.planSlots.count()).toBe(1);
     expect(await db.adherenceMatches.count()).toBe(1);
     expect((await db.planSlots.toArray())[0]?.mealType).toBe('breakfast');
@@ -108,35 +106,5 @@ describe('nutrition controller', () => {
 
     expect(state.matches).toHaveLength(1);
     expect(state.searchNotice).toMatch(/USDA live search unavailable/i);
-  });
-
-  it('migrates a legacy planned meal into a canonical plan slot on load', async () => {
-    const db = getDb();
-
-    await savePlannedMeal(db, {
-      name: 'Greek yogurt bowl',
-      mealType: 'breakfast',
-      calories: 310,
-      protein: 24,
-      fiber: 6,
-      carbs: 34,
-      fat: 8,
-      sourceName: 'Legacy planner',
-      notes: 'Keep berries in the bowl.',
-    });
-
-    const state = await loadNutritionPage(db, '2026-04-02', createNutritionPageState());
-
-    expect(state.plannedMeal?.name).toBe('Greek yogurt bowl');
-    expect(state.plannedMealSlotId).toBeTruthy();
-    expect(state.saveNotice).toBe('Legacy planned meal moved into today’s weekly plan.');
-    expect(await db.plannedMeals.count()).toBe(0);
-    expect(await db.planSlots.count()).toBe(1);
-    expect((await db.planSlots.toArray())[0]).toMatchObject({
-      slotType: 'meal',
-      itemType: 'food',
-      mealType: 'breakfast',
-      title: 'Greek yogurt bowl',
-    });
   });
 });

@@ -1,7 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getHealthDb, resetHealthDb } from '$lib/core/db/client';
-import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import NutritionPage from '../../../../src/routes/nutrition/+page.svelte';
 
 describe('Nutrition route', () => {
@@ -151,7 +150,6 @@ describe('Nutrition route', () => {
       expect(screen.getByText(/Planned next meal saved\./i)).toBeTruthy();
       expect(screen.getAllByText('Protein oats').length).toBeGreaterThan(0);
     });
-    expect(await db.plannedMeals.count()).toBe(0);
     expect(await db.planSlots.count()).toBe(1);
 
     await fireEvent.input(screen.getByLabelText('Meal name'), {
@@ -169,31 +167,6 @@ describe('Nutrition route', () => {
       expect(screen.getByText(/Nothing planned yet\./i)).toBeTruthy();
     });
     expect(await db.planSlots.count()).toBe(0);
-  });
-
-  it('migrates a legacy planned meal into the weekly plan when nutrition loads', async () => {
-    const db = getHealthDb();
-    await savePlannedMeal(db, {
-      name: 'Greek yogurt bowl',
-      mealType: 'breakfast',
-      calories: 310,
-      protein: 24,
-      fiber: 6,
-      carbs: 34,
-      fat: 8,
-      sourceName: 'Legacy planner',
-    });
-
-    render(NutritionPage);
-
-    await waitFor(() => {
-      expect(
-        screen.getByText(/Legacy planned meal moved into today’s weekly plan\./i)
-      ).toBeTruthy();
-      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
-    });
-    expect(await db.plannedMeals.count()).toBe(0);
-    expect(await db.planSlots.count()).toBe(1);
   });
 
   it('hydrates a review strategy deep link into the meal draft and clears the query', async () => {

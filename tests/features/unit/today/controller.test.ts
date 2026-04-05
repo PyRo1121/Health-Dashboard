@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { useTestHealthDb } from '../../../support/unit/testDb';
-import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import { saveFoodCatalogItem } from '$lib/features/nutrition/service';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import {
@@ -42,38 +41,25 @@ describe('today controller', () => {
     expect(await db.reviewSnapshots.count()).toBe(1);
   });
 
-  it('migrates a legacy planned meal into a canonical slot when today loads', async () => {
-    const db = getDb();
-    await savePlannedMeal(db, {
-      name: 'Greek yogurt bowl',
-      mealType: 'breakfast',
-      calories: 310,
-      protein: 24,
-      fiber: 6,
-      carbs: 34,
-      fat: 8,
-      sourceName: 'Legacy planner',
-    });
-
-    const state = await loadTodayPage(db, '2026-04-02');
-
-    expect(state.saveNotice).toBe('Legacy planned meal moved into today’s weekly plan.');
-    expect(state.snapshot?.plannedMeal?.name).toBe('Greek yogurt bowl');
-    expect(await db.plannedMeals.count()).toBe(0);
-    expect(await db.planSlots.count()).toBe(1);
-  });
-
   it('logs and clears a planned meal from the today page state', async () => {
     const db = getDb();
-    await savePlannedMeal(db, {
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const greekYogurt = await saveFoodCatalogItem(db, {
       name: 'Greek yogurt bowl',
-      mealType: 'breakfast',
       calories: 310,
       protein: 24,
       fiber: 6,
       carbs: 34,
       fat: 8,
-      sourceName: 'Local catalog',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: greekYogurt.id,
+      mealType: 'breakfast',
+      title: greekYogurt.name,
     });
 
     let state = await loadTodayPage(db, '2026-04-02');
@@ -86,14 +72,22 @@ describe('today controller', () => {
     expect(await db.adherenceMatches.count()).toBe(1);
     expect(await db.reviewSnapshots.count()).toBe(1);
 
-    await savePlannedMeal(db, {
+    const lentilSoup = await saveFoodCatalogItem(db, {
       name: 'Lentil soup',
-      mealType: 'lunch',
       calories: 280,
       protein: 16,
       fiber: 11,
       carbs: 39,
       fat: 6,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: lentilSoup.id,
+      mealType: 'lunch',
+      title: lentilSoup.name,
     });
 
     state = await loadTodayPage(db, '2026-04-02');

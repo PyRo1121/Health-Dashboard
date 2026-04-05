@@ -54,7 +54,7 @@ async function main() {
   const outputPath = requiredEnv('BRANCH_AUDIT_MARKDOWN_PATH');
   const requiredChecks = loadRequiredChecksFromMergify();
   let currentContexts = [];
-  let liveAuditStatus = 'not-run';
+  let liveAuditStatus;
 
   try {
     const protection = await github(

@@ -17,7 +17,6 @@ import type {
   JournalEntry,
   ManualGroceryItem,
   PlanSlot,
-  PlannedMeal,
   RecipeCatalogItem,
   ReviewSnapshot,
   SobrietyEvent,
@@ -32,7 +31,6 @@ export class HealthDatabase extends Dexie {
   foodEntries!: EntityTable<FoodEntry, 'id'>;
   foodCatalogItems!: EntityTable<FoodCatalogItem, 'id'>;
   recipeCatalogItems!: EntityTable<RecipeCatalogItem, 'id'>;
-  plannedMeals!: EntityTable<PlannedMeal, 'id'>;
   weeklyPlans!: EntityTable<WeeklyPlan, 'id'>;
   planSlots!: EntityTable<PlanSlot, 'id'>;
   derivedGroceryItems!: EntityTable<DerivedGroceryItem, 'id'>;
@@ -88,7 +86,6 @@ export async function exportHealthDbSnapshot(db = getHealthDb()): Promise<Health
     foodEntries,
     foodCatalogItems,
     recipeCatalogItems,
-    plannedMeals,
     weeklyPlans,
     planSlots,
     derivedGroceryItems,
@@ -110,7 +107,6 @@ export async function exportHealthDbSnapshot(db = getHealthDb()): Promise<Health
     db.foodEntries.toArray(),
     db.foodCatalogItems.toArray(),
     db.recipeCatalogItems.toArray(),
-    db.plannedMeals.toArray(),
     db.weeklyPlans.toArray(),
     db.planSlots.toArray(),
     db.derivedGroceryItems.toArray(),
@@ -134,7 +130,6 @@ export async function exportHealthDbSnapshot(db = getHealthDb()): Promise<Health
     foodEntries,
     foodCatalogItems,
     recipeCatalogItems,
-    plannedMeals,
     weeklyPlans,
     planSlots,
     derivedGroceryItems,

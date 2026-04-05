@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { useTestHealthDb } from '../../../support/unit/testDb';
-import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import {
   loadReviewPage,
   saveReviewExperimentPage,
@@ -46,25 +45,5 @@ describe('review controller', () => {
     state = await saveReviewExperimentPage(db, state);
     expect(state.weekly?.snapshot.experiment).toBe('Increase hydration tracking');
     expect(state.saveNotice).toBe('Experiment saved.');
-  });
-
-  it('migrates a legacy planned meal into a canonical slot when review loads', async () => {
-    const db = getDb();
-    await savePlannedMeal(db, {
-      name: 'Greek yogurt bowl',
-      mealType: 'breakfast',
-      calories: 310,
-      protein: 24,
-      fiber: 6,
-      carbs: 34,
-      fat: 8,
-      sourceName: 'Legacy planner',
-    });
-
-    const state = await loadReviewPage(db, '2026-04-02');
-
-    expect(state.loadNotice).toBe('Legacy planned meal moved into today’s weekly plan.');
-    expect(await db.plannedMeals.count()).toBe(0);
-    expect(await db.planSlots.count()).toBe(1);
   });
 });

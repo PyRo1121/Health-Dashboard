@@ -9,7 +9,6 @@ function emptySnapshot() {
     foodEntries: [],
     foodCatalogItems: [],
     recipeCatalogItems: [],
-    plannedMeals: [],
     weeklyPlans: [],
     planSlots: [],
     derivedGroceryItems: [],

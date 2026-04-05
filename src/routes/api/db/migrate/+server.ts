@@ -3,7 +3,9 @@ import type { HealthDbSnapshot } from '$lib/core/db/types';
 import { getServerHealthDb } from '$lib/server/db/client';
 
 type MigrationRequest = {
-  snapshot: HealthDbSnapshot;
+  snapshot: HealthDbSnapshot & {
+    plannedMeals?: unknown[];
+  };
 };
 
 export async function POST({ request }) {
@@ -16,7 +18,6 @@ export async function POST({ request }) {
   await db.foodEntries.bulkAdd(snapshot.foodEntries);
   await db.foodCatalogItems.bulkAdd(snapshot.foodCatalogItems);
   await db.recipeCatalogItems.bulkAdd(snapshot.recipeCatalogItems);
-  await db.plannedMeals.bulkAdd(snapshot.plannedMeals ?? []);
   await db.weeklyPlans.bulkAdd(snapshot.weeklyPlans ?? []);
   await db.planSlots.bulkAdd(snapshot.planSlots ?? []);
   await db.derivedGroceryItems.bulkAdd(snapshot.derivedGroceryItems ?? []);
@@ -34,6 +35,26 @@ export async function POST({ request }) {
   await db.adherenceMatches.bulkAdd(snapshot.adherenceMatches ?? []);
 
   return json({
-    migrated: Object.values(snapshot).reduce((count, records) => count + records.length, 0),
+    migrated:
+      snapshot.dailyRecords.length +
+      snapshot.journalEntries.length +
+      snapshot.foodEntries.length +
+      snapshot.foodCatalogItems.length +
+      snapshot.recipeCatalogItems.length +
+      snapshot.weeklyPlans.length +
+      snapshot.planSlots.length +
+      snapshot.derivedGroceryItems.length +
+      snapshot.manualGroceryItems.length +
+      snapshot.workoutTemplates.length +
+      snapshot.exerciseCatalogItems.length +
+      snapshot.favoriteMeals.length +
+      snapshot.healthEvents.length +
+      snapshot.healthTemplates.length +
+      snapshot.sobrietyEvents.length +
+      snapshot.assessmentResults.length +
+      snapshot.importBatches.length +
+      snapshot.importArtifacts.length +
+      snapshot.reviewSnapshots.length +
+      snapshot.adherenceMatches.length,
   });
 }
