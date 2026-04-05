@@ -147,7 +147,9 @@ export async function buildWeeklySnapshot(
       .map((event) => event.id)
       .slice(0, 5),
     journalHighlights: buildJournalHighlights(weekJournalEntries),
-    journalReflectionLinkedEventIds: weekJournalEntries.flatMap((entry) => entry.linkedEventIds).slice(0, 5),
+    journalReflectionLinkedEventIds: weekJournalEntries
+      .flatMap((entry) => entry.linkedEventIds)
+      .slice(0, 5),
     experimentOptions: [...REVIEW_EXPERIMENT_OPTIONS],
   };
 }
