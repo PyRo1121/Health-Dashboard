@@ -47,6 +47,8 @@ export interface WeeklyReviewData {
   deviceHighlights: string[];
   assessmentSummary: string[];
   healthHighlights: string[];
+  contextSignals: string[];
+  journalHighlights: string[];
   experimentOptions: string[];
 }
 

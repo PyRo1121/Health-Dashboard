@@ -94,6 +94,10 @@ describe('review model', () => {
       deviceHighlights: ['Sleep duration: 8 hours on 2026-04-02'],
       assessmentSummary: ['WHO-5: Strong wellbeing (17)'],
       healthHighlights: [],
+      contextSignals: ['Low sleep and a written reflection both landed on 2026-04-02.'],
+      journalHighlights: [
+        'Evening review on 2026-04-02: Crowded store and headache drained the afternoon.',
+      ],
       experimentOptions: ['Increase hydration tracking'],
     };
 
@@ -102,6 +106,8 @@ describe('review model', () => {
       'Drift flags',
       'Assessment changes',
       'Health highlights',
+      'Context signals',
+      'Journal excerpts',
       'Food adherence highlights',
       'Plan follow-through',
       'Actual vs plan',
@@ -176,11 +182,21 @@ describe('review model', () => {
       deviceHighlights: [],
       assessmentSummary: [],
       healthHighlights: ['Low sleep lined up with higher anxiety on 2026-04-02.'],
+      contextSignals: ['Low sleep and a written reflection both landed on 2026-04-02.'],
+      journalHighlights: [
+        'Evening review on 2026-04-02: Crowded store and headache drained the afternoon.',
+      ],
       experimentOptions: ['Increase hydration tracking'],
     };
 
     expect(createReviewSections(weekly).map((section) => section.title)).toContain(
       'Health highlights'
+    );
+    expect(createReviewSections(weekly).map((section) => section.title)).toContain(
+      'Context signals'
+    );
+    expect(createReviewSections(weekly).map((section) => section.title)).toContain(
+      'Journal excerpts'
     );
   });
 });
