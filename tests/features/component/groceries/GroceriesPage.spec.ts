@@ -89,4 +89,61 @@ describe('Groceries route', () => {
       ).toBeTruthy();
     });
   });
+
+  it('renders one merged grocery row when duplicate ingredients come from multiple recipes', async () => {
+    const db = getHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    await db.recipeCatalogItems.bulkPut([
+      {
+        id: 'themealdb:52772',
+        createdAt: '2026-04-07T08:00:00.000Z',
+        updatedAt: '2026-04-07T08:00:00.000Z',
+        title: 'Teriyaki Chicken Casserole',
+        sourceType: 'themealdb',
+        sourceName: 'TheMealDB',
+        externalId: '52772',
+        mealType: 'dinner',
+        cuisine: 'Japanese',
+        ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
+      },
+      {
+        id: 'themealdb:52773',
+        createdAt: '2026-04-07T08:00:00.000Z',
+        updatedAt: '2026-04-07T08:00:00.000Z',
+        title: 'Soy glazed bowl',
+        sourceType: 'themealdb',
+        sourceName: 'TheMealDB',
+        externalId: '52773',
+        mealType: 'dinner',
+        cuisine: 'Japanese',
+        ingredients: ['1 tbsp soy sauce'],
+      },
+    ]);
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'recipe',
+      itemId: 'themealdb:52772',
+      title: 'Teriyaki Chicken Casserole',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'recipe',
+      itemId: 'themealdb:52773',
+      title: 'Soy glazed bowl',
+    });
+
+    render(GroceriesPage);
+    expectHeading('Groceries');
+
+    await waitFor(() => {
+      expect(screen.getAllByText('soy sauce')).toHaveLength(1);
+      expect(screen.getByText(/Pantry · 3\/4 cup \+ 1 tbsp/i)).toBeTruthy();
+      expect(screen.getByText(/Teriyaki Chicken Casserole, Soy glazed bowl/i)).toBeTruthy();
+    });
+  });
 });
