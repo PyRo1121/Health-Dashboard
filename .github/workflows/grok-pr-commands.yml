@@ -286,6 +286,40 @@ jobs:
             }
 
             function patchCoverageForThread(thread, patchSummaries) {
+              const stopWords = new Set([
+                'about',
+                'after',
+                'before',
+                'comment',
+                'could',
+                'does',
+                'file',
+                'from',
+                'have',
+                'issue',
+                'just',
+                'line',
+                'need',
+                'open',
+                'path',
+                'review',
+                'should',
+                'that',
+                'there',
+                'this',
+                'thread',
+                'with',
+              ]);
+              const tokenize = (text) =>
+                [
+                  ...new Set(
+                    String(text || '')
+                      .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+                      .toLowerCase()
+                      .split(/[^a-z0-9]+/)
+                      .filter((token) => token.length >= 4 && !stopWords.has(token))
+                  ),
+                ];
               const exact = patchSummaries.find((patch) => patch.touchedFiles.includes(thread.path));
               if (exact) {
                 return { confidence: 'high', reason: 'exact file match', patch: exact };
@@ -303,6 +337,27 @@ jobs:
               );
               if (areaMatch) {
                 return { confidence: 'low', reason: 'same top-level area', patch: areaMatch };
+              }
+
+              const keywords = tokenize(thread.bodyText);
+              for (const patch of patchSummaries) {
+                const matchedKeywords = keywords.filter((keyword) =>
+                  patch.touchedFiles.some((file) => file.toLowerCase().includes(keyword))
+                );
+                if (matchedKeywords.length >= 2) {
+                  return {
+                    confidence: 'medium',
+                    reason: `thread keywords matched files (${matchedKeywords.slice(0, 3).join(', ')})`,
+                    patch,
+                  };
+                }
+                if (matchedKeywords.length === 1) {
+                  return {
+                    confidence: 'low',
+                    reason: `thread keyword matched files (${matchedKeywords[0]})`,
+                    patch,
+                  };
+                }
               }
 
               return null;

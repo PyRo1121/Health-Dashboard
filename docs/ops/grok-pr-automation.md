@@ -45,9 +45,11 @@ This repo uses Grok as the primary PR operator for review, bounded repair, and m
   - reports through workflow checks and artifacts instead of another PR-thread status comment
 - `grok-pr-commands.yml`
   - listens for `@grok` commands on PR comments
-  - supports `@grok status`, `@grok summarize`, `@grok full-review`, `@grok plan`, `@grok why-not-merge-ready`, `@grok what-changed-since-review`, `@grok assign`, `@grok fix`, `@grok retry`, `@grok resolve`, `@grok autopilot on`, and `@grok autopilot off`
+  - supports `@grok status`, `@grok summarize`, `@grok summary refresh`, `@grok full-review`, `@grok plan`, `@grok why-not-merge-ready`, `@grok what-changed-since-review`, `@grok assign`, `@grok explain <thread-id-or-file>`, `@grok resolve <thread-id-or-file>`, `@grok fix`, `@grok retry`, `@grok autopilot on`, `@grok autopilot off`, `@grok pause`, `@grok resume`, and `@grok config`
   - refreshes the PR manager, explains current readiness, requests reviewers from `CODEOWNERS`, or dispatches safe actions without introducing merge authority
   - `@grok explain <thread-id-or-file>` and `@grok resolve <thread-id-or-file>` can target specific review-thread context
+  - targeted `@grok resolve` only closes automation threads when recent patch coverage is high-confidence
+  - recent patch coverage uses exact file, basename, area, and thread-keyword matching instead of path overlap only
 - `pr-manager-self-test.yml`
   - runs on PRs that change PR automation files
   - verifies the control-plane scripts, formatting, and PR-manager unit tests

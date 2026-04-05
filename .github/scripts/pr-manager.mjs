@@ -408,6 +408,31 @@ function threadCoverageSummary(reviewThreads, patchSummaries) {
     return [];
   }
 
+  const STOP_WORDS = new Set([
+    'about',
+    'after',
+    'before',
+    'comment',
+    'could',
+    'does',
+    'file',
+    'from',
+    'have',
+    'issue',
+    'just',
+    'line',
+    'need',
+    'open',
+    'path',
+    'review',
+    'should',
+    'that',
+    'there',
+    'this',
+    'thread',
+    'with',
+  ]);
+
   function basename(file) {
     const parts = String(file || '').split('/');
     return parts[parts.length - 1] || '';
@@ -416,6 +441,41 @@ function threadCoverageSummary(reviewThreads, patchSummaries) {
   function area(file) {
     const parts = String(file || '').split('/');
     return parts[0] || '';
+  }
+
+  function tokenize(text) {
+    return [...new Set(
+      String(text || '')
+        .replace(/([a-z0-9])([A-Z])/g, '$1 $2')
+        .toLowerCase()
+        .split(/[^a-z0-9]+/)
+        .filter((token) => token.length >= 4 && !STOP_WORDS.has(token))
+    )];
+  }
+
+  function semanticFileMatch(thread, patch) {
+    const keywords = tokenize(thread.bodyText);
+    if (!keywords.length) return null;
+
+    const matchedKeywords = keywords.filter((keyword) =>
+      patch.touchedFiles.some((file) => file.toLowerCase().includes(keyword))
+    );
+
+    if (matchedKeywords.length >= 2) {
+      return {
+        confidence: 'medium',
+        reason: `thread keywords matched changed files (${matchedKeywords.slice(0, 3).join(', ')})`,
+      };
+    }
+
+    if (matchedKeywords.length === 1) {
+      return {
+        confidence: 'low',
+        reason: `thread keyword matched changed files (${matchedKeywords[0]})`,
+      };
+    }
+
+    return null;
   }
 
   const covered = [];
@@ -441,6 +501,18 @@ function threadCoverageSummary(reviewThreads, patchSummaries) {
       if (matchedPatch) {
         confidence = 'low';
         reason = 'same top-level area touched recently';
+      }
+    }
+
+    if (!matchedPatch) {
+      for (const patch of patches) {
+        const semantic = semanticFileMatch(thread, patch);
+        if (semantic) {
+          matchedPatch = patch;
+          confidence = semantic.confidence;
+          reason = semantic.reason;
+          break;
+        }
       }
     }
 

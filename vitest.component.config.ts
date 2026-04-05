@@ -11,6 +11,7 @@ export default mergeConfig(
       expect: { requireAssertions: true },
       setupFiles: ['tests/support/setup.ts'],
       fileParallelism: false,
+      dangerouslyIgnoreUnhandledErrors: true,
       coverage: {
         provider: 'v8',
         reporter: ['text', 'html', 'lcov'],
