@@ -1,0 +1,68 @@
+.github/workflows/ai-review-grok-super.yml
+  a4a207d9c63de5ba 1-176
+.prettierignore
+  dfa9ab62646aa2f5 1-3
+.mergify.yml
+  8452ad787e1d8ecb 1-56
+.github/workflows/ai-auto-fix-grok.yml
+  ff4dc50760c26c8d 1-162
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "5969edb9e984a3ddb83ff7f541f65956e921a2f3",
+  "prompts": {
+    "8452ad787e1d8ecb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-0092d8a0-0dcf-4d5d-a989-80019fa23a69",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 56,
+      "total_deletions": 0,
+      "accepted_lines": 56,
+      "overriden_lines": 0
+    },
+    "a4a207d9c63de5ba": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-e6c4c55f-ccdd-4507-b45f-937743519145",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 176,
+      "total_deletions": 0,
+      "accepted_lines": 176,
+      "overriden_lines": 0
+    },
+    "dfa9ab62646aa2f5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-0da21470-fa48-4505-8ac4-fc80bcb341c8",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 0,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "ff4dc50760c26c8d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-8861662b-0f13-46b0-8f76-a8a331e492e5",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 162,
+      "total_deletions": 0,
+      "accepted_lines": 162,
+      "overriden_lines": 0
+    }
+  }
+}
