@@ -24,7 +24,7 @@ jobs:
     steps:
       - name: Resolve pull request from workflow run
         id: pr
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             const prs = context.payload.workflow_run.pull_requests || [];
@@ -58,7 +58,7 @@ jobs:
 
       - name: Retry failed jobs once before surgery
         if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt == '1'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         with:
           script: |
             await github.rest.actions.reRunWorkflowFailedJobs({
@@ -74,7 +74,7 @@ jobs:
 
       - name: Check out PR branch
         if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           ref: ${{ steps.pr.outputs.head_ref }}
@@ -181,7 +181,7 @@ jobs:
 
       - name: Report CI surgeon result
         if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
-        uses: actions/github-script@v7
+        uses: actions/github-script@v8
         env:
           SURGEON_JSON_PATH: ${{ runner.temp }}/grok-ci-surgeon.json
         with:
