@@ -20,6 +20,29 @@ export function buildOptionalCollectionTool() {
   };
 }
 
+export function buildOptionalRemoteMcpTools() {
+  const raw = optionalEnv('XAI_REMOTE_MCP_TOOLS_JSON', '');
+  if (!raw.trim()) {
+    return [];
+  }
+
+  try {
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) {
+      return [];
+    }
+
+    return parsed.filter(
+      (tool) =>
+        tool &&
+        typeof tool === 'object' &&
+        (tool.type === 'mcp' || tool.type === 'remote_mcp' || tool.type === 'function')
+    );
+  } catch {
+    return [];
+  }
+}
+
 export function buildSearchTools({
   includeCodeInterpreter = false,
   xHandles = [],
@@ -45,6 +68,8 @@ export function buildSearchTools({
   if (collectionTool) {
     tools.push(collectionTool);
   }
+
+  tools.push(...buildOptionalRemoteMcpTools());
 
   if (includeCodeInterpreter) {
     tools.push({ type: 'code_interpreter' });

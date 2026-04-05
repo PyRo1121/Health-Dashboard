@@ -1,0 +1,50 @@
+name: Threat Triage
+description: Review or acknowledge a Grok threat-monitor finding.
+title: '[Threat Triage]: '
+labels: ['threat-monitor', 'needs-review']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this to acknowledge, investigate, or dismiss findings from the 6-hour Grok threat monitor.
+  - type: input
+    id: package
+    attributes:
+      label: Package or workflow action
+      placeholder: 'vite'
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Threat severity
+      options:
+        - critical
+        - high
+        - medium
+        - low
+    validations:
+      required: true
+  - type: textarea
+    id: finding
+    attributes:
+      label: Finding summary
+      description: Paste the exact threat-monitor conclusion or issue link.
+    validations:
+      required: true
+  - type: dropdown
+    id: disposition
+    attributes:
+      label: Disposition
+      options:
+        - Accept risk temporarily
+        - Needs dependency fix PR
+        - False positive
+        - Needs human investigation
+    validations:
+      required: true
+  - type: textarea
+    id: notes
+    attributes:
+      label: Notes
+      description: Add mitigation, owner, or time-bound follow-up details.
