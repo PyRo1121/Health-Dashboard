@@ -4,6 +4,7 @@ import { saveDailyCheckin, getTodaySnapshot, listEventsForDay } from '$lib/featu
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import { saveWorkoutTemplate } from '$lib/features/movement/service';
 import { saveFoodCatalogItem } from '$lib/features/nutrition/service';
+import { logAnxietyEvent, logSymptomEvent } from '$lib/features/health/service';
 import { useTestHealthDb } from '../../../support/unit/testDb';
 
 describe('today service', () => {
@@ -239,6 +240,80 @@ describe('today service', () => {
     expect(snapshot.plannedWorkout).toBeNull();
     expect(snapshot.plannedWorkoutIssue).toBe(
       'That planned workout no longer exists. Replace it in Plan before using it today.'
+    );
+  });
+
+  it('builds a recovery adaptation when sleep and strain point to a lighter day', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+    const workout = await saveWorkoutTemplate(db, {
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    });
+
+    await saveDailyCheckin(db, {
+      date: '2026-04-02',
+      mood: 3,
+      energy: 2,
+      stress: 4,
+      focus: 3,
+      sleepHours: 5.5,
+      sleepQuality: 2,
+      freeformNote: 'Dragging today.',
+    });
+    await logSymptomEvent(db, {
+      localDay: '2026-04-02',
+      symptom: 'Headache',
+      severity: 4,
+      note: 'Heavy pressure behind the eyes.',
+    });
+    await logAnxietyEvent(db, {
+      localDay: '2026-04-02',
+      intensity: 7,
+      trigger: 'Cramped schedule',
+      durationMinutes: 25,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      title: food.name,
+      mealType: 'breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: workout.id,
+      title: workout.title,
+    });
+
+    const snapshot = await getTodaySnapshot(db, '2026-04-02');
+
+    expect(snapshot.recoveryAdaptation).toMatchObject({
+      level: 'recovery',
+      headline: 'Recovery mode: simplify the day.',
+    });
+    expect(snapshot.recoveryAdaptation?.reasons).toContain('Sleep landed under 6 hours.');
+    expect(snapshot.recoveryAdaptation?.reasons).toContain('Symptom load is elevated today.');
+    expect(snapshot.recoveryAdaptation?.reasons).toContain('Anxiety intensity spiked today.');
+    expect(snapshot.recoveryAdaptation?.mealFallback).toContain(
+      'Meal fallback: keep the next meal familiar, easy, and protein-forward.'
+    );
+    expect(snapshot.recoveryAdaptation?.workoutFallback).toContain(
+      'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
     );
   });
 });

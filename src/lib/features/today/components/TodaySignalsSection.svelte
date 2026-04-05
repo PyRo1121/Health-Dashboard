@@ -18,6 +18,25 @@
   } = $props();
 </script>
 
+{#if snapshot?.recoveryAdaptation}
+  <SectionCard title="Recovery today">
+    <p class="recovery-headline">{snapshot.recoveryAdaptation.headline}</p>
+    <ul class="nutrition-guidance-list">
+      {#each snapshot.recoveryAdaptation.reasons as line (line)}
+        <li>{line}</li>
+      {/each}
+    </ul>
+    <ul class="summary-list">
+      {#each snapshot.recoveryAdaptation.mealFallback as line (line)}
+        <li>{line}</li>
+      {/each}
+      {#each snapshot.recoveryAdaptation.workoutFallback as line (line)}
+        <li>{line}</li>
+      {/each}
+    </ul>
+  </SectionCard>
+{/if}
+
 <SectionCard title="Nutrition pulse">
   {#if snapshot}
     <div class="nutrition-pulse-grid">
@@ -69,6 +88,12 @@
 </SectionCard>
 
 <style>
+  .recovery-headline {
+    margin: 0 0 0.75rem;
+    color: #6b3d2b;
+    font-weight: 700;
+  }
+
   .nutrition-pulse-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(10rem, 1fr));
