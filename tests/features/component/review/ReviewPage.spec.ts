@@ -117,9 +117,11 @@ describe('Review route', () => {
     await waitFor(() => {
       expect(screen.getAllByText(/1 hit, 0 misses, 1 inferred\./i).length).toBeGreaterThan(0);
     });
-    await waitForText(
-      /Meal inferred hit: Greek yogurt bowl matched a logged meal on 2026-04-02\./i
-    );
+    await waitForText('Inferred');
+    await waitFor(() => {
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
+    });
+    await waitForText(/Meal inferred hit: matched a logged meal on 2026-04-02\./i);
   });
 
   it('shows actual misses and grocery waste when a planned meal slips', async () => {

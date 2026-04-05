@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { WeeklyReviewData } from '$lib/features/review/service';
 import {
+  createReviewAdherenceAuditItems,
   createReviewAdherenceCards,
   createNutritionStrategyCards,
   createReviewSections,
@@ -69,6 +70,24 @@ describe('review model', () => {
         'Meal miss: Teriyaki Chicken Casserole was skipped.',
         'Workout hit: Full body reset was completed as planned.',
       ],
+      adherenceMatches: [
+        {
+          id: 'adherence-1',
+          createdAt: '2026-04-02T08:00:00.000Z',
+          updatedAt: '2026-04-02T08:00:00.000Z',
+          weekStart: '2026-03-31',
+          planSlotId: 'slot-1',
+          localDay: '2026-04-02',
+          slotType: 'meal',
+          slotTitle: 'Greek yogurt bowl',
+          outcome: 'hit',
+          matchSource: 'food-entry',
+          matchedRecordId: 'food-1',
+          confidence: 'inferred',
+          reason: 'matched a logged meal on 2026-04-02.',
+          fingerprint: 'fp-1',
+        },
+      ],
       grocerySignals: [
         'Potential waste: Teriyaki Chicken Casserole was missed after 1 grocery item had already been sourced.',
       ],
@@ -101,6 +120,14 @@ describe('review model', () => {
         label: 'Workouts',
         value: '100%',
         detail: '1 hit, 0 misses.',
+        tone: 'steady',
+      },
+    ]);
+    expect(createReviewAdherenceAuditItems(weekly)).toEqual([
+      {
+        badge: 'Inferred',
+        title: 'Greek yogurt bowl',
+        detail: 'Meal inferred hit: matched a logged meal on 2026-04-02.',
         tone: 'steady',
       },
     ]);
@@ -144,6 +171,7 @@ describe('review model', () => {
       planningHighlights: [],
       adherenceScores: [],
       adherenceSignals: [],
+      adherenceMatches: [],
       grocerySignals: [],
       deviceHighlights: [],
       assessmentSummary: [],

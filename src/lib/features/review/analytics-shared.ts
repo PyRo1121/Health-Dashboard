@@ -1,4 +1,9 @@
-import type { DailyRecord, FoodEntry, ReviewSnapshot } from '$lib/core/domain/types';
+import type {
+  AdherenceMatch,
+  DailyRecord,
+  FoodEntry,
+  ReviewSnapshot,
+} from '$lib/core/domain/types';
 import { startOfWeek } from '$lib/core/shared/dates';
 
 export interface ReviewCorrelation {
@@ -37,6 +42,7 @@ export interface WeeklyReviewData {
   planningHighlights: string[];
   adherenceScores: ReviewAdherenceScore[];
   adherenceSignals: string[];
+  adherenceMatches: AdherenceMatch[];
   grocerySignals: string[];
   deviceHighlights: string[];
   assessmentSummary: string[];
