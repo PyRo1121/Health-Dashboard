@@ -389,9 +389,9 @@ describe('Today route', () => {
       expect(screen.getByText('Recovery walk')).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Swap to recovery meal' })).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Swap to recovery walk' })).toBeTruthy();
-      expect(screen.getByRole('link', { name: 'Capture recovery note' }).getAttribute('href')).toMatch(
-        /^\/journal\?/
-      );
+      expect(
+        screen.getByRole('link', { name: 'Capture recovery note' }).getAttribute('href')
+      ).toMatch(/^\/journal\?/);
     });
   });
 

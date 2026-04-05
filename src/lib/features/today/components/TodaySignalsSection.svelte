@@ -76,7 +76,9 @@
           </button>
         {/each}
         {#if recoveryJournalHref}
-          <a class="recovery-action-link" href={resolve(recoveryJournalHref)}>Capture recovery note</a>
+          <a class="recovery-action-link" href={resolve(recoveryJournalHref)}
+            >Capture recovery note</a
+          >
         {/if}
       </div>
     {/if}
@@ -180,7 +182,10 @@
     border: 1px solid rgba(31, 92, 74, 0.14);
     background: rgba(241, 235, 226, 0.9);
     color: #1f5c4a;
-    font: 700 0.9rem/1 Manrope, system-ui, sans-serif;
+    font:
+      700 0.9rem/1 Manrope,
+      system-ui,
+      sans-serif;
     text-decoration: none;
   }
 
