@@ -44,6 +44,7 @@
     "@sveltejs/vite-plugin-svelte": "^6.2.4",
     "@types/node": "^24",
     "@vitest/coverage-v8": "^4.1.2",
+    "danger": "^13.0.7",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-svelte": "^3.15.2",

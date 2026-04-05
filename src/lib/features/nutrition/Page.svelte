@@ -288,7 +288,6 @@
 
     <NutritionPlannedMealSection
       plannedMeal={page.plannedMeal}
-      plannedMealCompatibilityNotice={page.plannedMealCompatibilityNotice}
       plannedMealIssue={page.plannedMealIssue}
       {plannedMealRows}
       onLoadPlannedMeal={loadPlannedMeal}

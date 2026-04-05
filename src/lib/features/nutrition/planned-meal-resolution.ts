@@ -1,17 +1,16 @@
 import type { HealthDatabase } from '$lib/core/db/types';
 import type { FoodCatalogItem, PlanSlot, PlannedMeal } from '$lib/core/domain/types';
 import { listPlanSlotsForDay } from '$lib/features/planning/service';
-import { getPlannedMeal, listFoodCatalogItems } from './service';
+import { listFoodCatalogItems } from './service';
 
 export interface NutritionPlannedMealCandidate {
-  kind: 'standalone' | 'plan-slot-food';
+  kind: 'plan-slot-food';
   meal: PlannedMeal;
   slotId?: string;
 }
 
 export interface NutritionPlannedMealResolution {
   candidate: NutritionPlannedMealCandidate | null;
-  compatibilityNotice: string | null;
   issue: string | null;
 }
 
@@ -54,7 +53,6 @@ function buildPlannedMealFromFoodSlot(
 }
 
 export function resolveNutritionPlannedMeal(
-  explicitPlannedMeal: PlannedMeal | null,
   planSlots: PlanSlot[],
   foodCatalogItems: FoodCatalogItem[]
 ): NutritionPlannedMealResolution {
@@ -63,7 +61,6 @@ export function resolveNutritionPlannedMeal(
     if (candidate) {
       return {
         candidate,
-        compatibilityNotice: null,
         issue: null,
       };
     }
@@ -76,27 +73,13 @@ export function resolveNutritionPlannedMeal(
     ) {
       return {
         candidate: null,
-        compatibilityNotice: null,
         issue: 'That planned meal no longer exists. Replace it in Plan before using it.',
       };
     }
   }
 
-  if (explicitPlannedMeal) {
-    return {
-      candidate: {
-        kind: 'standalone',
-        meal: explicitPlannedMeal,
-      },
-      compatibilityNotice:
-        'This planned meal is using the legacy fallback flow. Weekly plan slots take priority when they exist.',
-      issue: null,
-    };
-  }
-
   return {
     candidate: null,
-    compatibilityNotice: null,
     issue: null,
   };
 }
@@ -105,13 +88,12 @@ export async function getNutritionPlannedMealResolution(
   db: HealthDatabase,
   localDay: string
 ): Promise<NutritionPlannedMealResolution> {
-  const [plannedMeal, planSlots, foodCatalogItems] = await Promise.all([
-    getPlannedMeal(db),
+  const [planSlots, foodCatalogItems] = await Promise.all([
     listPlanSlotsForDay(db, localDay),
     listFoodCatalogItems(db),
   ]);
 
-  return resolveNutritionPlannedMeal(plannedMeal, planSlots, foodCatalogItems);
+  return resolveNutritionPlannedMeal(planSlots, foodCatalogItems);
 }
 
 export async function listStalePlannedFoodSlotIds(

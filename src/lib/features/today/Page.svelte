@@ -91,7 +91,6 @@
       todayDate={page.todayDate}
       {dailyRecordRows}
       plannedMeal={page.snapshot?.plannedMeal ?? null}
-      plannedMealCompatibilityNotice={page.snapshot?.plannedMealCompatibilityNotice ?? undefined}
       plannedMealIssue={page.snapshot?.plannedMealIssue ?? undefined}
       {plannedMealRows}
       plannedWorkout={page.snapshot?.plannedWorkout ?? null}
