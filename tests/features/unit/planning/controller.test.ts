@@ -1,6 +1,5 @@
 import { describe, expect, it } from 'vitest';
 import { useTestHealthDb } from '../../../support/unit/testDb';
-import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import { saveFoodCatalogItem, upsertRecipeCatalogItem } from '$lib/features/nutrition/service';
 import {
   addManualPlanningGroceryItemPage,
@@ -214,32 +213,6 @@ describe('planning controller', () => {
       'That workout template no longer exists. Choose another before adding it to the week.'
     );
     expect(state.slots).toHaveLength(0);
-  });
-
-  it('migrates a legacy planned meal into the weekly plan when plan loads', async () => {
-    const db = getDb();
-    await savePlannedMeal(db, {
-      name: 'Greek yogurt bowl',
-      mealType: 'breakfast',
-      calories: 310,
-      protein: 24,
-      fiber: 6,
-      carbs: 34,
-      fat: 8,
-      sourceName: 'Legacy planner',
-    });
-
-    const state = await loadPlanningPage(db, '2026-04-07', createPlanningPageState());
-
-    expect(state.planNotice).toBe('Legacy planned meal moved into today’s weekly plan.');
-    expect(state.slots).toHaveLength(1);
-    expect(state.slots[0]).toMatchObject({
-      slotType: 'meal',
-      itemType: 'food',
-      title: 'Greek yogurt bowl',
-      mealType: 'breakfast',
-    });
-    expect(await db.plannedMeals.count()).toBe(0);
   });
 
   it('adds and removes a manual grocery item from the planning grocery draft', async () => {

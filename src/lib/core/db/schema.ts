@@ -1,5 +1,5 @@
 export const DB_NAME = 'personal-health-cockpit';
-export const DB_VERSION = 10;
+export const DB_VERSION = 11;
 
 export const SCHEMA_STORES = {
   dailyRecords: 'id, date, updatedAt',
@@ -7,7 +7,6 @@ export const SCHEMA_STORES = {
   foodEntries: 'id, localDay, mealType, updatedAt',
   foodCatalogItems: 'id, name, sourceType, barcode, updatedAt',
   recipeCatalogItems: 'id, title, mealType, cuisine, updatedAt',
-  plannedMeals: 'id, mealType, updatedAt',
   weeklyPlans: 'id, weekStart, updatedAt',
   planSlots: 'id, weeklyPlanId, localDay, slotType, status, updatedAt',
   derivedGroceryItems: 'id, weeklyPlanId, aisle, checked, excluded, updatedAt',

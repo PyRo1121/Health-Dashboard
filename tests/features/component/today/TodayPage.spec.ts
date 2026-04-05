@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, it } from 'vitest';
 import { getHealthDb } from '$lib/core/db/client';
 import { currentLocalDay } from '$lib/core/domain/time';
 import { saveWorkoutTemplate } from '$lib/features/movement/service';
-import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import { saveFoodCatalogItem } from '$lib/features/nutrition/service';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import TodayPage from '../../../../src/routes/today/+page.svelte';
@@ -87,43 +86,6 @@ describe('Today route', () => {
 
   it('shows a planned meal and lets today log it immediately', async () => {
     const db = getHealthDb();
-    await savePlannedMeal(db, {
-      name: 'Greek yogurt bowl',
-      mealType: 'breakfast',
-      calories: 310,
-      protein: 24,
-      fiber: 6,
-      carbs: 34,
-      fat: 8,
-      sourceName: 'Local catalog',
-    });
-
-    render(TodayPage);
-    expectHeading('Today');
-
-    await waitFor(() => {
-      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
-      expect(screen.getByText(/Meal type: breakfast/i)).toBeTruthy();
-      expect(
-        screen.getByText(/Legacy planned meal moved into today’s weekly plan\./i)
-      ).toBeTruthy();
-    });
-    expect(await db.plannedMeals.count()).toBe(0);
-    expect(await db.planSlots.count()).toBe(1);
-
-    await fireEvent.click(screen.getByRole('button', { name: 'Log planned meal' }));
-    await waitFor(() => {
-      expect(screen.getByText(/Planned meal logged\./i)).toBeTruthy();
-      expect(screen.getByText(/Meals logged: 1/i)).toBeTruthy();
-      expect(screen.getByText(/Latest meal: Greek yogurt bowl/i)).toBeTruthy();
-      expect(screen.getByText(/Calories: 310/i)).toBeTruthy();
-      expect(screen.getByText(/Protein: 24/i)).toBeTruthy();
-      expect(screen.getByText(/Protein pace/i)).toBeTruthy();
-    });
-  });
-
-  it('shows canonical planned slots ahead of legacy planned meals when both exist', async () => {
-    const db = getHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     const food = await saveFoodCatalogItem(db, {
@@ -134,22 +96,13 @@ describe('Today route', () => {
       carbs: 34,
       fat: 8,
     });
-    await savePlannedMeal(db, {
-      name: 'Legacy oats',
-      mealType: 'breakfast',
-      calories: 320,
-      protein: 12,
-      fiber: 8,
-      carbs: 52,
-      fat: 7,
-      sourceName: 'Legacy planner',
-    });
     await savePlanSlot(db, {
       weeklyPlanId: weeklyPlan.id,
       localDay,
       slotType: 'meal',
       itemType: 'food',
       itemId: food.id,
+      mealType: 'breakfast',
       title: food.name,
     });
 
@@ -158,7 +111,18 @@ describe('Today route', () => {
 
     await waitFor(() => {
       expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
-      expect(screen.queryByText('Legacy oats')).toBeNull();
+      expect(screen.getByText(/Meal type: breakfast/i)).toBeTruthy();
+    });
+    expect(await db.planSlots.count()).toBe(1);
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Log planned meal' }));
+    await waitFor(() => {
+      expect(screen.getByText(/Planned meal logged\./i)).toBeTruthy();
+      expect(screen.getByText(/Meals logged: 1/i)).toBeTruthy();
+      expect(screen.getByText(/Latest meal: Greek yogurt bowl/i)).toBeTruthy();
+      expect(screen.getByText(/Calories: 310/i)).toBeTruthy();
+      expect(screen.getByText(/Protein: 24/i)).toBeTruthy();
+      expect(screen.getByText(/Protein pace/i)).toBeTruthy();
     });
   });
 

@@ -14,7 +14,6 @@ import type {
   JournalEntry,
   ManualGroceryItem,
   PlanSlot,
-  PlannedMeal,
   RecipeCatalogItem,
   ReviewSnapshot,
   SobrietyEvent,
@@ -48,7 +47,6 @@ export interface HealthDatabase {
   foodEntries: HealthDbTable<FoodEntry>;
   foodCatalogItems: HealthDbTable<FoodCatalogItem>;
   recipeCatalogItems: HealthDbTable<RecipeCatalogItem>;
-  plannedMeals: HealthDbTable<PlannedMeal>;
   weeklyPlans: HealthDbTable<WeeklyPlan>;
   planSlots: HealthDbTable<PlanSlot>;
   derivedGroceryItems: HealthDbTable<DerivedGroceryItem>;
@@ -74,7 +72,6 @@ export interface HealthDbSnapshot {
   foodEntries: FoodEntry[];
   foodCatalogItems: FoodCatalogItem[];
   recipeCatalogItems: RecipeCatalogItem[];
-  plannedMeals: PlannedMeal[];
   weeklyPlans: WeeklyPlan[];
   planSlots: PlanSlot[];
   derivedGroceryItems: DerivedGroceryItem[];

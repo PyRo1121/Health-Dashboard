@@ -13,7 +13,6 @@ import {
   listFoodCatalogItems,
   listRecipeCatalogItems,
 } from '$lib/features/nutrition/service';
-import { loadWithLegacyPlannedMealMigration } from '$lib/features/nutrition/migration';
 import {
   getNutritionPlannedMealResolution,
   resolveNutritionPlannedMeal,
@@ -133,12 +132,7 @@ export async function getTodayPlannedMealResolution(
   db: HealthDatabase,
   date: string
 ): Promise<NutritionPlannedMealResolution> {
-  const { data } = await loadWithLegacyPlannedMealMigration(
-    db,
-    date,
-    async () => await getNutritionPlannedMealResolution(db, date)
-  );
-  return data;
+  return await getNutritionPlannedMealResolution(db, date);
 }
 
 async function buildTodaySnapshotData(db: HealthDatabase, date: string): Promise<TodaySnapshot> {
@@ -211,25 +205,15 @@ async function buildTodaySnapshotData(db: HealthDatabase, date: string): Promise
 }
 
 export async function getTodaySnapshot(db: HealthDatabase, date: string): Promise<TodaySnapshot> {
-  const { data } = await loadWithLegacyPlannedMealMigration(
-    db,
-    date,
-    async () => await buildTodaySnapshotData(db, date)
-  );
-  return data;
+  return await buildTodaySnapshotData(db, date);
 }
 
 export async function loadTodaySnapshotWithNotice(
   db: HealthDatabase,
   date: string
 ): Promise<{ snapshot: TodaySnapshot; notice: string | null }> {
-  const { data, notice } = await loadWithLegacyPlannedMealMigration(
-    db,
-    date,
-    async () => await buildTodaySnapshotData(db, date)
-  );
   return {
-    snapshot: data,
-    notice,
+    snapshot: await buildTodaySnapshotData(db, date),
+    notice: null,
   };
 }

@@ -166,6 +166,7 @@ function ensureSqliteSchema(db: Database): void {
 		PRAGMA foreign_keys = ON;
 		PRAGMA busy_timeout = 5000;
 	`);
+  db.exec(`DROP TABLE IF EXISTS plannedMeals`);
 
   for (const tableName of TABLE_NAMES) {
     const indexedColumns = parseIndexedColumns(SCHEMA_STORES[tableName]);
@@ -200,7 +201,6 @@ function createTableMap(
   | 'foodEntries'
   | 'foodCatalogItems'
   | 'recipeCatalogItems'
-  | 'plannedMeals'
   | 'weeklyPlans'
   | 'planSlots'
   | 'derivedGroceryItems'
@@ -242,11 +242,6 @@ function createTableMap(
       database,
       'recipeCatalogItems',
       parseIndexedColumns(SCHEMA_STORES.recipeCatalogItems)
-    ),
-    plannedMeals: new SqliteTable(
-      database,
-      'plannedMeals',
-      parseIndexedColumns(SCHEMA_STORES.plannedMeals)
     ),
     weeklyPlans: new SqliteTable(
       database,

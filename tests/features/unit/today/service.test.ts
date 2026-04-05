@@ -3,7 +3,6 @@ import type { HealthEvent } from '$lib/core/domain/types';
 import { saveDailyCheckin, getTodaySnapshot, listEventsForDay } from '$lib/features/today/service';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import { saveWorkoutTemplate } from '$lib/features/movement/service';
-import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import { saveFoodCatalogItem } from '$lib/features/nutrition/service';
 import { useTestHealthDb } from '../../../support/unit/testDb';
 
@@ -134,7 +133,7 @@ describe('today service', () => {
     });
   });
 
-  it('prefers canonical plan slots over legacy planned meals when both exist', async () => {
+  it('surfaces the canonical planned meal when a planned food slot exists', async () => {
     const db = getDb();
     const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
     const food = await saveFoodCatalogItem(db, {
@@ -144,17 +143,6 @@ describe('today service', () => {
       fiber: 6,
       carbs: 34,
       fat: 8,
-    });
-
-    await savePlannedMeal(db, {
-      name: 'Legacy oats',
-      mealType: 'breakfast',
-      calories: 320,
-      protein: 12,
-      fiber: 8,
-      carbs: 52,
-      fat: 7,
-      sourceName: 'Legacy planner',
     });
     await savePlanSlot(db, {
       weeklyPlanId: weeklyPlan.id,
@@ -163,42 +151,20 @@ describe('today service', () => {
       itemType: 'food',
       itemId: food.id,
       title: food.name,
+      mealType: 'breakfast',
     });
 
     const snapshot = await getTodaySnapshot(db, '2026-04-02');
 
     expect(snapshot.plannedMeal).toMatchObject({
       name: 'Greek yogurt bowl',
+      mealType: 'breakfast',
       sourceName: 'Local catalog',
     });
     expect(snapshot.plannedMealIssue).toBeNull();
   });
 
-  it('migrates a legacy planned meal into a canonical planned slot before building today snapshot', async () => {
-    const db = getDb();
-
-    await savePlannedMeal(db, {
-      name: 'Legacy oats',
-      mealType: 'breakfast',
-      calories: 320,
-      protein: 12,
-      fiber: 8,
-      carbs: 52,
-      fat: 7,
-      sourceName: 'Legacy planner',
-    });
-
-    const snapshot = await getTodaySnapshot(db, '2026-04-02');
-
-    expect(snapshot.plannedMeal).toMatchObject({
-      name: 'Legacy oats',
-    });
-    expect(snapshot.plannedMealIssue).toBeNull();
-    expect(await db.plannedMeals.count()).toBe(0);
-    expect(await db.planSlots.count()).toBe(1);
-  });
-
-  it('does not fall back to legacy planned meals when a canonical slot exists but is stale', async () => {
+  it('shows a stale planned-meal issue when the canonical slot loses its food source', async () => {
     const db = getDb();
     const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
     const food = await saveFoodCatalogItem(db, {
@@ -208,17 +174,6 @@ describe('today service', () => {
       fiber: 6,
       carbs: 34,
       fat: 8,
-    });
-
-    await savePlannedMeal(db, {
-      name: 'Legacy oats',
-      mealType: 'breakfast',
-      calories: 320,
-      protein: 12,
-      fiber: 8,
-      carbs: 52,
-      fat: 7,
-      sourceName: 'Legacy planner',
     });
     await savePlanSlot(db, {
       weeklyPlanId: weeklyPlan.id,

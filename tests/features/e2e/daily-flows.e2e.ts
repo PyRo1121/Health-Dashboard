@@ -2,32 +2,6 @@ import { expect, test } from '@playwright/test';
 
 const resetHeaders = { 'x-health-reset-token': 'codex-e2e' };
 
-function emptySnapshot() {
-  return {
-    dailyRecords: [],
-    journalEntries: [],
-    foodEntries: [],
-    foodCatalogItems: [],
-    recipeCatalogItems: [],
-    plannedMeals: [],
-    weeklyPlans: [],
-    planSlots: [],
-    derivedGroceryItems: [],
-    manualGroceryItems: [],
-    workoutTemplates: [],
-    exerciseCatalogItems: [],
-    favoriteMeals: [],
-    healthEvents: [],
-    healthTemplates: [],
-    sobrietyEvents: [],
-    assessmentResults: [],
-    importBatches: [],
-    importArtifacts: [],
-    reviewSnapshots: [],
-    adherenceMatches: [],
-  };
-}
-
 test.beforeEach(async ({ page }) => {
   const response = await page.request.post('/api/test/reset-db', { headers: resetHeaders });
   expect(response.ok()).toBe(true);
@@ -166,49 +140,6 @@ test('planned meal flows from nutrition into today logging', async ({ page }) =>
   });
   await expect(dailyBriefingSection.locator('.summary-list')).toContainText('Meals logged: 1');
   await expect(page.getByText('Calories: 320')).toBeVisible();
-});
-
-test('legacy planned meal migrates when today loads', async ({ page }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
-    data: {
-      snapshot: {
-        ...emptySnapshot(),
-        plannedMeals: [
-          {
-            id: 'planned-meal:next',
-            createdAt: '2026-04-03T00:00:00.000Z',
-            updatedAt: '2026-04-03T00:00:00.000Z',
-            name: 'Greek yogurt bowl',
-            mealType: 'breakfast',
-            calories: 310,
-            protein: 24,
-            fiber: 6,
-            carbs: 34,
-            fat: 8,
-            sourceName: 'Legacy planner',
-          },
-        ],
-      },
-    },
-  });
-  expect(seedResponse.ok()).toBe(true);
-
-  await page.goto('/today');
-  const plannedMealSection = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Planned next meal' }),
-  });
-  await expect(
-    page.getByText(/Legacy planned meal moved into today’s weekly plan\./i)
-  ).toBeVisible();
-  await expect(plannedMealSection.getByText(/Meal type: breakfast/i)).toBeVisible();
-  await expect(plannedMealSection.getByText('Greek yogurt bowl')).toBeVisible();
-  await expect(
-    page.getByText(/This planned meal is using the legacy fallback flow\./i)
-  ).toHaveCount(0);
-
-  await page.getByRole('button', { name: 'Log planned meal' }).click();
-  await expect(page.getByText(/Planned meal logged\./i)).toBeVisible();
-  await expect(page.getByText(/Latest meal: Greek yogurt bowl/i)).toBeVisible();
 });
 
 test('weekly plan workout flows into today execution', async ({ page }) => {
