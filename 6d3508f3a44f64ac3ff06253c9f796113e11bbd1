@@ -1,0 +1,23 @@
+.gitar/config.md
+  bec93420fa1ef818 1-13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "6d3508f3a44f64ac3ff06253c9f796113e11bbd1",
+  "prompts": {
+    "bec93420fa1ef818": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-bf172634-5e1f-468d-bed5-c4e180e23b84",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 0,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
