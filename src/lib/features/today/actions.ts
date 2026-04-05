@@ -5,6 +5,7 @@ import { upsertDailyRecord } from '$lib/core/shared/daily-records';
 import { createRecordMeta } from '$lib/core/shared/records';
 import { createFoodEntry } from '$lib/features/nutrition/service';
 import { deletePlanSlot, updatePlanSlotStatus } from '$lib/features/planning/service';
+import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
 import { getTodayPlannedMealResolution } from './snapshot';
 
 export interface DailyCheckinInput {
@@ -72,6 +73,7 @@ export async function saveDailyCheckin(
       db.healthEvents.put(buildEvent(input.date, eventType, input[eventType], timestamp))
     )
   );
+  await refreshWeeklyReviewArtifactsSafely(db, input.date);
 
   return record;
 }
@@ -102,6 +104,7 @@ export async function logPlannedMealForToday(
   if (candidate.slotId) {
     await updatePlanSlotStatus(db, candidate.slotId, 'done');
   }
+  await refreshWeeklyReviewArtifactsSafely(db, date);
 
   return entry;
 }
@@ -110,6 +113,7 @@ export async function clearTodayPlannedMeal(db: HealthDatabase, date: string): P
   const resolution = await getTodayPlannedMealResolution(db, date);
   if (resolution.candidate?.slotId) {
     await deletePlanSlot(db, resolution.candidate.slotId);
+    await refreshWeeklyReviewArtifactsSafely(db, date);
   }
 }
 
@@ -118,5 +122,7 @@ export async function updateTodayPlanSlotStatus(
   slotId: string,
   status: PlanSlot['status']
 ): Promise<PlanSlot> {
-  return await updatePlanSlotStatus(db, slotId, status);
+  const slot = await updatePlanSlotStatus(db, slotId, status);
+  await refreshWeeklyReviewArtifactsSafely(db, slot.localDay);
+  return slot;
 }
