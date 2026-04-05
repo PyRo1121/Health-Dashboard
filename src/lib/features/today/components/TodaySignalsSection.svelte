@@ -9,12 +9,14 @@
     todayNutritionGuidance,
     todayNutritionRows,
     plannedMealProjectionRows,
+    onRecoveryAction,
   }: {
     snapshot: TodaySnapshot | null;
     todayNutritionPulseMetrics: TodayNutritionPulseMetric[];
     todayNutritionGuidance: string[];
     todayNutritionRows: string[];
     plannedMealProjectionRows: string[];
+    onRecoveryAction: (actionId: 'skip-workout' | 'clear-planned-meal') => void;
   } = $props();
 </script>
 
@@ -34,6 +36,15 @@
         <li>{line}</li>
       {/each}
     </ul>
+    {#if snapshot.recoveryAdaptation.actions.length}
+      <div class="recovery-actions">
+        {#each snapshot.recoveryAdaptation.actions as action (action.id)}
+          <button class="recovery-action-button" onclick={() => onRecoveryAction(action.id)}>
+            {action.label}
+          </button>
+        {/each}
+      </div>
+    {/if}
   </SectionCard>
 {/if}
 
@@ -92,6 +103,26 @@
     margin: 0 0 0.75rem;
     color: #6b3d2b;
     font-weight: 700;
+  }
+
+  .recovery-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.6rem;
+    margin-top: 0.9rem;
+  }
+
+  .recovery-action-button {
+    border: 1px solid rgba(107, 61, 43, 0.18);
+    background: rgba(255, 247, 241, 0.9);
+    color: #3f2a1f;
+    border-radius: 999px;
+    padding: 0.55rem 0.9rem;
+    font:
+      700 0.9rem/1 Manrope,
+      system-ui,
+      sans-serif;
+    cursor: pointer;
   }
 
   .nutrition-pulse-grid {
