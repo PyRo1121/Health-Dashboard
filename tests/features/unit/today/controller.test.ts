@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { useTestHealthDb } from '../../../support/unit/testDb';
-import { saveFoodCatalogItem, savePlannedMeal } from '$lib/features/nutrition/service';
+import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
+import { saveFoodCatalogItem } from '$lib/features/nutrition/service';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import {
   beginTodaySave,

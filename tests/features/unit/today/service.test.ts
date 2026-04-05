@@ -3,7 +3,8 @@ import type { HealthEvent } from '$lib/core/domain/types';
 import { saveDailyCheckin, getTodaySnapshot, listEventsForDay } from '$lib/features/today/service';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import { saveWorkoutTemplate } from '$lib/features/movement/service';
-import { saveFoodCatalogItem, savePlannedMeal } from '$lib/features/nutrition/service';
+import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
+import { saveFoodCatalogItem } from '$lib/features/nutrition/service';
 import { useTestHealthDb } from '../../../support/unit/testDb';
 
 describe('today service', () => {
