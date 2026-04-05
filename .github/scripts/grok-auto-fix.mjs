@@ -44,6 +44,19 @@ function parseJsonResponse(content) {
 }
 
 function extractMessageText(payload) {
+  if (typeof payload?.output_text === 'string' && payload.output_text.trim()) {
+    return payload.output_text;
+  }
+
+  const output = Array.isArray(payload?.output) ? payload.output : [];
+  for (const item of output) {
+    if (item?.type !== 'message' || !Array.isArray(item.content)) continue;
+    const textPart = item.content.find((part) => part?.type === 'output_text');
+    if (typeof textPart?.text === 'string') {
+      return textPart.text;
+    }
+  }
+
   const choiceContent = payload?.choices?.[0]?.message?.content;
   if (typeof choiceContent === 'string') {
     return choiceContent;
@@ -80,11 +93,12 @@ async function callXaiFix({ title, changedFiles, diff }) {
 
   const payload = {
     model,
+    store: false,
     temperature: 0.05,
     max_tokens: 3500,
-    response_format: {
-      type: 'json_schema',
-      json_schema: {
+    text: {
+      format: {
+        type: 'json_schema',
         name: 'grok_pr_fix',
         strict: true,
         schema: {
@@ -111,7 +125,7 @@ async function callXaiFix({ title, changedFiles, diff }) {
         allowed_x_handles: ['github', 'xai'],
       },
     ],
-    messages: [
+    input: [
       {
         role: 'system',
         content:
@@ -136,7 +150,7 @@ async function callXaiFix({ title, changedFiles, diff }) {
     ],
   };
 
-  const response = await fetch('https://api.x.ai/v1/chat/completions', {
+  const response = await fetch('https://api.x.ai/v1/responses', {
     method: 'POST',
     headers: {
       'content-type': 'application/json',
