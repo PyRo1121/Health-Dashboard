@@ -61,7 +61,7 @@ jobs:
 
       - name: ZAP Full Scan
         if: github.event.inputs.scan_type == 'full'
-        uses: zaproxy/action-full-scan@bee4e5be916301228d2b1b2dcad73aab6fa6a25b
+        uses: zaproxy/action-full-scan@3c58388149901b9a03b7718852c5ba889646c27c
         with:
           target: ${{ github.event.inputs.target_url }}
           rules_file_name: '.zap/rules.yaml'
