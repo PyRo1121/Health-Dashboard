@@ -3,6 +3,7 @@ import { nowIso } from '$lib/core/domain/time';
 import type { ReviewSnapshot } from '$lib/core/domain/types';
 import { updateRecordMeta } from '$lib/core/shared/records';
 import { buildWeekAdherenceMatches } from '$lib/features/adherence/service';
+import { listMergedWeeklyGroceries } from '$lib/features/groceries/service';
 import {
   buildAdherenceScores,
   buildAdherenceSignals,
@@ -60,7 +61,6 @@ export async function buildWeeklySnapshot(
     recipeCatalogItems,
     weeklyPlans,
     planSlots,
-    groceryItems,
   ] = await Promise.all([
     db.dailyRecords.toArray(),
     db.foodEntries.toArray(),
@@ -71,7 +71,6 @@ export async function buildWeeklySnapshot(
     db.recipeCatalogItems.toArray(),
     db.weeklyPlans.toArray(),
     db.planSlots.toArray(),
-    db.groceryItems.toArray(),
   ]);
 
   const weekRecords = filterByDays(records, (record) => record.date, days);
@@ -83,9 +82,7 @@ export async function buildWeeklySnapshot(
   const weekPlanSlots = weeklyPlan
     ? planSlots.filter((slot) => slot.weeklyPlanId === weeklyPlan.id)
     : [];
-  const weekGroceries = weeklyPlan
-    ? groceryItems.filter((item) => item.weeklyPlanId === weeklyPlan.id)
-    : [];
+  const weekGroceries = weeklyPlan ? await listMergedWeeklyGroceries(db, weeklyPlan.id) : [];
   const adherenceMatches = await buildWeekAdherenceMatches(
     db,
     weekStart,

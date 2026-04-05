@@ -2,16 +2,17 @@ import type {
   AdherenceMatch,
   AssessmentResult,
   DailyRecord,
+  DerivedGroceryItem,
   ExerciseCatalogItem,
   FavoriteMeal,
   FoodCatalogItem,
   FoodEntry,
-  GroceryItem,
   HealthEvent,
   HealthTemplate,
   ImportArtifact,
   ImportBatch,
   JournalEntry,
+  ManualGroceryItem,
   PlanSlot,
   PlannedMeal,
   RecipeCatalogItem,
@@ -50,7 +51,8 @@ export interface HealthDatabase {
   plannedMeals: HealthDbTable<PlannedMeal>;
   weeklyPlans: HealthDbTable<WeeklyPlan>;
   planSlots: HealthDbTable<PlanSlot>;
-  groceryItems: HealthDbTable<GroceryItem>;
+  derivedGroceryItems: HealthDbTable<DerivedGroceryItem>;
+  manualGroceryItems: HealthDbTable<ManualGroceryItem>;
   workoutTemplates: HealthDbTable<WorkoutTemplate>;
   exerciseCatalogItems: HealthDbTable<ExerciseCatalogItem>;
   favoriteMeals: HealthDbTable<FavoriteMeal>;
@@ -75,7 +77,8 @@ export interface HealthDbSnapshot {
   plannedMeals: PlannedMeal[];
   weeklyPlans: WeeklyPlan[];
   planSlots: PlanSlot[];
-  groceryItems: GroceryItem[];
+  derivedGroceryItems: DerivedGroceryItem[];
+  manualGroceryItems: ManualGroceryItem[];
   workoutTemplates: WorkoutTemplate[];
   exerciseCatalogItems: ExerciseCatalogItem[];
   favoriteMeals: FavoriteMeal[];

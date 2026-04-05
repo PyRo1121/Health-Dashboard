@@ -99,13 +99,13 @@ describe('groceries service', () => {
     });
 
     await deriveWeeklyGroceries(db, weeklyPlan.id);
-    expect(await db.groceryItems.count()).toBe(1);
+    expect(await db.derivedGroceryItems.count()).toBe(1);
 
     await db.planSlots.delete(slot.id);
     const groceries = await deriveWeeklyGroceries(db, weeklyPlan.id);
 
     expect(groceries).toEqual([]);
-    expect(await db.groceryItems.count()).toBe(0);
+    expect(await db.derivedGroceryItems.count()).toBe(0);
   });
 
   it('keeps excluded state, merges duplicate ingredients, and reports recipes with no usable ingredients', async () => {
@@ -285,6 +285,6 @@ describe('groceries service', () => {
     });
 
     await removeManualGroceryItem(db, manualOnly.id);
-    expect(await db.groceryItems.get(manualOnly.id)).toBeUndefined();
+    expect(await db.manualGroceryItems.toArray()).toHaveLength(0);
   });
 });

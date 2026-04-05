@@ -5,16 +5,17 @@ import type {
   AdherenceMatch,
   AssessmentResult,
   DailyRecord,
+  DerivedGroceryItem,
   ExerciseCatalogItem,
   FoodCatalogItem,
   FavoriteMeal,
   FoodEntry,
-  GroceryItem,
   HealthEvent,
   HealthTemplate,
   ImportArtifact,
   ImportBatch,
   JournalEntry,
+  ManualGroceryItem,
   PlanSlot,
   PlannedMeal,
   RecipeCatalogItem,
@@ -34,7 +35,8 @@ export class HealthDatabase extends Dexie {
   plannedMeals!: EntityTable<PlannedMeal, 'id'>;
   weeklyPlans!: EntityTable<WeeklyPlan, 'id'>;
   planSlots!: EntityTable<PlanSlot, 'id'>;
-  groceryItems!: EntityTable<GroceryItem, 'id'>;
+  derivedGroceryItems!: EntityTable<DerivedGroceryItem, 'id'>;
+  manualGroceryItems!: EntityTable<ManualGroceryItem, 'id'>;
   workoutTemplates!: EntityTable<WorkoutTemplate, 'id'>;
   exerciseCatalogItems!: EntityTable<ExerciseCatalogItem, 'id'>;
   favoriteMeals!: EntityTable<FavoriteMeal, 'id'>;
@@ -89,7 +91,8 @@ export async function exportHealthDbSnapshot(db = getHealthDb()): Promise<Health
     plannedMeals,
     weeklyPlans,
     planSlots,
-    groceryItems,
+    derivedGroceryItems,
+    manualGroceryItems,
     workoutTemplates,
     exerciseCatalogItems,
     favoriteMeals,
@@ -110,7 +113,8 @@ export async function exportHealthDbSnapshot(db = getHealthDb()): Promise<Health
     db.plannedMeals.toArray(),
     db.weeklyPlans.toArray(),
     db.planSlots.toArray(),
-    db.groceryItems.toArray(),
+    db.derivedGroceryItems.toArray(),
+    db.manualGroceryItems.toArray(),
     db.workoutTemplates.toArray(),
     db.exerciseCatalogItems.toArray(),
     db.favoriteMeals.toArray(),
@@ -133,7 +137,8 @@ export async function exportHealthDbSnapshot(db = getHealthDb()): Promise<Health
     plannedMeals,
     weeklyPlans,
     planSlots,
-    groceryItems,
+    derivedGroceryItems,
+    manualGroceryItems,
     workoutTemplates,
     exerciseCatalogItems,
     favoriteMeals,

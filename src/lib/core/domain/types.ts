@@ -139,14 +139,35 @@ export interface GroceryItem extends BaseRecord {
   ingredientKey: string;
   label: string;
   quantityText?: string;
-  derivedQuantityText?: string;
   manual?: boolean;
-  manualQuantityText?: string;
   aisle?: string;
   checked: boolean;
   excluded: boolean;
   onHand: boolean;
   sourceRecipeIds: RecordId[];
+}
+
+export interface DerivedGroceryItem extends BaseRecord {
+  weeklyPlanId: RecordId;
+  ingredientKey: string;
+  label: string;
+  quantityText?: string;
+  aisle?: string;
+  checked: boolean;
+  excluded: boolean;
+  onHand: boolean;
+  sourceRecipeIds: RecordId[];
+}
+
+export interface ManualGroceryItem extends BaseRecord {
+  weeklyPlanId: RecordId;
+  ingredientKey: string;
+  label: string;
+  quantityText?: string;
+  aisle?: string;
+  checked: boolean;
+  excluded: boolean;
+  onHand: boolean;
 }
 
 export interface WorkoutTemplateExerciseRef {
