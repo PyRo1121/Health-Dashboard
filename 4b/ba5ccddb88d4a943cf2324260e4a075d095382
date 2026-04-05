@@ -1,0 +1,23 @@
+tests/features/e2e/daily-flows.e2e.ts
+  25d8f9c900629687 155-156,158
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "4bba5ccddb88d4a943cf2324260e4a075d095382",
+  "prompts": {
+    "25d8f9c900629687": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-cff87a2c-3fed-4cca-b98b-1fb8e336bec4",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    }
+  }
+}
