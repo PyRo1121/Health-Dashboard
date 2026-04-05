@@ -44,13 +44,13 @@ jobs:
 
     steps:
       - name: Check out repository
-        uses: actions/checkout@d0fac2e4500dabe0009e67214ff5f5447ce83dd
+        uses: actions/checkout@v4
         with:
           persist-credentials: false
 
       - name: ZAP Baseline Scan
         if: github.event.inputs.scan_type == 'baseline' || github.event_name == 'schedule'
-        uses: zaproxy/action-baseline@bee4e5be916301228d2b1b2dcad73aab6fa6a25b
+        uses: zaproxy/action-baseline@v0
         with:
           target: ${{ github.event.inputs.target_url || 'http://localhost:5173' }}
           rules_file_name: '.zap/rules.yaml'
@@ -78,7 +78,7 @@ jobs:
 
       - name: Upload ZAP results
         if: always()
-        uses: actions/upload-artifact@bbbca2ddaa5d8feaa63e36b76fdaad77386f024f
+        uses: actions/upload-artifact@v4
         with:
           name: zap-results
           path: |
@@ -88,7 +88,7 @@ jobs:
 
       - name: Upload ZAP SARIF
         if: always()
-        uses: github/codeql-action/upload-sarif@d4b3ca9fa7f69d38bfcd667bdc45bc373d16277e
+        uses: github/codeql-action@v4
         with:
           sarif_file: zap_report.sarif.json
           category: '/zap'

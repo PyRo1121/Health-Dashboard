@@ -1,6 +1,5 @@
 import type { HealthDatabase } from '$lib/core/db/types';
 import {
-  clearPlannedMeal,
   createFoodEntry,
   reuseRecurringMeal,
   saveFavoriteMeal,
@@ -170,7 +169,6 @@ export async function planNutritionMeal(
     title: draft.name.trim(),
     notes: draft.notes.trim() || undefined,
   });
-  await clearPlannedMeal(db);
 
   return await reloadNutritionPageState(db, state, {
     saveNotice: 'Planned next meal saved.',
@@ -183,8 +181,6 @@ export async function clearNutritionPlannedMeal(
 ): Promise<NutritionPageState> {
   if (state.plannedMealSlotId) {
     await deletePlanSlot(db, state.plannedMealSlotId);
-  } else {
-    await clearPlannedMeal(db);
   }
 
   return await reloadNutritionPageState(db, state, {
