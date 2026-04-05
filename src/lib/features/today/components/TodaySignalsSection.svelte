@@ -118,7 +118,10 @@
     color: #3f2a1f;
     border-radius: 999px;
     padding: 0.55rem 0.9rem;
-    font: 700 0.9rem/1 Manrope, system-ui, sans-serif;
+    font:
+      700 0.9rem/1 Manrope,
+      system-ui,
+      sans-serif;
     cursor: pointer;
   }
 
