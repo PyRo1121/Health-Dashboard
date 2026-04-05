@@ -2,6 +2,7 @@ import type { HealthDatabase } from '$lib/core/db/types';
 import type { GroceryItem, RecipeCatalogItem, WeeklyPlan } from '$lib/core/domain/types';
 import { listRecipeCatalogItems } from '$lib/features/nutrition/service';
 import { ensureWeeklyPlan } from '$lib/features/planning/service';
+import { refreshWeeklyReviewArtifacts } from '$lib/features/review/service';
 import {
   deriveWeeklyGroceriesWithWarnings,
   removeManualGroceryItem,
@@ -78,6 +79,7 @@ export async function toggleGroceryItemPage(
   patch: Pick<GroceryItem, 'checked' | 'excluded' | 'onHand'>
 ): Promise<GroceriesPageState> {
   await setGroceryItemState(db, itemId, patch);
+  await refreshWeeklyReviewArtifacts(db, state.localDay);
   const next = await loadGroceriesPage(db, state.localDay);
   return {
     ...next,
@@ -104,6 +106,7 @@ export async function addManualGroceryItemPage(
   await saveManualGroceryItem(db, state.weeklyPlan.id, {
     rawLabel: [draft.quantityText.trim(), draft.label.trim()].filter(Boolean).join(' '),
   });
+  await refreshWeeklyReviewArtifacts(db, state.localDay);
   const next = await loadGroceriesPage(db, state.localDay);
   return {
     ...next,
@@ -117,6 +120,7 @@ export async function removeManualGroceryItemPage(
   itemId: string
 ): Promise<GroceriesPageState> {
   await removeManualGroceryItem(db, itemId);
+  await refreshWeeklyReviewArtifacts(db, state.localDay);
   const next = await loadGroceriesPage(db, state.localDay);
   return {
     ...next,

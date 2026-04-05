@@ -12,6 +12,7 @@ import {
   buildWeeklySnapshot,
   computeCorrelations,
   computeTrendComparisons,
+  refreshWeeklyReviewArtifacts,
   saveNextWeekExperiment,
 } from '$lib/features/review/service';
 import { setSobrietyStatusForDay } from '$lib/features/sobriety/service';
@@ -317,5 +318,20 @@ describe('review service', () => {
     });
     const weekly = await buildWeeklySnapshot(db, '2026-04-02');
     expect(weekly.assessmentSummary.some((line) => line.includes('GAD-7'))).toBe(false);
+  });
+
+  it('persists the current weekly snapshot when artifacts are explicitly refreshed', async () => {
+    const db = getDb();
+    await seedWeek();
+
+    const weekly = await refreshWeeklyReviewArtifacts(db, '2026-04-02');
+
+    expect(weekly.snapshot.weekStart).toBe('2026-03-30');
+    expect(await db.reviewSnapshots.count()).toBe(1);
+    expect(await db.adherenceMatches.count()).toBeGreaterThanOrEqual(0);
+    expect(await db.reviewSnapshots.get(weekly.snapshot.id)).toMatchObject({
+      weekStart: '2026-03-30',
+      headline: weekly.snapshot.headline,
+    });
   });
 });

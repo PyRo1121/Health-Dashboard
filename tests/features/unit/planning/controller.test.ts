@@ -51,6 +51,8 @@ describe('planning controller', () => {
     expect(state.slots).toHaveLength(1);
     expect(state.slots[0]?.title).toBe('Teriyaki Chicken Casserole');
     expect(state.groceryItems).toHaveLength(2);
+    expect(await db.reviewSnapshots.count()).toBe(1);
+    expect(await db.adherenceMatches.count()).toBe(1);
 
     state = await savePlanningSlotPage(db, {
       ...state,
@@ -71,6 +73,7 @@ describe('planning controller', () => {
     state = await markPlanningSlotStatusPage(db, state, state.slots[0]!.id, 'done');
     expect(state.planNotice).toBe('Plan slot marked done.');
     expect(state.slots[0]?.status).toBe('done');
+    expect(await db.adherenceMatches.count()).toBe(2);
 
     const groceryId = state.groceryItems[0]!.id;
     state = await togglePlanningGroceryStatePage(db, state, groceryId, {
@@ -80,10 +83,12 @@ describe('planning controller', () => {
     });
     expect(state.groceryNotice).toBe('Grocery item updated.');
     expect(state.groceryItems.find((item) => item.id === groceryId)?.checked).toBe(true);
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     state = await deletePlanningSlotPage(db, state, state.slots[0]!.id);
     expect(state.planNotice).toBe('Plan slot removed.');
     expect(state.slots).toHaveLength(1);
+    expect(await db.adherenceMatches.count()).toBe(1);
   });
 
   it('guards missing linked items and saves workout templates', async () => {
@@ -250,6 +255,7 @@ describe('planning controller', () => {
       manual: true,
       label: 'Paper towels',
     });
+    expect(await db.reviewSnapshots.count()).toBe(1);
 
     const itemId = state.groceryItems.find((item) => item.ingredientKey === 'paper towels')!.id;
     state = await removeManualPlanningGroceryItemPage(db, state, itemId);
@@ -257,5 +263,6 @@ describe('planning controller', () => {
     expect(
       state.groceryItems.find((item) => item.ingredientKey === 'paper towels')
     ).toBeUndefined();
+    expect(await db.reviewSnapshots.count()).toBe(1);
   });
 });

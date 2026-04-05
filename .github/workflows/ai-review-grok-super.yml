@@ -1,0 +1,176 @@
+name: 🤖 Grok 4.1 Fast Super Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number for manual review'
+        required: false
+        type: number
+
+concurrency:
+  group: grok-super-review-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  grok-review:
+    name: Grok 4.1 Fast Review
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Get PR diff
+        id: diff
+        run: |
+          echo "diff<<EOF" >> $GITHUB_OUTPUT
+          git diff origin/${{ github.base_ref }}...HEAD >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Get changed files
+        id: files
+        run: |
+          echo "files<<EOF" >> $GITHUB_OUTPUT
+          git diff origin/${{ github.base_ref }}...HEAD --name-only >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+
+      - name: Grok 4.1 Fast Structured Review
+        id: review
+        uses: actions/github-script@v7
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+        with:
+          script: |
+            const { OpenAI } = require('openai');
+            const openai = new OpenAI({
+              apiKey: process.env.XAI_API_KEY,
+              baseURL: 'https://api.x.ai/v1'
+            });
+
+            const diff = `${{ steps.diff.outputs.diff }}`;
+            const files = `${{ steps.files.outputs.files }}`.split('\n').filter(Boolean);
+
+            const response = await openai.chat.completions.create({
+              model: 'grok-4-1-fast-reasoning',
+              temperature: 0.1,
+              max_tokens: 4000,
+              response_format: { type: "json_object" },
+              messages: [
+                {
+                  role: "system",
+                  content: `You are an elite TypeScript/SvelteKit security & privacy engineer for a local-first health dashboard.
+Analyze the diff and output ONLY valid JSON with this exact schema:
+{
+  "summary": "short one-line verdict",
+  "issues": [{ "severity": "critical|high|medium|low", "file": "...", "line": number, "description": "...", "suggestion": "..." }],
+  "patch": "unified diff patch string that can be applied with git apply (or empty string)",
+  "overall_approval": "approve|request_changes|comment_only"
+}
+Focus on correctness, security/privacy (health data), performance, a11y, local-first best practices.
+IMPORTANT: Only include files in patch if you are confident the fix is correct and minimal.`
+                },
+                {
+                  role: "user",
+                  content: `PR Title: ${{ github.event.pull_request.title }}\n\nChanged Files:\n${files.join('\n')}\n\nDiff:\n${diff}`
+                }
+              ]
+            });
+
+            const result = JSON.parse(response.choices[0].message.content);
+            
+            const severityEmoji = { critical: '🔴', high: '🟠', medium: '🟡', low: '🔵' };
+            const reviewMarkdown = `## 🤖 Grok 4.1 Fast Super Review (xAI)
+
+**Verdict:** ${result.overall_approval.toUpperCase()}
+
+**Summary:** ${result.summary}
+
+### Issues & Suggestions
+${result.issues && result.issues.length > 0 
+  ? result.issues.map(i => `- **${severityEmoji[i.severity] || '⚪'} ${i.severity.toUpperCase()}** \`${i.file}:${i.line}\` — ${i.description}
+  **Suggestion:** ${i.suggestion}`).join('\n')
+  : '✅ No issues found'}
+
+${result.patch ? `
+### 🤖 Auto-Fix Available
+Add label \`ai-auto-fix\` to automatically apply this patch:
+\`\`\`diff
+${result.patch}
+\`\`\`
+` : ''}
+
+---
+*Reviewed by Grok 4.1 Fast Reasoning via xAI*`;
+
+            await github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: reviewMarkdown
+            });
+
+            return result;
+
+      - name: Update commit status
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const result = ${{ steps.review.outputs.result }};
+            if (!result) return;
+            
+            const status = result.overall_approval === 'approve' ? 'success' : 
+                          result.overall_approval === 'request_changes' ? 'failure' : 'neutral';
+            const description = result.summary || result.overall_approval;
+            
+            try {
+              await github.rest.repos.createCommitStatus({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                sha: context.sha,
+                state: status,
+                target_url: `https://github.com/${context.repo.owner}/${context.repo.repo}/pull/${context.issue.number}`,
+                description: description.substring(0, 140),
+                context: 'Grok 4.1 Fast Super Review'
+              });
+            } catch (e) {
+              console.log('Status update failed:', e.message);
+            }
+
+      - name: Add labels
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const result = ${{ steps.review.outputs.result }};
+            if (!result || !result.issues || result.issues.length === 0) return;
+            
+            const labels = ['grok-reviewed'];
+            const hasCritical = result.issues.some(i => i.severity === 'critical');
+            const hasHigh = result.issues.some(i => i.severity === 'high');
+            
+            if (hasCritical) labels.push('security-issue');
+            if (hasHigh) labels.push('needs-review');
+            if (result.patch) labels.push('has-patch');
+            
+            for (const label of labels) {
+              try {
+                await github.rest.issues.addLabels({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  labels: [label]
+                });
+              } catch (e) {
+                // Label may already exist
+              }
+            }
