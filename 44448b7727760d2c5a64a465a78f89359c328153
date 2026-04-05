@@ -1,0 +1,23 @@
+.github/workflows/codeql.yml
+  57cb94103e6891c2 37,43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "44448b7727760d2c5a64a465a78f89359c328153",
+  "prompts": {
+    "57cb94103e6891c2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-5749595f-e5db-402d-8808-261c38983623",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
