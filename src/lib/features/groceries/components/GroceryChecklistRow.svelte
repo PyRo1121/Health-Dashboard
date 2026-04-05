@@ -7,6 +7,7 @@
     summary,
     sourceSummary,
     onToggleItem,
+    onRemoveManualItem,
   }: {
     item: GroceryItem;
     summary: string;
@@ -15,6 +16,7 @@
       itemId: string,
       patch: Pick<GroceryItem, 'checked' | 'excluded' | 'onHand'>
     ) => void;
+    onRemoveManualItem?: (itemId: string) => void;
   } = $props();
 </script>
 
@@ -60,6 +62,9 @@
     >
       {item.onHand ? 'Need it' : 'On hand'}
     </Button>
+    {#if item.manual && onRemoveManualItem}
+      <Button variant="ghost" onclick={() => onRemoveManualItem(item.id)}>Remove manual</Button>
+    {/if}
   </div>
 </li>
 

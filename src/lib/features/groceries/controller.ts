@@ -2,7 +2,17 @@ import type { HealthDatabase } from '$lib/core/db/types';
 import type { GroceryItem, RecipeCatalogItem, WeeklyPlan } from '$lib/core/domain/types';
 import { listRecipeCatalogItems } from '$lib/features/nutrition/service';
 import { ensureWeeklyPlan } from '$lib/features/planning/service';
-import { deriveWeeklyGroceriesWithWarnings, setGroceryItemState } from './service';
+import {
+  deriveWeeklyGroceriesWithWarnings,
+  removeManualGroceryItem,
+  saveManualGroceryItem,
+  setGroceryItemState,
+} from './service';
+
+export interface ManualGroceryDraft {
+  label: string;
+  quantityText: string;
+}
 
 export interface GroceriesPageState {
   loading: boolean;
@@ -60,5 +70,44 @@ export async function toggleGroceryItemPage(
   return {
     ...next,
     saveNotice: 'Grocery item updated.',
+  };
+}
+
+export async function addManualGroceryItemPage(
+  db: HealthDatabase,
+  state: GroceriesPageState,
+  draft: ManualGroceryDraft
+): Promise<GroceriesPageState> {
+  if (!state.weeklyPlan) {
+    return state;
+  }
+
+  if (!draft.label.trim()) {
+    return {
+      ...state,
+      saveNotice: 'Manual grocery label is required.',
+    };
+  }
+
+  await saveManualGroceryItem(db, state.weeklyPlan.id, {
+    rawLabel: [draft.quantityText.trim(), draft.label.trim()].filter(Boolean).join(' '),
+  });
+  const next = await loadGroceriesPage(db, state.localDay);
+  return {
+    ...next,
+    saveNotice: 'Manual grocery item added.',
+  };
+}
+
+export async function removeManualGroceryItemPage(
+  db: HealthDatabase,
+  state: GroceriesPageState,
+  itemId: string
+): Promise<GroceriesPageState> {
+  await removeManualGroceryItem(db, itemId);
+  const next = await loadGroceriesPage(db, state.localDay);
+  return {
+    ...next,
+    saveNotice: 'Manual grocery item removed.',
   };
 }

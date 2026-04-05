@@ -3,8 +3,8 @@
   import type { GroceryItem, RecipeCatalogItem } from '$lib/core/domain/types';
   import {
     createGroceryGroups,
+    createGrocerySourceSummary,
     createGrocerySummary,
-    createRecipeSourceSummary,
   } from '$lib/features/groceries/model';
   import GroceryChecklistRow from './GroceryChecklistRow.svelte';
 
@@ -16,6 +16,7 @@
     emptyMessage,
     emptyWarningMessage,
     onToggleItem,
+    onRemoveManualItem,
   }: {
     groceryItems: GroceryItem[];
     groceryWarnings: string[];
@@ -27,6 +28,7 @@
       itemId: string,
       patch: Pick<GroceryItem, 'checked' | 'excluded' | 'onHand'>
     ) => void;
+    onRemoveManualItem?: (itemId: string) => void;
   } = $props();
 
   let groceryGroups = $derived(createGroceryGroups(groceryItems));
@@ -43,9 +45,12 @@
               {item}
               summary={createGrocerySummary(item)}
               sourceSummary={item.sourceRecipeIds.length
-                ? createRecipeSourceSummary(item, recipeCatalogItems)
-                : undefined}
+                ? createGrocerySourceSummary(item, recipeCatalogItems)
+                : item.manual
+                  ? createGrocerySourceSummary(item, recipeCatalogItems)
+                  : undefined}
               {onToggleItem}
+              {onRemoveManualItem}
             />
           {/each}
         </ul>

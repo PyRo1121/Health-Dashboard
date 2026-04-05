@@ -13,6 +13,8 @@ describe('groceries route', () => {
     db?: HealthDatabase;
     loadGroceriesPage?: ReturnType<typeof vi.fn>;
     toggleGroceryItemPage?: ReturnType<typeof vi.fn>;
+    addManualGroceryItemPage?: ReturnType<typeof vi.fn>;
+    removeManualGroceryItemPage?: ReturnType<typeof vi.fn>;
   }) {
     const db = overrides.db ?? ({} as HealthDatabase);
     const actual = await vi.importActual<typeof import('$lib/server/http/action-route')>(
@@ -51,6 +53,28 @@ describe('groceries route', () => {
           groceryWarnings: [],
           recipeCatalogItems: [],
           saveNotice: 'Grocery item updated.',
+        })),
+      addManualGroceryItemPage:
+        overrides.addManualGroceryItemPage ??
+        vi.fn(async () => ({
+          loading: false,
+          localDay: '2026-04-07',
+          weeklyPlan: null,
+          groceryItems: [],
+          groceryWarnings: [],
+          recipeCatalogItems: [],
+          saveNotice: 'Manual grocery item added.',
+        })),
+      removeManualGroceryItemPage:
+        overrides.removeManualGroceryItemPage ??
+        vi.fn(async () => ({
+          loading: false,
+          localDay: '2026-04-07',
+          weeklyPlan: null,
+          groceryItems: [],
+          groceryWarnings: [],
+          recipeCatalogItems: [],
+          saveNotice: 'Manual grocery item removed.',
         })),
     }));
 
@@ -129,5 +153,76 @@ describe('groceries route', () => {
       excluded: false,
       onHand: true,
     });
+  });
+
+  it('adds and removes manual grocery items through the action route', async () => {
+    const db = {} as HealthDatabase;
+    const state = {
+      loading: false,
+      localDay: '2026-04-07',
+      weeklyPlan: null,
+      groceryItems: [],
+      groceryWarnings: [],
+      recipeCatalogItems: [],
+      saveNotice: '',
+    };
+    const addManualGroceryItemPage = vi.fn(async () => ({
+      ...state,
+      groceryItems: [{ id: 'grocery-1', label: 'Paper towels', manual: true }],
+      saveNotice: 'Manual grocery item added.',
+    }));
+    const removeManualGroceryItemPage = vi.fn(async () => ({
+      ...state,
+      groceryItems: [],
+      saveNotice: 'Manual grocery item removed.',
+    }));
+    const { POST } = await importRoute({
+      db,
+      addManualGroceryItemPage,
+      removeManualGroceryItemPage,
+    });
+
+    const addResponse = await POST({
+      request: new Request('http://health.test/api/groceries', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'addManual',
+          state,
+          draft: { label: 'Paper towels', quantityText: '' },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(addResponse.status).toBe(200);
+    expect(await addResponse.json()).toEqual(
+      expect.objectContaining({
+        saveNotice: 'Manual grocery item added.',
+        groceryItems: [expect.objectContaining({ label: 'Paper towels', manual: true })],
+      })
+    );
+    expect(addManualGroceryItemPage).toHaveBeenCalledWith(db, state, {
+      label: 'Paper towels',
+      quantityText: '',
+    });
+
+    const removeResponse = await POST({
+      request: new Request('http://health.test/api/groceries', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'removeManual',
+          state,
+          itemId: 'grocery-1',
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(removeResponse.status).toBe(200);
+    expect(await removeResponse.json()).toEqual(
+      expect.objectContaining({
+        saveNotice: 'Manual grocery item removed.',
+        groceryItems: [],
+      })
+    );
+    expect(removeManualGroceryItemPage).toHaveBeenCalledWith(db, state, 'grocery-1');
   });
 });

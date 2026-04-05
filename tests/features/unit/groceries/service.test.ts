@@ -5,6 +5,8 @@ import * as nutritionService from '$lib/features/nutrition/service';
 import {
   deriveWeeklyGroceries,
   deriveWeeklyGroceriesWithWarnings,
+  removeManualGroceryItem,
+  saveManualGroceryItem,
   setGroceryItemState,
 } from '$lib/features/groceries/service';
 
@@ -225,5 +227,64 @@ describe('groceries service', () => {
     expect(result.items).toHaveLength(1);
     expect(result.items[0]?.label).toBe('soy sauce');
     expect(listRecipeCatalogItemsSpy).not.toHaveBeenCalled();
+  });
+
+  it('preserves manual grocery items through recipe recompute and can merge them with derived rows', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-07');
+    await nutritionService.upsertRecipeCatalogItem(db, {
+      id: 'themealdb:52772',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      title: 'Teriyaki Chicken Casserole',
+      sourceType: 'themealdb',
+      sourceName: 'TheMealDB',
+      externalId: '52772',
+      mealType: 'dinner',
+      cuisine: 'Japanese',
+      ingredients: ['3/4 cup soy sauce'],
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-07',
+      slotType: 'meal',
+      itemType: 'recipe',
+      itemId: 'themealdb:52772',
+      title: 'Teriyaki Chicken Casserole',
+    });
+
+    await deriveWeeklyGroceries(db, weeklyPlan.id);
+
+    const merged = await saveManualGroceryItem(db, weeklyPlan.id, {
+      rawLabel: '1 bottle soy sauce',
+    });
+    expect(merged.manual).toBe(true);
+    expect(merged.sourceRecipeIds).toEqual(['themealdb:52772']);
+    expect(merged.quantityText).toBe('3/4 cup + 1 bottle');
+
+    const manualOnly = await saveManualGroceryItem(db, weeklyPlan.id, {
+      rawLabel: 'paper towels',
+    });
+    expect(manualOnly.manual).toBe(true);
+    expect(manualOnly.sourceRecipeIds).toEqual([]);
+
+    const regenerated = await deriveWeeklyGroceries(db, weeklyPlan.id);
+    expect(regenerated.find((item) => item.ingredientKey === 'soy sauce')).toMatchObject({
+      manual: true,
+      quantityText: '3/4 cup + 1 bottle',
+    });
+    expect(regenerated.find((item) => item.ingredientKey === 'paper towels')).toMatchObject({
+      manual: true,
+      label: 'paper towels',
+    });
+
+    const afterManualRemoval = await removeManualGroceryItem(db, merged.id);
+    expect(afterManualRemoval).toMatchObject({
+      manual: false,
+      quantityText: '3/4 cup',
+    });
+
+    await removeManualGroceryItem(db, manualOnly.id);
+    expect(await db.groceryItems.get(manualOnly.id)).toBeUndefined();
   });
 });

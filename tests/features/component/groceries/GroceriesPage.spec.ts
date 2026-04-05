@@ -52,6 +52,30 @@ describe('Groceries route', () => {
     });
   });
 
+  it('adds and removes a manual grocery item from the checklist', async () => {
+    render(GroceriesPage);
+    expectHeading('Groceries');
+
+    await screen.findByLabelText('Manual grocery item');
+    await fireEvent.input(screen.getByLabelText('Manual grocery item'), {
+      target: { value: 'Paper towels' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Add manual item' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Manual grocery item added\./i)).toBeTruthy();
+      expect(screen.getByText('Paper towels')).toBeTruthy();
+      expect(screen.getByText('Manual item')).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Remove manual' })).toBeTruthy();
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Remove manual' }));
+    await waitFor(() => {
+      expect(screen.getByText(/Manual grocery item removed\./i)).toBeTruthy();
+      expect(screen.queryByText('Paper towels')).toBeNull();
+    });
+  });
+
   it('surfaces grocery warnings when a planned recipe has no usable ingredients', async () => {
     const db = getHealthDb();
     const localDay = currentLocalDay();

@@ -1,9 +1,12 @@
 import { currentLocalDay } from '$lib/core/domain/time';
 import { createFeatureActionClient } from '$lib/core/http/feature-client';
 import {
+  addManualGroceryItemPage as addManualGroceryItemPageController,
   createGroceriesPageState,
   loadGroceriesPage as loadGroceriesPageController,
+  removeManualGroceryItemPage as removeManualGroceryItemPageController,
   toggleGroceryItemPage as toggleGroceryItemPageController,
+  type ManualGroceryDraft,
   type GroceriesPageState,
 } from './controller';
 
@@ -27,5 +30,29 @@ export async function toggleGroceryItemPage(
     state,
     (db) => toggleGroceryItemPageController(db, state, itemId, patch),
     { itemId, patch }
+  );
+}
+
+export async function addManualGroceryItemPage(
+  state: GroceriesPageState,
+  draft: ManualGroceryDraft
+): Promise<GroceriesPageState> {
+  return await groceriesClient.stateAction(
+    'addManual',
+    state,
+    (db) => addManualGroceryItemPageController(db, state, draft),
+    { draft }
+  );
+}
+
+export async function removeManualGroceryItemPage(
+  state: GroceriesPageState,
+  itemId: string
+): Promise<GroceriesPageState> {
+  return await groceriesClient.stateAction(
+    'removeManual',
+    state,
+    (db) => removeManualGroceryItemPageController(db, state, itemId),
+    { itemId }
   );
 }

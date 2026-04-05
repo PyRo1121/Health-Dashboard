@@ -34,10 +34,21 @@ export function createGroceryGroups(items: GroceryItem[]): GroceryGroup[] {
     }));
 }
 
-export function createRecipeSourceSummary(item: GroceryItem, recipes: RecipeCatalogItem[]): string {
+export function createGrocerySourceSummary(
+  item: GroceryItem,
+  recipes: RecipeCatalogItem[]
+): string {
   const titles = item.sourceRecipeIds
     .map((recipeId) => recipes.find((candidate) => candidate.id === recipeId)?.title)
     .filter(Boolean) as string[];
+
+  if (item.manual && titles.length) {
+    return ['Manual item', titles.join(', ')].join(' · ');
+  }
+
+  if (item.manual) {
+    return 'Manual item';
+  }
 
   return titles.join(', ');
 }
