@@ -1,5 +1,9 @@
 import { createDbQueryPostHandler } from '$lib/server/http/action-route';
 import {
+  nutritionQueryRequestSchema,
+  type NutritionQueryRequest,
+} from '$lib/features/nutrition/contracts';
+import {
   foodLookupResultFromCatalogItem,
   listFoodCatalogItems,
   searchPackagedFoodCatalog,
@@ -11,8 +15,6 @@ import {
   searchOpenFoodFactsProducts,
 } from '$lib/server/nutrition/open-food-facts';
 
-type PackagedSearchRequest = { query?: string };
-
 function dedupeLookupResults(items: FoodLookupResult[]): FoodLookupResult[] {
   const deduped = new Map<string, FoodLookupResult>();
   for (const item of items) {
@@ -21,7 +23,7 @@ function dedupeLookupResults(items: FoodLookupResult[]): FoodLookupResult[] {
   return [...deduped.values()];
 }
 
-export const POST = createDbQueryPostHandler<PackagedSearchRequest, FoodLookupResult[]>(
+export const POST = createDbQueryPostHandler<NutritionQueryRequest, FoodLookupResult[]>(
   async (db, query) => {
     const catalogItems = await listFoodCatalogItems(db);
     const localMatches = searchPackagedFoodCatalog(query, catalogItems);
@@ -39,6 +41,14 @@ export const POST = createDbQueryPostHandler<PackagedSearchRequest, FoodLookupRe
   },
   undefined,
   {
+    parseBody: async (request) => {
+      const parsed = nutritionQueryRequestSchema.safeParse(await request.json());
+      if (!parsed.success) {
+        throw new Error('Invalid packaged search request payload.');
+      }
+      return parsed.data;
+    },
+    onParseError: () => new Response('Invalid packaged search request payload.', { status: 400 }),
     emptyResult: [],
   }
 );

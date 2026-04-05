@@ -1,0 +1,56 @@
+name-template: 'v$RESOLVED_VERSION'
+tag-template: 'v$RESOLVED_VERSION'
+filter-by-commitish: true
+change-template: '- $TITLE by @$AUTHOR in #$NUMBER'
+no-changes-template: '- No user-facing changes in this cycle.'
+version-resolver:
+  major:
+    labels:
+      - breaking
+  minor:
+    labels:
+      - feature
+      - enhancement
+  patch:
+    labels:
+      - fix
+      - bug
+      - security
+  default: patch
+categories:
+  - title: '🚀 Features'
+    labels:
+      - feature
+      - enhancement
+  - title: '🐛 Fixes'
+    labels:
+      - fix
+      - bug
+  - title: '🛡 Security'
+    labels:
+      - security
+  - title: '🧰 Maintenance'
+    labels:
+      - chore
+      - dependencies
+exclude-labels:
+  - skip-changelog
+autolabeler:
+  - label: documentation
+    files:
+      - '*.md'
+      - 'docs/**'
+  - label: ci
+    files:
+      - '.github/**'
+  - label: dependencies
+    branch:
+      - '/dependabot\/.+/'
+template: |
+  ## What's Changed
+
+  $CHANGES
+
+  ## Contributors
+
+  $CONTRIBUTORS

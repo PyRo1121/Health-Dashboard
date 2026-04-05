@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { useTestHealthDb } from '../../../support/unit/testDb';
+import { savePlannedMeal } from '$lib/features/nutrition/legacy-planned-meal-store';
 import {
   loadReviewPage,
   saveReviewExperimentPage,
   setReviewExperiment,
 } from '$lib/features/review/controller';
-import { createFoodEntry, savePlannedMeal } from '$lib/features/nutrition/service';
+import { createFoodEntry } from '$lib/features/nutrition/service';
 import { saveDailyCheckin } from '$lib/features/today/service';
 import { setSobrietyStatusForDay } from '$lib/features/sobriety/service';
 import { submitAssessment } from '$lib/features/assessments/service';

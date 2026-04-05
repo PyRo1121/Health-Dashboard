@@ -64,7 +64,8 @@ All changes must pass:
 - [x] Secret scanning (GitHub Advanced Security)
 - [x] Least-privilege GitHub Actions permissions
 - [x] Immutable lockfiles
-- [x] Branch protection (recommended)
+- [x] Branch protection with required checks
+- [x] Auto-merge support for approved automation PRs (label-gated)
 
 ## Recommended Branch Protection
 
@@ -76,8 +77,11 @@ Required reviewers: 1
 Dismiss stale reviews: Yes
 Require status checks to pass before merging: Yes
   - CI
+  - E2E
   - CodeQL
   - Dependency Review
+  - Snyk Security Scan
+Enable auto-merge only for PRs with `automerge`, `ai-fix`, or `dependencies` labels after approval.
 Require branches to be up to date before merging: Yes
 ```
 
