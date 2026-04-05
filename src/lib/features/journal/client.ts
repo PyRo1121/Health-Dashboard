@@ -7,6 +7,7 @@ import {
   hydrateJournalIntentPage as hydrateJournalIntentPageController,
   loadJournalPage as loadJournalPageController,
   saveJournalPage as saveJournalPageController,
+  toggleJournalContextEvent as toggleJournalContextEventController,
   type JournalPageState,
 } from './controller';
 import type { JournalIntent } from './navigation';
@@ -43,6 +44,13 @@ export async function hydrateJournalIntent(
     (db) => hydrateJournalIntentPageController(db, state, intent),
     { intent }
   );
+}
+
+export function toggleJournalContextEvent(
+  state: JournalPageState,
+  eventId: string
+): JournalPageState {
+  return toggleJournalContextEventController(state, eventId);
 }
 
 export async function deleteJournalPageEntry(

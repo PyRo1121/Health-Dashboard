@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { HealthEvent, JournalEntry } from '$lib/core/domain/types';
 import {
+  createJournalContextRows,
   createEmptyJournalDraft,
   createJournalEntryRows,
   createJournalLinkedContextRows,
@@ -62,5 +63,40 @@ describe('journal model', () => {
       label: 'Symptom',
       valueLabel: '4',
     });
+  });
+
+  it('marks selected journal context rows from linked event ids', () => {
+    const rows = createJournalContextRows(
+      [
+        {
+          id: 'symptom-1',
+          createdAt: '2026-04-02T09:00:00.000Z',
+          updatedAt: '2026-04-02T09:00:00.000Z',
+          sourceType: 'manual',
+          sourceApp: 'personal-health-cockpit',
+          sourceRecordId: 'symptom:1',
+          sourceTimestamp: '2026-04-02T09:00:00.000Z',
+          localDay: '2026-04-02',
+          timezone: 'UTC',
+          confidence: 1,
+          eventType: 'symptom',
+          value: 4,
+          payload: {
+            kind: 'symptom',
+            symptom: 'Headache',
+            severity: 4,
+          },
+        } satisfies HealthEvent,
+      ],
+      ['symptom-1']
+    );
+
+    expect(rows).toEqual([
+      expect.objectContaining({
+        id: 'symptom-1',
+        label: 'Symptom',
+        selected: true,
+      }),
+    ]);
   });
 });

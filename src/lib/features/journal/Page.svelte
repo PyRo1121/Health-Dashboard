@@ -7,6 +7,7 @@
     hydrateJournalIntent,
     loadJournalPage,
     saveJournalPage,
+    toggleJournalContextEvent,
   } from '$lib/features/journal/client';
   import {
     clearJournalIntentFromLocation,
@@ -40,6 +41,10 @@
 
   async function handleDelete(id: string) {
     page = await deleteJournalPageEntry(page, id);
+  }
+
+  function handleToggleContext(eventId: string) {
+    page = toggleJournalContextEvent(page, eventId);
   }
 
   onBrowserRouteMount(loadEntries);
@@ -86,6 +91,7 @@
         <p class="status-copy">Linked context: {page.draft.linkedEventIds.length} events.</p>
       {/if}
       {#if page.linkedContextRows.length}
+        <h3 class="card-subtitle">Available context</h3>
         <ul class="entry-list linked-context-list">
           {#each page.linkedContextRows as row (row.id)}
             <li>
@@ -93,7 +99,16 @@
                 <strong>{row.label}</strong>
                 <p>{row.valueLabel}</p>
               </div>
-              <span class="status-copy">{row.sourceLabel}</span>
+              <div class="context-actions">
+                <span class="status-copy">{row.sourceLabel}</span>
+                <Button
+                  variant="ghost"
+                  aria-label={`${row.selected ? 'Remove' : 'Link'} signal ${row.label}`}
+                  onclick={() => handleToggleContext(row.id)}
+                >
+                  {row.selected ? 'Remove signal' : 'Link signal'}
+                </Button>
+              </div>
             </li>
           {/each}
         </ul>
@@ -146,6 +161,13 @@
 
   .linked-context-list {
     margin-top: 0.85rem;
+  }
+
+  .context-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    flex-wrap: wrap;
   }
 
   @media (min-width: 960px) {

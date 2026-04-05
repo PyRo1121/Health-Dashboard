@@ -7,6 +7,7 @@ import {
   hydrateJournalIntentPage,
   loadJournalPage,
   saveJournalPage,
+  toggleJournalContextEvent,
 } from '$lib/features/journal/controller';
 
 describe('journal controller', () => {
@@ -74,5 +75,46 @@ describe('journal controller', () => {
         valueLabel: '4',
       }),
     ]);
+  });
+
+  it('toggles linked context ids in the draft locally', async () => {
+    const db = getDb();
+    await db.healthEvents.put({
+      id: 'symptom-1',
+      createdAt: '2026-04-04T09:00:00.000Z',
+      updatedAt: '2026-04-04T09:00:00.000Z',
+      sourceType: 'manual',
+      sourceApp: 'personal-health-cockpit',
+      sourceRecordId: 'symptom:1',
+      sourceTimestamp: '2026-04-04T09:00:00.000Z',
+      localDay: '2026-04-04',
+      timezone: 'UTC',
+      confidence: 1,
+      eventType: 'symptom',
+      value: 4,
+      payload: {
+        kind: 'symptom',
+        symptom: 'Headache',
+        severity: 4,
+      },
+    });
+
+    let state = await loadJournalPage(db, '2026-04-04', createJournalPageState());
+    state = await hydrateJournalIntentPage(db, state, {
+      source: 'today-recovery',
+      localDay: '2026-04-04',
+      entryType: 'symptom_note',
+      title: 'Recovery note',
+      body: 'Crowded store and headache drained the afternoon.',
+      linkedEventIds: [],
+    });
+
+    state = toggleJournalContextEvent(state, 'symptom-1');
+    expect(state.draft.linkedEventIds).toEqual(['symptom-1']);
+    expect(state.linkedContextRows[0]).toMatchObject({ id: 'symptom-1', selected: true });
+
+    state = toggleJournalContextEvent(state, 'symptom-1');
+    expect(state.draft.linkedEventIds).toEqual([]);
+    expect(state.linkedContextRows[0]).toMatchObject({ id: 'symptom-1', selected: false });
   });
 });

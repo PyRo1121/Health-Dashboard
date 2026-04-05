@@ -23,6 +23,7 @@ export type JournalLinkedContextRow = {
   label: string;
   valueLabel: string;
   sourceLabel: string;
+  selected: boolean;
 };
 
 export function createEmptyJournalDraft(localDay: string): JournalDraft {
@@ -63,5 +64,17 @@ export function createJournalLinkedContextRows(events: HealthEvent[]): JournalLi
   return events.map((event) => ({
     id: event.id,
     ...buildHealthEventDisplay(event),
+    selected: false,
+  }));
+}
+
+export function createJournalContextRows(
+  events: HealthEvent[],
+  linkedEventIds: string[]
+): JournalLinkedContextRow[] {
+  return events.map((event) => ({
+    id: event.id,
+    ...buildHealthEventDisplay(event),
+    selected: linkedEventIds.includes(event.id),
   }));
 }
