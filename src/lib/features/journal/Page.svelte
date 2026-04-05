@@ -4,6 +4,7 @@
     beginJournalSave,
     createJournalPageState,
     deleteJournalPageEntry,
+    hydrateJournalIntent,
     loadJournalPage,
     saveJournalPage,
   } from '$lib/features/journal/client';
@@ -29,21 +30,7 @@
     }
 
     clearJournalIntentFromLocation(window.location, window.history);
-    page = {
-      ...loaded,
-      saveNotice:
-        intent.source === 'today-recovery'
-          ? 'Loaded from today recovery.'
-          : 'Loaded from review context.',
-      draft: {
-        ...loaded.draft,
-        localDay: intent.localDay,
-        entryType: intent.entryType,
-        title: intent.title,
-        body: intent.body,
-        linkedEventIds: intent.linkedEventIds,
-      },
-    };
+    page = await hydrateJournalIntent(loaded, intent);
   }
 
   async function handleSave() {
@@ -98,6 +85,19 @@
       {#if page.draft.linkedEventIds.length}
         <p class="status-copy">Linked context: {page.draft.linkedEventIds.length} events.</p>
       {/if}
+      {#if page.linkedContextRows.length}
+        <ul class="entry-list linked-context-list">
+          {#each page.linkedContextRows as row (row.id)}
+            <li>
+              <div>
+                <strong>{row.label}</strong>
+                <p>{row.valueLabel}</p>
+              </div>
+              <span class="status-copy">{row.sourceLabel}</span>
+            </li>
+          {/each}
+        </ul>
+      {/if}
     </SectionCard>
 
     <SectionCard title="Today">
@@ -110,6 +110,9 @@
               <div>
                 <strong>{entry.title}</strong>
                 <p>{entry.body}</p>
+                {#if entry.contextLabel}
+                  <p class="status-copy">{entry.contextLabel}</p>
+                {/if}
               </div>
               <Button variant="ghost" onclick={() => handleDelete(entry.id)}>Delete</Button>
             </li>
@@ -139,6 +142,10 @@
   .entry-list p {
     margin: 0;
     color: #3a352e;
+  }
+
+  .linked-context-list {
+    margin-top: 0.85rem;
   }
 
   @media (min-width: 960px) {

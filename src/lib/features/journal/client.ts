@@ -4,10 +4,12 @@ import {
   beginJournalSave,
   createJournalPageState,
   deleteJournalPageEntry as deleteJournalPageEntryController,
+  hydrateJournalIntentPage as hydrateJournalIntentPageController,
   loadJournalPage as loadJournalPageController,
   saveJournalPage as saveJournalPageController,
   type JournalPageState,
 } from './controller';
+import type { JournalIntent } from './navigation';
 
 export { beginJournalSave, createJournalPageState };
 
@@ -28,6 +30,18 @@ export async function loadJournalPage(
 export async function saveJournalPage(state: JournalPageState): Promise<JournalPageState> {
   return await journalClient.stateAction('save', state, (db) =>
     saveJournalPageController(db, state)
+  );
+}
+
+export async function hydrateJournalIntent(
+  state: JournalPageState,
+  intent: JournalIntent
+): Promise<JournalPageState> {
+  return await journalClient.stateAction(
+    'hydrateIntent',
+    state,
+    (db) => hydrateJournalIntentPageController(db, state, intent),
+    { intent }
   );
 }
 
