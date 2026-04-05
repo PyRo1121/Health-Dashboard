@@ -1,0 +1,36 @@
+.github/workflows/anti-slop.yml
+  d542807803882978 20-48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "b5a9a91fe6594137f36e4f9c5eb18b0e57fd4d2f",
+  "prompts": {
+    "81abc1d12c2478f3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-edde8986-b473-40f5-8f83-89fa4ec1c52f",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 13,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "d542807803882978": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-90a3d77e-d7cf-4757-a2bf-8333c5e3fcae",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 42,
+      "total_deletions": 1,
+      "accepted_lines": 29,
+      "overriden_lines": 0
+    }
+  }
+}
