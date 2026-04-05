@@ -1,0 +1,23 @@
+.github/workflows/release.yml
+  ba3cc23a88230ca9 161
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "8476b06e4a99c52a2176ce0dda8f952d0fd7339b",
+  "prompts": {
+    "ba3cc23a88230ca9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-18dee50e-6ab1-4590-8b06-27b625dd6628",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
