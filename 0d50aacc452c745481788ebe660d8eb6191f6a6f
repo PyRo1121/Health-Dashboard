@@ -1,0 +1,99 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "0d50aacc452c745481788ebe660d8eb6191f6a6f",
+  "prompts": {
+    "4f24f3262736cff4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-fcbba3c8-6bc1-4f57-8fa9-f0b99042500d",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    },
+    "5165ed09676abdf0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-bfa3cca3-c380-4485-ab57-f2be9641c7c3",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "51a9de59cc0cbc16": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-431b4059-0b79-4add-bb28-b488ab671a37",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "5cda33afffb5bc33": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-80ec59ac-96db-47c6-877d-0acd9f596fd6",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "d6725b6fd7b29110": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-01cd9af1-d47b-4e23-a597-c738b3b94c62",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 3,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "d7f3118fa2d950cd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-4c11e8ec-bcc3-48ec-8af4-4d4c88a33856",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 86,
+      "overriden_lines": 0
+    },
+    "dff1cac324661b0c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-f59c4b12-a8c3-482d-af7f-597ebea0b862",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
