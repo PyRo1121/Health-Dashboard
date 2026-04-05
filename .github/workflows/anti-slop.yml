@@ -1,0 +1,48 @@
+name: Anti-Slop PR Quality Gate
+
+on:
+  pull_request_target:
+    types: [opened, reopened]
+
+permissions:
+  contents: read
+  issues: read
+  pull-requests: write
+
+jobs:
+  anti-slop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: peakoss/anti-slop@v0
+        with:
+          max-failures: 4
+          require-description: true
+          require-conventional-title: false
+          max-description-length: 2500
+          max-emoji-count: 2
+          max-code-references: 5
+          require-maintainer-can-modify: true
+          blocked-paths: |
+            README.md
+            SECURITY.md
+            LICENSE
+            CODE_OF_CONDUCT.md
+          require-final-newline: true
+          max-added-comments: 10
+          detect-spam-usernames: true
+          min-account-age: 30
+          min-profile-completeness: 4
+          max-daily-forks: 7
+          min-global-merge-ratio: 30
+          global-merge-ratio-exclude-own: true
+          failure-add-pr-labels: ai-slop-detected
+          close-pr: false
+          lock-pr: false
+          failure-pr-message: |
+            This PR was flagged by anti-slop checks. Please review:
+            - Ensure description is meaningful and not AI-generated
+            - Confirm all commits are authored by you
+            - Check that file changes don't include protected docs
+            - Verify your GitHub profile is complete
+
+            If this is a legitimate contribution, please address the issues and re-open.

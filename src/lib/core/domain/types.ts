@@ -139,9 +139,7 @@ export interface GroceryItem extends BaseRecord {
   ingredientKey: string;
   label: string;
   quantityText?: string;
-  derivedQuantityText?: string;
   manual?: boolean;
-  manualQuantityText?: string;
   aisle?: string;
   checked: boolean;
   excluded: boolean;
