@@ -37,6 +37,7 @@ jobs:
           XAI_MODEL: grok-4-1-fast-reasoning
           THREAT_JSON_PATH: ${{ runner.temp }}/grok-threat-monitor.json
           THREAT_MARKDOWN_PATH: ${{ runner.temp }}/grok-threat-monitor.md
+          THREAT_FIX_CANDIDATES_PATH: ${{ runner.temp }}/threat-fix-candidates.json
           GITHUB_REPOSITORY: ${{ github.repository }}
         run: node .github/scripts/grok-threat-monitor.mjs
 
@@ -88,12 +89,6 @@ jobs:
               });
             }
 
-      - name: Extract auto-fix candidates
-        id: candidates
-        run: node .github/scripts/grok-threat-fix-prs.mjs > "$RUNNER_TEMP/threat-fix-candidates.json"
-        env:
-          THREAT_JSON_PATH: ${{ runner.temp }}/grok-threat-monitor.json
-
       - name: Create dependency fix PR for high-confidence threats
         id: autofix
         env:
@@ -134,6 +129,7 @@ jobs:
             --base main \
             --head "$BRANCH" \
             --label dependencies \
+            --label threat-fix-pr \
             --label security-issue \
             --label automation
 

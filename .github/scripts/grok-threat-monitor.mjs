@@ -2,7 +2,7 @@
 
 import { readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
-import { buildSearchTools } from './xai-tooling.mjs';
+import { buildSearchTools, optionalEnv, runResponsesFunctionLoop } from './xai-tooling.mjs';
 
 const DEFAULT_MODEL = 'grok-4-1-fast-reasoning';
 const MARKER = '<!-- grok-threat-monitor -->';
@@ -15,44 +15,18 @@ function requiredEnv(name) {
   return value;
 }
 
-function optionalEnv(name, fallback = '') {
-  return process.env[name] ?? fallback;
-}
-
-function parseJsonResponse(content) {
-  try {
-    return JSON.parse(content);
-  } catch {
-    const first = content.indexOf('{');
-    const last = content.lastIndexOf('}');
-    if (first >= 0 && last > first) {
-      return JSON.parse(content.slice(first, last + 1));
-    }
-    throw new Error('xAI threat monitor response did not contain valid JSON.');
-  }
-}
-
-function extractMessageText(payload) {
-  if (typeof payload?.output_text === 'string' && payload.output_text.trim()) {
-    return payload.output_text;
-  }
-  const output = Array.isArray(payload?.output) ? payload.output : [];
-  for (const item of output) {
-    if (item?.type !== 'message' || !Array.isArray(item.content)) continue;
-    const textPart = item.content.find((part) => part?.type === 'output_text');
-    if (typeof textPart?.text === 'string') {
-      return textPart.text;
-    }
-  }
-  throw new Error('xAI threat monitor response did not return message content.');
-}
-
 function escapeRegExp(value) {
   return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
 function normalizeVersion(range) {
   return range.replace(/^[~^<>=\s]+/, '').split(' || ')[0]?.trim() || '';
+}
+
+function normalizeSeverity(value, fallback = 'low') {
+  return ['critical', 'high', 'medium', 'low', 'none'].includes(String(value || '').toLowerCase())
+    ? String(value).toLowerCase()
+    : fallback;
 }
 
 function collectDependencies() {
@@ -123,118 +97,6 @@ async function queryOsv(dependencies) {
   }));
 }
 
-async function callThreatMonitor({ dependencies, actions, advisoryHits }) {
-  const apiKey = requiredEnv('XAI_API_KEY');
-  const model = optionalEnv('XAI_MODEL', DEFAULT_MODEL);
-
-  const payload = {
-    model,
-    store: false,
-    temperature: 0.1,
-    max_tokens: 4000,
-    text: {
-      format: {
-        type: 'json_schema',
-        name: 'grok_threat_monitor',
-        strict: true,
-        schema: {
-          type: 'object',
-          additionalProperties: false,
-          required: ['summary', 'severity', 'findings'],
-          properties: {
-            summary: { type: 'string' },
-            severity: {
-              type: 'string',
-              enum: ['none', 'low', 'medium', 'high', 'critical'],
-            },
-            findings: {
-              type: 'array',
-              items: {
-                type: 'object',
-                additionalProperties: false,
-                required: [
-                  'package',
-                  'ecosystem',
-                  'severity',
-                  'confidence',
-                  'auto_fix_ready',
-                  'why_now',
-                  'evidence',
-                  'recommended_action',
-                ],
-                properties: {
-                  package: { type: 'string' },
-                  ecosystem: { type: 'string' },
-                  scope: { type: 'string' },
-                  severity: {
-                    type: 'string',
-                    enum: ['critical', 'high', 'medium', 'low'],
-                  },
-                  confidence: {
-                    type: 'string',
-                    enum: ['high', 'medium', 'low'],
-                  },
-                  auto_fix_ready: { type: 'boolean' },
-                  version: { type: 'string' },
-                  target_version: { type: 'string' },
-                  advisory: { type: 'string' },
-                  why_now: { type: 'string' },
-                  evidence: { type: 'string' },
-                  recommended_action: { type: 'string' },
-                },
-              },
-            },
-          },
-        },
-      },
-    },
-    tools: buildSearchTools({
-      includeCodeInterpreter: true,
-      xHandles: ['github', 'xai', 'CISAgov'],
-    }),
-    input: [
-      {
-        role: 'system',
-        content:
-          'You are an enterprise dependency and supply-chain threat analyst. ' +
-          'Use web_search and x_search to evaluate the current threat context for direct dependencies and GitHub Actions. ' +
-          'Prioritize packages with OSV advisories plus high-leverage build/runtime components. ' +
-          'Only report actionable current threats, active exploitation, maintainer warnings, or urgent upgrade pressure. ' +
-          'Set auto_fix_ready=true only when upgrading the package is a straightforward dependency update and target_version is high-confidence.',
-      },
-      {
-        role: 'user',
-        content: JSON.stringify(
-          {
-            repository: requiredEnv('GITHUB_REPOSITORY'),
-            directDependencies: dependencies,
-            workflowActions: actions,
-            osvAdvisories: advisoryHits,
-            task: 'Produce a threat-monitor summary for the last 30 days with actionable findings only.',
-          },
-          null,
-          2
-        ),
-      },
-    ],
-  };
-
-  const response = await fetch('https://api.x.ai/v1/responses', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      authorization: `Bearer ${apiKey}`,
-    },
-    body: JSON.stringify(payload),
-  });
-
-  if (!response.ok) {
-    throw new Error(`xAI threat monitor request failed with ${response.status}: ${await response.text()}`);
-  }
-
-  return parseJsonResponse(extractMessageText(await response.json()));
-}
-
 function renderMarkdown(result) {
   return `${MARKER}
 # Grok Threat Monitor
@@ -259,6 +121,189 @@ ${
 Generated by Grok threat monitoring with xAI web + X search.`;
 }
 
+function normalizeFinding(args) {
+  return {
+    package: typeof args.package === 'string' ? args.package.trim() : 'unknown',
+    ecosystem: typeof args.ecosystem === 'string' ? args.ecosystem.trim() : 'npm',
+    scope: typeof args.scope === 'string' ? args.scope.trim() : '',
+    severity: normalizeSeverity(args.severity, 'low'),
+    confidence: ['high', 'medium', 'low'].includes(String(args.confidence || '').toLowerCase())
+      ? String(args.confidence).toLowerCase()
+      : 'low',
+    auto_fix_ready: args.auto_fix_ready === true,
+    version: typeof args.version === 'string' ? args.version.trim() : '',
+    target_version: typeof args.target_version === 'string' ? args.target_version.trim() : '',
+    advisory: typeof args.advisory === 'string' ? args.advisory.trim() : '',
+    why_now: typeof args.why_now === 'string' ? args.why_now.trim() : 'No current threat rationale returned.',
+    evidence: typeof args.evidence === 'string' ? args.evidence.trim() : 'No evidence returned.',
+    recommended_action:
+      typeof args.recommended_action === 'string' ? args.recommended_action.trim() : 'Review the package manually.',
+  };
+}
+
+function normalizeFixCandidate(args) {
+  return {
+    package: typeof args.package === 'string' ? args.package.trim() : 'unknown',
+    scope: typeof args.scope === 'string' ? args.scope.trim() : 'dependencies',
+    targetVersion: typeof args.targetVersion === 'string' ? args.targetVersion.trim() : '',
+    severity: normalizeSeverity(args.severity, 'high'),
+    advisory: typeof args.advisory === 'string' ? args.advisory.trim() : '',
+    whyNow: typeof args.whyNow === 'string' ? args.whyNow.trim() : 'No rationale returned.',
+    recommendedAction:
+      typeof args.recommendedAction === 'string' ? args.recommendedAction.trim() : 'Upgrade to the proposed target version.',
+  };
+}
+
+async function callThreatMonitor({ dependencies, actions, advisoryHits }) {
+  const state = {
+    summary: 'No actionable threats detected in this run.',
+    severity: 'none',
+    findings: [],
+    fixCandidates: [],
+  };
+
+  try {
+    await runResponsesFunctionLoop({
+      apiKey: requiredEnv('XAI_API_KEY'),
+      model: optionalEnv('XAI_MODEL', DEFAULT_MODEL),
+      temperature: 0.1,
+      maxTokens: 4000,
+      maxRounds: 8,
+      toolChoice: 'required',
+      tools: [
+        ...buildSearchTools({
+          includeCodeInterpreter: true,
+          xHandles: ['github', 'xai', 'CISAgov'],
+        }),
+        {
+          type: 'function',
+          name: 'set_threat_summary',
+          description: 'Set the single overall threat-monitor summary and severity for this run.',
+          parameters: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['summary', 'severity'],
+            properties: {
+              summary: { type: 'string' },
+              severity: {
+                type: 'string',
+                enum: ['none', 'low', 'medium', 'high', 'critical'],
+              },
+            },
+          },
+        },
+        {
+          type: 'function',
+          name: 'record_threat_finding',
+          description: 'Record one actionable dependency or workflow-action threat finding.',
+          parameters: {
+            type: 'object',
+            additionalProperties: false,
+            required: [
+              'package',
+              'ecosystem',
+              'severity',
+              'confidence',
+              'auto_fix_ready',
+              'why_now',
+              'evidence',
+              'recommended_action',
+            ],
+            properties: {
+              package: { type: 'string' },
+              ecosystem: { type: 'string' },
+              scope: { type: 'string' },
+              severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] },
+              confidence: { type: 'string', enum: ['high', 'medium', 'low'] },
+              auto_fix_ready: { type: 'boolean' },
+              version: { type: 'string' },
+              target_version: { type: 'string' },
+              advisory: { type: 'string' },
+              why_now: { type: 'string' },
+              evidence: { type: 'string' },
+              recommended_action: { type: 'string' },
+            },
+          },
+        },
+        {
+          type: 'function',
+          name: 'record_fix_candidate',
+          description: 'Record one high-confidence dependency update candidate that is safe for an automated fix PR.',
+          parameters: {
+            type: 'object',
+            additionalProperties: false,
+            required: ['package', 'scope', 'targetVersion', 'severity', 'whyNow', 'recommendedAction'],
+            properties: {
+              package: { type: 'string' },
+              scope: { type: 'string' },
+              targetVersion: { type: 'string' },
+              severity: { type: 'string', enum: ['critical', 'high', 'medium', 'low'] },
+              advisory: { type: 'string' },
+              whyNow: { type: 'string' },
+              recommendedAction: { type: 'string' },
+            },
+          },
+        },
+      ],
+      input: [
+        {
+          role: 'system',
+          content:
+            'You are an enterprise dependency and supply-chain threat analyst. ' +
+            'Use web_search, x_search, code_interpreter, file_search, and the xAI docs MCP when useful. ' +
+            'Only record findings for actionable current threats, active exploitation, maintainer warnings, or urgent upgrade pressure. ' +
+            'Always call set_threat_summary. Call record_threat_finding for each actionable finding. ' +
+            'Call record_fix_candidate only when the upgrade path is high-confidence and automatable as a dependency-only PR.',
+        },
+        {
+          role: 'user',
+          content: JSON.stringify(
+            {
+              repository: requiredEnv('GITHUB_REPOSITORY'),
+              directDependencies: dependencies,
+              workflowActions: actions,
+              osvAdvisories: advisoryHits,
+              task: 'Produce a threat-monitor summary for the last 30 days with actionable findings only.',
+            },
+            null,
+            2
+          ),
+        },
+      ],
+      functionHandlers: {
+        set_threat_summary(args) {
+          state.summary = typeof args.summary === 'string' ? args.summary.trim() : state.summary;
+          state.severity = normalizeSeverity(args.severity, state.severity);
+          return { ok: true };
+        },
+        record_threat_finding(args) {
+          const finding = normalizeFinding(args);
+          state.findings.push(finding);
+          return { ok: true, recorded: finding.package };
+        },
+        record_fix_candidate(args) {
+          const candidate = normalizeFixCandidate(args);
+          if (candidate.package && candidate.targetVersion) {
+            state.fixCandidates.push(candidate);
+          }
+          return { ok: true, recorded: candidate.package };
+        },
+      },
+    });
+  } catch (error) {
+    state.summary = `Threat monitor fell back to OSV-only mode: ${String(error?.message ?? error)}`;
+    state.severity = advisoryHits.length ? 'medium' : 'low';
+  }
+
+  if (state.summary === 'No actionable threats detected in this run.' && advisoryHits.length) {
+    state.summary =
+      `OSV found advisory activity for ${advisoryHits.length} direct dependencies, but no urgent live-threat escalation was recorded.`;
+    state.severity = state.findings.length ? state.severity : 'low';
+  }
+
+  return state;
+}
+
 async function main() {
   const dependencies = collectDependencies();
   const actions = collectWorkflowActions();
@@ -275,10 +320,12 @@ async function main() {
     }));
 
   const result = await callThreatMonitor({ dependencies, actions, advisoryHits });
-  const outputJsonPath = requiredEnv('THREAT_JSON_PATH');
-  const outputMarkdownPath = requiredEnv('THREAT_MARKDOWN_PATH');
-  writeFileSync(outputJsonPath, JSON.stringify(result, null, 2));
-  writeFileSync(outputMarkdownPath, renderMarkdown(result));
+  writeFileSync(requiredEnv('THREAT_JSON_PATH'), JSON.stringify(result, null, 2));
+  writeFileSync(requiredEnv('THREAT_MARKDOWN_PATH'), renderMarkdown(result));
+  writeFileSync(
+    requiredEnv('THREAT_FIX_CANDIDATES_PATH'),
+    JSON.stringify(result.fixCandidates ?? [], null, 2)
+  );
 }
 
 main().catch((error) => {
