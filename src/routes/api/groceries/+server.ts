@@ -4,32 +4,26 @@ import {
   loadGroceriesPage,
   removeManualGroceryItemPage,
   toggleGroceryItemPage,
-  type ManualGroceryDraft,
   type GroceriesPageState,
 } from '$lib/features/groceries/controller';
+import { groceriesRequestSchema, type GroceriesRequest } from '$lib/features/groceries/contracts';
 
-type GroceriesRequest =
-  | { action: 'load'; localDay: string }
-  | {
-      action: 'toggle';
-      state: GroceriesPageState;
-      itemId: string;
-      patch: { checked: boolean; excluded: boolean; onHand: boolean };
-    }
-  | {
-      action: 'addManual';
-      state: GroceriesPageState;
-      draft: ManualGroceryDraft;
-    }
-  | {
-      action: 'removeManual';
-      state: GroceriesPageState;
-      itemId: string;
-    };
-
-export const POST = createDbActionPostHandler<GroceriesRequest, GroceriesPageState>({
-  load: (db, body) => loadGroceriesPage(db, body.localDay),
-  toggle: (db, body) => toggleGroceryItemPage(db, body.state, body.itemId, body.patch),
-  addManual: (db, body) => addManualGroceryItemPage(db, body.state, body.draft),
-  removeManual: (db, body) => removeManualGroceryItemPage(db, body.state, body.itemId),
-});
+export const POST = createDbActionPostHandler<GroceriesRequest, GroceriesPageState>(
+  {
+    load: (db, body) => loadGroceriesPage(db, body.localDay),
+    toggle: (db, body) => toggleGroceryItemPage(db, body.state, body.itemId, body.patch),
+    addManual: (db, body) => addManualGroceryItemPage(db, body.state, body.draft),
+    removeManual: (db, body) => removeManualGroceryItemPage(db, body.state, body.itemId),
+  },
+  undefined,
+  {
+    parseBody: async (request) => {
+      const parsed = groceriesRequestSchema.safeParse(await request.json());
+      if (!parsed.success) {
+        throw new Error('Invalid groceries request payload.');
+      }
+      return parsed.data;
+    },
+    onParseError: () => new Response('Invalid groceries request payload.', { status: 400 }),
+  }
+);
