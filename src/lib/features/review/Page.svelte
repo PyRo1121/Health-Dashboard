@@ -12,6 +12,7 @@
     setReviewExperiment,
   } from '$lib/features/review/client';
   import {
+    createReviewAdherenceAuditItems,
     createReviewAdherenceCards,
     createNutritionStrategyCards,
     createReviewSections,
@@ -25,6 +26,7 @@
   let reviewSections = $derived(createReviewSections(page.weekly));
   let nutritionStrategyCards = $derived(createNutritionStrategyCards(page.weekly));
   let adherenceCards = $derived(createReviewAdherenceCards(page.weekly));
+  let adherenceAuditItems = $derived(createReviewAdherenceAuditItems(page.weekly));
 
   async function loadWeekly() {
     page = await loadReviewPage();
@@ -58,7 +60,7 @@
       }}
     />
 
-    <ReviewAdherenceSection {adherenceCards} />
+    <ReviewAdherenceSection {adherenceCards} auditItems={adherenceAuditItems} />
 
     <ReviewCorrelationSection correlations={page.weekly.snapshot.correlations} />
 

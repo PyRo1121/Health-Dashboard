@@ -129,6 +129,7 @@ export async function buildWeeklySnapshot(
     planningHighlights: buildPlanningHighlights(weeklyPlan, weekPlanSlots, weekGroceries),
     adherenceScores: buildAdherenceScores(adherenceMatches),
     adherenceSignals: buildAdherenceSignals(adherenceMatches),
+    adherenceMatches,
     grocerySignals: buildGrocerySignals(weekPlanSlots, weekGroceries, anchorDay),
     deviceHighlights: buildDeviceHighlights(weekHealthEvents),
     assessmentSummary: buildAssessmentSummary(weekAssessments),

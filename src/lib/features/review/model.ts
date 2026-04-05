@@ -27,6 +27,13 @@ export type ReviewAdherenceCard = {
   tone: 'steady' | 'mixed' | 'attention';
 };
 
+export type ReviewAdherenceAuditItem = {
+  badge: 'Explicit' | 'Inferred';
+  title: string;
+  detail: string;
+  tone: 'steady' | 'mixed' | 'attention';
+};
+
 function normalizeStrategyDetail(detail: string): string {
   const trimmed = detail.trim();
   return trimmed.endsWith('.') ? trimmed : `${trimmed}.`;
@@ -83,6 +90,41 @@ export function createReviewAdherenceCards(weekly: WeeklyReviewData | null): Rev
         detail: normalizeStrategyDetail(score.detail),
         tone: score.tone,
       }))
+    : [];
+}
+
+function toneForOutcome(
+  outcome: WeeklyReviewData['adherenceMatches'][number]['outcome']
+): ReviewAdherenceAuditItem['tone'] {
+  if (outcome === 'hit') return 'steady';
+  if (outcome === 'miss') return 'attention';
+  return 'mixed';
+}
+
+export function createReviewAdherenceAuditItems(
+  weekly: WeeklyReviewData | null
+): ReviewAdherenceAuditItem[] {
+  return weekly
+    ? weekly.adherenceMatches
+        .filter((match) => match.outcome !== 'pending')
+        .map((match) => {
+          const badge: ReviewAdherenceAuditItem['badge'] =
+            match.confidence === 'explicit' ? 'Explicit' : 'Inferred';
+
+          return {
+            badge,
+            title: match.slotTitle,
+            detail:
+              (match.slotType === 'meal'
+                ? 'Meal'
+                : match.slotType === 'workout'
+                  ? 'Workout'
+                  : 'Note') +
+              `${match.confidence === 'inferred' ? ' inferred' : ''} ${match.outcome}: ${match.reason}`,
+            tone: toneForOutcome(match.outcome),
+          };
+        })
+        .slice(0, 6)
     : [];
 }
 
