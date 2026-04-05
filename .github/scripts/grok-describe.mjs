@@ -87,6 +87,202 @@ function extractMessageText(payload) {
   throw new Error('xAI describe response did not return message content.');
 }
 
+/**
+ * Detect issue tracker references (Jira, Linear, GitHub Issues)
+ */
+function detectIssueReferences(title, body) {
+  const text = `${title} ${body || ''}`;
+  const issues = [];
+  
+  const patterns = [
+    // Jira: PROJECT-123 or PROJECT-1234
+    { pattern: /\b([A-Z][A-Z0-9]+-\d+)\b/g, type: 'jira', urlTemplate: (id) => `https://jira.atlassian.com/browse/${id}` },
+    // Linear: PROJECT-123 or HEALTH-123
+    { pattern: /\b([A-Z]+-\d+)\b/g, type: 'linear', urlTemplate: (id) => `https://linear.app/project/issues/${id}` },
+    // GitHub Issues/PRs: #123
+    { pattern: /#(\d+)\b/g, type: 'github', urlTemplate: (id) => `#${id}` },
+  ];
+  
+  const seen = new Set();
+  
+  for (const { pattern, type, urlTemplate } of patterns) {
+    let match;
+    while ((match = pattern.exec(text)) !== null) {
+      const id = match[0];
+      if (!seen.has(id)) {
+        seen.add(id);
+        issues.push({ id, type, url: urlTemplate(id) });
+      }
+    }
+  }
+  
+  return issues;
+}
+
+/**
+ * Fetch issue status from Jira (if configured)
+ */
+async function fetchJiraIssueStatus(issueId, apiToken, email) {
+  try {
+    const response = await fetch(`https://api.atlassian.com/rest/api/3/issue/${issueId}`, {
+      headers: {
+        'Authorization': `Basic ${Buffer.from(`${email}:${apiToken}`).toString('base64')}`,
+        'Accept': 'application/json',
+      },
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    return {
+      status: data.fields?.status?.name || 'Unknown',
+      statusCategory: data.fields?.status?.statusCategory?.name || 'Unknown',
+      summary: data.fields?.summary || '',
+    };
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Fetch issue status from Linear (if configured)
+ */
+async function fetchLinearIssueStatus(issueId, apiKey) {
+  try {
+    const response = await fetch('https://api.linear.app/graphql', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: `query { issue(id: "${issueId}") { identifier state { name } title } }`,
+      }),
+    });
+    if (!response.ok) return null;
+    const data = await response.json();
+    if (data?.data?.issue) {
+      return {
+        status: data.data.issue.state?.name || 'Unknown',
+        summary: data.data.issue.title || '',
+      };
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Generate dependency changelog from package manager diffs
+ */
+function generateDependencyChangelog(diff) {
+  const lines = diff.split('\n');
+  const changes = { added: [], updated: [], removed: [] };
+  
+  let currentSection = null;
+  
+  for (const line of lines) {
+    // Bun.lock format: @@ -version +version @@
+    if (line.startsWith('@@')) {
+      continue;
+    }
+    
+    // Detect added dependencies
+    if (line.startsWith('+') && !line.startsWith('+++')) {
+      const dep = line.slice(1).trim();
+      if (dep && !dep.startsWith('-')) {
+        // Parse version pattern: "package@^1.2.3" or "package@1.2.3"
+        const match = dep.match(/^(@?[\w-]+)@[\^~>=<]+([\d.]+)/);
+        if (match) {
+          changes.added.push({ name: match[1], version: match[2] });
+        }
+      }
+    }
+    
+    // Detect removed dependencies  
+    if (line.startsWith('-') && !line.startsWith('---')) {
+      const dep = line.slice(1).trim();
+      if (dep && !dep.startsWith('+')) {
+        const match = dep.match(/^(@?[\w-]+)@[\^~>=<]+([\d.]+)/);
+        if (match) {
+          changes.removed.push({ name: match[1], version: match[2] });
+        }
+      }
+    }
+    
+    // Detect version updates (look for lines with both old and new)
+    if (line.includes('@') && line.includes('->')) {
+      const parts = line.split('->').map(p => p.trim());
+      if (parts.length === 2) {
+        const oldMatch = parts[0].match(/^(@?[\w-]+)@([\d.]+)/);
+        const newMatch = parts[1].match(/^(@?[\w-]+)@([\d.]+)/);
+        if (oldMatch && newMatch) {
+          changes.updated.push({ 
+            name: newMatch[1], 
+            from: oldMatch[2], 
+            to: newMatch[2] 
+          });
+        }
+      }
+    }
+  }
+  
+  return changes;
+}
+
+function hasDependencyChanges(files, diff) {
+  return files.some(f => 
+    f.includes('package.json') || 
+    f.includes('bun.lock') || 
+    f.includes('package-lock.json') ||
+    f.includes('pnpm-lock.yaml') ||
+    f.includes('yarn.lock')
+  );
+}
+
+/**
+ * Simple language detection based on character patterns
+ */
+function detectLanguage(text) {
+  if (!text) return 'en';
+  
+  const patterns = {
+    en: /^[a-zA-Z0-9\s.,!?'"()\[\]{}:;\-\n]+$/,
+    zh: /[\u4e00-\u9fff]/,
+    ja: /[\u3040-\u309f\u30a0-\u30ff]/,
+    ko: /[\uac00-\ud7af]/,
+    ar: /[\u0600-\u06ff]/,
+    ru: /[\u0400-\u04ff]/,
+    de: /[äöüß]/i,
+    fr: /[àâçéèêëïîôùûü]/i,
+    es: /[áéíóúüñ¿¡]/i,
+    pt: /[ãõçéê]/i,
+  };
+  
+  // Count characters matching each language
+  const counts = {};
+  for (const [lang, pattern] of Object.entries(patterns)) {
+    const matches = text.match(new RegExp(pattern, 'g'));
+    counts[lang] = matches ? matches.length : 0;
+  }
+  
+  // Find language with most matches
+  const detected = Object.entries(counts).sort((a, b) => b[1] - a[1])[0];
+  return detected[1] > 0 ? detected[0] : 'en';
+}
+
+const languageNames = {
+  en: 'English',
+  zh: 'Chinese',
+  ja: 'Japanese',
+  ko: 'Korean',
+  ar: 'Arabic',
+  ru: 'Russian',
+  de: 'German',
+  fr: 'French',
+  es: 'Spanish',
+  pt: 'Portuguese',
+};
+
 function detectPRType(files, diff) {
   const types = new Set();
   const hasTests = files.some(f => f.includes('test') || f.includes('spec') || f.includes('__tests__'));
@@ -206,7 +402,7 @@ async function callXaiDescribe({ title, files, diff, config }) {
   return parseJsonResponse(extractMessageText(data));
 }
 
-function renderMarkdown(result, prTypes) {
+function renderMarkdown(result, prTypes, issues = [], depChanges = null) {
   const typeEmoji = {
     feat: '✨', fix: '🐛', refactor: '♻️', docs: '📚',
     style: '💄', test: '🧪', ci: '👷', perf: '⚡',
@@ -214,7 +410,19 @@ function renderMarkdown(result, prTypes) {
   };
   
   const emojis = prTypes.map(t => typeEmoji[t] || '📦').filter(Boolean);
-  const typeTags = prTypes.map(t => `\`${t}\``).join(' ' ') || '`change`';
+  const typeTags = prTypes.map(t => `\`${t}\``).join(' | ') || '`change`';
+  
+  const issueSection = issues.length > 0
+    ? `\n### Related Issues\n${issues.map(issue => {
+        const icon = issue.type === 'jira' ? '📋' : issue.type === 'linear' ? '🔷' : '🐙';
+        const statusBadge = issue.status ? ` [\`${issue.status}\`] ` : ' ';
+        return `- ${icon} **${issue.id}**${statusBadge}${issue.summary ? `- ${issue.summary}` : ''}`;
+      }).join('\n')}\n`
+    : '';
+  
+  const depSection = depChanges && (depChanges.added.length > 0 || depChanges.updated.length > 0 || depChanges.removed.length > 0)
+    ? `\n### Dependencies\n${depChanges.added.length > 0 ? `\n**Added:**\n${depChanges.added.map(d => `- \`${d.name}@${d.version}\``).join('\n')}\n` : ''}${depChanges.updated.length > 0 ? `\n**Updated:**\n${depChanges.updated.map(d => `- \`${d.name}\`: ${d.from} → ${d.to}`).join('\n')}\n` : ''}${depChanges.removed.length > 0 ? `\n**Removed:**\n${depChanges.removed.map(d => `- ~~\`${d.name}@${d.version}\`~~`).join('\n')}\n` : ''}`
+    : '';
 
   return `${DESCRIBE_MARKER}
 ## 🤖 Grok PR Description
@@ -229,8 +437,7 @@ ${result.walkthrough ? `### Walkthrough\n${result.walkthrough}\n` : ''}
 ${result.highlights?.length ? `### Highlights\n${result.highlights.map(h => `- ${h}`).join('\n')}\n` : ''}
 ${result.todo?.length ? `### TODO\n${result.todo.map(t => `- [ ] ${t}`).join('\n')}\n` : ''}
 ${result.needs_testing ? '### ⚠️ Needs Testing\nThis PR may require additional manual testing.\n' : ''}
-${result.changelog ? `### Changelog Entry\n\`\`\`\n${result.changelog}\n\`\`\`\n` : ''}
----
+${result.changelog ? `### Changelog Entry\n\`\`\`\n${result.changelog}\n\`\`\`\n` : ''}${issueSection}${depSection}---
 *Generated by Grok 4.1 Fast via xAI*
 `;
 }
@@ -242,6 +449,7 @@ async function main() {
   const outputMarkdownPath = requiredEnv('DESCRIBE_MARKDOWN_PATH');
 
   const title = optionalEnv('PR_TITLE', 'Untitled PR');
+  const prBody = optionalEnv('PR_BODY', '');
   const diff = readFileSync(diffPath, 'utf8').slice(0, DEFAULT_MAX_DIFF_CHARS);
   const files = readFileSync(filesPath, 'utf8')
     .split('\n')
@@ -250,8 +458,38 @@ async function main() {
   
   const config = loadConfig();
   const prTypes = detectPRType(files, diff);
+  
+  // Detect language
+  const detectedLang = detectLanguage(`${title} ${prBody}`);
+  const preferredLang = config.language || 'en';
+  const language = preferredLang !== 'en' ? preferredLang : detectedLang;
+  
+  // Detect issue references
+  const detectedIssues = detectIssueReferences(title, prBody);
+  
+  // Fetch issue status if configured
+  const issues = await Promise.all(detectedIssues.map(async (issue) => {
+    if (issue.type === 'jira') {
+      const jiraToken = optionalEnv('JIRA_API_TOKEN', '');
+      const jiraEmail = optionalEnv('JIRA_EMAIL', '');
+      if (jiraToken && jiraEmail) {
+        const status = await fetchJiraIssueStatus(issue.id, jiraToken, jiraEmail);
+        return status ? { ...issue, ...status } : issue;
+      }
+    } else if (issue.type === 'linear') {
+      const linearKey = optionalEnv('LINEAR_API_KEY', '');
+      if (linearKey) {
+        const status = await fetchLinearIssueStatus(issue.id, linearKey);
+        return status ? { ...issue, ...status } : issue;
+      }
+    }
+    return issue;
+  }));
 
   const rawResult = await callXaiDescribe({ title, files, diff, config });
+  
+  // Generate dependency changelog if relevant
+  const depChanges = hasDependencyChanges(files, diff) ? generateDependencyChangelog(diff) : null;
   
   const result = {
     type: rawResult.type || prTypes[0] || 'change',
@@ -264,10 +502,21 @@ async function main() {
     walkthrough: rawResult.walkthrough || '',
     highlights: Array.isArray(rawResult.highlights) ? rawResult.highlights : [],
     todo: Array.isArray(rawResult.todo) ? rawResult.todo : [],
+    issues,
+    dependencies: depChanges,
+    language,
+    detectedLanguage: detectedLang,
   };
 
   writeFileSync(outputJsonPath, JSON.stringify(result, null, 2));
-  writeFileSync(outputMarkdownPath, renderMarkdown(result, prTypes));
+  writeFileSync(outputMarkdownPath, renderMarkdown(result, prTypes, issues, depChanges));
+  
+  console.log(`Detected language: ${languageNames[language] || language}`);
+  console.log(`Detected ${issues.length} related issues`);
+  if (depChanges) {
+    const totalChanges = depChanges.added.length + depChanges.updated.length + depChanges.removed.length;
+    console.log(`Detected ${totalChanges} dependency changes`);
+  }
 }
 
 main().catch((error) => {

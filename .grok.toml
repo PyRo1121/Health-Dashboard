@@ -41,3 +41,9 @@
 
 # Privacy
 # store_responses = false         # Don't store xAI responses (recommended)
+
+# Issue Tracker Integration
+# Jira API (set JIRA_API_TOKEN and JIRA_EMAIL env vars)
+# jira_auto_detect = true         # Detect Jira issue references in PR title/body
+# Linear API (set LINEAR_API_KEY env var)
+# linear_auto_detect = true       # Detect Linear issue references in PR title/body

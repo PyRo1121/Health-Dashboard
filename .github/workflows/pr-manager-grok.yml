@@ -137,6 +137,39 @@ jobs:
               }
             );
 
+            // Get branch protection rules for the base branch
+            const branchProtection = await github.graphql(
+              `
+                query($owner: String!, $repo: String!, $branch: String!) {
+                  repository(owner: $owner, name: $repo) {
+                    branch(name: $branch) {
+                      protection {
+                        requiredStatusCheck: requiredStatusChecks {
+                          strict
+                          checks {
+                            context
+                          }
+                        }
+                        requiredReviews: requiredApprovingReviewsCount
+                        isAdminEnforced
+                        allowsDeletions
+                        allowsForcePushes
+                        requiresCodeOwnerReviews
+                        requiresCommitSignatures
+                        requiresLinearHistory
+                        dismissesStaleReviews
+                      }
+                    }
+                  }
+                }
+              `,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                branch: pr.base.ref,
+              }
+            );
+
             const payload = {
               repository: `${context.repo.owner}/${context.repo.repo}`,
               number: pr.number,
@@ -181,6 +214,7 @@ jobs:
                 description: status.description,
                 target_url: status.target_url,
               })),
+              branchProtection: branchProtection?.repository?.branch?.protection || null,
               reviewThreads: (
                 reviewThreadData?.repository?.pullRequest?.reviewThreads?.nodes || []
               ).map((thread) => ({

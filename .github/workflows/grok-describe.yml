@@ -51,6 +51,7 @@ jobs:
           XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
           XAI_MODEL: grok-4-1-fast-reasoning
           PR_TITLE: ${{ github.event.pull_request.title || 'Untitled PR' }}
+          PR_BODY: ${{ github.event.pull_request.body || '' }}
           PR_DIFF_PATH: ${{ steps.diff.outputs.diff_path }}
           PR_FILES_PATH: ${{ steps.diff.outputs.files_path }}
           DESCRIBE_JSON_PATH: ${{ runner.temp }}/grok-describe.json
