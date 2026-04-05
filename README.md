@@ -66,9 +66,15 @@ GitHub Actions is expected to run:
 - component tests
 - end-to-end tests
 - production build
+- Grok PR review with structured findings and labels
+- label-gated Grok auto-fix for same-repo trusted branches
+- PR manager label/comment sync for docs, automation, dependency, and large PRs
+- 6-hour Grok dependency / CVE / threat monitor issue updates
 - CodeQL SAST
 - dependency and vulnerability scanning (Dependency Review + Snyk + Trivy in release)
 - release artifact signing and attestations
-- label-gated auto-merge for approved automation PRs (`automerge`, `ai-fix`, `dependencies`)
+- label-gated auto-merge for approved PRs (`automerge`)
 - auto-drafted release notes per PR via Release Drafter
 - automated changelog refresh PRs on `main` via git-cliff
+
+Automation details live in [docs/ops/grok-pr-automation.md](docs/ops/grok-pr-automation.md).

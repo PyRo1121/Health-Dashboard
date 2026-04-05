@@ -19,6 +19,7 @@ Without it, implementation will drift because different docs say the same thing 
 8. [landscape notes](research/2026-04-02-health-dashboard-landscape.md)
 9. [CI/CD enterprise audit (2026-04-05)](research/2026-04-05-cicd-enterprise-audit.md)
 10. [CI workflow inventory](ops/ci-workflow-inventory.md)
+11. [Grok PR automation](ops/grok-pr-automation.md)
 
 ## Source Of Truth By Topic
 
@@ -43,6 +44,7 @@ Without it, implementation will drift because different docs say the same thing 
 - Primary: [integration options](research/2026-04-02-health-integration-options.md)
 - CI/CD baseline + gap analysis: [CI/CD enterprise audit (2026-04-05)](research/2026-04-05-cicd-enterprise-audit.md)
 - CI/CD live workflow index: [CI workflow inventory](ops/ci-workflow-inventory.md)
+- PR automation + threat monitoring: [Grok PR automation](ops/grok-pr-automation.md)
 
 ## Doc Status
 
