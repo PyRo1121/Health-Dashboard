@@ -1,0 +1,31 @@
+name: Branch Protection Drift
+description: Track branch-protection drift found by the scheduled audit.
+title: '[Branch Protection Drift]: '
+labels: ['automation', 'needs-review']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when the branch-protection audit finds missing or extra required checks.
+  - type: input
+    id: branch
+    attributes:
+      label: Branch
+      placeholder: 'main'
+    validations:
+      required: true
+  - type: textarea
+    id: missing_checks
+    attributes:
+      label: Missing required checks
+      description: List checks that policy requires but branch protection does not.
+  - type: textarea
+    id: extra_checks
+    attributes:
+      label: Extra required checks
+      description: List checks that branch protection still requires but policy no longer wants.
+  - type: textarea
+    id: remediation
+    attributes:
+      label: Remediation plan
+      description: Describe who will update branch protection and when.

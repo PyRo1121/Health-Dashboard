@@ -39,6 +39,7 @@ This repo uses Grok as the primary PR manager and AI review/fix engine.
 - `grok-collections-bootstrap.yml`
   - uploads repo policy docs into an xAI collection using a management key
   - prints the collection ID for `XAI_COLLECTION_IDS`
+  - can be extended with Remote MCP-backed tools via `XAI_REMOTE_MCP_TOOLS_JSON`
 
 ## Managed Labels
 
@@ -81,8 +82,19 @@ Canonical definitions live in [`.github/labels.json`](../../.github/labels.json)
 - Auto-fix runs on labeled `pull_request` events instead of `pull_request_target`.
 - Grok review and fix scripts use xAI Responses API with `store: false`.
 - Optional repo-policy grounding can be enabled by setting `XAI_COLLECTION_IDS`.
+- Optional Remote MCP / custom tool wiring can be enabled by setting `XAI_REMOTE_MCP_TOOLS_JSON`.
 - Collections bootstrap requires `XAI_MANAGEMENT_API_KEY`.
 - Search is restricted to official documentation and selected X accounts where possible.
+
+## Issue Forms
+
+Structured issue intake now exists for:
+
+- automation exceptions
+- threat-monitor triage
+- branch-protection drift
+
+These live under [`.github/ISSUE_TEMPLATE`](../../.github/ISSUE_TEMPLATE).
 
 ## Threat Monitor
 

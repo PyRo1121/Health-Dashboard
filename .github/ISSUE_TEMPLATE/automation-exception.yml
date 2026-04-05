@@ -1,0 +1,43 @@
+name: Automation Exception
+description: Request a temporary exception or override for Grok PR automation behavior.
+title: '[Automation Exception]: '
+labels: ['automation', 'needs-review']
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Use this when a PR manager rule, auto-fix guardrail, or merge automation policy needs a temporary exception.
+  - type: input
+    id: pr_number
+    attributes:
+      label: Pull request number
+      description: Which PR is blocked or needs an exception?
+      placeholder: '123'
+    validations:
+      required: true
+  - type: dropdown
+    id: exception_type
+    attributes:
+      label: Exception type
+      options:
+        - Auto-fix protected path override
+        - Merge automation override
+        - CI surgeon opt-out
+        - Threat monitor false positive
+        - Label policy override
+    validations:
+      required: true
+  - type: textarea
+    id: rationale
+    attributes:
+      label: Why is the exception needed?
+      description: Be explicit about the blocker, scope, and risk.
+    validations:
+      required: true
+  - type: textarea
+    id: expiry
+    attributes:
+      label: When should this exception expire?
+      description: Provide a concrete date or condition for removal.
+    validations:
+      required: true
