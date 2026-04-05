@@ -1,0 +1,199 @@
+name: 🩺 Grok CI Surgeon
+
+on:
+  workflow_run:
+    workflows:
+      - CI
+      - E2E
+    types: [completed]
+
+permissions:
+  actions: write
+  contents: write
+  pull-requests: read
+
+jobs:
+  surgeon:
+    if: >-
+      github.event.workflow_run.conclusion == 'failure' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+
+    steps:
+      - name: Resolve pull request from workflow run
+        id: pr
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const prs = context.payload.workflow_run.pull_requests || [];
+            if (!prs.length) {
+              core.setOutput('skip_reason', 'no-pr');
+              return;
+            }
+
+            const pr = prs[0];
+            const details = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pr.number,
+            });
+            const labels = (details.data.labels || []).map((label) => label.name);
+            if (!labels.includes('ai-autopilot')) {
+              core.setOutput('skip_reason', 'missing-ai-autopilot');
+              return;
+            }
+
+            core.setOutput('skip_reason', '');
+            core.setOutput('number', String(pr.number));
+            core.setOutput('title', details.data.title);
+            core.setOutput('head_ref', details.data.head.ref);
+            core.setOutput('base_sha', details.data.base.sha);
+            core.setOutput('run_attempt', String(context.payload.workflow_run.run_attempt || 1));
+
+      - name: Stop when no eligible PR is attached
+        if: steps.pr.outputs.skip_reason != ''
+        run: 'echo "Skipping CI surgeon: ${{ steps.pr.outputs.skip_reason }}"'
+
+      - name: Retry failed jobs once before surgery
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt == '1'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.actions.reRunWorkflowFailedJobs({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: context.payload.workflow_run.id,
+            });
+            core.notice('Requested one retry of failed jobs before CI surgery.');
+
+      - name: Stop after requesting a retry
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt == '1'
+        run: 'echo "Retry requested; waiting for rerun before surgery."'
+
+      - name: Check out PR branch
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
+        uses: actions/checkout@v6
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ref: ${{ steps.pr.outputs.head_ref }}
+          fetch-depth: 0
+
+      - name: Set up Bun
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.3.10
+
+      - name: Install dependencies
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
+        run: bun install --frozen-lockfile
+
+      - name: Prepare diff and failing checks
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          BASE_SHA: ${{ steps.pr.outputs.base_sha }}
+        run: |
+          git diff --no-color --unified=3 "${BASE_SHA}...HEAD" > "$RUNNER_TEMP/pr.diff"
+          git diff --name-only "${BASE_SHA}...HEAD" > "$RUNNER_TEMP/pr.files"
+
+          gh api "repos/${{ github.repository }}/actions/runs/${RUN_ID}/jobs?per_page=100" \
+            --jq '[.jobs[] | select(.conclusion == "failure") | {id, name}]' > "$RUNNER_TEMP/failing-checks.json"
+
+      - name: Download failing logs
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          python - <<'PY'
+          import json, os, subprocess, pathlib
+          checks = json.load(open(os.path.join(os.environ["RUNNER_TEMP"], "failing-checks.json")))
+          output = []
+          for check in checks:
+              job_id = check["id"]
+              name = check["name"]
+              result = subprocess.run(
+                  ["gh", "api", f"/repos/{os.environ['GITHUB_REPOSITORY']}/actions/jobs/{job_id}/logs"],
+                  capture_output=True,
+                  text=True,
+                  check=False,
+              )
+              output.append({"name": name, "log": result.stdout[-12000:]})
+          pathlib.Path(os.path.join(os.environ["RUNNER_TEMP"], "failing-logs.json")).write_text(json.dumps(output, indent=2))
+          pathlib.Path(os.path.join(os.environ["RUNNER_TEMP"], "failing-logs.txt")).write_text("\n\n".join(f"## {item['name']}\n{item['log']}" for item in output))
+          PY
+
+      - name: Run Grok CI surgeon
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          XAI_MODEL: grok-4-1-fast-reasoning
+          PR_TITLE: ${{ steps.pr.outputs.title }}
+          PR_DIFF_PATH: ${{ runner.temp }}/pr.diff
+          PR_FILES_PATH: ${{ runner.temp }}/pr.files
+          FAILED_LOGS_PATH: ${{ runner.temp }}/failing-logs.txt
+          FAILED_CHECKS_PATH: ${{ runner.temp }}/failing-checks.json
+          SURGEON_JSON_PATH: ${{ runner.temp }}/grok-ci-surgeon.json
+          SURGEON_PATCH_PATH: ${{ runner.temp }}/grok-ci-surgeon.patch
+          XAI_COLLECTION_IDS: ${{ secrets.XAI_COLLECTION_IDS }}
+        run: node .github/scripts/grok-ci-surgeon.mjs
+
+      - name: Apply surgeon patch
+        id: apply
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
+        env:
+          PATCH_PATH: ${{ runner.temp }}/grok-ci-surgeon.patch
+        run: |
+          if [ ! -s "$PATCH_PATH" ]; then
+            echo "fix_applied=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          git apply --check "$PATCH_PATH"
+          git apply "$PATCH_PATH"
+          echo "fix_applied=true" >> "$GITHUB_OUTPUT"
+
+      - name: Validate patched branch
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1' && steps.apply.outputs.fix_applied == 'true'
+        run: bun run check:ci
+
+      - name: Commit and push CI surgeon fix
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1' && steps.apply.outputs.fix_applied == 'true'
+        env:
+          SURGEON_JSON_PATH: ${{ runner.temp }}/grok-ci-surgeon.json
+        run: |
+          REASONING=$(node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.env.SURGEON_JSON_PATH,'utf8')); process.stdout.write((data.reasoning || 'High-confidence CI repair from Grok.').replace(/\\s+/g,' ').trim());")
+          FILES=$(node -e "const fs=require('fs'); const data=JSON.parse(fs.readFileSync(process.env.SURGEON_JSON_PATH,'utf8')); process.stdout.write((data.touchedFiles || []).join('\n'));")
+          if [ -z "$FILES" ]; then
+            echo "No touched files recorded for CI surgeon patch."
+            exit 1
+          fi
+          git config --local user.name "Grok CI Surgeon"
+          git config --local user.email "grok-ci@x.ai"
+          while IFS= read -r file; do
+            [ -n "$file" ] && git add -- "$file"
+          done <<< "$FILES"
+          cat > /tmp/grok-ci-surgeon-commit-message.txt <<EOF
+          fix: grok ci surgeon repair
+
+          Reasoning: ${REASONING:-High-confidence CI repair from Grok.}
+
+          Co-authored-by: Grok 4.1 Fast <grok@x.ai>
+          EOF
+          git commit -F /tmp/grok-ci-surgeon-commit-message.txt
+          git push
+
+      - name: Refresh PR manager after CI surgery
+        if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            await github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'pr-manager-grok.yml',
+              ref: '${{ github.event.workflow_run.head_branch }}',
+              inputs: { pr_number: String('${{ steps.pr.outputs.number }}') },
+            });

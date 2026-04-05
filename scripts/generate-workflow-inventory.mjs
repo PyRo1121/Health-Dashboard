@@ -20,10 +20,10 @@ function parseTriggers(content) {
     return onLine[1].trim();
   }
 
-  const blockMatch = content.match(/^on:\s*\n([\s\S]*?)(?:^\S|\Z)/m);
+  const blockMatch = content.match(/^on:\s*\n([\s\S]*?)(?:^\S|$)/m);
   if (!blockMatch) return 'manual/other';
 
-  const triggerLines = [...blockMatch[1].matchAll(/^  ([a-zA-Z_]+):/gm)].map((match) => match[1]);
+  const triggerLines = [...blockMatch[1].matchAll(/^ {2}([a-zA-Z_]+):/gm)].map((match) => match[1]);
 
   if (triggerLines.length === 0) return 'manual/other';
   return [...new Set(triggerLines)].join(', ');

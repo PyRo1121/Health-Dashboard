@@ -49,4 +49,4 @@ jobs:
           labels: |
             documentation
             ci
-            automerge
+            docs-only

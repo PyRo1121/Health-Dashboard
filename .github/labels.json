@@ -1,0 +1,87 @@
+[
+  {
+    "name": "ai-auto-fix",
+    "color": "5319e7",
+    "description": "Managed by the PR manager to attempt a validated auto-fix on trusted PRs."
+  },
+  {
+    "name": "ai-fix-applied",
+    "color": "0e8a16",
+    "description": "Grok auto-fix already pushed a commit to this PR."
+  },
+  {
+    "name": "ai-autopilot",
+    "color": "5319e7",
+    "description": "Managed by the PR manager to allow bounded CI repair on trusted PRs."
+  },
+  {
+    "name": "has-patch",
+    "color": "fbca04",
+    "description": "Grok produced a high-confidence patch candidate for this PR."
+  },
+  {
+    "name": "needs-review",
+    "color": "d93f0b",
+    "description": "Human review is needed because automation found higher-risk issues."
+  },
+  {
+    "name": "security-issue",
+    "color": "b60205",
+    "description": "Security or privacy issue requires immediate attention."
+  },
+  {
+    "name": "dependencies",
+    "color": "0366d6",
+    "description": "Dependency or ecosystem maintenance change."
+  },
+  {
+    "name": "automation",
+    "color": "5319e7",
+    "description": "Workflow, bot, CI/CD, or repository automation change."
+  },
+  {
+    "name": "docs-only",
+    "color": "bfdadc",
+    "description": "Only docs and repo text changed."
+  },
+  {
+    "name": "large-pr",
+    "color": "c2e0c6",
+    "description": "PR changes more than 20 files."
+  },
+  {
+    "name": "blocked-ci",
+    "color": "d93f0b",
+    "description": "PR is waiting on failed or pending CI, status checks, or automation self-tests."
+  },
+  {
+    "name": "blocked-review",
+    "color": "fbca04",
+    "description": "PR is waiting on current human review, approval, or unresolved review threads."
+  },
+  {
+    "name": "blocked-author",
+    "color": "b60205",
+    "description": "PR needs author action before it can reach final review."
+  },
+  {
+    "name": "merge-ready",
+    "color": "0e8a16",
+    "description": "PR is ready for final human review and manual merge."
+  },
+  {
+    "name": "stale-review",
+    "color": "fbca04",
+    "description": "Prior approvals are stale on an older head commit."
+  },
+  {
+    "name": "do-not-merge",
+    "color": "b60205",
+    "description": "Explicitly block PR automation and manual merge."
+  },
+  {
+    "name": "work-in-progress",
+    "color": "fbca04",
+    "description": "PR is not ready for automation handoff or final review."
+  }
+]

@@ -46,4 +46,4 @@ jobs:
           labels: |
             documentation
             changelog
-            automerge
+            docs-only

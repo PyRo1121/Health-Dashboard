@@ -1,0 +1,378 @@
+name: 🧭 Grok PR Manager
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled, ready_for_review]
+  pull_request_review:
+    types: [submitted, dismissed, edited]
+  pull_request_review_comment:
+    types: [created, edited, deleted]
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number to refresh'
+        required: false
+        type: string
+
+concurrency:
+  group: grok-pr-manager-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  manage-pr:
+    if: >-
+      github.event_name == 'pull_request_target' ||
+      (github.event.pull_request && github.event.pull_request.head.repo.full_name == github.repository)
+    name: PR Manager
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out base repository automation config
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.event.pull_request.base.sha || github.sha }}
+          persist-credentials: false
+
+      - name: Sync canonical labels
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node .github/scripts/sync-labels.mjs .github/labels.json
+
+      - name: Collect PR context
+        id: pr_context
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- grok-pr-manager -->';
+            const path = `${process.env.RUNNER_TEMP}/pr-context.json`;
+            const pullNumber =
+              context.payload.pull_request?.number ||
+              context.payload.issue?.number ||
+              Number(context.payload.inputs?.pr_number || 0);
+            const details = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+            });
+            const pr = details.data;
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+              per_page: 100,
+            });
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+              per_page: 100,
+            });
+            const checks = await github.rest.checks.listForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha,
+              per_page: 100,
+            });
+            const statuses = await github.rest.repos.getCombinedStatusForRef({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              ref: pr.head.sha,
+            });
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: pullNumber,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const previousManagerComment =
+              comments.find((comment) => comment.body?.includes(marker))?.body || '';
+            const autoFixComment =
+              comments.find((comment) => comment.body?.includes('<!-- grok-auto-fix -->'))?.body || '';
+            const ciSurgeonComment =
+              comments.find((comment) => comment.body?.includes('<!-- grok-ci-surgeon -->'))?.body || '';
+            const reviewThreadData = await github.graphql(
+              `
+                query($owner: String!, $repo: String!, $number: Int!) {
+                  repository(owner: $owner, name: $repo) {
+                    pullRequest(number: $number) {
+                      commits(last: 1) {
+                        nodes {
+                          commit {
+                            committedDate
+                          }
+                        }
+                      }
+                      reviewThreads(first: 100) {
+                        nodes {
+                          id
+                          isResolved
+                          isOutdated
+                          path
+                          comments(last: 1) {
+                            nodes {
+                              author {
+                                login
+                              }
+                              bodyText
+                              createdAt
+                            }
+                          }
+                        }
+                      }
+                    }
+                  }
+                }
+              `,
+              {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                number: pullNumber,
+              }
+            );
+
+            const payload = {
+              repository: `${context.repo.owner}/${context.repo.repo}`,
+              number: pr.number,
+              title: pr.title,
+              author: pr.user.login,
+              authorAssociation: pr.author_association,
+              headRef: pr.head.ref,
+              headRepositoryFullName: pr.head.repo?.full_name || '',
+              requestedReviewers: (pr.requested_reviewers || []).map((reviewer) => reviewer.login),
+              headCommittedAt:
+                reviewThreadData?.repository?.pullRequest?.commits?.nodes?.[0]?.commit?.committedDate ||
+                pr.updated_at,
+              isDraft: Boolean(pr.draft),
+              mergeStateStatus: pr.mergeable_state || 'unknown',
+              headSha: pr.head.sha,
+              previousManagerComment,
+              autoFixComment,
+              ciSurgeonComment,
+              labels: (pr.labels || []).map((label) => label.name),
+              files: files.map((file) => ({
+                filename: file.filename,
+                status: file.status,
+                additions: file.additions,
+                deletions: file.deletions,
+              })),
+              reviews: reviews
+                .filter(Boolean)
+                .map((review) => ({
+                  user: { login: review?.user?.login || 'unknown' },
+                  state: review?.state,
+                  submitted_at: review?.submitted_at,
+                  commit_id: review?.commit_id,
+                })),
+              checkRuns: (checks.data.check_runs || []).map((run) => ({
+                name: run.name,
+                status: run.status,
+                conclusion: run.conclusion,
+              })),
+              commitStatuses: (statuses.data.statuses || []).map((status) => ({
+                context: status.context,
+                state: status.state,
+                description: status.description,
+                target_url: status.target_url,
+              })),
+              reviewThreads: (
+                reviewThreadData?.repository?.pullRequest?.reviewThreads?.nodes || []
+              ).map((thread) => ({
+                id: thread.id,
+                isResolved: Boolean(thread.isResolved),
+                isOutdated: Boolean(thread.isOutdated),
+                path: thread.path || 'unknown',
+                lastCommentAuthor:
+                  thread.comments?.nodes?.[0]?.author?.login || 'unknown',
+                lastCommentBodyText:
+                  thread.comments?.nodes?.[0]?.bodyText || '',
+                lastCommentCreatedAt:
+                  thread.comments?.nodes?.[0]?.createdAt || null,
+              })),
+              branchManagerSnapshots: await (async () => {
+                const related = await github.paginate(github.rest.pulls.list, {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  state: 'all',
+                  head: `${context.repo.owner}:${pr.head.ref}`,
+                  per_page: 100,
+                });
+                const snapshots = [];
+                for (const relatedPr of related) {
+                  if (relatedPr.number === pr.number) continue;
+                  const { data: relatedComments } = await github.rest.issues.listComments({
+                    owner: context.repo.owner,
+                    repo: context.repo.repo,
+                    issue_number: relatedPr.number,
+                    per_page: 100,
+                  });
+                  const managerComment =
+                    relatedComments.find((comment) => comment.body?.includes(marker))?.body || '';
+                  if (!managerComment) continue;
+                  snapshots.push({
+                    number: relatedPr.number,
+                    state: relatedPr.state,
+                    mergedAt: relatedPr.merged_at || null,
+                    managerComment,
+                  });
+                }
+                return snapshots;
+              })(),
+            };
+
+            fs.writeFileSync(path, JSON.stringify(payload, null, 2));
+            core.setOutput('context_path', path);
+
+      - name: Run PR manager classification
+        env:
+          XAI_API_KEY: ${{ secrets.XAI_API_KEY }}
+          XAI_MODEL: grok-4-1-fast-reasoning
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_CONTEXT_PATH: ${{ steps.pr_context.outputs.context_path }}
+          PR_MANAGER_JSON_PATH: ${{ runner.temp }}/pr-manager.json
+          PR_MANAGER_MARKDOWN_PATH: ${{ runner.temp }}/pr-manager.md
+        run: node .github/scripts/pr-manager.mjs
+
+      - name: Upsert PR manager comment
+        uses: actions/github-script@v8
+        env:
+          PR_MANAGER_MARKDOWN_PATH: ${{ runner.temp }}/pr-manager.md
+        with:
+          script: |
+            const fs = require('fs');
+            const marker = '<!-- grok-pr-manager -->';
+            const body = fs.readFileSync(process.env.PR_MANAGER_MARKDOWN_PATH, 'utf8');
+            const { data: comments } = await github.rest.issues.listComments({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              per_page: 100,
+            });
+            const existing = comments.find((comment) => comment.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: existing.id,
+                body,
+              });
+            } else {
+              await github.rest.issues.createComment({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                body,
+              });
+            }
+
+      - name: Sync manager labels
+        uses: actions/github-script@v8
+        env:
+          PR_MANAGER_JSON_PATH: ${{ runner.temp }}/pr-manager.json
+        with:
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync(process.env.PR_MANAGER_JSON_PATH, 'utf8'));
+            const add = Array.isArray(result.labelsToAdd) ? result.labelsToAdd : [];
+            const remove = Array.isArray(result.labelsToRemove) ? result.labelsToRemove : [];
+
+            if (add.length) {
+              await github.rest.issues.addLabels({
+                issue_number: context.issue.number,
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                labels: add,
+              });
+            }
+
+            for (const name of remove) {
+              try {
+                await github.rest.issues.removeLabel({
+                  issue_number: context.issue.number,
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  name,
+                });
+              } catch {}
+            }
+
+      - name: Resolve eligible automation review threads
+        uses: actions/github-script@v8
+        env:
+          PR_MANAGER_JSON_PATH: ${{ runner.temp }}/pr-manager.json
+        with:
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync(process.env.PR_MANAGER_JSON_PATH, 'utf8'));
+            const resolve = Array.isArray(result.reviewThreadActions?.resolve)
+              ? result.reviewThreadActions.resolve
+              : [];
+
+            if (!resolve.length) {
+              core.info('No automation review threads eligible for resolution.');
+              return;
+            }
+
+            const replyMutation = `
+              mutation($threadId: ID!, $body: String!) {
+                addPullRequestReviewThreadReply(
+                  input: {
+                    pullRequestReviewThreadId: $threadId,
+                    body: $body
+                  }
+                ) {
+                  comment {
+                    id
+                  }
+                }
+              }
+            `;
+            const resolveMutation = `
+              mutation($threadId: ID!) {
+                resolveReviewThread(input: { threadId: $threadId }) {
+                  thread {
+                    id
+                    isResolved
+                  }
+                }
+              }
+            `;
+
+            for (const thread of resolve) {
+              const replyBody = [
+                'PR manager rechecked this automation note after newer changes and green gates.',
+                '',
+                `Reason: ${thread.reason}`,
+                '',
+                'Marking this automation thread resolved for final human review.',
+              ].join('\n');
+
+              try {
+                await github.graphql(replyMutation, {
+                  threadId: thread.id,
+                  body: replyBody,
+                });
+              } catch (error) {
+                core.warning(`Could not reply on thread ${thread.id}: ${error.message}`);
+              }
+
+              try {
+                await github.graphql(resolveMutation, { threadId: thread.id });
+              } catch (error) {
+                core.warning(`Could not resolve thread ${thread.id}: ${error.message}`);
+              }
+            }
+
+      - name: Upload PR manager artifact
+        uses: actions/upload-artifact@v7
+        with:
+          name: pr-manager-artifact
+          path: |
+            ${{ runner.temp }}/pr-manager.json
+            ${{ runner.temp }}/pr-manager.md
