@@ -1,0 +1,23 @@
+.github/workflows/reviewdog.yml
+  6fe857eabf542f70 42,48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "0bf6e69f7dd3614a31e0f56803ab6698961daf65",
+  "prompts": {
+    "6fe857eabf542f70": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-5a1f83fa-9b11-4c6d-bbdc-1f7aee20229b",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 2,
+      "total_deletions": 6,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
