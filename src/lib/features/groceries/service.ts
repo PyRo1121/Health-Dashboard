@@ -314,7 +314,11 @@ export async function deriveWeeklyGroceriesWithWarnings(
     const manual = manualByKey.get(ingredientKey);
     const derivedQuantityText = item.quantityParts.join(' + ') || undefined;
     const groceryItem: DerivedGroceryItem = {
-      ...updateRecordMeta(existing, buildDerivedGroceryItemId(weeklyPlanId, ingredientKey), timestamp),
+      ...updateRecordMeta(
+        existing,
+        buildDerivedGroceryItemId(weeklyPlanId, ingredientKey),
+        timestamp
+      ),
       weeklyPlanId,
       ingredientKey,
       label: item.label,
