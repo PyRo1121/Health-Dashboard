@@ -14,6 +14,7 @@
     createTodayNutritionPulseMetrics,
     createPlannedMealProjectionRows,
     createPlannedMealRows,
+    createRecoveryJournalIntentHref,
     createPlannedWorkoutRows,
     createTodayNutritionRows,
     createTodayEventRows,
@@ -34,6 +35,7 @@
   let todayPlanRows = $derived(createTodayPlanRows(page.snapshot));
   let todayEventRows = $derived(createTodayEventRows(page.snapshot));
   let plannedMealRows = $derived(createPlannedMealRows(page.snapshot?.plannedMeal ?? null));
+  let recoveryJournalHref = $derived(createRecoveryJournalIntentHref(page.snapshot));
   let plannedWorkoutRows = $derived(
     createPlannedWorkoutRows(page.snapshot?.plannedWorkout ?? null)
   );
@@ -132,6 +134,7 @@
       {todayNutritionGuidance}
       {todayNutritionRows}
       {plannedMealProjectionRows}
+      {recoveryJournalHref}
       onRecoveryAction={handleRecoveryAction}
     />
   </div>

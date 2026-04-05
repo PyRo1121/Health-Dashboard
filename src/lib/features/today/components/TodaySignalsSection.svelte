@@ -1,5 +1,7 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import { EmptyState, SectionCard } from '$lib/core/ui/primitives';
+  import type { JournalIntentHref } from '$lib/features/journal/navigation';
   import type { TodayNutritionPulseMetric } from '$lib/features/today/model';
   import type { TodaySnapshot } from '$lib/features/today/service';
 
@@ -9,6 +11,7 @@
     todayNutritionGuidance,
     todayNutritionRows,
     plannedMealProjectionRows,
+    recoveryJournalHref,
     onRecoveryAction,
   }: {
     snapshot: TodaySnapshot | null;
@@ -16,6 +19,7 @@
     todayNutritionGuidance: string[];
     todayNutritionRows: string[];
     plannedMealProjectionRows: string[];
+    recoveryJournalHref: JournalIntentHref | null;
     onRecoveryAction: (
       actionId:
         | 'skip-workout'
@@ -71,6 +75,11 @@
             {action.label}
           </button>
         {/each}
+        {#if recoveryJournalHref}
+          <a class="recovery-action-link" href={resolve(recoveryJournalHref)}
+            >Capture recovery note</a
+          >
+        {/if}
       </div>
     {/if}
   </SectionCard>
@@ -161,6 +170,23 @@
       system-ui,
       sans-serif;
     cursor: pointer;
+  }
+
+  .recovery-action-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.55rem 0.9rem;
+    border-radius: 999px;
+    border: 1px solid rgba(31, 92, 74, 0.14);
+    background: rgba(241, 235, 226, 0.9);
+    color: #1f5c4a;
+    font:
+      700 0.9rem/1 Manrope,
+      system-ui,
+      sans-serif;
+    text-decoration: none;
   }
 
   .nutrition-pulse-grid {

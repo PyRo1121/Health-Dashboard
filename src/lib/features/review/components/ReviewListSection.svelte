@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { resolve } from '$app/paths';
   import { EmptyState, SectionCard } from '$lib/core/ui/primitives';
   import type { ReviewSection } from '$lib/features/review/model';
 
@@ -24,6 +25,11 @@
   {:else}
     <p class="status-copy">{section.emptyMessage}</p>
   {/if}
+  {#if section.actionHref && section.actionLabel}
+    <div class="section-action">
+      <a class="section-link" href={resolve(section.actionHref)}>{section.actionLabel}</a>
+    </div>
+  {/if}
 </SectionCard>
 
 <style>
@@ -40,5 +46,25 @@
     border: 1px solid rgba(31, 92, 74, 0.12);
     border-radius: 1rem;
     background: linear-gradient(180deg, rgba(31, 92, 74, 0.06) 0%, rgba(241, 235, 226, 0.6) 100%);
+  }
+
+  .section-action {
+    margin-top: 0.85rem;
+  }
+
+  .section-link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 44px;
+    padding: 0.75rem 1rem;
+    border-radius: 999px;
+    background: #1f5c4a;
+    color: #fbf8f3;
+    font:
+      600 0.95rem/1 Manrope,
+      system-ui,
+      sans-serif;
+    text-decoration: none;
   }
 </style>

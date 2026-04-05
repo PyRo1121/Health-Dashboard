@@ -4,6 +4,7 @@ import type {
   TodaySnapshot,
 } from '$lib/features/today/service';
 import { buildHealthEventDisplay } from '$lib/core/shared/health-events';
+import { buildJournalIntentHref, type JournalIntentHref } from '$lib/features/journal/navigation';
 import type { PlannedMeal } from '$lib/core/domain/types';
 
 export const DEFAULT_TODAY_FORM = {
@@ -251,6 +252,35 @@ export function createPlannedMealProjectionRows(snapshot: TodaySnapshot | null):
     `Projected carbs: ${snapshot.nutritionSummary.carbs + (snapshot.plannedMeal.carbs ?? 0)}`,
     `Projected fat: ${snapshot.nutritionSummary.fat + (snapshot.plannedMeal.fat ?? 0)}`,
   ];
+}
+
+export function createRecoveryJournalIntentHref(
+  snapshot: TodaySnapshot | null
+): JournalIntentHref | null {
+  if (!snapshot?.recoveryAdaptation) {
+    return null;
+  }
+
+  const linkedEventIds = snapshot.events
+    .filter((event) => event.eventType === 'symptom' || event.eventType === 'anxiety-episode')
+    .map((event) => event.id)
+    .slice(0, 3);
+
+  return buildJournalIntentHref({
+    source: 'today-recovery',
+    localDay: snapshot.date,
+    entryType: 'symptom_note',
+    title: 'Recovery note',
+    body: [
+      `Recovery note for ${snapshot.date}.`,
+      '',
+      'Signals noticed:',
+      ...snapshot.recoveryAdaptation.reasons.map((line) => `- ${line}`),
+      '',
+      'What felt hardest? What would make the rest of the day lighter?',
+    ].join('\n'),
+    linkedEventIds,
+  });
 }
 
 export function createDailyCheckinPayload(date: string, form: TodayFormState): DailyCheckinInput {
