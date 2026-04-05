@@ -1,0 +1,22 @@
+# CODEOWNERS - Enterprise Access Control
+
+# Default owner for everything
+* @pyro1121
+
+# Security and CI/CD
+.github/ @pyro1121
+
+# Core infrastructure
+/src/lib/core/ @pyro1121
+
+# Feature ownership
+/src/lib/features/**/client.ts @pyro1121
+/src/lib/features/**/service.ts @pyro1121
+
+# Routes and API
+/src/routes/api/ @pyro1121
+/src/routes/**/+page.svelte @pyro1121
+
+# Security-sensitive files
+**/SECURITY.md @pyro1121
+**/CODEOWNERS @pyro1121
