@@ -1,0 +1,36 @@
+.github/workflows/ai-review-grok-super.yml
+  0365f3a97d7b4dd1 101-102,107
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "632f00120b43f73b86aefe838107f5ed89c03404",
+  "prompts": {
+    "0365f3a97d7b4dd1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-4d33f7d1-8be5-431d-9864-630176ff63e2",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 9,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    },
+    "0a341950d14a5646": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-5acb754a-9d9b-4fc2-a0fe-c94497a84d60",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 9,
+      "total_deletions": 4,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
