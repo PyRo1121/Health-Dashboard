@@ -1,0 +1,76 @@
+.github/workflows/ai-review-grok-super.yml
+  06e1166592fa2475 103-104,106
+  f6d3c32ff5a77854 99-102,105
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "d1e3c95945b58a5c6d829bf522bd8918263eb6ea",
+  "prompts": {
+    "06e1166592fa2475": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-2ab8eacc-d748-4cc6-9f0e-c55618d86d64",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 32,
+      "total_deletions": 30,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "7af4190f502e9746": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-eb50fd85-275c-48bb-98b0-910648137fc6",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 26,
+      "total_deletions": 20,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "c1da9de53ed99fe6": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-d6983a1b-8759-4aae-a4de-be8c25fc8a19",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 5,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "f18d4bc44ade8868": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-e1b76be6-1b5c-4fca-b2e3-940224add874",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 22,
+      "total_deletions": 21,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "f6d3c32ff5a77854": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-50d7c5ac-df67-49f6-8f44-a2bcd726527b",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 38,
+      "accepted_lines": 5,
+      "overriden_lines": 0
+    }
+  }
+}
