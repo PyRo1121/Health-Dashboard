@@ -34,6 +34,7 @@ jobs:
       - name: Prepare PR context
         id: diff
         env:
+          GH_TOKEN: ${{ github.token }}
           PR_NUMBER: ${{ github.event.pull_request.number || github.event.inputs.pr_number }}
         run: |
           if [ -n "$PR_NUMBER" ]; then
