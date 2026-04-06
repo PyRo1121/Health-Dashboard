@@ -137,38 +137,48 @@ jobs:
               }
             );
 
-            // Get branch protection rules for the base branch
-            const branchProtection = await github.graphql(
-              `
-                query($owner: String!, $repo: String!, $branch: String!) {
-                  repository(owner: $owner, name: $repo) {
-                    branch(name: $branch) {
-                      protection {
-                        requiredStatusCheck: requiredStatusChecks {
-                          strict
-                          checks {
-                            context
+            // Get branch protection rules for the base branch (GraphQL API changed - wrap in try-catch)
+            let branchProtection = null;
+            try {
+              const bpResult = await github.graphql(
+                `
+                  query($owner: String!, $repo: String!, $branch: String!) {
+                    repository(owner: $owner, name: $repo) {
+                      branchProtectionRules(first: 1) {
+                        nodes {
+                          pattern
+                          requiredStatusCheck: requiredStatusChecks {
+                            strict
+                            checks {
+                              context
+                            }
                           }
+                          requiredReviews: requiredApprovingReviewsCount
+                          isAdminEnforced
+                          allowsDeletions
+                          allowsForcePushes
+                          requiresCodeOwnerReviews
+                          requiresCommitSignatures
+                          requiresLinearHistory
+                          dismissesStaleReviews
                         }
-                        requiredReviews: requiredApprovingReviewsCount
-                        isAdminEnforced
-                        allowsDeletions
-                        allowsForcePushes
-                        requiresCodeOwnerReviews
-                        requiresCommitSignatures
-                        requiresLinearHistory
-                        dismissesStaleReviews
                       }
                     }
                   }
+                `,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  branch: pr.base.ref,
                 }
-              `,
-              {
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                branch: pr.base.ref,
-              }
-            );
+              );
+              // Get the rule matching our branch
+              const rules = bpResult?.repository?.branchProtectionRules?.nodes || [];
+              branchProtection = rules.find(r => r.pattern === pr.base.ref) || rules[0] || null;
+            } catch (e) {
+              // Branch protection lookup failed, continue without it
+              console.warn('Branch protection lookup failed:', e.message);
+            }
 
             const payload = {
               repository: `${context.repo.owner}/${context.repo.repo}`,
@@ -214,7 +224,7 @@ jobs:
                 description: status.description,
                 target_url: status.target_url,
               })),
-              branchProtection: branchProtection?.repository?.branch?.protection || null,
+              branchProtection: branchProtection,
               reviewThreads: (
                 reviewThreadData?.repository?.pullRequest?.reviewThreads?.nodes || []
               ).map((thread) => ({
