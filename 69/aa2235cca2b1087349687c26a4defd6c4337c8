@@ -1,0 +1,51 @@
+.github/workflows/pr-manager-grok.yml
+  51d880eb5954e1cc 227
+  dbf5befebcbd87be 140-149,168-172,174-181
+  e0c8a93bd427717c 150-154,156-163
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "69aa2235cca2b1087349687c26a4defd6c4337c8",
+  "prompts": {
+    "51d880eb5954e1cc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-6ddbd92d-b97b-44e0-8779-e41674043859",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "dbf5befebcbd87be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-5508a8aa-f4e7-4c70-806f-c53a8ca88c9c",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 23,
+      "total_deletions": 15,
+      "accepted_lines": 23,
+      "overriden_lines": 0
+    },
+    "e0c8a93bd427717c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-120fda88-2a93-41b3-a752-a44e512be02f",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 15,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}
