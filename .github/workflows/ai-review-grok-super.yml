@@ -98,12 +98,13 @@ jobs:
             } else {
               // Create new review with inline comments
               try {
-                await github.rest.pulls.createReview({
+                // Use github.request for more control over the REST API call
+                const reviewResponse = await github.request('POST /repos/{owner}/{repo}/pulls/{pull_number}/reviews', {
                   owner: context.repo.owner,
                   repo: context.repo.repo,
                   pull_number: context.issue.number,
                   body,
-                  event,
+                  event: event,
                   comments: inlineComments.length > 0 ? inlineComments : undefined,
                 });
               } catch (error) {
