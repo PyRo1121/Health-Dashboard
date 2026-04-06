@@ -1,0 +1,23 @@
+.github/workflows/grok-describe.yml
+  32bfe43a42741206 37
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "b499a4d6fa175a740b3b8a3ec8ff313cf6e355b1",
+  "prompts": {
+    "32bfe43a42741206": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-9990ae70-9ae1-4663-8413-a1b1cfb420a8",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
