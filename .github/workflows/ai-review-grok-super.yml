@@ -86,14 +86,13 @@ jobs:
             const existingReview = reviews.find(r => r.user.login === 'github-actions[bot]');
             
             if (existingReview) {
-              // Update existing review
+              // Update existing review (only body is valid, not event)
               await github.rest.pulls.updateReview({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 pull_number: context.issue.number,
                 review_id: existingReview.id,
                 body,
-                event,
               });
             } else {
               // Create a comment as the review (fallback approach)
