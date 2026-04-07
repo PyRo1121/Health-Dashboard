@@ -286,6 +286,8 @@ ${issue.suggestion}
 
 **Summary:** ${result.summary || 'No summary returned.'}
 
+${ciSection}
+
 ### Issues${issuesByFile.size > 0 ? fileCommentsSection : '\n- ✅ No actionable issues found.'}
 
 ${
