@@ -148,6 +148,7 @@ function reviewerHistorySummary(context) {
   const approved = new Set();
   const commented = new Set();
   const changesRequested = new Set();
+  const reviewTimestamps = new Map();
 
   for (const review of Array.isArray(context.reviews) ? context.reviews : []) {
     const login = review?.user?.login;
@@ -155,6 +156,11 @@ function reviewerHistorySummary(context) {
     if (review.state === 'APPROVED') approved.add(login);
     if (review.state === 'COMMENTED') commented.add(login);
     if (review.state === 'CHANGES_REQUESTED') changesRequested.add(login);
+    const ts = new Date(review?.submitted_at || 0).getTime();
+    if (ts > 0) {
+      const existing = reviewTimestamps.get(login) || 0;
+      if (ts > existing) reviewTimestamps.set(login, ts);
+    }
   }
 
   return {
@@ -162,13 +168,24 @@ function reviewerHistorySummary(context) {
     approved: [...approved].sort(),
     commented: [...commented].sort(),
     changesRequested: [...changesRequested].sort(),
+    reviewTimestamps: Object.fromEntries(reviewTimestamps),
   };
+}
+
+// Calculate recency multiplier: recent reviews get higher weight
+function getRecencyMultiplier(lastReviewTs, now = Date.now()) {
+  const daysSince = (now - lastReviewTs) / (1000 * 60 * 60 * 24);
+  if (daysSince <= 7) return 2.0;
+  if (daysSince <= 30) return 1.5;
+  if (daysSince <= 90) return 1.0;
+  return 0.5;
 }
 
 function rankSuggestedReviewers(suggestedReviewers, context) {
   const history = reviewerHistorySummary(context);
   const authorHandle = `@${context.author}`;
   const scores = new Map();
+  const now = Date.now();
 
   const filtered = suggestedReviewers.filter((reviewer) => reviewer !== authorHandle);
 
@@ -179,6 +196,11 @@ function rankSuggestedReviewers(suggestedReviewers, context) {
     if (history.commented.includes(login)) score += 2;
     if (history.requested.includes(login)) score += 1;
     if (history.changesRequested.includes(login)) score += 1;
+    // Apply recency weighting
+    const lastReviewTs = history.reviewTimestamps?.[login] || 0;
+    if (lastReviewTs > 0) {
+      score = Math.round(score * getRecencyMultiplier(lastReviewTs, now) * 10) / 10;
+    }
     scores.set(reviewer, score);
   }
 
@@ -1235,6 +1257,13 @@ ${plan.blockers.length ? plan.blockers.map((line) => `- ${line}`).join('\n') : '
 
 ### Next steps
 ${plan.nextSteps.length ? plan.nextSteps.map((line) => `- ${line}`).join('\n') : '- None'}
+
+### Grok Review
+<details>
+<summary>🤖 View latest Grok AI code review</summary>
+
+<!-- Review injected by workflow if available -->${context.grokReviewSummary || '*No Grok review available yet. The review runs automatically on PR open.*'}
+</details>
 
 ### Automation dispatch
 - CI autopilot: ${labels.dispatch.shouldEnableAutopilot ? 'managed automatically on this PR' : 'disabled for this PR'}
