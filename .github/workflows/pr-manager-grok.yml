@@ -501,19 +501,22 @@ jobs:
             }
             
             function codeownersMatches(pattern, file) {
-              if (pattern === '*') return true;
-              if (pattern.endsWith('/')) return file.startsWith(pattern);
-              if (pattern.endsWith('/**')) return file.startsWith(pattern.slice(0, -2));
-              if (pattern.includes('/**/')) {
-                const [prefix, suffix] = pattern.split('/**/');
-                return file.startsWith(prefix) && file.endsWith(suffix);
+              const normalizedPattern = pattern.replace(/^\//, '');
+              const normalizedFile = file.replace(/^\//, '');
+
+              if (normalizedPattern === '*') return true;
+              if (normalizedPattern.endsWith('/')) return normalizedFile.startsWith(normalizedPattern);
+              if (normalizedPattern.endsWith('/**')) return normalizedFile.startsWith(normalizedPattern.slice(0, -2));
+              if (normalizedPattern.includes('/**/')) {
+                const [prefix, suffix] = normalizedPattern.split('/**/');
+                return normalizedFile.startsWith(prefix) && normalizedFile.endsWith(suffix);
               }
-              if (pattern.startsWith('**/')) return file.endsWith(pattern.slice(3));
-              if (pattern.includes('*')) {
-                const escaped = pattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
-                return new RegExp(`^${escaped}$`).test(file);
+              if (normalizedPattern.startsWith('**/')) return normalizedFile.endsWith(normalizedPattern.slice(3));
+              if (normalizedPattern.includes('*')) {
+                const escaped = normalizedPattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+                return new RegExp(`^${escaped}$`).test(normalizedFile);
               }
-              return file === pattern || file.startsWith(`${pattern}/`);
+              return normalizedFile === normalizedPattern || normalizedFile.startsWith(`${normalizedPattern}/`);
             }
             
             const entries = parseCodeowners(codeowners);
