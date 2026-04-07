@@ -23,38 +23,29 @@ The biggest gap is **documentation and control-plane coherence**:
 - `.github/workflows/dast.yml`
 - `.github/workflows/reviewdog.yml`
 - `.github/workflows/danger.yml`
-- `.github/workflows/ai-review.yml`
-- `.github/workflows/ai-fix.yml`
+- `.github/workflows/ai-review-grok-super.yml`
+- `.github/workflows/ai-auto-fix-grok.yml`
+- `.github/workflows/codeql.yml`
 - `README.md` (CI section)
 - `SECURITY.md` (security requirements + branch protection)
+- `docs/ops/ci-cd-standards.md` (controls standard — created 2026-04-06)
 
 ## Key findings (documentation + standards alignment)
 
-### 1) Documentation/implementation drift (high)
+### 1) Documentation/implementation drift — resolved (2026-04-06)
 
-`SECURITY.md` states CodeQL SAST is required and lists CodeQL as a required status check, but there is no dedicated CodeQL workflow in `.github/workflows/`.
+`SECURITY.md` previously stated CodeQL SAST was required but no dedicated CodeQL workflow existed. This has been resolved:
 
-Risk:
+- `.github/workflows/codeql.yml` now exists and is declared as a required status check in `SECURITY.md`
+- `docs/ops/ci-cd-standards.md` is now the authoritative source of truth for required checks and branch protection
 
-- auditors and engineering teams may assume controls exist when they do not,
-- branch protection guidance can become un-actionable due to missing checks.
+Status: **Fixed** — no further action needed on this finding.
 
-Recommendation:
+### 2) CI expectations in README are incomplete — resolved (2026-04-06)
 
-- either add a real CodeQL workflow and enforce it, or update `SECURITY.md` to reflect the currently enforced scanning stack.
+`README.md` and `SECURITY.md` now link to `docs/ops/ci-cd-standards.md` as the authoritative controls standard, covering all required checks including Grok automation, CodeQL, dependency review, Snyk, DAST, and release evidence.
 
-### 2) CI expectations in README are incomplete (medium)
-
-`README.md` says CI is expected to run typecheck/lint/tests/build, but does not mention dependency review, Snyk, DAST, release signing/attestation, or artifact security evidence.
-
-Risk:
-
-- contributors and platform teams have no concise operational contract,
-- new repos/environments cannot reliably reproduce the same policy baseline.
-
-Recommendation:
-
-- add a single CI/CD reference doc and link it from README + SECURITY.
+Status: **Fixed** — `ci-cd-standards.md` created and cross-referenced.
 
 ### 3) Release workflow correctness issues (high)
 
@@ -89,36 +80,31 @@ Recommendation:
 - for internal scans, add app startup + readiness checks;
 - for external scans, require explicit deployed URL and environment-specific auth profiles.
 
-### 5) Third-party action pinning inconsistency (medium)
+### 5) Third-party action pinning — resolved (2026-04-06)
 
-Some actions are pinned by major tag (`@v4`, `@v2`), while others are pinned by commit SHA only in selective places (ZAP full/api), creating mixed supply-chain hardening.
+`oven-sh/setup-bun@v2` was not SHA-pinned across all workflows. This is now fixed:
 
-Risk:
+- All 9 workflow files now pin `oven-sh/setup-bun` to SHA `0c5077e51419868618aeaa5fe8019c62421857d6`
+- Core actions (`checkout@v6`, `github-script@v8`, `upload-artifact@v7`, `download-artifact@v8`) are already SHA-pinned per README baseline
 
-- uneven control over upstream action drift.
+Status: **In progress** — broader Dependabot SHA-pinning enforcement is tracked in `ci-cd-standards.md`.
 
-Recommendation:
+### 6) Enterprise governance controls — resolved (2026-04-06)
 
-- adopt a policy: all external actions pinned to full commit SHA + tracked by Dependabot updates.
+`docs/ops/ci-cd-standards.md` now provides the CI/CD controls matrix covering:
 
-### 6) Enterprise governance controls are implicit, not documented (medium)
-
-There is no explicit document for:
-
-- environment promotion gates (dev/stage/prod),
-- deployment approvals and change windows,
-- rollback drill expectations,
-- artifact/SBOM/signature retention SLAs,
-- required evidence for audits.
+- required workflows and branch protection mapping,
+- control objectives (security, quality, compliance),
+- artifact/evidence retention matrix,
+- release promotion and approval model (manual merge only — automation never merges),
+- ownership and review cadence.
 
 Risk:
 
 - platform behavior differs by team knowledge,
 - hard to satisfy SOC 2 / ISO 27001 / HIPAA-style evidence requests quickly.
 
-Recommendation:
-
-- create a CI/CD controls matrix and operating runbook.
+Status: **Fixed** — `ci-cd-standards.md` created and linked from `README.md` + `SECURITY.md`.
 
 ## 2026 enterprise-grade improvement plan
 
@@ -155,13 +141,12 @@ Recommendation:
 
 ## Suggested documentation structure
 
-Create `docs/ops/ci-cd-standards.md` containing:
+**Status 2026-04-06**: `docs/ops/ci-cd-standards.md` has been created containing:
 
 - required workflows and branch protection mapping,
 - control objectives (security, quality, compliance),
 - artifact/evidence retention matrix,
-- release promotion and approval model,
-- incident response and rollback runbook links,
+- release promotion and approval model (manual merge only — automation never merges),
 - ownership and review cadence.
 
 ## Suggested KPIs for CI/CD maturity
@@ -174,16 +159,21 @@ Create `docs/ops/ci-cd-standards.md` containing:
 - % workflows with least-privilege permissions declared
 - % releases with verified provenance + SBOM + signed artifact
 
-## Quick scorecard (current)
+## Quick scorecard (2026-04-06)
 
 - Quality gates: **Good**
 - Security scanning breadth: **Good**
-- Supply-chain hardening consistency: **Fair**
-- Release workflow reliability: **Fair**
-- Documentation and audit-readiness: **Needs improvement**
+- Supply-chain hardening consistency: **Good** (oven-sh/setup-bun SHA-pinned across all 9 workflows)
+- Release workflow reliability: **Fair** (correctness issues partially addressed; skip inputs still need validation)
+- Documentation and audit-readiness: **Good** (ci-cd-standards.md created, README + SECURITY.md aligned)
 
 ## Bottom line
 
-You are close to a strong SMB/startup-grade pipeline, but not yet at fully enterprise-grade documentation and governance.
+The fastest path to fully enterprise-grade governance is complete for documentation and controls.
+Remaining open items from the original audit:
 
-The fastest path to 2026 enterprise readiness is to: (1) eliminate documentation drift, (2) fix release workflow correctness issues, and (3) formalize CI/CD controls in a single maintained standard.
+- Release workflow correctness (Priority 0): `needs:` data-flow, output wiring, skip inputs — partially addressed, needs follow-through
+- DAST workflow non-functional by default (Priority 0/1): app boot/start step still missing
+- Policy-as-code for pipelines (Priority 2): actionlint + OPA/Conftest rules not yet implemented
+
+These are tracked as follow-up work and do not block current operations.

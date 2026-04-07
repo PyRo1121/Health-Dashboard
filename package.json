@@ -17,6 +17,7 @@
     "check:ci": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --fail-on-warnings",
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "test:unit": "node ./scripts/run-vitest.mjs --config vitest.unit.config.ts",
+    "test:ci-config": "node ./scripts/run-vitest.mjs --config vitest.ci.config.ts",
     "test:component": "node ./scripts/run-vitest.mjs --config vitest.component.config.ts",
     "test:watch": "node ./scripts/run-vitest.mjs --config vitest.component.config.ts --watch",
     "test": "node ./scripts/test-all.mjs",

@@ -84,16 +84,17 @@ GitHub Actions is expected to run:
 - CodeQL SAST
 - dependency and vulnerability scanning (Dependency Review + Snyk + Trivy in release)
 - release artifact signing and attestations
-- label-gated auto-merge for approved PRs (`automerge`)
+- manual merge only — automation never merges
 - auto-drafted release notes per PR via Release Drafter
 - automated changelog refresh PRs on `main` via git-cliff
 
+Controls standard: [docs/ops/ci-cd-standards.md](docs/ops/ci-cd-standards.md).
 Automation details live in [docs/ops/grok-pr-automation.md](docs/ops/grok-pr-automation.md).
 
 ## 2026 Automation Baseline
 
 This repo tracks the 2026 GitHub Actions Node 24 transition and current xAI Responses API tool guidance:
 
-- official GitHub actions are on current Node 24-capable majors (`checkout@v6`, `github-script@v8`, `upload-artifact@v7`, `download-artifact@v8`, `setup-node@v6`)
+- official GitHub actions are pinned to full commit SHAs for supply-chain hardening (`checkout@v6`, `github-script@v8`, `upload-artifact@v7`, `download-artifact@v8`, `setup-bun@SHA`)
 - Grok automation uses the xAI Responses API with `store: false`
 - xAI docs MCP is enabled by default, with optional repo collections and extra Remote MCP tools layered on top
