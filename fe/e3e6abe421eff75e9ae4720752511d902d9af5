@@ -1,0 +1,37 @@
+tests/features/component/journal/JournalPage.spec.ts
+  0f78ee8d15cf038a 4
+  59e52fa5d340a6dd 62-63,66-67,71-72
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "fee3e6abe421eff75e9ae4720752511d902d9af5",
+  "prompts": {
+    "0f78ee8d15cf038a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-095fa2fc-01e4-47ff-8e29-f631ed1626f6",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "59e52fa5d340a6dd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-fb4c5753-3ff2-4acd-a3b8-a3c9ed328a18",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 4,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    }
+  }
+}
