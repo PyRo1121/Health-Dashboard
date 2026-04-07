@@ -1,6 +1,7 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getHealthDb } from '$lib/core/db/client';
+import { currentLocalDay } from '$lib/core/domain/time';
 import JournalPage from '../../../../src/routes/journal/+page.svelte';
 import { expectHeading, resetRouteDb, waitForText } from '../../../support/component/routeHarness';
 
@@ -58,15 +59,17 @@ describe('Journal route', () => {
 
   it('lets the user link a same-day signal before saving the entry', async () => {
     const db = getHealthDb();
+    const today = currentLocalDay();
+    const todayISO = `${today}T09:00:00.000Z`;
     await db.healthEvents.put({
       id: 'symptom-1',
-      createdAt: '2026-04-05T09:00:00.000Z',
-      updatedAt: '2026-04-05T09:00:00.000Z',
+      createdAt: todayISO,
+      updatedAt: todayISO,
       sourceType: 'manual',
       sourceApp: 'personal-health-cockpit',
       sourceRecordId: 'symptom:1',
-      sourceTimestamp: '2026-04-05T09:00:00.000Z',
-      localDay: '2026-04-05',
+      sourceTimestamp: todayISO,
+      localDay: today,
       timezone: 'UTC',
       confidence: 1,
       eventType: 'symptom',
