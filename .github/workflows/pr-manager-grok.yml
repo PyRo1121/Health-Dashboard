@@ -144,7 +144,7 @@ jobs:
                 `
                   query($owner: String!, $repo: String!, $branch: String!) {
                     repository(owner: $owner, name: $repo) {
-                      branchProtectionRules(first: 1) {
+                      branchProtectionRules(first: 100) {
                         nodes {
                           pattern
                           requiredStatusCheck: requiredStatusChecks {
