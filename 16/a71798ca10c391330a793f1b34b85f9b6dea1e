@@ -1,0 +1,50 @@
+tests/core/unit/github/pr-workflow-surfaces.test.ts
+  e6b546235c437574 23-24
+  98cae2082cd70eb1 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "16a71798ca10c391330a793f1b34b85f9b6dea1e",
+  "prompts": {
+    "8d08723b67a804e3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-883796e3-d2f4-4a71-9598-b3898b467102",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "98cae2082cd70eb1": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-88ab5345-eeeb-446a-82f1-c4e9e80d1ef4",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "e6b546235c437574": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-86bf4662-0cb8-4797-b915-3cc456a13ecb",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}
