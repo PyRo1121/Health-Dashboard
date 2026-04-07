@@ -1290,6 +1290,7 @@ async function main() {
   const labels = buildManagedLabels(context, plan);
   const reviewThreadActions = buildReviewThreadActions(context, plan);
   const healthScore = calculateHealthScore(context, plan);
+  plan.healthScore = healthScore;
 
   const result = {
     status: plan.status,
