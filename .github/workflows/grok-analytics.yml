@@ -1,0 +1,102 @@
+name: 📊 Grok Analytics Dashboard
+
+on:
+  schedule:
+    # Run every Monday at 9am UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:
+    inputs:
+      period:
+        description: 'Time period (weekly, monthly, quarterly)'
+        required: false
+        type: string
+        default: 'weekly'
+      days_back:
+        description: 'Number of days to look back'
+        required: false
+        type: number
+        default: '7'
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  analytics:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - name: Collect PR analytics
+        id: analytics
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PERIOD: ${{ github.event.inputs.period || 'weekly' }}
+          DAYS_BACK: ${{ github.event.inputs.days_back || '7' }}
+        run: |
+          node .github/scripts/grok-analytics.mjs
+
+      - name: Post analytics report
+        if: success()
+        uses: actions/github-script@v8
+        env:
+          ANALYTICS_JSON_PATH: ${{ runner.temp }}/grok-analytics.json
+          ANALYTICS_MARKDOWN_PATH: ${{ runner.temp }}/grok-analytics.md
+        with:
+          script: |
+            const fs = require('fs');
+            const result = JSON.parse(fs.readFileSync(process.env.ANALYTICS_JSON_PATH, 'utf8'));
+            const markdown = fs.readFileSync(process.env.ANALYTICS_MARKDOWN_PATH, 'utf8');
+            
+            // Find or create the analytics issue
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            
+            // Search for existing analytics issue
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner,
+              repo,
+              state: 'open',
+              labels: ['grok-analytics'],
+              per_page: 100,
+            });
+            
+            const analyticsIssue = issues.find(issue => 
+              issue.title.includes('Grok Analytics') && 
+              issue.title.includes(result.period)
+            );
+            
+            if (analyticsIssue) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner,
+                repo,
+                issue_number: analyticsIssue.number,
+                body: markdown,
+              });
+              console.log(`Updated analytics issue #${analyticsIssue.number}`);
+            } else {
+              // Create new issue
+              const { data: newIssue } = await github.rest.issues.create({
+                owner,
+                repo,
+                title: `📊 Grok Analytics - ${result.period} ${result.dateRange.start} to ${result.dateRange.end}`,
+                body: markdown,
+                labels: ['grok-analytics'],
+              });
+              console.log(`Created analytics issue #${newIssue.number}`);
+            }
+
+      - name: Upload analytics artifact
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: grok-analytics-artifact
+          path: |
+            ${{ runner.temp }}/grok-analytics.json
+            ${{ runner.temp }}/grok-analytics.md

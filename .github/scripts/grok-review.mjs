@@ -62,6 +62,39 @@ function extractMessageText(payload) {
   throw new Error('xAI chat completion did not return message content.');
 }
 
+/**
+ * Detect CI/CD pipeline systems from changed files
+ */
+function detectCIPipelines(changedFiles) {
+  const ciSystems = [];
+  const ciFiles = [];
+  
+  const ciPatterns = [
+    { pattern: /\.circleci\/config\.yml$/, name: 'CircleCI', icon: '⚙️' },
+    { pattern: /\.gitlab-ci\.ya?ml$/, name: 'GitLab CI', icon: '🔶' },
+    { pattern: /Jenkinsfile(?:\.pipeline)?$/, name: 'Jenkins', icon: '💧' },
+    { pattern: /\.github\/workflows\/.+\.ya?ml$/, name: 'GitHub Actions', icon: '🐙' },
+    { pattern: /azure-pipelines\.ya?ml$/, name: 'Azure Pipelines', icon: '🔷' },
+    { pattern: /bitbucket-pipelines\.ya?ml$/, name: 'Bitbucket Pipelines', icon: '📦' },
+    { pattern: /\.travis\.ya?ml$/, name: 'Travis CI', icon: '✅' },
+    { pattern: /\.drone\.ya?ml$/, name: 'Drone CI', icon: '🚀' },
+    { pattern: /buildkite\/.+\.ya?ml$/, name: 'Buildkite', icon: '🏗️' },
+  ];
+  
+  for (const file of changedFiles) {
+    for (const { pattern, name, icon } of ciPatterns) {
+      if (pattern.test(file)) {
+        if (!ciSystems.includes(name)) {
+          ciSystems.push(name);
+        }
+        ciFiles.push({ file, system: name });
+      }
+    }
+  }
+  
+  return { ciSystems, ciFiles };
+}
+
 function normalizeIssues(issues) {
   if (!Array.isArray(issues)) return [];
   return issues
@@ -72,14 +105,25 @@ function normalizeIssues(issues) {
         : 'low',
       file: typeof issue.file === 'string' ? issue.file : 'unknown',
       line: Number.isFinite(issue.line) ? issue.line : 1,
+      endLine: Number.isFinite(issue.endLine) ? issue.endLine : issue.line,
+      path: typeof issue.path === 'string' ? issue.path : issue.file,
       description: typeof issue.description === 'string' ? issue.description : 'No description.',
       suggestion: typeof issue.suggestion === 'string' ? issue.suggestion : 'No suggestion.',
+      body: typeof issue.body === 'string' ? issue.body : `${issue.description}\n\n**Suggestion:** ${issue.suggestion}`,
     }));
 }
 
 async function callXaiReview({ title, changedFiles, diff }) {
   const apiKey = requiredEnv('XAI_API_KEY');
   const model = optionalEnv('XAI_MODEL', DEFAULT_MODEL);
+  
+  // Detect CI pipelines
+  const { ciSystems, ciFiles } = detectCIPipelines(changedFiles);
+  const ciContext = ciSystems.length > 0
+    ? `\n\n## CI/CD Pipeline Context\nThis PR modifies CI configuration for: ${ciSystems.join(', ')}\n` +
+      `Changed CI files:\n${ciFiles.map(f => `- ${f.file}`).join('\n')}\n` +
+      'Pay special attention to CI security (secret exposure, insecure credentials, dangerous commands) and configuration correctness.'
+    : '';
 
   const payload = {
     model,
@@ -133,7 +177,8 @@ async function callXaiReview({ title, changedFiles, diff }) {
           'and prefer official docs over social chatter. Output strict JSON matching the provided schema. ' +
           'Prioritize correctness, privacy for health data, GitHub Actions security, maintainability, performance, and accessibility. ' +
           'Do not spend issues on pure lint, formatting, or mechanical style noise already enforced by ESLint, Prettier, or existing CI unless it directly causes a correctness, security, or accessibility defect. ' +
-          'Only include a patch when the fix is minimal and high-confidence.',
+          'Only include a patch when the fix is minimal and high-confidence.' +
+          ciContext,
       },
       {
         role: 'user',
@@ -167,7 +212,7 @@ async function callXaiReview({ title, changedFiles, diff }) {
   return parseJsonResponse(extractMessageText(data));
 }
 
-function renderMarkdown(result) {
+function renderMarkdown(result, ciSystems = []) {
   const issues = normalizeIssues(result.issues);
   const severityEmoji = {
     critical: '🔴',
@@ -175,6 +220,64 @@ function renderMarkdown(result) {
     medium: '🟡',
     low: '🔵',
   };
+  
+  const ciSection = ciSystems.length > 0
+    ? `\n### CI/CD Pipelines\nThis PR modifies: ${ciSystems.join(', ')}`
+    : '';
+
+  // Group issues by file for inline display
+  const issuesByFile = new Map();
+  for (const issue of issues) {
+    const key = issue.path || issue.file;
+    if (!issuesByFile.has(key)) {
+      issuesByFile.set(key, []);
+    }
+    issuesByFile.get(key).push(issue);
+  }
+
+  // Generate inline comments with suggestions for GitHub review
+  const inlineComments = [];
+  const suggestions = [];
+  for (const issue of issues) {
+    if (issue.path && issue.line) {
+      const comment = {
+        path: issue.path,
+        line: issue.line,
+        side: issue.side || 'RIGHT',
+        body: `${severityEmoji[issue.severity]} **${issue.severity.toUpperCase()}:** ${issue.body}`,
+      };
+      
+      // If there's a suggestion patch, format it as a GitHub suggestion
+      if (issue.suggestion && issue.suggestion !== 'No suggestion.') {
+        comment.body += `\n\n\`\`\`suggestion:${issue.line}
+${issue.suggestion}
+\`\`\``;
+        suggestions.push(comment);
+      } else {
+        inlineComments.push(comment);
+      }
+    }
+  }
+
+  // Write inline comments and suggestions to file for workflow
+  const allInlineComments = [...inlineComments, ...suggestions];
+  if (allInlineComments.length) {
+    writeFileSync('/tmp/inline-comments.json', JSON.stringify(allInlineComments, null, 2));
+  }
+  
+  // Write suggestions separately for GitHub suggestions feature
+  if (suggestions.length) {
+    writeFileSync('/tmp/code-suggestions.json', JSON.stringify(suggestions, null, 2));
+  }
+
+  let fileCommentsSection = '';
+  for (const [file, fileIssues] of issuesByFile) {
+    fileCommentsSection += `\n#### \`${file}\`\n`;
+    for (const issue of fileIssues) {
+      fileCommentsSection += `- **${severityEmoji[issue.severity]} ${issue.severity.toUpperCase()}** line ${issue.line}: ${issue.description}\n`;
+      fileCommentsSection += `  - **Suggestion:** ${issue.suggestion}\n`;
+    }
+  }
 
   return `${REVIEW_MARKER}
 ## Grok 4.1 Fast Super Review
@@ -183,17 +286,9 @@ function renderMarkdown(result) {
 
 **Summary:** ${result.summary || 'No summary returned.'}
 
-### Issues
-${
-  issues.length
-    ? issues
-        .map(
-          (issue) =>
-            `- **${severityEmoji[issue.severity]} ${issue.severity.toUpperCase()}** \`${issue.file}:${issue.line}\` — ${issue.description}\n  **Suggestion:** ${issue.suggestion}`
-        )
-        .join('\n')
-    : '✅ No actionable issues found.'
-}
+${ciSection}
+
+### Issues${issuesByFile.size > 0 ? fileCommentsSection : '\n- ✅ No actionable issues found.'}
 
 ${
   result.patch
@@ -218,6 +313,9 @@ async function main() {
     .split('\n')
     .map((line) => line.trim())
     .filter(Boolean);
+  
+  // Detect CI pipelines
+  const { ciSystems } = detectCIPipelines(changedFiles);
 
   const rawResult = await callXaiReview({ title, changedFiles, diff });
   const result = {
@@ -229,10 +327,26 @@ async function main() {
     )
       ? rawResult.overall_approval
       : 'comment_only',
+    ciSystems,
   };
 
   writeFileSync(outputJsonPath, JSON.stringify(result, null, 2));
-  writeFileSync(outputMarkdownPath, renderMarkdown(result));
+  writeFileSync(outputMarkdownPath, renderMarkdown(result, ciSystems));
+  
+  // Also write inline comments for GitHub review
+  const issues = normalizeIssues(result.issues);
+  const inlineComments = [];
+  for (const issue of issues) {
+    if (issue.path && issue.line) {
+      inlineComments.push({
+        path: issue.path,
+        line: issue.line,
+        side: 'RIGHT',
+        body: issue.body,
+      });
+    }
+  }
+  writeFileSync('/tmp/inline-comments.json', JSON.stringify(inlineComments, null, 2));
 }
 
 main().catch((error) => {

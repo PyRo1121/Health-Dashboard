@@ -600,6 +600,149 @@ function isTrustedAutomationContext(context) {
   );
 }
 
+export function summarizeBranchProtection(branchProtection) {
+  if (!branchProtection) {
+    return { hasProtection: false, requirements: [] };
+  }
+  
+  const requirements = [];
+  
+  if (branchProtection.requiredStatusCheck) {
+    const { strict, checks } = branchProtection.requiredStatusCheck;
+    requirements.push({
+      type: 'status_check',
+      strict,
+      checks: checks.map(c => c.context),
+    });
+  }
+  
+  if (branchProtection.requiredReviews > 0) {
+    requirements.push({
+      type: 'review',
+      count: branchProtection.requiredReviews,
+      requiresCodeOwner: branchProtection.requiresCodeOwnerReviews,
+    });
+  }
+  
+  requirements.push({
+    type: 'force_push',
+    allowed: !branchProtection.allowsForcePushes,
+  });
+  
+  requirements.push({
+    type: 'deletion',
+    allowed: !branchProtection.allowsDeletions,
+  });
+  
+  if (branchProtection.requiresLinearHistory) {
+    requirements.push({ type: 'linear_history' });
+  }
+  
+  if (branchProtection.requiresCommitSignatures) {
+    requirements.push({ type: 'signed_commits' });
+  }
+  
+  return {
+    hasProtection: true,
+    isAdminEnforced: branchProtection.isAdminEnforced,
+    requirements,
+  };
+}
+
+/**
+ * Calculate PR health score (0-100)
+ */
+export function calculateHealthScore(context, plan) {
+  let score = 0;
+  const factors = [];
+  
+  // Has description (10 points)
+  const hasDescription = context.title && context.title.length > 10;
+  if (hasDescription) {
+    score += 10;
+    factors.push({ name: 'Has title', points: 10 });
+  } else {
+    factors.push({ name: 'Missing title', points: 0 });
+  }
+  
+  // CI passing (20 points)
+  const gateFailed = [...(plan.checkSummary?.failed || [])];
+  const gatePending = [...(plan.checkSummary?.pending || [])];
+  if (gateFailed.length === 0 && gatePending.length === 0) {
+    score += 20;
+    factors.push({ name: 'CI passing', points: 20 });
+  } else if (gateFailed.length > 0) {
+    factors.push({ name: `CI failing (${gateFailed.length} checks)`, points: 0 });
+  } else {
+    factors.push({ name: `CI pending (${gatePending.length} checks)`, points: 5 });
+    score += 5;
+  }
+  
+  // Has approvals (20 points)
+  const currentApprovals = plan.reviewSummary?.approvalsCurrentHead?.length || 0;
+  if (currentApprovals >= 1) {
+    score += 20;
+    factors.push({ name: `Has approval (${currentApprovals})`, points: 20 });
+  } else if (plan.reviewSummary?.approvalsStale?.length > 0) {
+    score += 5;
+    factors.push({ name: 'Stale approval only', points: 5 });
+  } else {
+    factors.push({ name: 'No approvals', points: 0 });
+  }
+  
+  // No unresolved threads (15 points)
+  const humanThreads = plan.reviewThreadSummary?.humanUnresolvedCount || 0;
+  if (humanThreads === 0) {
+    score += 15;
+    factors.push({ name: 'No unresolved threads', points: 15 });
+  } else {
+    factors.push({ name: `Has unresolved threads (${humanThreads})`, points: 0 });
+  }
+  
+  // Not too large (10 points)
+  const fileCount = context.files?.length || 0;
+  if (fileCount <= 20) {
+    score += 10;
+    factors.push({ name: `PR size OK (${fileCount} files)`, points: 10 });
+  } else if (fileCount <= 50) {
+    score += 5;
+    factors.push({ name: `Large PR (${fileCount} files)`, points: 5 });
+  } else {
+    factors.push({ name: `Very large PR (${fileCount} files)`, points: 0 });
+  }
+  
+  // Has tests (10 points)
+  const hasTests = context.files?.some(f => 
+    f.filename.includes('test') || 
+    f.filename.includes('spec') || 
+    f.filename.includes('__tests__')
+  );
+  if (hasTests) {
+    score += 10;
+    factors.push({ name: 'Has tests', points: 10 });
+  } else {
+    factors.push({ name: 'No tests', points: 0 });
+  }
+  
+  // No blocking labels (15 points)
+  const hasBlockingLabels = context.labels?.some(l => 
+    ['do-not-merge', 'work-in-progress', 'blocked-ci', 'blocked-review', 'blocked-author'].includes(l)
+  );
+  if (!hasBlockingLabels && plan.status === 'merge-ready') {
+    score += 15;
+    factors.push({ name: 'No blocking labels', points: 15 });
+  } else {
+    factors.push({ name: `Has blocking state: ${plan.status}`, points: 0 });
+  }
+  
+  return {
+    score,
+    maxScore: 100,
+    grade: score >= 90 ? 'A' : score >= 80 ? 'B' : score >= 70 ? 'C' : score >= 60 ? 'D' : 'F',
+    factors,
+  };
+}
+
 export function buildBaselinePlan(context) {
   const labels = new Set(context.labels);
   const checks = summarizeChecks(context.checkRuns);
@@ -752,6 +895,7 @@ export function buildBaselinePlan(context) {
     selfTestRequired,
     selfTestContext: AUTOMATION_SELF_TEST_CONTEXT,
     trustedAutomation: isTrustedAutomationContext(context),
+    branchProtection: summarizeBranchProtection(context.branchProtection),
   };
 }
 
@@ -940,6 +1084,10 @@ export function renderMarkdown(context, plan, labels) {
 **Areas:** ${areas.join(', ') || 'unknown'}
 **Status:** \`${plan.status}\`${plan.staleReview ? ' · stale review detected' : ''}
 
+### PR Health Score
+- **Score:** ${plan.healthScore?.score || 0}/100 (\`${plan.healthScore?.grade || 'N/A'}\`)
+${plan.healthScore?.factors?.length ? plan.healthScore.factors.map(f => `  - ${f.name}: ${f.points} pts`).join('\n') : ''}
+
 ### Gate snapshot
 - Failing gates: ${plan.checkSummary.failed.length ? plan.checkSummary.failed.join(', ') : 'none'}
 - Pending gates: ${plan.checkSummary.pending.length ? plan.checkSummary.pending.join(', ') : 'none'}
@@ -951,6 +1099,36 @@ export function renderMarkdown(context, plan, labels) {
 - Automation threads eligible for auto-resolution: ${plan.reviewThreadSummary.resolvableAutomationCount}
 - Suggested reviewers: ${plan.suggestedReviewers.length ? plan.suggestedReviewers.join(', ') : 'none'}
 - Trusted automation lane: ${plan.trustedAutomation ? 'enabled' : 'disabled'}
+
+### Branch Protection
+${
+  plan.branchProtection?.hasProtection
+    ? [
+        `- Admin enforcement: ${plan.branchProtection.isAdminEnforced ? 'enabled' : 'disabled'}`,
+        ...plan.branchProtection.requirements.map(req => {
+          if (req.type === 'status_check') {
+            return `- Required status checks: ${req.checks.join(', ') || 'none'}${req.strict ? ' (strict)' : ''}`;
+          }
+          if (req.type === 'review') {
+            return `- Required reviews: ${req.count}${req.requiresCodeOwner ? ' (code owner required)' : ''}`;
+          }
+          if (req.type === 'force_push') {
+            return `- Force pushes: ${req.allowed ? 'blocked' : 'allowed'}`;
+          }
+          if (req.type === 'deletion') {
+            return `- Branch deletion: ${req.allowed ? 'blocked' : 'allowed'}`;
+          }
+          if (req.type === 'linear_history') {
+            return `- Linear history: required`;
+          }
+          if (req.type === 'signed_commits') {
+            return `- Signed commits: required`;
+          }
+          return `- ${req.type}`;
+        }),
+      ].join('\n')
+    : '- No branch protection configured'
+}
 
 ### Managed labels
 ${effectiveLabels.length ? effectiveLabels.map((label) => `- \`${label}\``).join('\n') : '- none'}
@@ -1063,6 +1241,29 @@ ${plan.nextSteps.length ? plan.nextSteps.map((line) => `- ${line}`).join('\n') :
 - Auto-fix patch lane: ${labels.dispatch.shouldDispatchAutoFix ? 'dispatching `ai-auto-fix` now' : 'not dispatching'}
 - Legacy automerge: removed from this PR if present
 
+### PR State Flow
+\`\`\`mermaid
+stateDiagram-v2
+    [*] --> opened : PR opened
+    opened --> blocked : Draft/WIP
+    opened --> blocked : Conflicts
+    opened --> blocked : No approval
+    opened --> blocked : Failing CI
+    opened --> blocked : Review changes
+    opened --> blocked : Unresolved threads
+    blocked --> pending : Blockers resolved
+    pending --> mergeReady : All gates green
+    mergeReady --> [*] : Human merges
+    mergeReady --> blocked : New issue found
+    mergeReady --> pending : Approval revoked
+    mergeReady --> blocked : CI fails
+    pending --> blocked : CI fails
+    pending --> mergeReady : CI passes
+    mergeReady --> blocked : Review threads
+    blocked --> mergeReady : Human approves
+    mergeReady --> blocked : Request changes
+\`\`\`
+
 ### Notes
 - \`merge-ready\` means ready for your final review. The PR manager never merges.
 - Workflow and repo-automation changes must pass \`${plan.selfTestContext}\` before \`merge-ready\`.
@@ -1088,6 +1289,8 @@ async function main() {
   const plan = await buildXaiManagerPlan(context, baseline);
   const labels = buildManagedLabels(context, plan);
   const reviewThreadActions = buildReviewThreadActions(context, plan);
+  const healthScore = calculateHealthScore(context, plan);
+  plan.healthScore = healthScore;
 
   const result = {
     status: plan.status,
@@ -1098,6 +1301,7 @@ async function main() {
     labelsToAdd: labels.labelsToAdd,
     labelsToRemove: labels.labelsToRemove,
     reviewThreadActions,
+    healthScore,
   };
 
   writeFileSync(requiredEnv('PR_MANAGER_JSON_PATH'), JSON.stringify(result, null, 2));

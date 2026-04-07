@@ -1,0 +1,140 @@
+# Grok PR Manager Configuration
+# This file controls Grok's behavior for this repository
+
+# PR Description Settings
+# include_changelog = true   # Include changelog entry in PR description
+# include_walkthrough = true  # Include walkthrough in PR description
+# auto_describe = true       # Auto-generate PR description on PR open
+
+# Review Settings  
+# review_include_security = true    # Include security issues in review
+# review_include_perf = true      # Include performance issues in review
+# review_max_issues = 10         # Maximum issues to report
+# review_require_patch = true      # Require patch generation for auto-fix
+
+# Auto-Fix Settings
+# auto_fix_on_patch = true        # Auto-dispatch auto-fix when patch available
+# auto_fix_protected_paths = [".github/workflows", "tests", "docs"]  # Paths to protect
+
+# CI Surgeon Settings
+# ci_surgeon_enabled = true       # Enable CI failure repair
+# ci_surgeon_max_retries = 1      # Max retries before giving up
+# ci_surgeon_trusted_only = true   # Only run on trusted PRs
+
+# Reviewer Assignment
+# auto_assign_reviewers = false  # Auto-assign reviewers from CODEOWNERS
+# reviewer_recency_weight = true    # Weight recent reviewers higher
+# reviewer_max_load = 5           # Max PRs per reviewer
+
+# Label Settings
+# label_prefix = "grok-"          # Prefix for managed labels
+# label_blocked_ci = "blocked-ci"  # Label for blocked PRs
+# label_merge_ready = "merge-ready" # Label for merge-ready PRs
+
+# Commands
+# commands_enabled = true          # Enable @grok commands
+# commands_require_trusted = true  # Require trusted association for destructive commands
+
+# Output Settings
+# output_verbose = false          # Verbose output in comments
+# output_collapse_details = true  # Collapse details in comments
+
+# Privacy
+# store_responses = false         # Don't store xAI responses (recommended)
+
+# Issue Tracker Integration
+# Jira API (set JIRA_API_TOKEN and JIRA_EMAIL env vars)
+# jira_auto_detect = true         # Detect Jira issue references in PR title/body
+# Linear API (set LINEAR_API_KEY env var)
+# linear_auto_detect = true       # Detect Linear issue references in PR title/body
+
+# =============================================================================
+# TEAM CUSTOM INSTRUCTIONS
+# =============================================================================
+# These instructions are appended to every Grok prompt for this repository.
+# Use this to enforce team-specific standards, terminology, and priorities.
+
+[custom_instructions]
+# Security first: All health data must be encrypted at rest and in transit
+# Privacy: No health data should ever be logged or exposed in error messages  
+# Performance: API responses should target <200ms for cached queries
+# Testing: All new features require test coverage before merge
+# Documentation: All public APIs must have JSDoc comments
+# Commit style: Follow conventional commits (feat, fix, docs, etc.)
+# Code coverage: Maintain >80% coverage for core modules
+
+# Team-specific terminology:
+# - "meal" instead of "food entry"
+# - "snapshot" instead of "daily record"
+# - Use "plan" terminology for scheduled items
+
+# Priority order for reviews:
+# 1. Security and privacy implications
+# 2. Data integrity and consistency
+# 3. Performance and scalability
+# 4. Code maintainability
+# 5. Test coverage
+
+# =============================================================================
+# REVIEW TEMPLATES
+# =============================================================================
+# Define custom review templates for different PR types
+
+[review_templates]
+# Default template applied to all PRs
+default = [
+  "Security implications for health data",
+  "Data privacy considerations",
+  "API contract compatibility",
+  "Test coverage adequacy",
+]
+
+# Template for infrastructure changes
+infra = [
+  "CI/CD pipeline security",
+  "Secrets management",
+  "Rollback procedures",
+  "Monitoring and alerting",
+]
+
+# Template for database/schema changes  
+db = [
+  "Migration safety",
+  "Data integrity checks",
+  "Backward compatibility",
+  "Index performance impact",
+]
+
+# Template for security-related changes
+security = [
+  "Authentication/authorization review",
+  "Input validation",
+  "Output encoding",
+  "Dependency vulnerability scan",
+]
+
+# =============================================================================
+# MULTI-PLATFORM SUPPORT
+# =============================================================================
+# Configure which platforms to support and their specific settings
+
+[platforms]
+# GitHub is always enabled (uses GITHUB_TOKEN from secrets)
+github_enabled = true
+
+# GitLab support (uses GITLAB_TOKEN from secrets)
+gitlab_enabled = false
+# gitlab_url = "https://gitlab.com"
+
+# Bitbucket support (uses BITBUCKET_TOKEN from secrets)  
+bitbucket_enabled = false
+# bitbucket_workspace = "my-workspace"
+
+[platforms.github]
+require_github_actions = true
+
+[platforms.gitlab]
+require_gitlab_ci = true
+
+[platforms.bitbucket]
+require_bitbucket_pipelines = true

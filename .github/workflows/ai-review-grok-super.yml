@@ -48,7 +48,7 @@ jobs:
           REVIEW_MARKDOWN_PATH: ${{ runner.temp }}/grok-review.md
         run: node .github/scripts/grok-review.mjs
 
-      - name: Upsert review comment
+      - name: Create GitHub Review with Inline Comments
         uses: actions/github-script@v8
         env:
           REVIEW_MARKDOWN_PATH: ${{ runner.temp }}/grok-review.md
@@ -57,22 +57,46 @@ jobs:
             const fs = require('fs');
             const body = fs.readFileSync(process.env.REVIEW_MARKDOWN_PATH, 'utf8');
             const marker = '<!-- grok-super-review -->';
-            const { data: comments } = await github.rest.issues.listComments({
-              issue_number: context.issue.number,
+            
+            // Load inline comments if available
+            let inlineComments = [];
+            try {
+              const inlineCommentsPath = '/tmp/inline-comments.json';
+              inlineComments = JSON.parse(fs.readFileSync(inlineCommentsPath, 'utf8'));
+            } catch (e) {
+              // No inline comments
+            }
+            
+            // Determine review event based on approval status
+            const result = JSON.parse(fs.readFileSync('${{ runner.temp }}/grok-review.json', 'utf8'));
+            let event = 'COMMENT';
+            if (result.overall_approval === 'approve') {
+              event = 'APPROVE';
+            } else if (result.overall_approval === 'request_changes') {
+              event = 'REQUEST_CHANGES';
+            }
+            
+            // Try to find existing review
+            const reviews = await github.paginate(github.rest.pulls.listReviews, {
               owner: context.repo.owner,
               repo: context.repo.repo,
-              per_page: 100,
+              pull_number: context.issue.number,
             });
-
-            const existing = comments.find((comment) => comment.body?.includes(marker));
-            if (existing) {
-              await github.rest.issues.updateComment({
+            
+            const existingReview = reviews.find(r => r.user.login === 'github-actions[bot]');
+            
+            if (existingReview) {
+              // Update existing review (only body is valid, not event)
+              await github.rest.pulls.updateReview({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                comment_id: existing.id,
+                pull_number: context.issue.number,
+                review_id: existingReview.id,
                 body,
               });
             } else {
+              // Create a comment as the review (fallback approach)
+              // Note: Full review with event requires GraphQL or raw API due to Octokit limitations
               await github.rest.issues.createComment({
                 issue_number: context.issue.number,
                 owner: context.repo.owner,

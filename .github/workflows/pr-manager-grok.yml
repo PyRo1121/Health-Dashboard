@@ -137,6 +137,49 @@ jobs:
               }
             );
 
+            // Get branch protection rules for the base branch (GraphQL API changed - wrap in try-catch)
+            let branchProtection = null;
+            try {
+              const bpResult = await github.graphql(
+                `
+                  query($owner: String!, $repo: String!, $branch: String!) {
+                    repository(owner: $owner, name: $repo) {
+                      branchProtectionRules(first: 100) {
+                        nodes {
+                          pattern
+                          requiredStatusCheck: requiredStatusChecks {
+                            strict
+                            checks {
+                              context
+                            }
+                          }
+                          requiredReviews: requiredApprovingReviewsCount
+                          isAdminEnforced
+                          allowsDeletions
+                          allowsForcePushes
+                          requiresCodeOwnerReviews
+                          requiresCommitSignatures
+                          requiresLinearHistory
+                          dismissesStaleReviews
+                        }
+                      }
+                    }
+                  }
+                `,
+                {
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  branch: pr.base.ref,
+                }
+              );
+              // Get the rule matching our branch
+              const rules = bpResult?.repository?.branchProtectionRules?.nodes || [];
+              branchProtection = rules.find(r => r.pattern === pr.base.ref) || rules[0] || null;
+            } catch (e) {
+              // Branch protection lookup failed, continue without it
+              console.warn('Branch protection lookup failed:', e.message);
+            }
+
             const payload = {
               repository: `${context.repo.owner}/${context.repo.repo}`,
               number: pr.number,
@@ -181,6 +224,7 @@ jobs:
                 description: status.description,
                 target_url: status.target_url,
               })),
+              branchProtection: branchProtection,
               reviewThreads: (
                 reviewThreadData?.repository?.pullRequest?.reviewThreads?.nodes || []
               ).map((thread) => ({
@@ -368,6 +412,143 @@ jobs:
                 core.warning(`Could not resolve thread ${thread.id}: ${error.message}`);
               }
             }
+
+      - name: Auto-assign reviewers from CODEOWNERS
+        if: github.event.action == 'opened'
+        uses: actions/github-script@v8
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Load .grok.toml config
+            let autoAssignReviewers = false;
+            try {
+              const configContent = fs.readFileSync('.grok.toml', 'utf8');
+              for (const line of configContent.split('\n')) {
+                const trimmed = line.trim();
+                if (trimmed.startsWith('auto_assign_reviewers')) {
+                  const value = trimmed.split('=')[1]?.trim().toLowerCase();
+                  autoAssignReviewers = value === 'true';
+                  break;
+                }
+              }
+            } catch (e) {
+              core.info('No .grok.toml found or could not read it, skipping auto-assign');
+            }
+            
+            if (!autoAssignReviewers) {
+              core.info('Auto-assign reviewers is disabled in .grok.toml');
+              return;
+            }
+            
+            const pullNumber = context.payload.pull_request?.number;
+            if (!pullNumber) {
+              core.info('No pull request number found');
+              return;
+            }
+            
+            // Get current PR to check if reviewers are already requested
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+            });
+            
+            const currentReviewers = new Set((pr.requested_reviewers || []).map(r => r.login));
+            
+            if (currentReviewers.size > 0) {
+              core.info(`Reviewers already requested: ${[...currentReviewers].join(', ')}`);
+              return;
+            }
+            
+            // Get suggested reviewers from CODEOWNERS
+            let codeowners = '';
+            try {
+              const response = await github.rest.repos.getContent({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                path: '.github/CODEOWNERS',
+                ref: pr.base.ref,
+              });
+              codeowners = Buffer.from(response.data.content, 'base64').toString('utf8');
+            } catch (e) {
+              core.info('No CODEOWNERS file found');
+              return;
+            }
+            
+            // Get changed files
+            const files = await github.paginate(github.rest.pulls.listFiles, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+              per_page: 100,
+            });
+            
+            // Parse CODEOWNERS and find matching reviewers
+            function parseCodeowners(content) {
+              return content
+                .split('\n')
+                .map(line => line.trim())
+                .filter(line => line && !line.startsWith('#'))
+                .map(line => {
+                  const parts = line.split(/\s+/).filter(Boolean);
+                  return {
+                    pattern: parts[0],
+                    owners: parts.slice(1).filter(owner => owner.startsWith('@')),
+                  };
+                })
+                .filter(entry => entry.pattern && entry.owners.length);
+            }
+            
+            function codeownersMatches(pattern, file) {
+              const normalizedPattern = pattern.replace(/^\//, '');
+              const normalizedFile = file.replace(/^\//, '');
+
+              if (normalizedPattern === '*') return true;
+              if (normalizedPattern.endsWith('/')) return normalizedFile.startsWith(normalizedPattern);
+              if (normalizedPattern.endsWith('/**')) return normalizedFile.startsWith(normalizedPattern.slice(0, -2));
+              if (normalizedPattern.includes('/**/')) {
+                const [prefix, suffix] = normalizedPattern.split('/**/');
+                return normalizedFile.startsWith(prefix) && normalizedFile.endsWith(suffix);
+              }
+              if (normalizedPattern.startsWith('**/')) return normalizedFile.endsWith(normalizedPattern.slice(3));
+              if (normalizedPattern.includes('*')) {
+                const escaped = normalizedPattern.replace(/[.+?^${}()|[\]\\]/g, '\\$&').replace(/\*/g, '.*');
+                return new RegExp(`^${escaped}$`).test(normalizedFile);
+              }
+              return normalizedFile === normalizedPattern || normalizedFile.startsWith(`${normalizedPattern}/`);
+            }
+            
+            const entries = parseCodeowners(codeowners);
+            const owners = new Set();
+            
+            for (const file of files) {
+              for (const entry of entries) {
+                if (codeownersMatches(entry.pattern, file.filename)) {
+                  for (const owner of entry.owners) {
+                    owners.add(owner.replace(/^@/, ''));
+                  }
+                }
+              }
+            }
+            
+            const suggested = [...owners].filter(r => r !== pr.user.login).slice(0, 3);
+            
+            if (!suggested.length) {
+              core.info('No CODEOWNERS reviewers found for changed files');
+              return;
+            }
+            
+            // Request reviewers
+            await github.rest.pulls.requestReviewers({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: pullNumber,
+              reviewers: suggested.filter((r) => !r.includes('/')),
+              team_reviewers: suggested.filter((r) => r.includes('/')).map((r) => r.split('/')[1]),
+            });
+            
+            core.info(`Auto-requested reviewers from CODEOWNERS: ${suggested.join(', ')}`);
 
       - name: Upload PR manager artifact
         uses: actions/upload-artifact@v7

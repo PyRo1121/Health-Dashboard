@@ -1,0 +1,74 @@
+name: 📅 Grok Timeline
+
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: 'PR number'
+        required: true
+        type: string
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  timeline:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Collect PR timeline data
+        id: data
+        env:
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Get reviews
+          gh api repos/{owner}/{repo}/pulls/$PR_NUMBER/reviews --jq '.[]' > "$RUNNER_TEMP/reviews.json"
+          
+          # Get comments (excluding bot comments)
+          gh api repos/{owner}/{repo}/issues/$PR_NUMBER/comments --jq '.[] | select(.user.login | contains("[bot]") | not)' > "$RUNNER_TEMP/comments.json"
+          
+          # Get commits
+          gh api repos/{owner}/{repo}/pulls/$PR_NUMBER/commits --jq '.[]' > "$RUNNER_TEMP/commits.json"
+          
+          # Get check runs
+          PR_HEAD_SHA=$(gh api repos/{owner}/{repo}/pulls/$PR_NUMBER --jq '.head.sha')
+          gh api repos/{owner}/{repo}/commits/$PR_HEAD_SHA/check-runs --jq '.check_runs[]' > "$RUNNER_TEMP/checks.json"
+          
+          echo "reviews=$RUNNER_TEMP/reviews.json" >> "$GITHUB_OUTPUT"
+          echo "comments=$RUNNER_TEMP/comments.json" >> "$GITHUB_OUTPUT"
+          echo "commits=$RUNNER_TEMP/commits.json" >> "$GITHUB_OUTPUT"
+          echo "checks=$RUNNER_TEMP/checks.json" >> "$GITHUB_OUTPUT"
+
+      - name: Generate timeline
+        env:
+          REVIEWS_JSON_PATH: ${{ runner.temp }}/reviews.json
+          COMMENTS_JSON_PATH: ${{ runner.temp }}/comments.json
+          COMMITS_JSON_PATH: ${{ runner.temp }}/commits.json
+          CHECKS_JSON_PATH: ${{ runner.temp }}/checks.json
+          TIMELINE_MARKDOWN_PATH: ${{ runner.temp }}/grok-timeline.md
+        run: node .github/scripts/grok-timeline.mjs
+
+      - name: Post timeline
+        uses: actions/github-script@v8
+        env:
+          TIMELINE_MARKDOWN_PATH: ${{ runner.temp }}/grok-timeline.md
+          PR_NUMBER: ${{ github.event.inputs.pr_number }}
+        with:
+          script: |
+            const fs = require('fs');
+            const timeline = fs.readFileSync(process.env.TIMELINE_MARKDOWN_PATH, 'utf8');
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: parseInt(process.env.PR_NUMBER),
+              body: timeline,
+            });
