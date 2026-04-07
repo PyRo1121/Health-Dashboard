@@ -41,8 +41,9 @@ jobs:
           BASE_SHA: ${{ steps.pr.outputs.base_sha }}
           PR_NUMBER: ${{ github.event.inputs.pr_number }}
         run: |
-          git diff --no-color --unified=3 "${BASE_SHA}...HEAD" > "$RUNNER_TEMP/pr.diff"
-          git diff --name-only "${BASE_SHA}...HEAD" > "$RUNNER_TEMP/pr.files"
+          git fetch --no-tags origin "pull/${PR_NUMBER}/head:pr-${PR_NUMBER}"
+          git diff --no-color --unified=3 "${BASE_SHA}...pr-${PR_NUMBER}" > "$RUNNER_TEMP/pr.diff"
+          git diff --name-only "${BASE_SHA}...pr-${PR_NUMBER}" > "$RUNNER_TEMP/pr.files"
           echo "diff_path=$RUNNER_TEMP/pr.diff" >> "$GITHUB_OUTPUT"
           echo "files_path=$RUNNER_TEMP/pr.files" >> "$GITHUB_OUTPUT"
 
