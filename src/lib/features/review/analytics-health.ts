@@ -128,3 +128,61 @@ export function buildContextSignals(
 
   return [...new Set(signals)];
 }
+
+export function buildPatternHighlights(entries: JournalEntry[], events: HealthEvent[]): string[] {
+  const highlights: string[] = [];
+  const eventsById = new Map(events.map((event) => [event.id, event]));
+
+  const symptomDaysByName = new Map<string, Set<string>>();
+  const anxietyDays = new Set<string>();
+
+  for (const entry of entries) {
+    const seenSymptomNames = new Set<string>();
+    let linkedAnxiety = false;
+
+    for (const eventId of entry.linkedEventIds) {
+      const event = eventsById.get(eventId);
+      if (!event) {
+        continue;
+      }
+
+      if (event.eventType === 'symptom') {
+        const symptomName =
+          typeof event.payload?.symptom === 'string' && event.payload.symptom.trim().length > 0
+            ? event.payload.symptom.trim()
+            : 'Symptom';
+        if (!seenSymptomNames.has(symptomName)) {
+          seenSymptomNames.add(symptomName);
+          if (!symptomDaysByName.has(symptomName)) {
+            symptomDaysByName.set(symptomName, new Set());
+          }
+          symptomDaysByName.get(symptomName)!.add(entry.localDay);
+        }
+      }
+
+      if (event.eventType === 'anxiety-episode') {
+        linkedAnxiety = true;
+      }
+    }
+
+    if (linkedAnxiety) {
+      anxietyDays.add(entry.localDay);
+    }
+  }
+
+  for (const [symptomName, days] of symptomDaysByName) {
+    if (days.size >= 2) {
+      highlights.push(
+        `${symptomName} kept showing up in your notes on ${days.size} days this week.`
+      );
+    }
+  }
+
+  if (anxietyDays.size >= 2) {
+    highlights.push(
+      `Anxiety-related context showed up in your notes on ${anxietyDays.size} days this week.`
+    );
+  }
+
+  return highlights;
+}

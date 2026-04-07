@@ -232,6 +232,170 @@ test('weekly review surfaces journal context signals', async ({ page }) => {
   ).toBeVisible();
 });
 
+test('weekly review surfaces repeated context patterns', async ({ page }) => {
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        dailyRecords: [
+          {
+            id: 'daily:2026-03-30',
+            createdAt: '2026-03-30T08:00:00.000Z',
+            updatedAt: '2026-03-30T08:00:00.000Z',
+            date: '2026-03-30',
+            mood: 3,
+            energy: 2,
+            stress: 3,
+            focus: 3,
+            sleepHours: 6,
+            sleepQuality: 3,
+          },
+          {
+            id: 'daily:2026-03-31',
+            createdAt: '2026-03-31T08:00:00.000Z',
+            updatedAt: '2026-03-31T08:00:00.000Z',
+            date: '2026-03-31',
+            mood: 3,
+            energy: 2,
+            stress: 3,
+            focus: 3,
+            sleepHours: 6,
+            sleepQuality: 3,
+          },
+        ],
+        journalEntries: [
+          {
+            id: 'journal-1',
+            createdAt: '2026-03-30T21:00:00.000Z',
+            updatedAt: '2026-03-30T21:00:00.000Z',
+            localDay: '2026-03-30',
+            entryType: 'symptom_note',
+            title: 'Headache note',
+            body: 'Headache and worry hit after lunch.',
+            tags: [],
+            linkedEventIds: ['symptom-1', 'anxiety-1'],
+          },
+          {
+            id: 'journal-2',
+            createdAt: '2026-03-31T21:00:00.000Z',
+            updatedAt: '2026-03-31T21:00:00.000Z',
+            localDay: '2026-03-31',
+            entryType: 'symptom_note',
+            title: 'Headache note',
+            body: 'Headache and worry hit again after errands.',
+            tags: [],
+            linkedEventIds: ['symptom-2', 'anxiety-2'],
+          },
+        ],
+        foodEntries: [],
+        foodCatalogItems: [],
+        recipeCatalogItems: [],
+        weeklyPlans: [],
+        planSlots: [],
+        derivedGroceryItems: [],
+        manualGroceryItems: [],
+        workoutTemplates: [],
+        exerciseCatalogItems: [],
+        favoriteMeals: [],
+        healthEvents: [
+          {
+            id: 'symptom-1',
+            createdAt: '2026-03-30T09:00:00.000Z',
+            updatedAt: '2026-03-30T09:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'symptom:1',
+            sourceTimestamp: '2026-03-30T09:00:00.000Z',
+            localDay: '2026-03-30',
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'symptom',
+            value: 4,
+            payload: {
+              kind: 'symptom',
+              symptom: 'Headache',
+              severity: 4,
+            },
+          },
+          {
+            id: 'symptom-2',
+            createdAt: '2026-03-31T09:00:00.000Z',
+            updatedAt: '2026-03-31T09:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'symptom:2',
+            sourceTimestamp: '2026-03-31T09:00:00.000Z',
+            localDay: '2026-03-31',
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'symptom',
+            value: 4,
+            payload: {
+              kind: 'symptom',
+              symptom: 'Headache',
+              severity: 4,
+            },
+          },
+          {
+            id: 'anxiety-1',
+            createdAt: '2026-03-30T14:00:00.000Z',
+            updatedAt: '2026-03-30T14:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'anxiety:1',
+            sourceTimestamp: '2026-03-30T14:00:00.000Z',
+            localDay: '2026-03-30',
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'anxiety-episode',
+            value: 6,
+            payload: {
+              kind: 'anxiety',
+              intensity: 6,
+              trigger: 'Crowded store',
+            },
+          },
+          {
+            id: 'anxiety-2',
+            createdAt: '2026-03-31T14:00:00.000Z',
+            updatedAt: '2026-03-31T14:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'anxiety:2',
+            sourceTimestamp: '2026-03-31T14:00:00.000Z',
+            localDay: '2026-03-31',
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'anxiety-episode',
+            value: 6,
+            payload: {
+              kind: 'anxiety',
+              intensity: 6,
+              trigger: 'Cramped schedule',
+            },
+          },
+        ],
+        healthTemplates: [],
+        sobrietyEvents: [],
+        assessmentResults: [],
+        importBatches: [],
+        importArtifacts: [],
+        reviewSnapshots: [],
+        adherenceMatches: [],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/review');
+  await expect(page.getByText('Patterns to watch')).toBeVisible();
+  await expect(
+    page.getByText('Headache kept showing up in your notes on 2 days this week.')
+  ).toBeVisible();
+  await expect(
+    page.getByText('Anxiety-related context showed up in your notes on 2 days this week.')
+  ).toBeVisible();
+});
+
 test('today recovery links into a prefilled journal note', async ({ page }) => {
   const localDay = new Intl.DateTimeFormat('en-CA', {
     timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,

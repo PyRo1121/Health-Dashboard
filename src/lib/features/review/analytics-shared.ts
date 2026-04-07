@@ -52,6 +52,7 @@ export interface WeeklyReviewData {
   contextCaptureLinkedEventIds: string[];
   journalHighlights: string[];
   journalReflectionLinkedEventIds: string[];
+  patternHighlights: string[];
   experimentOptions: string[];
 }
 

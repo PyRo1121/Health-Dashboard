@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetRouteDb, expectHeading, waitForText } from '../../../support/component/routeHarness';
 import { seedReviewSnapshotInputs } from '../../../support/component/routeSeeds';
 import { getHealthDb } from '$lib/core/db/client';
+import { logAnxietyEvent, logSymptomEvent } from '$lib/features/health/service';
 import { saveJournalEntry } from '$lib/features/journal/service';
 import { createFoodEntry, saveFoodCatalogItem } from '$lib/features/nutrition/service';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
@@ -194,5 +195,53 @@ describe('Review route', () => {
     expect(screen.getByRole('link', { name: 'Write reflection' }).getAttribute('href')).toMatch(
       /^\/journal\?/
     );
+  });
+
+  it('shows repeated context patterns inside review', async () => {
+    await seedReviewSnapshotInputs();
+    const db = getHealthDb();
+    const symptomOne = await logSymptomEvent(db, {
+      localDay: '2026-03-30',
+      symptom: 'Headache',
+      severity: 4,
+    });
+    const symptomTwo = await logSymptomEvent(db, {
+      localDay: '2026-03-31',
+      symptom: 'Headache',
+      severity: 4,
+    });
+    const anxietyOne = await logAnxietyEvent(db, {
+      localDay: '2026-03-30',
+      intensity: 6,
+      trigger: 'Crowded store',
+    });
+    const anxietyTwo = await logAnxietyEvent(db, {
+      localDay: '2026-03-31',
+      intensity: 6,
+      trigger: 'Cramped schedule',
+    });
+    await saveJournalEntry(db, {
+      localDay: '2026-03-30',
+      entryType: 'symptom_note',
+      title: 'Headache note',
+      body: 'Headache and worry hit after lunch.',
+      tags: [],
+      linkedEventIds: [symptomOne.id, anxietyOne.id],
+    });
+    await saveJournalEntry(db, {
+      localDay: '2026-03-31',
+      entryType: 'symptom_note',
+      title: 'Headache note',
+      body: 'Headache and worry hit again after errands.',
+      tags: [],
+      linkedEventIds: [symptomTwo.id, anxietyTwo.id],
+    });
+
+    render(ReviewPage);
+    expectHeading('Review');
+
+    await waitForText('Patterns to watch');
+    await waitForText(/Headache kept showing up in your notes on 2 days this week\./i);
+    await waitForText(/Anxiety-related context showed up in your notes on 2 days this week\./i);
   });
 });

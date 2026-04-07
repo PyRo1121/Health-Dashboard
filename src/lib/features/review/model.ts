@@ -211,6 +211,12 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
             : undefined,
         },
         {
+          title: 'Patterns to watch',
+          items: weekly.patternHighlights,
+          emptyMessage:
+            'Repeat a few linked context notes before Review can surface recurring patterns.',
+        },
+        {
           title: 'Food adherence highlights',
           items: weekly.nutritionHighlights,
           emptyMessage: 'Nutrition needs a few more logged meals before highlights mean much.',

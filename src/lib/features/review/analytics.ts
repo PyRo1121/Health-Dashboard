@@ -28,4 +28,5 @@ export {
   buildDeviceHighlights,
   buildHealthHighlights,
   buildJournalHighlights,
+  buildPatternHighlights,
 } from './analytics-health';
