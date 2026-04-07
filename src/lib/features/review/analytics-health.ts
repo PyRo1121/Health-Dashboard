@@ -129,10 +129,7 @@ export function buildContextSignals(
   return [...new Set(signals)];
 }
 
-export function buildPatternHighlights(
-  entries: JournalEntry[],
-  events: HealthEvent[]
-): string[] {
+export function buildPatternHighlights(entries: JournalEntry[], events: HealthEvent[]): string[] {
   const highlights: string[] = [];
   const eventsById = new Map(events.map((event) => [event.id, event]));
 
@@ -175,12 +172,16 @@ export function buildPatternHighlights(
 
   for (const [symptomName, days] of symptomDaysByName) {
     if (days.size >= 2) {
-      highlights.push(`${symptomName} kept showing up in your notes on ${days.size} days this week.`);
+      highlights.push(
+        `${symptomName} kept showing up in your notes on ${days.size} days this week.`
+      );
     }
   }
 
   if (anxietyDays.size >= 2) {
-    highlights.push(`Anxiety-related context showed up in your notes on ${anxietyDays.size} days this week.`);
+    highlights.push(
+      `Anxiety-related context showed up in your notes on ${anxietyDays.size} days this week.`
+    );
   }
 
   return highlights;

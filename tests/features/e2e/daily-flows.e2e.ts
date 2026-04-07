@@ -388,8 +388,12 @@ test('weekly review surfaces repeated context patterns', async ({ page }) => {
 
   await page.goto('/review');
   await expect(page.getByText('Patterns to watch')).toBeVisible();
-  await expect(page.getByText('Headache kept showing up in your notes on 2 days this week.')).toBeVisible();
-  await expect(page.getByText('Anxiety-related context showed up in your notes on 2 days this week.')).toBeVisible();
+  await expect(
+    page.getByText('Headache kept showing up in your notes on 2 days this week.')
+  ).toBeVisible();
+  await expect(
+    page.getByText('Anxiety-related context showed up in your notes on 2 days this week.')
+  ).toBeVisible();
 });
 
 test('today recovery links into a prefilled journal note', async ({ page }) => {
