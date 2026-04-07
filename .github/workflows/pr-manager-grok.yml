@@ -544,7 +544,8 @@ jobs:
               owner: context.repo.owner,
               repo: context.repo.repo,
               pull_number: pullNumber,
-              reviewers: suggested,
+              reviewers: suggested.filter((r) => !r.includes('/')),
+              team_reviewers: suggested.filter((r) => r.includes('/')).map((r) => r.split('/')[1]),
             });
             
             core.info(`Auto-requested reviewers from CODEOWNERS: ${suggested.join(', ')}`);
