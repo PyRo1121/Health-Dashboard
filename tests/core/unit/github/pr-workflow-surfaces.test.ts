@@ -10,7 +10,7 @@ function readWorkflow(name: string) {
 }
 
 describe('github workflow comment surfaces', () => {
-  it('keeps PR comments only on the review and manager control-plane workflows', () => {
+  it('manages PR comments only on designated control-plane workflows', () => {
     const review = readWorkflow('ai-review-grok-super.yml');
     const manager = readWorkflow('pr-manager-grok.yml');
     const autoFix = readWorkflow('ai-auto-fix-grok.yml');
@@ -20,9 +20,9 @@ describe('github workflow comment surfaces', () => {
     expect(review).toContain('<!-- grok-super-review -->');
     expect(manager).toContain('<!-- grok-pr-manager -->');
 
-    expect(autoFix).not.toContain('<!-- grok-auto-fix -->');
-    expect(autoFix).not.toContain('issues.createComment');
-    expect(autoFix).not.toContain('issues.updateComment');
+    expect(autoFix).toContain('<!-- grok-auto-fix -->');
+    expect(autoFix).toContain('issues.createComment');
+    expect(autoFix).toContain('issues.updateComment');
 
     expect(surgeon).not.toContain('<!-- grok-ci-surgeon -->');
     expect(surgeon).not.toContain('issues.createComment');
