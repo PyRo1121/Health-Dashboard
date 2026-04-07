@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import { readFileSync, writeFileSync } from 'node:fs';
+import { z } from 'zod';
 import { buildSearchTools } from './xai-tooling.mjs';
 
 const DEFAULT_MODEL = 'grok-4-1-fast-reasoning';
@@ -13,6 +14,38 @@ function requiredEnv(name) {
     throw new Error(`Missing required environment variable: ${name}`);
   }
   return value;
+}
+
+const GrokReviewSchema = z.object({
+  summary: z.string(),
+  issues: z.array(
+    z.object({
+      severity: z.enum(['critical', 'high', 'medium', 'low']),
+      file: z.string(),
+      line: z.number().int().positive(),
+      endLine: z.number().int().positive().optional(),
+      path: z.string().optional(),
+      description: z.string(),
+      suggestion: z.string(),
+    })
+  ),
+  patch: z.string().optional().default(''),
+  overall_approval: z.enum(['approve', 'request_changes', 'comment_only']),
+});
+
+function safeParseGrokReview(raw) {
+  const result = GrokReviewSchema.safeParse(raw);
+  if (result.success) {
+    return result.data;
+  }
+  const fallback = {
+    summary: 'Review could not be parsed. Please refer to the raw output.',
+    issues: [],
+    patch: '',
+    overall_approval: 'comment_only',
+    _parse_error: result.error.message,
+  };
+  return fallback;
 }
 
 function optionalEnv(name, fallback = '') {
@@ -318,35 +351,41 @@ async function main() {
   const { ciSystems } = detectCIPipelines(changedFiles);
 
   const rawResult = await callXaiReview({ title, changedFiles, diff });
+  const parsed = safeParseGrokReview(rawResult);
+  const isFallback = '_parse_error' in parsed;
+
   const result = {
-    summary: typeof rawResult.summary === 'string' ? rawResult.summary : 'No summary returned.',
-    issues: normalizeIssues(rawResult.issues),
-    patch: typeof rawResult.patch === 'string' ? rawResult.patch : '',
-    overall_approval: ['approve', 'request_changes', 'comment_only'].includes(
-      rawResult.overall_approval
-    )
-      ? rawResult.overall_approval
-      : 'comment_only',
+    summary: parsed.summary,
+    issues: normalizeIssues(parsed.issues),
+    patch: parsed.patch ?? '',
+    overall_approval: parsed.overall_approval,
     ciSystems,
+    ...(isFallback ? { _parse_error: parsed._parse_error } : {}),
   };
 
   writeFileSync(outputJsonPath, JSON.stringify(result, null, 2));
-  writeFileSync(outputMarkdownPath, renderMarkdown(result, ciSystems));
-  
-  // Also write inline comments for GitHub review
-  const issues = normalizeIssues(result.issues);
-  const inlineComments = [];
-  for (const issue of issues) {
-    if (issue.path && issue.line) {
-      inlineComments.push({
-        path: issue.path,
-        line: issue.line,
-        side: 'RIGHT',
-        body: issue.body,
-      });
+  const markdown = isFallback
+    ? `${REVIEW_MARKER}\n## Grok 4.1 Fast Super Review\n\n**Summary:** ${parsed.summary}\n\n---\n*Review powered by Grok 4.1 Fast Reasoning via xAI*`
+    : renderMarkdown(result, ciSystems);
+  writeFileSync(outputMarkdownPath, markdown);
+
+  if (!isFallback) {
+    const issues = normalizeIssues(result.issues);
+    const inlineComments = [];
+    for (const issue of issues) {
+      if (issue.path && issue.line) {
+        inlineComments.push({
+          path: issue.path,
+          line: issue.line,
+          side: 'RIGHT',
+          body: issue.body,
+        });
+      }
     }
+    writeFileSync('/tmp/inline-comments.json', JSON.stringify(inlineComments, null, 2));
+  } else {
+    writeFileSync('/tmp/inline-comments.json', JSON.stringify([], null, 2));
   }
-  writeFileSync('/tmp/inline-comments.json', JSON.stringify(inlineComments, null, 2));
 }
 
 main().catch((error) => {

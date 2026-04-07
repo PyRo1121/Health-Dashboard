@@ -1,0 +1,10 @@
+name: Invalid Workflow
+on:
+  push:
+jobs:
+  broken:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Bad indentation
+        run: echo hello
+          not-valid: yaml

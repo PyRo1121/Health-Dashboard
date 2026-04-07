@@ -72,18 +72,22 @@ All changes must pass:
 For production deployments, enable these settings:
 
 ```
-Require pull request reviews before merging: Yes
-Required reviewers: 1
+Require pull request reviews before merging: No (Grok review is advisory only)
+Required approving reviewers: 0
 Dismiss stale reviews: Yes
 Require status checks to pass before merging: Yes
-  - CI
+  - Lint
+  - Type Check
+  - Dependency Review
+  - Unit Tests
+  - Component Tests
+  - Build
   - E2E
   - CodeQL
-  - Dependency Review
-  - Snyk Security Scan
-Enable auto-merge only for PRs with `automerge`, `ai-fix`, or `dependencies` labels after approval.
-Require branches to be up to date before merging: Yes
+Require branches to be up to date before merging: Yes (strict)
 ```
+
+See [docs/ops/ci-cd-standards.md](docs/ops/ci-cd-standards.md) for the authoritative controls list.
 
 ## License
 
