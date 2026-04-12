@@ -46,7 +46,7 @@ jobs:
 
       - name: Collect PR context
         id: pr_context
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');
@@ -284,7 +284,7 @@ jobs:
         run: node .github/scripts/pr-manager.mjs
 
       - name: Upsert PR manager comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PR_MANAGER_MARKDOWN_PATH: ${{ runner.temp }}/pr-manager.md
         with:
@@ -316,7 +316,7 @@ jobs:
             }
 
       - name: Sync manager labels
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PR_MANAGER_JSON_PATH: ${{ runner.temp }}/pr-manager.json
         with:
@@ -347,7 +347,7 @@ jobs:
             }
 
       - name: Resolve eligible automation review threads
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PR_MANAGER_JSON_PATH: ${{ runner.temp }}/pr-manager.json
         with:
@@ -415,7 +415,7 @@ jobs:
 
       - name: Auto-assign reviewers from CODEOWNERS
         if: github.event.action == 'opened'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fs = require('fs');

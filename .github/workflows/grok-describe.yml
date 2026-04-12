@@ -60,7 +60,7 @@ jobs:
         run: node .github/scripts/grok-describe.mjs
 
       - name: Update PR description
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           DESCRIBE_JSON_PATH: ${{ runner.temp }}/grok-describe.json
           DESCRIBE_MARKDOWN_PATH: ${{ runner.temp }}/grok-describe.md

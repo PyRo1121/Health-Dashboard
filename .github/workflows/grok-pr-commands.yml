@@ -36,7 +36,7 @@ jobs:
 
       - name: Stop on non-command comments
         id: parsed
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           PR_COMMAND_JSON_PATH: ${{ runner.temp }}/pr-command.json
         with:
@@ -47,7 +47,7 @@ jobs:
 
       - name: Execute command
         if: steps.parsed.outputs.kind != 'none'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           COMMAND_KIND: ${{ steps.parsed.outputs.kind }}
           PR_COMMAND_JSON_PATH: ${{ runner.temp }}/pr-command.json
