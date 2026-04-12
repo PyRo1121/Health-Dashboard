@@ -101,6 +101,7 @@ describe('review model', () => {
         'Evening review on 2026-04-02: Crowded store and headache drained the afternoon.',
       ],
       journalReflectionLinkedEventIds: ['anxiety-1'],
+      patternHighlights: ['Headache kept showing up in your notes on 2 days this week.'],
       experimentOptions: ['Increase hydration tracking'],
     };
 
@@ -111,6 +112,7 @@ describe('review model', () => {
       'Health highlights',
       'Context signals',
       'Journal excerpts',
+      'Patterns to watch',
       'Food adherence highlights',
       'Plan follow-through',
       'Actual vs plan',
@@ -192,6 +194,7 @@ describe('review model', () => {
         'Evening review on 2026-04-02: Crowded store and headache drained the afternoon.',
       ],
       journalReflectionLinkedEventIds: ['anxiety-1'],
+      patternHighlights: ['Headache kept showing up in your notes on 2 days this week.'],
       experimentOptions: ['Increase hydration tracking'],
     };
 
@@ -203,6 +206,9 @@ describe('review model', () => {
     );
     expect(createReviewSections(weekly).map((section) => section.title)).toContain(
       'Journal excerpts'
+    );
+    expect(createReviewSections(weekly).map((section) => section.title)).toContain(
+      'Patterns to watch'
     );
   });
 });

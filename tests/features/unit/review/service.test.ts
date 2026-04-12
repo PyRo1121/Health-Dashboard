@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { saveAssessmentProgress, submitAssessment } from '$lib/features/assessments/service';
 import { deriveWeeklyGroceries, setGroceryItemState } from '$lib/features/groceries/service';
+import { logAnxietyEvent, logSymptomEvent } from '$lib/features/health/service';
 import { commitImportBatch, previewImport } from '$lib/features/imports/store';
 import { saveJournalEntry } from '$lib/features/journal/service';
 import { createFoodEntry, saveFoodCatalogItem, upsertRecipeCatalogItem } from '$lib/features/nutrition/store';
@@ -143,6 +144,58 @@ describe('review service', () => {
     );
     expect(weekly.journalHighlights).toContain(
       'Evening review on 2026-03-30: Crowded store and headache drained the afternoon.'
+    );
+  });
+
+  it('captures repeated journal-linked patterns in the weekly snapshot', async () => {
+    const db = getDb();
+    await seedWeek();
+
+    const symptomOne = await logSymptomEvent(db, {
+      localDay: '2026-03-30',
+      symptom: 'Headache',
+      severity: 4,
+    });
+    const symptomTwo = await logSymptomEvent(db, {
+      localDay: '2026-03-31',
+      symptom: 'Headache',
+      severity: 4,
+    });
+    const anxietyOne = await logAnxietyEvent(db, {
+      localDay: '2026-03-30',
+      intensity: 6,
+      trigger: 'Crowded store',
+    });
+    const anxietyTwo = await logAnxietyEvent(db, {
+      localDay: '2026-03-31',
+      intensity: 6,
+      trigger: 'Cramped schedule',
+    });
+
+    await saveJournalEntry(db, {
+      localDay: '2026-03-30',
+      entryType: 'symptom_note',
+      title: 'Headache note',
+      body: 'Headache and worry hit after lunch.',
+      tags: [],
+      linkedEventIds: [symptomOne.id, anxietyOne.id],
+    });
+    await saveJournalEntry(db, {
+      localDay: '2026-03-31',
+      entryType: 'symptom_note',
+      title: 'Headache note',
+      body: 'Headache and worry hit again after errands.',
+      tags: [],
+      linkedEventIds: [symptomTwo.id, anxietyTwo.id],
+    });
+
+    const weekly = await buildWeeklySnapshot(db, '2026-04-02');
+
+    expect(weekly.patternHighlights).toContain(
+      'Headache kept showing up in your notes on 2 days this week.'
+    );
+    expect(weekly.patternHighlights).toContain(
+      'Anxiety-related context showed up in your notes on 2 days this week.'
     );
   });
 

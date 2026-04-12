@@ -46,6 +46,7 @@ import {
   buildHealthHighlights,
   buildHeadline,
   buildJournalHighlights,
+  buildPatternHighlights,
   buildNutritionHighlights,
   buildNutritionStrategy,
   buildPlanningHighlights,
@@ -311,6 +312,7 @@ export function buildWeeklySnapshotFromWeekData(input: {
     journalReflectionLinkedEventIds: weekJournalEntries
       .flatMap((entry) => entry.linkedEventIds)
       .slice(0, 5),
+    patternHighlights: buildPatternHighlights(weekJournalEntries, weekHealthEvents),
     experimentOptions: [...REVIEW_EXPERIMENT_OPTIONS],
   };
 }
