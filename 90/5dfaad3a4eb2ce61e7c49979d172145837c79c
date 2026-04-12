@@ -1,0 +1,65 @@
+src/lib/features/review/service.ts
+  3a3c56a6dbec304e 49,315
+src/lib/features/review/analytics-health.ts
+  3a3c56a6dbec304e 132-189
+src/lib/features/review/analytics-shared.ts
+  3a3c56a6dbec304e 55
+tests/features/component/review/ReviewPage.spec.ts
+  3a3c56a6dbec304e 6,199-245
+src/lib/features/review/model.ts
+  3a3c56a6dbec304e 214-218
+tests/features/e2e/daily-flows.e2e.ts
+  3a3c56a6dbec304e 238-401
+tests/features/unit/review/model.test.ts
+  3a3c56a6dbec304e 104,115,197,210-211
+src/lib/features/review/analytics.ts
+  3a3c56a6dbec304e 31
+tests/features/unit/review/service.test.ts
+  3a3c56a6dbec304e 4,150-198
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "905dfaad3a4eb2ce61e7c49979d172145837c79c",
+  "prompts": {
+    "3a3c56a6dbec304e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7a4f-c83f-7fd3-9d3a-e52ffc06f97e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 350,
+      "total_deletions": 10,
+      "accepted_lines": 1730,
+      "overriden_lines": 0
+    },
+    "e32f9530a5463689": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7f45-6dcd-7810-b362-d89c40778896",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    },
+    "f78fa76e7aa06e40": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-4f4f967f-4eed-4bf6-83ee-9218514fcb8c",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
