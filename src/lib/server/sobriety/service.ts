@@ -5,7 +5,7 @@ import type { SobrietyPageState } from '$lib/features/sobriety/controller';
 import { refreshWeeklyReviewArtifactsServer } from '$lib/server/review/service';
 import { getServerDrizzleClient } from '$lib/server/db/drizzle/client';
 import { drizzleSchema } from '$lib/server/db/drizzle/schema';
-import { selectMirrorRecordById, selectMirrorRecordsByField, upsertMirrorRecord } from '$lib/server/db/drizzle/mirror';
+import { selectMirrorRecordsByField, upsertMirrorRecord } from '$lib/server/db/drizzle/mirror';
 
 async function upsertDailyRecordPatch(localDay: string, patch: { sobrietyStatus?: 'sober' | 'lapse' | 'recovery'; cravingScore?: number }) {
   const { db } = getServerDrizzleClient();

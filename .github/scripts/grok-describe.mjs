@@ -178,8 +178,6 @@ function generateDependencyChangelog(diff) {
   const lines = diff.split('\n');
   const changes = { added: [], updated: [], removed: [] };
   
-  let currentSection = null;
-  
   for (const line of lines) {
     // Bun.lock format: @@ -version +version @@
     if (line.startsWith('@@')) {
@@ -211,7 +209,7 @@ function generateDependencyChangelog(diff) {
     
     // Detect version updates (look for lines with both old and new)
     if (line.includes('@') && line.includes('->')) {
-      const parts = line.split('->').map(p => p.trim());
+      const parts = line.split('->').map((part) => part.trim());
       if (parts.length === 2) {
         const oldMatch = parts[0].match(/^(@?[\w-]+)@([\d.]+)/);
         const newMatch = parts[1].match(/^(@?[\w-]+)@([\d.]+)/);
@@ -229,7 +227,7 @@ function generateDependencyChangelog(diff) {
   return changes;
 }
 
-function hasDependencyChanges(files, diff) {
+function hasDependencyChanges(files) {
   return files.some(f => 
     f.includes('package.json') || 
     f.includes('bun.lock') || 
@@ -246,7 +244,7 @@ function detectLanguage(text) {
   if (!text) return 'en';
   
   const patterns = {
-    en: /^[a-zA-Z0-9\s.,!?'"()\[\]{}:;\-\n]+$/,
+    en: /^[a-zA-Z0-9\s.,!?'"(){}:;\-\n]+$/,
     zh: /[\u4e00-\u9fff]/,
     ja: /[\u3040-\u309f\u30a0-\u30ff]/,
     ko: /[\uac00-\ud7af]/,
@@ -320,7 +318,6 @@ async function callXaiDescribe({ title, files, diff, config }) {
   const model = optionalEnv('XAI_MODEL', DEFAULT_MODEL);
   
   const prTypes = detectPRType(files, diff);
-  const includeChangelog = config.include_changelog !== 'false';
   const includeWalkthrough = config.include_walkthrough !== 'false';
 
   const payload = {
@@ -489,7 +486,7 @@ async function main() {
   const rawResult = await callXaiDescribe({ title, files, diff, config });
   
   // Generate dependency changelog if relevant
-  const depChanges = hasDependencyChanges(files, diff) ? generateDependencyChangelog(diff) : null;
+  const depChanges = hasDependencyChanges(files) ? generateDependencyChangelog(diff) : null;
   
   const result = {
     type: rawResult.type || prTypes[0] || 'change',

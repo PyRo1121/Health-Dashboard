@@ -1,6 +1,6 @@
 import { countHealthMetricEvents } from '$lib/core/domain/health-metrics';
 import type { HealthDbDailyRecordsStore, HealthDbHealthEventsStore } from '$lib/core/db/types';
-import type { DailyRecord, FoodEntry, HealthEvent } from '$lib/core/domain/types';
+import type { FoodEntry } from '$lib/core/domain/types';
 import type { NutritionRecommendationContextSnapshot } from './types';
 import { listFoodEntriesForDay, type FoodEntriesStore } from './store';
 

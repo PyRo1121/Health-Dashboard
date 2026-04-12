@@ -7,7 +7,7 @@
  */
 
 import { readFileSync, writeFileSync } from 'node:fs';
-import { createXaiResponse, extractMessageText, buildSearchTools, optionalEnv } from './xai-tooling.mjs';
+import { createXaiResponse, extractMessageText, buildSearchTools } from './xai-tooling.mjs';
 
 const XAI_MODEL = process.env.XAI_MODEL || 'grok-4-1-fast-reasoning';
 const XAI_API_KEY = process.env.XAI_API_KEY;

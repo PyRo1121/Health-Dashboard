@@ -1,6 +1,6 @@
 import type { HealthDbDailyRecordsStore, HealthDbSobrietyEventsStore } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
-import type { DailyRecord, SobrietyEvent } from '$lib/core/domain/types';
+import type { SobrietyEvent } from '$lib/core/domain/types';
 import { upsertDailyRecord } from '$lib/core/shared/daily-records';
 import { createRecordMeta } from '$lib/core/shared/records';
 
