@@ -36,7 +36,7 @@ describe('Sobriety route', () => {
     await waitFor(() => {
       expect(screen.getByText(/Current streak: 1 day/i)).toBeTruthy();
       expect(screen.getByText(/Stress spike after lunch/i)).toBeTruthy();
-      expect(screen.getByText(/Text sponsor/i)).toBeTruthy();
+      expect(screen.getByText(/Lapse context logged\./i)).toBeTruthy();
     });
   });
 });

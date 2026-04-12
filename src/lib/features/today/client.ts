@@ -14,7 +14,8 @@ import {
 
 export { beginTodaySave, createTodayPageState };
 
-const todayClient = createFeatureActionClient('/api/today');
+const todayClient =
+  createFeatureActionClient<Parameters<typeof loadTodayPageController>[0]>('/api/today');
 
 export async function loadTodayPage(localDay = currentLocalDay()): Promise<TodayPageState> {
   return await todayClient.action('load', (db) => loadTodayPageController(db, localDay), {

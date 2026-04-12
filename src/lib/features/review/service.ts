@@ -1,10 +1,41 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import type {
+  HealthDbAdherenceMatchesStore,
+  HealthDbAssessmentResultsStore,
+  HealthDbDailyRecordsStore,
+  HealthDbDerivedGroceryItemsStore,
+  HealthDbFoodCatalogItemsStore,
+  HealthDbFoodEntriesStore,
+  HealthDbHealthEventsStore,
+  HealthDbJournalEntriesStore,
+  HealthDbManualGroceryItemsStore,
+  HealthDbPlanSlotsStore,
+  HealthDbRecipeCatalogItemsStore,
+  HealthDbReviewSnapshotsStore,
+  HealthDbSobrietyEventsStore,
+  HealthDbWeeklyPlansStore,
+} from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
-import type { ReviewSnapshot } from '$lib/core/domain/types';
+import type {
+  AdherenceMatch,
+  AssessmentResult,
+  DailyRecord,
+  DerivedGroceryItem,
+  FoodCatalogItem,
+  FoodEntry,
+  GroceryItem,
+  HealthEvent,
+  JournalEntry,
+  ManualGroceryItem,
+  PlanSlot,
+  RecipeCatalogItem,
+  ReviewSnapshot,
+  SobrietyEvent,
+  WeeklyPlan,
+} from '$lib/core/domain/types';
 import { startOfWeek } from '$lib/core/shared/dates';
 import { updateRecordMeta } from '$lib/core/shared/records';
-import { buildWeekAdherenceMatches } from '$lib/features/adherence/service';
-import { deriveWeeklyGroceriesWithWarnings } from '$lib/features/groceries/service';
+import { computeWeekAdherenceMatches } from '$lib/features/adherence/matching';
+import { deriveWeeklyGroceriesFromData } from '$lib/features/groceries/derivation';
 import {
   buildAdherenceScores,
   buildAdherenceSignals,
@@ -32,31 +63,63 @@ import {
 export type { ReviewCorrelation, WeeklyReviewData } from './analytics';
 export { computeCorrelations, generateReviewFlags } from './analytics';
 
-export async function computeTrendComparisons(
-  db: HealthDatabase,
-  anchorDay: string
-): Promise<{
-  weekStart: string;
-  daysTracked: number;
-  averageMood: number;
-  averageSleep: number;
-  averageProtein: number;
-}> {
-  const { weekStart, days } = weekRangeFromAnchorDay(anchorDay);
-  const records = (await db.dailyRecords.toArray()).filter((record) => days.includes(record.date));
-  const foodEntries = (await db.foodEntries.toArray()).filter((entry) =>
-    days.includes(entry.localDay)
-  );
-  return computeTrendComparisonsFromData(weekStart, records, foodEntries);
+export interface ReviewStorage
+  extends
+    HealthDbDailyRecordsStore,
+    HealthDbFoodEntriesStore,
+    HealthDbSobrietyEventsStore,
+    HealthDbAssessmentResultsStore,
+    HealthDbHealthEventsStore,
+    HealthDbJournalEntriesStore,
+    HealthDbFoodCatalogItemsStore,
+    HealthDbRecipeCatalogItemsStore,
+    HealthDbWeeklyPlansStore,
+    HealthDbPlanSlotsStore,
+    HealthDbDerivedGroceryItemsStore,
+    HealthDbManualGroceryItemsStore,
+    HealthDbReviewSnapshotsStore,
+    HealthDbAdherenceMatchesStore {}
+
+export interface ReviewSourceData {
+  dailyRecords: DailyRecord[];
+  foodEntries: FoodEntry[];
+  sobrietyEvents: SobrietyEvent[];
+  assessments: AssessmentResult[];
+  healthEvents: HealthEvent[];
+  journalEntries: JournalEntry[];
+  foodCatalogItems: FoodCatalogItem[];
+  recipeCatalogItems: RecipeCatalogItem[];
+  weeklyPlans: WeeklyPlan[];
+  planSlots: PlanSlot[];
 }
 
-export async function buildWeeklySnapshot(
-  db: HealthDatabase,
-  anchorDay: string
-): Promise<WeeklyReviewData> {
-  const { weekStart, days } = weekRangeFromAnchorDay(anchorDay);
+export interface ReviewWeekData {
+  anchorDay: string;
+  weekStart: string;
+  weekRecords: DailyRecord[];
+  weekFood: FoodEntry[];
+  weekSobriety: SobrietyEvent[];
+  weekAssessments: AssessmentResult[];
+  weekHealthEvents: HealthEvent[];
+  weekJournalEntries: JournalEntry[];
+  foodCatalogItems: FoodCatalogItem[];
+  recipeCatalogItems: RecipeCatalogItem[];
+  weeklyPlan: WeeklyPlan | null;
+  weekPlanSlots: PlanSlot[];
+}
+
+function latestDay(days: Array<string | null | undefined>): string | null {
+  return (
+    days
+      .filter((day): day is string => Boolean(day))
+      .sort()
+      .at(-1) ?? null
+  );
+}
+
+async function loadReviewSourceData(store: ReviewStorage): Promise<ReviewSourceData> {
   const [
-    records,
+    dailyRecords,
     foodEntries,
     sobrietyEvents,
     assessments,
@@ -67,54 +130,157 @@ export async function buildWeeklySnapshot(
     weeklyPlans,
     planSlots,
   ] = await Promise.all([
-    db.dailyRecords.toArray(),
-    db.foodEntries.toArray(),
-    db.sobrietyEvents.toArray(),
-    db.assessmentResults.toArray(),
-    db.healthEvents.toArray(),
-    db.journalEntries.toArray(),
-    db.foodCatalogItems.toArray(),
-    db.recipeCatalogItems.toArray(),
-    db.weeklyPlans.toArray(),
-    db.planSlots.toArray(),
+    store.dailyRecords.toArray(),
+    store.foodEntries.toArray(),
+    store.sobrietyEvents.toArray(),
+    store.assessmentResults.toArray(),
+    store.healthEvents.toArray(),
+    store.journalEntries.toArray(),
+    store.foodCatalogItems.toArray(),
+    store.recipeCatalogItems.toArray(),
+    store.weeklyPlans.toArray(),
+    store.planSlots.toArray(),
   ]);
 
-  const weekRecords = filterByDays(records, (record) => record.date, days);
+  return {
+    dailyRecords,
+    foodEntries,
+    sobrietyEvents,
+    assessments,
+    healthEvents,
+    journalEntries,
+    foodCatalogItems,
+    recipeCatalogItems,
+    weeklyPlans,
+    planSlots,
+  };
+}
+
+export function resolveReviewAnchorDayFromSourceData(
+  sourceData: ReviewSourceData,
+  requestedAnchorDay: string
+): string {
+  const { weekStart, days } = weekRangeFromAnchorDay(requestedAnchorDay);
+  const daySet = new Set(days);
+  const {
+    dailyRecords,
+    foodEntries,
+    sobrietyEvents,
+    assessments,
+    healthEvents,
+    journalEntries,
+    weeklyPlans,
+    planSlots,
+  } = sourceData;
+
+  const weeklyPlanIds = new Set(
+    weeklyPlans.filter((plan) => plan.weekStart === weekStart).map((plan) => plan.id)
+  );
+  const hasActivity =
+    dailyRecords.some((record) => daySet.has(record.date)) ||
+    foodEntries.some((entry) => daySet.has(entry.localDay)) ||
+    sobrietyEvents.some((event) => daySet.has(event.localDay)) ||
+    assessments.some((assessment) => daySet.has(assessment.localDay)) ||
+    healthEvents.some((event) => daySet.has(event.localDay)) ||
+    journalEntries.some((entry) => daySet.has(entry.localDay)) ||
+    planSlots.some((slot) => weeklyPlanIds.has(slot.weeklyPlanId));
+
+  const latestAnchorDay = latestDay([
+    ...dailyRecords.map((record) => record.date),
+    ...foodEntries.map((entry) => entry.localDay),
+    ...sobrietyEvents.map((event) => event.localDay),
+    ...assessments.map((assessment) => assessment.localDay),
+    ...healthEvents.map((event) => event.localDay),
+    ...journalEntries.map((entry) => entry.localDay),
+    ...weeklyPlans.map((plan) => plan.weekStart),
+  ]);
+
+  if (hasActivity || !latestAnchorDay) {
+    return requestedAnchorDay;
+  }
+
+  return latestAnchorDay;
+}
+
+export function selectReviewWeekData(
+  sourceData: ReviewSourceData,
+  anchorDay: string
+): ReviewWeekData {
+  const { weekStart, days } = weekRangeFromAnchorDay(anchorDay);
+  const {
+    dailyRecords,
+    foodEntries,
+    sobrietyEvents,
+    assessments,
+    healthEvents,
+    journalEntries,
+    foodCatalogItems,
+    recipeCatalogItems,
+    weeklyPlans,
+    planSlots,
+  } = sourceData;
+  const weekRecords = filterByDays(dailyRecords, (record) => record.date, days);
   const weekFood = filterByDays(foodEntries, (entry) => entry.localDay, days);
   const weekSobriety = filterByDays(sobrietyEvents, (event) => event.localDay, days);
   const weekAssessments = filterByDays(assessments, (assessment) => assessment.localDay, days);
   const weekHealthEvents = filterByDays(healthEvents, (event) => event.localDay, days);
   const weekJournalEntries = filterByDays(journalEntries, (entry) => entry.localDay, days);
-  const journalDays = new Set(weekJournalEntries.map((entry) => entry.localDay));
   const weeklyPlan = weeklyPlans.find((plan) => plan.weekStart === weekStart) ?? null;
   const weekPlanSlots = weeklyPlan
     ? planSlots.filter((slot) => slot.weeklyPlanId === weeklyPlan.id)
     : [];
-  const weekGroceries = weeklyPlan
-    ? (await deriveWeeklyGroceriesWithWarnings(db, weeklyPlan.id, recipeCatalogItems)).items
-    : [];
-  const adherenceMatches = await buildWeekAdherenceMatches(
-    db,
-    weekStart,
-    weekPlanSlots,
-    weekFood,
-    anchorDay
-  );
 
+  return {
+    anchorDay,
+    weekStart,
+    weekRecords,
+    weekFood,
+    weekSobriety,
+    weekAssessments,
+    weekHealthEvents,
+    weekJournalEntries,
+    foodCatalogItems,
+    recipeCatalogItems,
+    weeklyPlan,
+    weekPlanSlots,
+  };
+}
+
+export function buildWeeklySnapshotFromWeekData(input: {
+  weekData: ReviewWeekData;
+  existingSnapshot?: ReviewSnapshot;
+  weekGroceries: GroceryItem[];
+  adherenceMatches: AdherenceMatch[];
+}): WeeklyReviewData {
+  const { weekData, existingSnapshot, weekGroceries, adherenceMatches } = input;
+  const {
+    anchorDay,
+    weekStart,
+    weekRecords,
+    weekFood,
+    weekSobriety,
+    weekAssessments,
+    weekHealthEvents,
+    weekJournalEntries,
+    foodCatalogItems,
+    recipeCatalogItems,
+    weeklyPlan,
+    weekPlanSlots,
+  } = weekData;
+  const journalDays = new Set(weekJournalEntries.map((entry) => entry.localDay));
   const trends = computeTrendComparisonsFromData(weekStart, weekRecords, weekFood);
   const correlations = computeCorrelations(weekRecords, weekFood);
   const flags = generateReviewFlags(weekRecords, weekSobriety, weekAssessments);
-  const existing = await db.reviewSnapshots.get(`review:${weekStart}`);
   const timestamp = nowIso();
 
   const snapshot: ReviewSnapshot = {
-    ...updateRecordMeta(existing, `review:${weekStart}`, timestamp),
+    ...updateRecordMeta(existingSnapshot, `review:${weekStart}`, timestamp),
     weekStart,
     headline: buildHeadline(weekRecords, flags),
     daysTracked: weekRecords.length,
     flags,
     correlations,
-    experiment: existing?.experiment,
+    experiment: existingSnapshot?.experiment,
   };
 
   return {
@@ -156,12 +322,157 @@ export async function buildWeeklySnapshot(
   };
 }
 
+async function listAdherenceMatchesForWeek(
+  store: ReviewStorage,
+  weekStart: string
+): Promise<AdherenceMatch[]> {
+  return await store.adherenceMatches.where('weekStart').equals(weekStart).toArray();
+}
+
+async function listDerivedGroceriesForPlan(
+  store: ReviewStorage,
+  weeklyPlanId: string
+): Promise<DerivedGroceryItem[]> {
+  return await store.derivedGroceryItems.where('weeklyPlanId').equals(weeklyPlanId).toArray();
+}
+
+async function listManualGroceriesForPlan(
+  store: ReviewStorage,
+  weeklyPlanId: string
+): Promise<ManualGroceryItem[]> {
+  return await store.manualGroceryItems.where('weeklyPlanId').equals(weeklyPlanId).toArray();
+}
+
+async function persistDerivedGroceries(
+  store: ReviewStorage,
+  nextItems: DerivedGroceryItem[],
+  existingItems: DerivedGroceryItem[]
+): Promise<void> {
+  for (const item of nextItems) {
+    await store.derivedGroceryItems.put(item);
+  }
+
+  for (const staleItem of existingItems) {
+    if (!nextItems.find((item) => item.id === staleItem.id)) {
+      await store.derivedGroceryItems.delete(staleItem.id);
+    }
+  }
+}
+
+async function persistAdherenceMatches(
+  store: ReviewStorage,
+  nextMatches: AdherenceMatch[],
+  existingMatches: AdherenceMatch[]
+): Promise<void> {
+  for (const match of nextMatches) {
+    await store.adherenceMatches.put(match);
+  }
+
+  for (const staleMatch of existingMatches) {
+    if (!nextMatches.find((match) => match.id === staleMatch.id)) {
+      await store.adherenceMatches.delete(staleMatch.id);
+    }
+  }
+}
+
+export async function resolveReviewAnchorDay(
+  store: ReviewStorage,
+  requestedAnchorDay: string
+): Promise<string> {
+  return resolveReviewAnchorDayFromSourceData(
+    await loadReviewSourceData(store),
+    requestedAnchorDay
+  );
+}
+
+export async function computeTrendComparisons(
+  store: ReviewStorage,
+  anchorDay: string
+): Promise<{
+  weekStart: string;
+  daysTracked: number;
+  averageMood: number;
+  averageSleep: number;
+  averageProtein: number;
+}> {
+  const weekData = selectReviewWeekData(await loadReviewSourceData(store), anchorDay);
+  return computeTrendComparisonsFromData(
+    weekData.weekStart,
+    weekData.weekRecords,
+    weekData.weekFood
+  );
+}
+
+export async function buildWeeklySnapshot(
+  store: ReviewStorage,
+  anchorDay: string
+): Promise<WeeklyReviewData> {
+  const weekData = selectReviewWeekData(await loadReviewSourceData(store), anchorDay);
+  const [existingSnapshot, existingAdherenceMatches, existingDerivedItems, manualItems] =
+    await Promise.all([
+      store.reviewSnapshots.get(`review:${weekData.weekStart}`),
+      listAdherenceMatchesForWeek(store, weekData.weekStart),
+      weekData.weeklyPlan
+        ? listDerivedGroceriesForPlan(store, weekData.weeklyPlan.id)
+        : Promise.resolve([]),
+      weekData.weeklyPlan
+        ? listManualGroceriesForPlan(store, weekData.weeklyPlan.id)
+        : Promise.resolve([]),
+    ]);
+
+  const groceryResult = weekData.weeklyPlan
+    ? deriveWeeklyGroceriesFromData({
+        weeklyPlanId: weekData.weeklyPlan.id,
+        slots: weekData.weekPlanSlots,
+        recipes: weekData.recipeCatalogItems,
+        existingDerivedItems,
+        manualItems,
+      })
+    : { derivedItems: [], items: [], warnings: [] };
+  const adherenceComputation = computeWeekAdherenceMatches({
+    existingMatches: existingAdherenceMatches,
+    weekStart: weekData.weekStart,
+    planSlots: weekData.weekPlanSlots,
+    foodEntries: weekData.weekFood,
+    anchorDay,
+  });
+
+  if (!adherenceComputation.reusedExisting) {
+    await persistAdherenceMatches(store, adherenceComputation.matches, existingAdherenceMatches);
+  }
+
+  if (weekData.weeklyPlan) {
+    await persistDerivedGroceries(store, groceryResult.derivedItems, existingDerivedItems);
+  }
+
+  return buildWeeklySnapshotFromWeekData({
+    weekData,
+    existingSnapshot: existingSnapshot ?? undefined,
+    weekGroceries: groceryResult.items,
+    adherenceMatches: adherenceComputation.matches,
+  });
+}
+
+async function persistReviewSnapshot(
+  store: ReviewStorage,
+  weekly: WeeklyReviewData,
+  snapshot: ReviewSnapshot = weekly.snapshot
+): Promise<WeeklyReviewData> {
+  await store.reviewSnapshots.put(snapshot);
+  return snapshot === weekly.snapshot
+    ? weekly
+    : {
+        ...weekly,
+        snapshot,
+      };
+}
+
 export async function saveNextWeekExperiment(
-  db: HealthDatabase,
+  store: ReviewStorage,
   anchorDay: string,
   experiment: string
 ): Promise<ReviewSnapshot> {
-  const weekly = await buildWeeklySnapshot(db, anchorDay);
+  const weekly = await buildWeeklySnapshot(store, anchorDay);
   const timestamp = nowIso();
 
   const snapshot: ReviewSnapshot = {
@@ -170,17 +481,15 @@ export async function saveNextWeekExperiment(
     experiment,
   };
 
-  await db.reviewSnapshots.put(snapshot);
-  return snapshot;
+  return (await persistReviewSnapshot(store, weekly, snapshot)).snapshot;
 }
 
 export async function refreshWeeklyReviewArtifacts(
-  db: HealthDatabase,
+  store: ReviewStorage,
   anchorDay: string
 ): Promise<WeeklyReviewData> {
-  const weekly = await buildWeeklySnapshot(db, anchorDay);
-  await db.reviewSnapshots.put(weekly.snapshot);
-  return weekly;
+  const weekly = await buildWeeklySnapshot(store, anchorDay);
+  return await persistReviewSnapshot(store, weekly);
 }
 
 function isDatabaseClosedError(error: unknown): boolean {
@@ -191,11 +500,11 @@ function isDatabaseClosedError(error: unknown): boolean {
 }
 
 export async function refreshWeeklyReviewArtifactsSafely(
-  db: HealthDatabase,
+  store: ReviewStorage,
   anchorDay: string
 ): Promise<void> {
   try {
-    await refreshWeeklyReviewArtifacts(db, anchorDay);
+    await refreshWeeklyReviewArtifacts(store, anchorDay);
   } catch (error) {
     if (!isDatabaseClosedError(error)) {
       throw error;
@@ -204,7 +513,7 @@ export async function refreshWeeklyReviewArtifactsSafely(
 }
 
 export async function refreshWeeklyReviewArtifactsForDaysSafely(
-  db: HealthDatabase,
+  store: ReviewStorage,
   anchorDays: string[]
 ): Promise<void> {
   const refreshedWeeks = new Set<string>();
@@ -220,6 +529,6 @@ export async function refreshWeeklyReviewArtifactsForDaysSafely(
     }
     refreshedWeeks.add(weekStart);
 
-    await refreshWeeklyReviewArtifactsSafely(db, anchorDay);
+    await refreshWeeklyReviewArtifactsSafely(store, anchorDay);
   }
 }

@@ -10,7 +10,8 @@ import {
 
 export { createReviewPageState, setReviewExperiment };
 
-const reviewClient = createFeatureActionClient('/api/review');
+const reviewClient =
+  createFeatureActionClient<Parameters<typeof loadReviewPageController>[0]>('/api/review');
 
 export async function loadReviewPage(localDay = currentLocalDay()): Promise<ReviewPageState> {
   return await reviewClient.action('load', (db) => loadReviewPageController(db, localDay), {

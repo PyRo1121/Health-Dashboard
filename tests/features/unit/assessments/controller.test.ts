@@ -9,7 +9,7 @@ import {
 } from '$lib/features/assessments/controller';
 
 describe('assessments controller', () => {
-  const getDb = useTestHealthDb('assessments-page-controller');
+  const getDb = useTestHealthDb();
 
   it('loads and submits assessment controller state', async () => {
     const db = getDb();

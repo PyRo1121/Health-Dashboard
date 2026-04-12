@@ -1,5 +1,8 @@
 import type { WeeklyReviewData } from '$lib/features/review/service';
-import { buildJournalIntentHref, type JournalIntentHref } from '$lib/features/journal/navigation';
+import {
+  buildStoredJournalIntentHref,
+  type JournalIntentHref,
+} from '$lib/features/journal/navigation';
 import {
   buildNutritionIntentHref,
   type NutritionIntentHref,
@@ -56,7 +59,7 @@ function createReviewJournalIntentHref(
     linkedEventIds: string[];
   }
 ): JournalIntentHref {
-  return buildJournalIntentHref({
+  return buildStoredJournalIntentHref({
     source: 'review-context',
     localDay: weekly.anchorDay,
     entryType: input.entryType,

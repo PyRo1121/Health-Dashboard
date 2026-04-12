@@ -4,38 +4,38 @@ import {
   createFeatureRequestClient,
 } from '$lib/core/http/feature-client';
 import {
+  clearNutritionPlannedMeal as clearNutritionPlannedMealController,
+  planNutritionMeal as planNutritionMealController,
+  reuseNutritionMeal as reuseNutritionMealController,
+  saveNutritionCatalogItem as saveNutritionCatalogItemController,
+  saveNutritionMeal as saveNutritionMealController,
+  saveNutritionRecurringMeal as saveNutritionRecurringMealController,
+  type NutritionActionsStorage,
+} from './actions';
+import {
   applyNutritionBarcodeMatch,
   applyNutritionRecipeMatches,
   applyNutritionSearchMatches,
   applyPackagedNutritionMatches,
-  clearNutritionPlannedMeal as clearNutritionPlannedMealController,
   createNutritionPageState,
   loadNutritionPage as loadNutritionPageController,
-  planNutritionMeal as planNutritionMealController,
-  reuseNutritionMeal as reuseNutritionMealController,
+  selectNutritionMatch,
   updateNutritionBarcode,
   updateNutritionPackagedSearch,
   updateNutritionRecipeSearch,
-  saveNutritionCatalogItem as saveNutritionCatalogItemController,
-  saveNutritionMeal as saveNutritionMealController,
-  saveNutritionRecurringMeal as saveNutritionRecurringMealController,
-  selectNutritionMatch,
-  useNutritionRecipe,
   updateNutritionSearch,
-  type NutritionCatalogItemDraft,
-  type NutritionMealDraft,
+  useNutritionRecipe,
   type NutritionPageState,
-  type NutritionPlannedMealDraft,
-  type NutritionRecurringMealDraft,
-} from './controller';
-import {
-  findFoodCatalogItemByBarcode,
-  listFoodCatalogItems,
-  listRecipeCatalogItems,
-  searchFoodData,
-  searchPackagedFoodCatalog,
-  type FoodLookupResult,
-} from './service';
+} from './state';
+import type {
+  NutritionCatalogItemDraft,
+  NutritionMealDraft,
+  NutritionPlannedMealDraft,
+  NutritionRecurringMealDraft,
+} from './actions';
+import { findFoodCatalogItemByBarcode, searchFoodData, searchPackagedFoodCatalog } from './lookup';
+import type { FoodLookupResult } from './types';
+import { listFoodCatalogItems, listRecipeCatalogItems } from './store';
 import type { RecipeCatalogItem } from '$lib/core/domain/types';
 
 export {
@@ -46,13 +46,19 @@ export {
   updateNutritionSearch,
 };
 
-const nutritionClient = createFeatureActionClient('/api/nutrition');
-const packagedSearchClient = createFeatureRequestClient('/api/nutrition/search-packaged');
-const usdaSearchClient = createFeatureRequestClient('/api/nutrition/search-usda');
-const recipeSearchClient = createFeatureRequestClient('/api/nutrition/search-recipes');
+const nutritionClient = createFeatureActionClient<NutritionActionsStorage>('/api/nutrition');
+const packagedSearchClient = createFeatureRequestClient<
+  Parameters<typeof loadNutritionPageController>[0]
+>('/api/nutrition/search-packaged');
+const usdaSearchClient = createFeatureRequestClient<
+  Parameters<typeof loadNutritionPageController>[0]
+>('/api/nutrition/search-usda');
+const recipeSearchClient = createFeatureRequestClient<
+  Parameters<typeof loadNutritionPageController>[0]
+>('/api/nutrition/search-recipes');
 
 function createNutritionLookupClient(endpoint: string) {
-  return createFeatureRequestClient(endpoint);
+  return createFeatureRequestClient<Parameters<typeof loadNutritionPageController>[0]>(endpoint);
 }
 
 export async function loadNutritionPage(

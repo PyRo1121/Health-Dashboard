@@ -14,10 +14,6 @@ function requiredEnv(name) {
   return value;
 }
 
-function optionalEnv(name, fallback = '') {
-  return process.env[name] ?? fallback;
-}
-
 function parseEvents(reviews, comments, commits, checks) {
   const events = [];
   

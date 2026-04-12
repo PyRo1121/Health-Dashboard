@@ -1,35 +1,49 @@
-import { createDbActionPostHandler } from '$lib/server/http/action-route';
+import type { RequestHandler } from './$types';
+import { nutritionRequestSchema } from '$lib/features/nutrition/contracts';
 import {
-  loadNutritionPage,
-  planNutritionMeal,
-  reuseNutritionMeal,
-  clearNutritionPlannedMeal,
-  saveNutritionCatalogItem,
-  saveNutritionMeal,
-  saveNutritionRecurringMeal,
-  type NutritionPageState,
-} from '$lib/features/nutrition/controller';
-import { nutritionRequestSchema, type NutritionRequest } from '$lib/features/nutrition/contracts';
+  clearNutritionPlannedMealServer,
+  loadNutritionPageServer,
+  planNutritionMealServer,
+  reuseNutritionMealServer,
+  saveNutritionCatalogItemServer,
+  saveNutritionMealServer,
+  saveNutritionRecurringMealServer,
+} from '$lib/server/nutrition/service';
 
-export const POST = createDbActionPostHandler<NutritionRequest, NutritionPageState>(
-  {
-    load: (db, body) => loadNutritionPage(db, body.localDay, body.state),
-    saveMeal: (db, body) => saveNutritionMeal(db, body.state, body.draft),
-    planMeal: (db, body) => planNutritionMeal(db, body.state, body.draft),
-    saveRecurringMeal: (db, body) => saveNutritionRecurringMeal(db, body.state, body.draft),
-    saveCatalogItem: (db, body) => saveNutritionCatalogItem(db, body.state, body.draft),
-    clearPlannedMeal: (db, body) => clearNutritionPlannedMeal(db, body.state),
-    reuseMeal: (db, body) => reuseNutritionMeal(db, body.state, body.favoriteMealId),
-  },
-  undefined,
-  {
-    parseBody: async (request) => {
-      const parsed = nutritionRequestSchema.safeParse(await request.json());
-      if (!parsed.success) {
-        throw new Error('Invalid nutrition request payload.');
-      }
-      return parsed.data;
-    },
-    onParseError: () => new Response('Invalid nutrition request payload.', { status: 400 }),
+export const POST: RequestHandler = async ({ request }) => {
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Invalid nutrition request payload.', { status: 400 });
   }
-);
+
+  const parsed = nutritionRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response('Invalid nutrition request payload.', { status: 400 });
+  }
+
+  switch (parsed.data.action) {
+    case 'load':
+      return Response.json(await loadNutritionPageServer(parsed.data.localDay, parsed.data.state));
+    case 'saveMeal':
+      return Response.json(await saveNutritionMealServer(parsed.data.state, parsed.data.draft));
+    case 'planMeal':
+      return Response.json(await planNutritionMealServer(parsed.data.state, parsed.data.draft));
+    case 'saveRecurringMeal':
+      return Response.json(
+        await saveNutritionRecurringMealServer(parsed.data.state, parsed.data.draft)
+      );
+    case 'saveCatalogItem':
+      return Response.json(
+        await saveNutritionCatalogItemServer(parsed.data.state, parsed.data.draft)
+      );
+    case 'clearPlannedMeal':
+      return Response.json(await clearNutritionPlannedMealServer(parsed.data.state));
+    case 'reuseMeal':
+      return Response.json(
+        await reuseNutritionMealServer(parsed.data.state, parsed.data.favoriteMealId)
+      );
+  }
+};

@@ -1,43 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { HealthDatabase } from '$lib/core/db/types';
 
 describe('review route', () => {
   afterEach(() => {
-    vi.doUnmock('$lib/features/review/controller');
-    vi.doUnmock('$lib/server/http/action-route');
+    vi.doUnmock('$lib/server/review/service');
     vi.restoreAllMocks();
     vi.resetModules();
   });
 
   async function importRoute(overrides: {
-    db?: HealthDatabase;
-    loadReviewPage?: ReturnType<typeof vi.fn>;
-    saveReviewExperimentPage?: ReturnType<typeof vi.fn>;
+    loadReviewPageServer?: ReturnType<typeof vi.fn>;
+    saveReviewExperimentPageServer?: ReturnType<typeof vi.fn>;
   }) {
-    const db = overrides.db ?? ({} as HealthDatabase);
-    const actual = await vi.importActual<typeof import('$lib/server/http/action-route')>(
-      '$lib/server/http/action-route'
-    );
-
-    vi.doMock('$lib/server/http/action-route', () => ({
-      ...actual,
-      createDbActionPostHandler: (
-        handlers: Parameters<typeof actual.createDbActionPostHandler>[0],
-        _deps: Parameters<typeof actual.createDbActionPostHandler>[1],
-        options: Parameters<typeof actual.createDbActionPostHandler>[2]
-      ) =>
-        actual.createDbActionPostHandler(
-          handlers,
-          {
-            withDb: async (run) => await run(db),
-            toResponse: (body) => Response.json(body),
-          },
-          options
-        ),
-    }));
-    vi.doMock('$lib/features/review/controller', () => ({
-      loadReviewPage:
-        overrides.loadReviewPage ??
+    vi.doMock('$lib/server/review/service', () => ({
+      loadReviewPageServer:
+        overrides.loadReviewPageServer ??
         vi.fn(async () => ({
           loading: false,
           localDay: '2026-04-04',
@@ -46,9 +22,9 @@ describe('review route', () => {
           loadNotice: '',
           saveNotice: '',
         })),
-      saveReviewExperimentPage:
-        overrides.saveReviewExperimentPage ??
-        vi.fn(async (database: HealthDatabase, state: unknown) => ({
+      saveReviewExperimentPageServer:
+        overrides.saveReviewExperimentPageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
           saveNotice: 'Experiment saved.',
         })),
@@ -57,9 +33,8 @@ describe('review route', () => {
     return await import('../../../../src/routes/api/review/+server.ts');
   }
 
-  it('loads review page state through the action route', async () => {
-    const db = {} as HealthDatabase;
-    const loadReviewPage = vi.fn(async () => ({
+  it('loads review page state through the server route', async () => {
+    const loadReviewPageServer = vi.fn(async () => ({
       loading: false,
       localDay: '2026-04-04',
       weekly: { experimentOptions: ['More protein'] },
@@ -67,7 +42,7 @@ describe('review route', () => {
       loadNotice: '',
       saveNotice: '',
     }));
-    const { POST } = await importRoute({ db, loadReviewPage });
+    const { POST } = await importRoute({ loadReviewPageServer });
 
     const response = await POST({
       request: new Request('http://health.test/api/review', {
@@ -83,11 +58,10 @@ describe('review route', () => {
         loading: false,
       })
     );
-    expect(loadReviewPage).toHaveBeenCalledWith(db, '2026-04-04');
+    expect(loadReviewPageServer).toHaveBeenCalledWith('2026-04-04');
   });
 
-  it('saves the selected review experiment through the action route', async () => {
-    const db = {} as HealthDatabase;
+  it('saves the selected review experiment through the server route', async () => {
     const state = {
       loading: false,
       localDay: '2026-04-04',
@@ -96,11 +70,11 @@ describe('review route', () => {
       loadNotice: '',
       saveNotice: '',
     };
-    const saveReviewExperimentPage = vi.fn(async () => ({
+    const saveReviewExperimentPageServer = vi.fn(async () => ({
       ...state,
       saveNotice: 'Experiment saved.',
     }));
-    const { POST } = await importRoute({ db, saveReviewExperimentPage });
+    const { POST } = await importRoute({ saveReviewExperimentPageServer });
 
     const response = await POST({
       request: new Request('http://health.test/api/review', {
@@ -113,12 +87,12 @@ describe('review route', () => {
     expect(await response.json()).toEqual(
       expect.objectContaining({ saveNotice: 'Experiment saved.' })
     );
-    expect(saveReviewExperimentPage).toHaveBeenCalledWith(db, state);
+    expect(saveReviewExperimentPageServer).toHaveBeenCalledWith(state);
   });
 
   it('returns 400 for invalid review action payloads', async () => {
-    const loadReviewPage = vi.fn();
-    const { POST } = await importRoute({ loadReviewPage });
+    const loadReviewPageServer = vi.fn();
+    const { POST } = await importRoute({ loadReviewPageServer });
 
     const response = await POST({
       request: new Request('http://health.test/api/review', {
@@ -129,6 +103,6 @@ describe('review route', () => {
 
     expect(response.status).toBe(400);
     expect(await response.text()).toBe('Invalid review request payload.');
-    expect(loadReviewPage).not.toHaveBeenCalled();
+    expect(loadReviewPageServer).not.toHaveBeenCalled();
   });
 });

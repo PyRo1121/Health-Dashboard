@@ -1,10 +1,10 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import type { HealthDbHealthEventsStore } from '$lib/core/db/types';
 import {
   createLocalDayPageState,
   loadLocalDayPageState,
   reloadLocalDayPageState,
 } from '$lib/core/shared/local-day-page';
-import type { JournalEntry } from '$lib/core/domain/types';
+import type { HealthEvent, JournalEntry } from '$lib/core/domain/types';
 import {
   createEmptyJournalDraft,
   createJournalContextRows,
@@ -16,8 +16,11 @@ import {
   listJournalEntriesForDay,
   saveJournalEntry,
   type JournalDraft,
+  type JournalEntriesStore,
 } from '$lib/features/journal/service';
 import type { JournalIntent } from './navigation';
+
+export interface JournalPageStorage extends JournalEntriesStore, HealthDbHealthEventsStore {}
 
 export interface JournalPageState {
   loading: boolean;
@@ -39,23 +42,34 @@ export function createJournalPageState(): JournalPageState {
 }
 
 async function listLinkedJournalEvents(
-  db: HealthDatabase,
+  store: JournalPageStorage,
   localDay: string
-): Promise<import('$lib/core/domain/types').HealthEvent[]> {
-  return (await db.healthEvents.where('localDay').equals(localDay).toArray()).sort((left, right) =>
-    (right.sourceTimestamp ?? right.updatedAt).localeCompare(left.sourceTimestamp ?? left.updatedAt)
+): Promise<HealthEvent[]> {
+  return (await store.healthEvents.where('localDay').equals(localDay).toArray()).sort(
+    (left, right) =>
+      (right.sourceTimestamp ?? right.updatedAt).localeCompare(
+        left.sourceTimestamp ?? left.updatedAt
+      )
   );
 }
 
+async function loadJournalContextRows(
+  store: JournalPageStorage,
+  localDay: string,
+  linkedEventIds: string[]
+): Promise<JournalLinkedContextRow[]> {
+  return createJournalContextRows(await listLinkedJournalEvents(store, localDay), linkedEventIds);
+}
+
 export async function loadJournalPage(
-  db: HealthDatabase,
+  store: JournalPageStorage,
   localDay: string,
   state: JournalPageState
 ): Promise<JournalPageState> {
   const loaded = await loadLocalDayPageState(
     state,
     localDay,
-    (day) => listJournalEntriesForDay(db, day),
+    (day) => listJournalEntriesForDay(store, day),
     (current, nextLocalDay, entries) => ({
       ...current,
       loading: false,
@@ -71,10 +85,7 @@ export async function loadJournalPage(
 
   return {
     ...loaded,
-    linkedContextRows: createJournalContextRows(
-      await listLinkedJournalEvents(db, localDay),
-      loaded.draft.linkedEventIds
-    ),
+    linkedContextRows: await loadJournalContextRows(store, localDay, loaded.draft.linkedEventIds),
   };
 }
 
@@ -87,13 +98,13 @@ export function beginJournalSave(state: JournalPageState): JournalPageState {
 }
 
 async function refreshJournalEntries(
-  db: HealthDatabase,
+  store: JournalPageStorage,
   state: JournalPageState,
   overrides: Partial<JournalPageState> = {}
 ): Promise<JournalPageState> {
   const next = await reloadLocalDayPageState(
     state,
-    (localDay) => listJournalEntriesForDay(db, localDay),
+    (localDay) => listJournalEntriesForDay(store, localDay),
     (current, entries) => ({
       ...current,
       entries,
@@ -103,19 +114,20 @@ async function refreshJournalEntries(
 
   return {
     ...next,
-    linkedContextRows: createJournalContextRows(
-      await listLinkedJournalEvents(db, next.localDay),
+    linkedContextRows: await loadJournalContextRows(
+      store,
+      next.localDay,
       next.draft.linkedEventIds
     ),
   };
 }
 
 export async function saveJournalPage(
-  db: HealthDatabase,
+  store: JournalPageStorage,
   state: JournalPageState
 ): Promise<JournalPageState> {
-  const saved = await saveJournalEntry(db, normalizeJournalDraft(state.draft, state.localDay));
-  return await refreshJournalEntries(db, state, {
+  const saved = await saveJournalEntry(store, normalizeJournalDraft(state.draft, state.localDay));
+  return await refreshJournalEntries(store, state, {
     saving: false,
     saveNotice: saved.title ? `${saved.title} saved.` : 'Entry saved.',
     draft: createEmptyJournalDraft(state.localDay),
@@ -124,21 +136,19 @@ export async function saveJournalPage(
 }
 
 export async function deleteJournalPageEntry(
-  db: HealthDatabase,
+  store: JournalPageStorage,
   state: JournalPageState,
   id: string
 ): Promise<JournalPageState> {
-  await deleteJournalEntry(db, id);
-  return await refreshJournalEntries(db, state);
+  await deleteJournalEntry(store, id);
+  return await refreshJournalEntries(store, state);
 }
 
 export async function hydrateJournalIntentPage(
-  db: HealthDatabase,
+  store: JournalPageStorage,
   state: JournalPageState,
   intent: JournalIntent
 ): Promise<JournalPageState> {
-  const linkedEvents = await listLinkedJournalEvents(db, intent.localDay);
-
   return {
     ...state,
     loading: false,
@@ -155,7 +165,7 @@ export async function hydrateJournalIntentPage(
       body: intent.body,
       linkedEventIds: [...intent.linkedEventIds],
     },
-    linkedContextRows: createJournalContextRows(linkedEvents, intent.linkedEventIds),
+    linkedContextRows: await loadJournalContextRows(store, intent.localDay, intent.linkedEventIds),
   };
 }
 

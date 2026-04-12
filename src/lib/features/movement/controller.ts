@@ -1,4 +1,3 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import type { ExerciseCatalogItem, WorkoutTemplate } from '$lib/core/domain/types';
 import {
   createWorkoutTemplateForm,
@@ -10,6 +9,7 @@ import {
   listWorkoutTemplates,
   saveWorkoutTemplate,
   searchExerciseCatalog,
+  type MovementStorage,
 } from './service';
 import {
   addEmptyExerciseToWorkoutTemplateState,
@@ -42,10 +42,10 @@ export function createMovementPageState(): MovementPageState {
   };
 }
 
-export async function loadMovementPage(db: HealthDatabase): Promise<MovementPageState> {
+export async function loadMovementPage(store: MovementStorage): Promise<MovementPageState> {
   const [workoutTemplates, exerciseCatalogItems] = await Promise.all([
-    listWorkoutTemplates(db),
-    listExerciseCatalogItems(db),
+    listWorkoutTemplates(store),
+    listExerciseCatalogItems(store),
   ]);
 
   return {
@@ -53,18 +53,6 @@ export async function loadMovementPage(db: HealthDatabase): Promise<MovementPage
     loading: false,
     workoutTemplates,
     exerciseCatalogItems,
-  };
-}
-
-async function reloadMovementPageState(
-  db: HealthDatabase,
-  state: MovementPageState,
-  overrides: Partial<MovementPageState> = {}
-): Promise<MovementPageState> {
-  const next = await loadMovementPage(db);
-  return {
-    ...next,
-    ...overrides,
   };
 }
 
@@ -117,17 +105,18 @@ export function searchMovementExercises(state: MovementPageState): MovementPageS
 }
 
 export async function saveMovementWorkoutTemplatePage(
-  db: HealthDatabase,
+  store: MovementStorage,
   state: MovementPageState
 ): Promise<MovementPageState> {
-  await saveWorkoutTemplate(db, {
+  await saveWorkoutTemplate(store, {
     title: state.workoutTemplateForm.title,
     goal: state.workoutTemplateForm.goal,
     exerciseRefs: normalizeExerciseDrafts(state.workoutTemplateForm.exercises),
   });
 
-  return await reloadMovementPageState(db, state, {
+  return {
+    ...(await loadMovementPage(store)),
     saveNotice: 'Workout template saved.',
     workoutTemplateForm: createWorkoutTemplateForm(),
-  });
+  };
 }

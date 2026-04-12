@@ -1,11 +1,11 @@
 import { z } from 'zod';
+import type { NutritionPageState } from './state';
 import type {
   NutritionCatalogItemDraft,
   NutritionMealDraft,
-  NutritionPageState,
   NutritionPlannedMealDraft,
   NutritionRecurringMealDraft,
-} from './controller';
+} from './actions';
 
 function isNutritionPageState(value: unknown): value is NutritionPageState {
   if (!value || typeof value !== 'object') return false;

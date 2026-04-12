@@ -8,7 +8,7 @@ import {
 } from '$lib/features/movement/controller';
 
 describe('movement controller', () => {
-  const getDb = useTestHealthDb('movement-page-controller');
+  const getDb = useTestHealthDb();
 
   it('loads movement state and saves a workout template', async () => {
     const db = getDb();

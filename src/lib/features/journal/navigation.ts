@@ -9,68 +9,66 @@ export interface JournalIntent {
   linkedEventIds: string[];
 }
 
-export type JournalIntentHref = `/journal?${string}`;
+export type JournalIntentHref = `/journal?intentId=${string}`;
 
-export function buildJournalIntentHref(intent: JournalIntent): JournalIntentHref {
-  const params = new URLSearchParams({
-    source: intent.source,
-    localDay: intent.localDay,
-    entryType: intent.entryType,
-    title: intent.title,
-    body: intent.body,
-  });
+const JOURNAL_INTENT_STORAGE_PREFIX = 'health:journal-intent:';
+const journalIntentMemory = new Map<string, JournalIntent>();
 
-  if (intent.linkedEventIds.length) {
-    params.set('linkedEventIds', intent.linkedEventIds.join(','));
+function createJournalIntentId(): string {
+  if (typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function') {
+    return crypto.randomUUID();
   }
 
-  return `/journal?${params.toString()}` as JournalIntentHref;
+  return `intent-${Date.now()}-${Math.random().toString(36).slice(2, 10)}`;
+}
+
+function persistJournalIntent(id: string, intent: JournalIntent): void {
+  journalIntentMemory.set(id, intent);
+
+  if (typeof sessionStorage === 'undefined') {
+    return;
+  }
+
+  sessionStorage.setItem(`${JOURNAL_INTENT_STORAGE_PREFIX}${id}`, JSON.stringify(intent));
+}
+
+function consumeStoredJournalIntent(id: string): JournalIntent | null {
+  const memoryIntent = journalIntentMemory.get(id) ?? null;
+  journalIntentMemory.delete(id);
+
+  if (typeof sessionStorage === 'undefined') {
+    return memoryIntent;
+  }
+
+  const storageKey = `${JOURNAL_INTENT_STORAGE_PREFIX}${id}`;
+  const raw = sessionStorage.getItem(storageKey);
+  if (!raw) {
+    return memoryIntent;
+  }
+
+  sessionStorage.removeItem(storageKey);
+
+  try {
+    return JSON.parse(raw) as JournalIntent;
+  } catch {
+    return memoryIntent;
+  }
+}
+
+export function buildStoredJournalIntentHref(intent: JournalIntent): JournalIntentHref {
+  const intentId = createJournalIntentId();
+  persistJournalIntent(intentId, intent);
+  return `/journal?intentId=${encodeURIComponent(intentId)}` as JournalIntentHref;
 }
 
 export function readJournalIntentFromSearch(search: string): JournalIntent | null {
   const params = new URLSearchParams(search);
-  const source = params.get('source');
-  const localDay = params.get('localDay')?.trim();
-  const entryType = params.get('entryType') as JournalEntry['entryType'] | null;
-  const title = params.get('title')?.trim();
-  const body = params.get('body')?.trim();
-  const linkedEventIds = (params.get('linkedEventIds') ?? '')
-    .split(',')
-    .map((value) => value.trim())
-    .filter(Boolean);
-
-  const allowedSources = new Set<JournalIntent['source']>(['today-recovery', 'review-context']);
-  const allowedEntryTypes = new Set<JournalIntent['entryType']>([
-    'freeform',
-    'morning_intention',
-    'evening_review',
-    'craving_reflection',
-    'lapse_reflection',
-    'symptom_note',
-    'experiment_note',
-    'provider_visit_note',
-  ]);
-
-  if (
-    !source ||
-    !allowedSources.has(source as JournalIntent['source']) ||
-    !localDay ||
-    !entryType ||
-    !allowedEntryTypes.has(entryType) ||
-    !title ||
-    !body
-  ) {
+  const intentId = params.get('intentId')?.trim();
+  if (!intentId) {
     return null;
   }
 
-  return {
-    source: source as JournalIntent['source'],
-    localDay,
-    entryType,
-    title,
-    body,
-    linkedEventIds,
-  };
+  return consumeStoredJournalIntent(intentId);
 }
 
 export function clearJournalIntentFromLocation(
@@ -78,12 +76,7 @@ export function clearJournalIntentFromLocation(
   history: Pick<History, 'replaceState' | 'state'>
 ): void {
   const params = new URLSearchParams(location.search);
-  params.delete('source');
-  params.delete('localDay');
-  params.delete('entryType');
-  params.delete('title');
-  params.delete('body');
-  params.delete('linkedEventIds');
+  params.delete('intentId');
 
   const nextSearch = params.toString();
   const nextUrl = `${location.pathname}${nextSearch ? `?${nextSearch}` : ''}${location.hash ?? ''}`;

@@ -37,10 +37,8 @@
   import { buildNutritionRecommendations } from '$lib/features/nutrition/recommend';
   import { onBrowserRouteMount } from '$lib/core/ui/route-runtime';
   import RoutePageHeader from '$lib/core/ui/shell/RoutePageHeader.svelte';
-  import {
-    foodLookupResultFromCatalogItem,
-    type FoodLookupResult,
-  } from '$lib/features/nutrition/service';
+  import { foodLookupResultFromCatalogItem } from '$lib/features/nutrition/lookup';
+  import type { FoodLookupResult } from '$lib/features/nutrition/types';
 
   let page = $state(createNutritionPageState());
   let draftFromForm = $derived(
@@ -200,8 +198,10 @@
     };
   }
 
-  function useRecipe(recipe: RecipeCatalogItem) {
-    page = useNutritionRecipeIdea(page, recipe);
+  async function useRecipe(recipe: RecipeCatalogItem) {
+    await runNutritionAction(async () => {
+      page = useNutritionRecipeIdea(page, recipe);
+    });
   }
 
   function loadPlannedMeal() {

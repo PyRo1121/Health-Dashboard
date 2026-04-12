@@ -2,10 +2,10 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { resetRouteDb, expectHeading, waitForText } from '../../../support/component/routeHarness';
 import { seedReviewSnapshotInputs } from '../../../support/component/routeSeeds';
-import { getHealthDb } from '$lib/core/db/client';
+import { getTestHealthDb } from '$lib/core/db/test-client';
 import { logAnxietyEvent, logSymptomEvent } from '$lib/features/health/service';
 import { saveJournalEntry } from '$lib/features/journal/service';
-import { createFoodEntry, saveFoodCatalogItem } from '$lib/features/nutrition/service';
+import { createFoodEntry, saveFoodCatalogItem } from '$lib/features/nutrition/store';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 
 vi.mock('$lib/features/review/client', async () => {
@@ -69,7 +69,7 @@ describe('Review route', () => {
   });
 
   it('labels inferred adherence explicitly inside the review audit', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
     const food = await saveFoodCatalogItem(db, {
       name: 'Greek yogurt bowl',
@@ -114,7 +114,7 @@ describe('Review route', () => {
 
   it('shows actual misses and grocery waste when a planned meal slips', async () => {
     await seedReviewSnapshotInputs();
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const planSlots = await db.planSlots.toArray();
     const mealSlot = planSlots.find((slot) => slot.slotType === 'meal');
     const workoutSlot = planSlots.find((slot) => slot.slotType === 'workout');
@@ -148,7 +148,7 @@ describe('Review route', () => {
 
   it('shows a skip strategy card when a meal plan was skipped', async () => {
     await seedReviewSnapshotInputs();
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const mealSlot = (await db.planSlots.toArray()).find((slot) => slot.slotType === 'meal');
     if (!mealSlot) {
       throw new Error('Expected seeded meal slot');
@@ -170,7 +170,7 @@ describe('Review route', () => {
 
   it('shows context signals and journal excerpts inside review', async () => {
     await seedReviewSnapshotInputs();
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     await saveJournalEntry(db, {
       localDay: '2026-03-31',
       entryType: 'evening_review',
@@ -199,7 +199,7 @@ describe('Review route', () => {
 
   it('shows repeated context patterns inside review', async () => {
     await seedReviewSnapshotInputs();
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const symptomOne = await logSymptomEvent(db, {
       localDay: '2026-03-30',
       symptom: 'Headache',

@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getHealthDb } from '$lib/core/db/client';
+import { getTestHealthDb } from '$lib/core/db/test-client';
 import PlanPage from '../../../../src/routes/plan/+page.svelte';
 import { expectHeading, resetRouteDb } from '../../../support/component/routeHarness';
 
@@ -54,7 +54,7 @@ describe('Plan route', () => {
         screen.getByText(/Recovery · 2 exercises · Goblet squat · 3x8 · 60s rest/i)
       ).toBeTruthy();
     });
-    const [template] = await getHealthDb().workoutTemplates.toArray();
+    const [template] = await getTestHealthDb().workoutTemplates.toArray();
     expect(template?.title).toBe('Full body reset');
     expect(template?.exerciseRefs).toEqual([
       { name: 'Goblet squat', sets: 3, reps: '8', restSeconds: 60 },
@@ -76,7 +76,7 @@ describe('Plan route', () => {
   });
 
   it('searches cached exercises and adds one into the template draft', async () => {
-    await getHealthDb().exerciseCatalogItems.put({
+    await getTestHealthDb().exerciseCatalogItems.put({
       id: 'wger:1',
       createdAt: '2026-04-03T00:00:00.000Z',
       updatedAt: '2026-04-03T00:00:00.000Z',
@@ -113,7 +113,7 @@ describe('Plan route', () => {
     await waitFor(() => {
       expect(screen.getByText(/Workout template saved\./i)).toBeTruthy();
     });
-    const templates = await getHealthDb().workoutTemplates.toArray();
+    const templates = await getTestHealthDb().workoutTemplates.toArray();
     expect(templates.at(-1)?.exerciseRefs[0]).toEqual(
       expect.objectContaining({
         name: 'Goblet squat',
@@ -123,7 +123,7 @@ describe('Plan route', () => {
   });
 
   it('derives groceries from a planned recipe slot', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     await db.recipeCatalogItems.put({
       id: 'themealdb:52772',
       createdAt: '2026-04-03T00:00:00.000Z',
@@ -164,7 +164,7 @@ describe('Plan route', () => {
   });
 
   it('adds a saved food as a meal slot without routing it through recipes', async () => {
-    await getHealthDb().foodCatalogItems.put({
+    await getTestHealthDb().foodCatalogItems.put({
       id: 'food-catalog-1',
       createdAt: '2026-04-03T00:00:00.000Z',
       updatedAt: '2026-04-03T00:00:00.000Z',
@@ -234,7 +234,7 @@ describe('Plan route', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Move up Second slot' }));
 
     await waitFor(() => {
-      const slots = getHealthDb().planSlots.toArray();
+      const slots = getTestHealthDb().planSlots.toArray();
       return slots.then((items) => {
         const ordered = items
           .filter((item) => item.localDay === items[0]?.localDay)
@@ -245,7 +245,7 @@ describe('Plan route', () => {
   });
 
   it('shows a visible error when a selected recipe disappears before save', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     await db.recipeCatalogItems.put({
       id: 'themealdb:52772',
       createdAt: '2026-04-03T00:00:00.000Z',
@@ -280,7 +280,7 @@ describe('Plan route', () => {
   });
 
   it('shows a warning row when a planned recipe has no ingredients for grocery generation', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     await db.recipeCatalogItems.put({
       id: 'themealdb:52774',
       createdAt: '2026-04-03T00:00:00.000Z',

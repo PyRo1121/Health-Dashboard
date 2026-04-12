@@ -1,6 +1,10 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import type { WeeklyReviewData } from '$lib/features/review/service';
-import { buildWeeklySnapshot, saveNextWeekExperiment } from '$lib/features/review/service';
+import {
+  buildWeeklySnapshot,
+  resolveReviewAnchorDay,
+  saveNextWeekExperiment,
+  type ReviewStorage,
+} from '$lib/features/review/service';
 
 export interface ReviewPageState {
   loading: boolean;
@@ -23,13 +27,14 @@ export function createReviewPageState(): ReviewPageState {
 }
 
 export async function loadReviewPage(
-  db: HealthDatabase,
+  store: ReviewStorage,
   localDay: string
 ): Promise<ReviewPageState> {
-  const weekly = await buildWeeklySnapshot(db, localDay);
+  const resolvedLocalDay = await resolveReviewAnchorDay(store, localDay);
+  const weekly = await buildWeeklySnapshot(store, resolvedLocalDay);
   return {
     loading: false,
-    localDay,
+    localDay: resolvedLocalDay,
     weekly,
     selectedExperiment: weekly.experimentOptions[0] ?? '',
     loadNotice: '',
@@ -48,14 +53,14 @@ export function setReviewExperiment(
 }
 
 export async function saveReviewExperimentPage(
-  db: HealthDatabase,
+  store: ReviewStorage,
   state: ReviewPageState
 ): Promise<ReviewPageState> {
   if (!state.weekly || !state.selectedExperiment) {
     return state;
   }
 
-  const snapshot = await saveNextWeekExperiment(db, state.localDay, state.selectedExperiment);
+  const snapshot = await saveNextWeekExperiment(store, state.localDay, state.selectedExperiment);
   return {
     ...state,
     weekly: {

@@ -10,7 +10,7 @@ import {
 import { useTestHealthDb } from '../../../support/unit/testDb';
 
 describe('health service', () => {
-  const getDb = useTestHealthDb('health-service');
+  const getDb = useTestHealthDb();
 
   it('creates reusable templates and quick-logs them as canonical health events', async () => {
     const db = getDb();

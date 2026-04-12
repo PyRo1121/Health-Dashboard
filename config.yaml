@@ -1,0 +1,48 @@
+# OpenSwarm Configuration
+# Environment variables use ${VAR_NAME} or ${VAR_NAME:-default} format
+
+# Default CLI adapter for worker/reviewer stages
+# Options: claude, codex, gpt
+# For GPT: run `openswarm auth login --provider gpt` first
+adapter: claude
+
+discord:
+  token: ${DISCORD_TOKEN}
+  channelId: ${DISCORD_CHANNEL_ID}
+  webhookUrl: ${DISCORD_WEBHOOK_URL:-}  # optional
+
+linear:
+  apiKey: ${LINEAR_API_KEY}
+  teamId: ${LINEAR_TEAM_ID}
+
+github:
+  repos:
+    - owner/repo1
+    - owner/repo2
+  checkInterval: 300000  # 5 min (ms)
+
+# Agent list
+agents:
+  - name: main
+    projectPath: ~/dev/my-project
+    heartbeatInterval: 1800000  # 30 min (ms)
+    linearLabel: main  # Label for Linear issue filtering
+    enabled: true
+    paused: false
+
+  - name: backend
+    projectPath: ~/dev/backend-api
+    linearLabel: backend
+    enabled: true
+
+# Default heartbeat interval (ms)
+defaultHeartbeatInterval: 1800000
+
+# Worker/Reviewer pair mode configuration
+pairMode:
+  enabled: false              # Enable pair mode
+  maxAttempts: 3              # Worker max attempts
+  workerTimeoutMs: 300000     # Worker timeout (5 min)
+  reviewerTimeoutMs: 180000   # Reviewer timeout (3 min)
+  webhookUrl: ${PAIR_WEBHOOK_URL:-}  # Completion/failure notification (optional)
+  autoLinearUpdate: true      # Auto Linear status update

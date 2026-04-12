@@ -1,18 +1,33 @@
-import { createDbActionPostHandler } from '$lib/server/http/action-route';
+import type { RequestHandler } from './$types';
+import { assessmentsRequestSchema } from '$lib/features/assessments/contracts';
 import {
-  loadAssessmentsPage,
-  saveAssessmentsProgressPage,
-  submitAssessmentsPage,
-  type AssessmentsPageState,
-} from '$lib/features/assessments/controller';
+  loadAssessmentsPageServer,
+  saveAssessmentsProgressPageServer,
+  submitAssessmentsPageServer,
+} from '$lib/server/assessments/service';
 
-type AssessmentsRequest =
-  | { action: 'load'; localDay: string; state: AssessmentsPageState }
-  | { action: 'saveProgress'; state: AssessmentsPageState }
-  | { action: 'submit'; state: AssessmentsPageState };
+export const POST: RequestHandler = async ({ request }) => {
+  let body: unknown;
 
-export const POST = createDbActionPostHandler<AssessmentsRequest, AssessmentsPageState>({
-  load: (db, body) => loadAssessmentsPage(db, body.localDay, body.state),
-  saveProgress: (db, body) => saveAssessmentsProgressPage(db, body.state),
-  submit: (db, body) => submitAssessmentsPage(db, body.state),
-});
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Invalid assessments request payload.', { status: 400 });
+  }
+
+  const parsed = assessmentsRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response('Invalid assessments request payload.', { status: 400 });
+  }
+
+  switch (parsed.data.action) {
+    case 'load':
+      return Response.json(
+        await loadAssessmentsPageServer(parsed.data.localDay, parsed.data.state)
+      );
+    case 'saveProgress':
+      return Response.json(await saveAssessmentsProgressPageServer(parsed.data.state));
+    case 'submit':
+      return Response.json(await submitAssessmentsPageServer(parsed.data.state));
+  }
+};

@@ -1,42 +1,26 @@
+import type { RequestHandler } from './$types';
 import type { RecipeCatalogItem } from '$lib/core/domain/types';
-import { createDbQueryPostHandler } from '$lib/server/http/action-route';
-import {
-  nutritionQueryRequestSchema,
-  type NutritionQueryRequest,
-} from '$lib/features/nutrition/contracts';
-import { listRecipeCatalogItems, upsertRecipeCatalogItem } from '$lib/features/nutrition/service';
-import { searchThemealdbRecipes } from '$lib/server/nutrition/themealdb';
+import { nutritionQueryRequestSchema } from '$lib/features/nutrition/contracts';
+import { searchRecipesServer } from '$lib/server/nutrition/service';
 
-function dedupeRecipesById(items: RecipeCatalogItem[]): RecipeCatalogItem[] {
-  const deduped = new Map<string, RecipeCatalogItem>();
-  for (const item of items) {
-    deduped.set(item.id, item);
+export const POST: RequestHandler = async ({ request }) => {
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Invalid recipe search request payload.', { status: 400 });
   }
-  return [...deduped.values()];
-}
 
-export const POST = createDbQueryPostHandler<NutritionQueryRequest, RecipeCatalogItem[]>(
-  async (db, query) => {
-    const localMatches = (await listRecipeCatalogItems(db)).filter((recipe) =>
-      recipe.title.toLowerCase().includes(query.toLowerCase())
-    );
-    const remoteMatches = await searchThemealdbRecipes(query);
-    const cachedRemoteMatches = await Promise.all(
-      remoteMatches.map((recipe) => upsertRecipeCatalogItem(db, recipe))
-    );
-
-    return dedupeRecipesById([...localMatches, ...cachedRemoteMatches]);
-  },
-  undefined,
-  {
-    parseBody: async (request) => {
-      const parsed = nutritionQueryRequestSchema.safeParse(await request.json());
-      if (!parsed.success) {
-        throw new Error('Invalid recipe search request payload.');
-      }
-      return parsed.data;
-    },
-    onParseError: () => new Response('Invalid recipe search request payload.', { status: 400 }),
-    emptyResult: [],
+  const parsed = nutritionQueryRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response('Invalid recipe search request payload.', { status: 400 });
   }
-);
+
+  const query = parsed.data.query?.trim() ?? '';
+  if (!query) {
+    return Response.json([] satisfies RecipeCatalogItem[]);
+  }
+
+  return Response.json(await searchRecipesServer(query));
+};

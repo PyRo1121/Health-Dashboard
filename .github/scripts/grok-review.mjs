@@ -115,7 +115,7 @@ function detectCIPipelines(changedFiles) {
   ];
   
   for (const file of changedFiles) {
-    for (const { pattern, name, icon } of ciPatterns) {
+    for (const { pattern, name } of ciPatterns) {
       if (pattern.test(file)) {
         if (!ciSystems.includes(name)) {
           ciSystems.push(name);

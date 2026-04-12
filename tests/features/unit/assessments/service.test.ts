@@ -11,7 +11,7 @@ import {
 import { useTestHealthDb } from '../../../support/unit/testDb';
 
 describe('assessment service', () => {
-  const getDb = useTestHealthDb('assessment-service');
+  const getDb = useTestHealthDb();
 
   it('scores and bands PHQ-9 deterministically', () => {
     const responses = [1, 1, 1, 1, 1, 1, 1, 1, 0];

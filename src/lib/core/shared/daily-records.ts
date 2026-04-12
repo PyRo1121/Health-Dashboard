@@ -1,14 +1,16 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import type { HealthDbDailyRecordsStore } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
 import type { DailyRecord } from '$lib/core/domain/types';
 import { updateRecordMeta } from '$lib/core/shared/records';
 
+export type DailyRecordsStore = HealthDbDailyRecordsStore;
+
 export async function upsertDailyRecord(
-  db: HealthDatabase,
+  store: DailyRecordsStore,
   date: string,
   patch: Partial<DailyRecord>
 ): Promise<DailyRecord> {
-  const existing = await db.dailyRecords.where('date').equals(date).first();
+  const existing = await store.dailyRecords.where('date').equals(date).first();
   const timestamp = nowIso();
 
   const record: DailyRecord = {
@@ -18,6 +20,6 @@ export async function upsertDailyRecord(
     ...patch,
   };
 
-  await db.dailyRecords.put(record);
+  await store.dailyRecords.put(record);
   return record;
 }

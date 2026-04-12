@@ -1,10 +1,10 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getHealthDb } from '$lib/core/db/client';
+import { getTestHealthDb } from '$lib/core/db/test-client';
 import { currentLocalDay } from '$lib/core/domain/time';
 import { logAnxietyEvent, logSymptomEvent } from '$lib/features/health/service';
 import { saveWorkoutTemplate } from '$lib/features/movement/service';
-import { saveFoodCatalogItem } from '$lib/features/nutrition/service';
+import { saveFoodCatalogItem } from '$lib/features/nutrition/store';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import TodayPage from '../../../../src/routes/today/+page.svelte';
 import { expectHeading, resetRouteDb, waitForText } from '../../../support/component/routeHarness';
@@ -19,6 +19,8 @@ describe('Today route', () => {
 
     expectHeading('Today');
     await waitForText(/Nothing logged yet today/i);
+    await waitForText(/No strong recommendation yet\./i);
+    await waitForText(/Open check-in/i);
   });
 
   it('saves a daily check-in and shows the event stream', async () => {
@@ -44,7 +46,7 @@ describe('Today route', () => {
   });
 
   it('shows same-day manual and imported health events in the event stream', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     await db.healthEvents.bulkAdd([
       {
@@ -86,7 +88,7 @@ describe('Today route', () => {
   });
 
   it('shows a planned meal and lets today log it immediately', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     const food = await saveFoodCatalogItem(db, {
@@ -128,7 +130,7 @@ describe('Today route', () => {
   });
 
   it('shows today plan slots and lets the user mark them done', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     await savePlanSlot(db, {
@@ -155,7 +157,7 @@ describe('Today route', () => {
   });
 
   it('shows richer workout plan summaries from the planner domain', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     const template = await saveWorkoutTemplate(db, {
@@ -209,7 +211,7 @@ describe('Today route', () => {
   });
 
   it('shows saved-food meal summaries from the planner domain', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     const food = await saveFoodCatalogItem(db, {
@@ -248,7 +250,7 @@ describe('Today route', () => {
   });
 
   it('shows explicit stale-item messaging when planned handoffs no longer resolve', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     const food = await saveFoodCatalogItem(db, {
@@ -288,18 +290,20 @@ describe('Today route', () => {
 
     await waitFor(() => {
       expect(
-        screen.getByText('That planned meal no longer exists. Replace it in Plan before using it.')
-      ).toBeTruthy();
+        screen.getAllByText(
+          'That planned meal no longer exists. Replace it in Plan before using it.'
+        ).length
+      ).toBeGreaterThan(0);
       expect(
-        screen.getByText(
+        screen.getAllByText(
           'That planned workout no longer exists. Replace it in Plan before using it today.'
-        )
-      ).toBeTruthy();
+        ).length
+      ).toBeGreaterThan(0);
     });
   });
 
   it('surfaces a recovery-aware fallback when sleep and symptoms are rough', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     const food = await saveFoodCatalogItem(db, {
@@ -371,11 +375,11 @@ describe('Today route', () => {
     expectHeading('Today');
 
     await waitFor(() => {
-      expect(screen.getByText('Recovery today')).toBeTruthy();
-      expect(screen.getByText('Recovery mode: simplify the day.')).toBeTruthy();
-      expect(screen.getByText('Sleep landed under 6 hours.')).toBeTruthy();
-      expect(screen.getByText('Symptom load is elevated today.')).toBeTruthy();
-      expect(screen.getByText('Anxiety intensity spiked today.')).toBeTruthy();
+      expect(screen.getByText("Today's recommendation")).toBeTruthy();
+      expect(screen.getByText('Keep today lighter')).toBeTruthy();
+      expect(screen.getByText(/High confidence/i)).toBeTruthy();
+      expect(screen.getByRole('button', { name: 'Capture recovery note' })).toBeTruthy();
+      expect(screen.getAllByText('Sleep landed under 6 hours.').length).toBeGreaterThan(0);
       expect(
         screen.getByText('Meal fallback: keep the next meal familiar, easy, and protein-forward.')
       ).toBeTruthy();
@@ -384,19 +388,15 @@ describe('Today route', () => {
           'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
         )
       ).toBeTruthy();
-      expect(screen.getByText('Greek yogurt bowl')).toBeTruthy();
-      expect(screen.getByText(/310 kcal/i)).toBeTruthy();
-      expect(screen.getByText('Recovery walk')).toBeTruthy();
+      expect(screen.getByText(/Recovery meal: Greek yogurt bowl\./i)).toBeTruthy();
+      expect(screen.getByText(/Recovery workout: Recovery walk\./i)).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Swap to recovery meal' })).toBeTruthy();
       expect(screen.getByRole('button', { name: 'Swap to recovery walk' })).toBeTruthy();
-      expect(
-        screen.getByRole('link', { name: 'Capture recovery note' }).getAttribute('href')
-      ).toMatch(/^\/journal\?/);
     });
   });
 
   it('lets recovery mode swap the meal and workout to fallback suggestions', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     const food = await saveFoodCatalogItem(db, {

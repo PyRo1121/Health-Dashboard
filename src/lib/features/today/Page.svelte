@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { goto } from '$app/navigation';
+  import { resolve } from '$app/paths';
   import {
     applyTodayRecoveryActionPage,
     beginTodaySave,
@@ -12,17 +14,24 @@
   import {
     createTodayNutritionGuidance,
     createTodayNutritionPulseMetrics,
+    createTodayNutritionRows,
+    createTodayRecommendationSupportRows,
     createPlannedMealProjectionRows,
     createPlannedMealRows,
-    createRecoveryJournalIntentHref,
     createPlannedWorkoutRows,
-    createTodayNutritionRows,
     createTodayEventRows,
     createTodayPlanRows,
     createTodayRecordRows,
+    type TodayFormState,
   } from '$lib/features/today/model';
+  import type { TodayRecommendationAction } from '$lib/features/today/intelligence';
   import { onBrowserRouteMount } from '$lib/core/ui/route-runtime';
   import RoutePageHeader from '$lib/core/ui/shell/RoutePageHeader.svelte';
+  import { buildStoredJournalIntentHref } from '$lib/features/journal/navigation';
+  import {
+    createTodayContextCaptureJournalIntent,
+    createTodayRecoveryJournalIntent,
+  } from '$lib/features/today/journal-intents';
   import TodayCheckInSection from '$lib/features/today/components/TodayCheckInSection.svelte';
   import TodayPlanSurface from '$lib/features/today/components/TodayPlanSurface.svelte';
   import TodaySignalsSection from '$lib/features/today/components/TodaySignalsSection.svelte';
@@ -35,11 +44,11 @@
   let todayPlanRows = $derived(createTodayPlanRows(page.snapshot));
   let todayEventRows = $derived(createTodayEventRows(page.snapshot));
   let plannedMealRows = $derived(createPlannedMealRows(page.snapshot?.plannedMeal ?? null));
-  let recoveryJournalHref = $derived(createRecoveryJournalIntentHref(page.snapshot));
   let plannedWorkoutRows = $derived(
     createPlannedWorkoutRows(page.snapshot?.plannedWorkout ?? null)
   );
   let plannedMealProjectionRows = $derived(createPlannedMealProjectionRows(page.snapshot));
+  let recommendationSupportRows = $derived(createTodayRecommendationSupportRows(page.snapshot));
 
   async function loadSnapshot() {
     page = await loadTodayPage();
@@ -85,7 +94,55 @@
     }
   }
 
-  function updateFormField(field: keyof typeof page.form, value: string) {
+  async function handleRecommendationAction(action: TodayRecommendationAction) {
+    switch (action.kind) {
+      case 'log-planned-meal':
+        await handleLogPlannedMeal();
+        return;
+      case 'clear-planned-meal':
+        await handleClearPlannedMeal();
+        return;
+      case 'plan-status':
+        await handlePlanStatus(action.slotId, action.status);
+        return;
+      case 'recovery-action':
+        await handleRecoveryAction(action.actionId);
+        return;
+      case 'open-journal-recovery-note':
+        if (page.snapshot?.recoveryAdaptation) {
+          await goto(
+            resolve(
+              buildStoredJournalIntentHref(
+                createTodayRecoveryJournalIntent({
+                  date: page.snapshot.date,
+                  reasons: page.snapshot.recoveryAdaptation.reasons,
+                  events: page.snapshot.events,
+                })
+              )
+            )
+          );
+        }
+        return;
+      case 'open-journal-context-capture':
+        if (page.snapshot) {
+          await goto(
+            resolve(
+              buildStoredJournalIntentHref(
+                createTodayContextCaptureJournalIntent({
+                  date: page.snapshot.date,
+                  events: page.snapshot.events,
+                })
+              )
+            )
+          );
+        }
+        return;
+      default:
+        return;
+    }
+  }
+
+  function updateFormField(field: keyof TodayFormState, value: string) {
     page = {
       ...page,
       form: {
@@ -134,8 +191,8 @@
       {todayNutritionGuidance}
       {todayNutritionRows}
       {plannedMealProjectionRows}
-      {recoveryJournalHref}
-      onRecoveryAction={handleRecoveryAction}
+      {recommendationSupportRows}
+      onRecommendationAction={handleRecommendationAction}
     />
   </div>
 {/if}

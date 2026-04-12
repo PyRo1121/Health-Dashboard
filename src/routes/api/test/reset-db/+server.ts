@@ -1,29 +1,15 @@
-import { error, json } from '@sveltejs/kit';
-import { PLAYWRIGHT_MODE_FLAG, resetServerHealthDb } from '$lib/server/db/client';
-import { existsSync } from 'node:fs';
+import { json } from '@sveltejs/kit';
+import type { RequestHandler } from './$types';
+import { resetServerDrizzleStorage } from '$lib/server/db/drizzle/client';
 
-export async function POST({ request }) {
+const HEALTH_RESET_TOKEN = 'codex-e2e';
+
+export const POST: RequestHandler = async ({ request }) => {
   const token = request.headers.get('x-health-reset-token');
-  const modeEnabled = existsSync(PLAYWRIGHT_MODE_FLAG);
-  if (!modeEnabled || token !== 'codex-e2e') {
-    throw error(404);
+  if (token !== HEALTH_RESET_TOKEN) {
+    return new Response('Forbidden', { status: 403 });
   }
 
-  try {
-    await resetServerHealthDb();
-    return json({ ok: true });
-  } catch (cause) {
-    console.error('reset-db failure', cause);
-    return new Response(
-      JSON.stringify({
-        message: cause instanceof Error ? cause.message : 'reset failed',
-      }),
-      {
-        status: 500,
-        headers: {
-          'content-type': 'application/json',
-        },
-      }
-    );
-  }
-}
+  resetServerDrizzleStorage();
+  return json({ ok: true });
+};

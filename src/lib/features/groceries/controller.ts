@@ -1,14 +1,23 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import type { GroceryItem, RecipeCatalogItem, WeeklyPlan } from '$lib/core/domain/types';
-import { listRecipeCatalogItems } from '$lib/features/nutrition/service';
-import { ensureWeeklyPlan } from '$lib/features/planning/service';
-import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
+import {
+  listRecipeCatalogItems,
+  type RecipeCatalogItemsStore,
+} from '$lib/features/nutrition/store';
+import { ensureWeeklyPlan, type WeeklyPlansStore } from '$lib/features/planning/service';
+import {
+  refreshWeeklyReviewArtifactsSafely,
+  type ReviewStorage,
+} from '$lib/features/review/service';
 import {
   deriveWeeklyGroceriesWithWarnings,
   removeManualGroceryItem,
   saveManualGroceryItem,
   setGroceryItemState,
+  type GroceryServiceStore,
 } from './service';
+
+export interface GroceriesPageStorage
+  extends WeeklyPlansStore, RecipeCatalogItemsStore, GroceryServiceStore, ReviewStorage {}
 
 export interface ManualGroceryDraft {
   label: string;
@@ -50,13 +59,13 @@ export function createGroceryDraftState(): GroceryDraftState {
 }
 
 export async function loadGroceriesPage(
-  db: HealthDatabase,
+  store: GroceriesPageStorage,
   localDay: string
 ): Promise<GroceriesPageState> {
-  const weeklyPlan = await ensureWeeklyPlan(db, localDay);
-  const recipeCatalogItems = await listRecipeCatalogItems(db);
+  const weeklyPlan = await ensureWeeklyPlan(store, localDay);
+  const recipeCatalogItems = await listRecipeCatalogItems(store);
   const groceryResult = await deriveWeeklyGroceriesWithWarnings(
-    db,
+    store,
     weeklyPlan.id,
     recipeCatalogItems
   );
@@ -72,23 +81,31 @@ export async function loadGroceriesPage(
   };
 }
 
+async function refreshGroceriesPageAfterMutation(
+  store: GroceriesPageStorage,
+  state: GroceriesPageState,
+  saveNotice: string
+): Promise<GroceriesPageState> {
+  await refreshWeeklyReviewArtifactsSafely(store, state.localDay);
+  const next = await loadGroceriesPage(store, state.localDay);
+  return {
+    ...next,
+    saveNotice,
+  };
+}
+
 export async function toggleGroceryItemPage(
-  db: HealthDatabase,
+  store: GroceriesPageStorage,
   state: GroceriesPageState,
   itemId: string,
   patch: Pick<GroceryItem, 'checked' | 'excluded' | 'onHand'>
 ): Promise<GroceriesPageState> {
-  await setGroceryItemState(db, itemId, patch);
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  const next = await loadGroceriesPage(db, state.localDay);
-  return {
-    ...next,
-    saveNotice: 'Grocery item updated.',
-  };
+  await setGroceryItemState(store, itemId, patch);
+  return await refreshGroceriesPageAfterMutation(store, state, 'Grocery item updated.');
 }
 
 export async function addManualGroceryItemPage(
-  db: HealthDatabase,
+  store: GroceriesPageStorage,
   state: GroceriesPageState,
   draft: ManualGroceryDraft
 ): Promise<GroceriesPageState> {
@@ -103,27 +120,17 @@ export async function addManualGroceryItemPage(
     };
   }
 
-  await saveManualGroceryItem(db, state.weeklyPlan.id, {
+  await saveManualGroceryItem(store, state.weeklyPlan.id, {
     rawLabel: [draft.quantityText.trim(), draft.label.trim()].filter(Boolean).join(' '),
   });
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  const next = await loadGroceriesPage(db, state.localDay);
-  return {
-    ...next,
-    saveNotice: 'Manual grocery item added.',
-  };
+  return await refreshGroceriesPageAfterMutation(store, state, 'Manual grocery item added.');
 }
 
 export async function removeManualGroceryItemPage(
-  db: HealthDatabase,
+  store: GroceriesPageStorage,
   state: GroceriesPageState,
   itemId: string
 ): Promise<GroceriesPageState> {
-  await removeManualGroceryItem(db, itemId);
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  const next = await loadGroceriesPage(db, state.localDay);
-  return {
-    ...next,
-    saveNotice: 'Manual grocery item removed.',
-  };
+  await removeManualGroceryItem(store, itemId);
+  return await refreshGroceriesPageAfterMutation(store, state, 'Manual grocery item removed.');
 }

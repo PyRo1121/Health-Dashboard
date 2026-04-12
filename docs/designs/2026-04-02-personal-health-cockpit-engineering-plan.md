@@ -1,8 +1,11 @@
 # Personal Health Cockpit Engineering Plan
 
-Status: Active
+Historical note: this document is preserved as a planning/review record. Code paths, file references, and architecture details inside may be stale; use `ARCHITECTURE.md` and the living docs under `docs/` for current implementation truth.
+
+Status: Historical
 Date: 2026-04-02
 Supersedes: `docs/designs/2026-04-02-personal-health-cockpit-starter-plan.md`
+Superseded by: `ARCHITECTURE.md` and the living docs under `docs/`
 Framework: SvelteKit
 Review Type: plan-eng-review
 Detailed tranche plan: `docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md`

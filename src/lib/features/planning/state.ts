@@ -1,4 +1,3 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import type {
   ExerciseCatalogItem,
   GroceryItem,
@@ -6,7 +5,7 @@ import type {
   WorkoutTemplate,
 } from '$lib/core/domain/types';
 import { createPlanningSlotForm, type PlanningSlotFormState } from './model';
-import { getWeeklyPlanSnapshot } from './service';
+import { getWeeklyPlanSnapshot, type PlanningStorage } from './service';
 import {
   createWorkoutTemplateForm,
   type WorkoutTemplateFormState,
@@ -19,6 +18,8 @@ import {
   updateExerciseSearchQueryState,
   updateWorkoutTemplateExerciseFieldState,
 } from '$lib/features/movement/studio-state';
+
+export type PlanningPageStorage = PlanningStorage;
 
 export interface PlanningPageState {
   loading: boolean;
@@ -71,11 +72,11 @@ export function createPlanningPageState(): PlanningPageState {
 }
 
 export async function loadPlanningPage(
-  db: HealthDatabase,
+  store: PlanningPageStorage,
   localDay: string,
   state: PlanningPageState
 ): Promise<PlanningPageState> {
-  const snapshot = await getWeeklyPlanSnapshot(db, localDay);
+  const snapshot = await getWeeklyPlanSnapshot(store, localDay);
   return {
     ...state,
     ...emptyPlanningNotices(),
@@ -101,11 +102,11 @@ export async function loadPlanningPage(
 }
 
 export async function reloadPlanningPageState(
-  db: HealthDatabase,
+  store: PlanningPageStorage,
   state: PlanningPageState,
   overrides: Partial<PlanningPageState> = {}
 ): Promise<PlanningPageState> {
-  const next = await loadPlanningPage(db, state.localDay, state);
+  const next = await loadPlanningPage(store, state.localDay, state);
   return {
     ...next,
     ...overrides,

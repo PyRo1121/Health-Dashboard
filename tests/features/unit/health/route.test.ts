@@ -1,41 +1,49 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { HealthDatabase } from '$lib/core/db/types';
 
 describe('health route', () => {
   afterEach(() => {
-    vi.doUnmock('$lib/features/health/controller');
-    vi.doUnmock('$lib/server/http/action-route');
+    vi.doUnmock('$lib/server/health/service');
     vi.restoreAllMocks();
     vi.resetModules();
   });
 
-  async function importRoute(overrides: {
-    db?: HealthDatabase;
-    loadHealthPage?: ReturnType<typeof vi.fn>;
-    saveSymptomPage?: ReturnType<typeof vi.fn>;
-    saveAnxietyPage?: ReturnType<typeof vi.fn>;
-    saveSleepNotePage?: ReturnType<typeof vi.fn>;
-    saveTemplatePage?: ReturnType<typeof vi.fn>;
-    quickLogTemplatePage?: ReturnType<typeof vi.fn>;
-  }) {
-    const db = overrides.db ?? ({} as HealthDatabase);
-    const actual = await vi.importActual<typeof import('$lib/server/http/action-route')>(
-      '$lib/server/http/action-route'
-    );
+  const mutationState = {
+    localDay: '2026-04-04',
+    symptomForm: { symptom: 'Headache', severity: '4', note: 'After lunch' },
+    anxietyForm: {
+      intensity: '4',
+      trigger: 'Crowded store',
+      durationMinutes: '15',
+      note: 'Walked it off',
+    },
+    sleepNoteForm: { note: 'Woke up twice', restfulness: '2', context: 'Stress' },
+    templateForm: {
+      label: 'Magnesium glycinate',
+      templateType: 'supplement' as const,
+      defaultDose: '2',
+      defaultUnit: 'capsules',
+      note: 'Evening stack',
+    },
+  };
 
-    vi.doMock('$lib/server/http/action-route', () => ({
-      ...actual,
-      createDbActionPostHandler: (
-        handlers: Parameters<typeof actual.createDbActionPostHandler>[0]
-      ) =>
-        actual.createDbActionPostHandler(handlers, {
-          withDb: async (run) => await run(db),
-          toResponse: (body) => Response.json(body),
-        }),
-    }));
-    vi.doMock('$lib/features/health/controller', () => ({
-      loadHealthPage:
-        overrides.loadHealthPage ??
+  const requestState = {
+    loading: false,
+    snapshot: null,
+    saveNotice: '',
+    ...mutationState,
+  };
+
+  async function importRoute(overrides: {
+    loadHealthPageServer?: ReturnType<typeof vi.fn>;
+    saveSymptomPageServer?: ReturnType<typeof vi.fn>;
+    saveAnxietyPageServer?: ReturnType<typeof vi.fn>;
+    saveSleepNotePageServer?: ReturnType<typeof vi.fn>;
+    saveTemplatePageServer?: ReturnType<typeof vi.fn>;
+    quickLogTemplatePageServer?: ReturnType<typeof vi.fn>;
+  }) {
+    vi.doMock('$lib/server/health/service', () => ({
+      loadHealthPageServer:
+        overrides.loadHealthPageServer ??
         vi.fn(async () => ({
           loading: false,
           localDay: '2026-04-04',
@@ -52,34 +60,44 @@ describe('health route', () => {
             note: '',
           },
         })),
-      saveSymptomPage:
-        overrides.saveSymptomPage ??
-        vi.fn(async (database: HealthDatabase, state: unknown) => ({
+      saveSymptomPageServer:
+        overrides.saveSymptomPageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
+          loading: false,
+          snapshot: null,
           saveNotice: 'Symptom logged.',
         })),
-      saveAnxietyPage:
-        overrides.saveAnxietyPage ??
-        vi.fn(async (database: HealthDatabase, state: unknown) => ({
+      saveAnxietyPageServer:
+        overrides.saveAnxietyPageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
+          loading: false,
+          snapshot: null,
           saveNotice: 'Anxiety episode logged.',
         })),
-      saveSleepNotePage:
-        overrides.saveSleepNotePage ??
-        vi.fn(async (database: HealthDatabase, state: unknown) => ({
+      saveSleepNotePageServer:
+        overrides.saveSleepNotePageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
+          loading: false,
+          snapshot: null,
           saveNotice: 'Sleep context logged.',
         })),
-      saveTemplatePage:
-        overrides.saveTemplatePage ??
-        vi.fn(async (database: HealthDatabase, state: unknown) => ({
+      saveTemplatePageServer:
+        overrides.saveTemplatePageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
+          loading: false,
+          snapshot: null,
           saveNotice: 'Template saved.',
         })),
-      quickLogTemplatePage:
-        overrides.quickLogTemplatePage ??
-        vi.fn(async (database: HealthDatabase, state: unknown) => ({
+      quickLogTemplatePageServer:
+        overrides.quickLogTemplatePageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
+          loading: false,
+          snapshot: null,
           saveNotice: 'Template logged.',
         })),
     }));
@@ -87,9 +105,8 @@ describe('health route', () => {
     return await import('../../../../src/routes/api/health/+server.ts');
   }
 
-  it('loads health page state through the action route', async () => {
-    const db = {} as HealthDatabase;
-    const loadHealthPage = vi.fn(async () => ({
+  it('loads health page state through the server route', async () => {
+    const loadHealthPageServer = vi.fn(async () => ({
       loading: false,
       localDay: '2026-04-04',
       snapshot: null,
@@ -105,7 +122,7 @@ describe('health route', () => {
         note: '',
       },
     }));
-    const { POST } = await importRoute({ db, loadHealthPage });
+    const { POST } = await importRoute({ loadHealthPageServer });
 
     const response = await POST({
       request: new Request('http://health.test/api/health', {
@@ -121,105 +138,111 @@ describe('health route', () => {
         loading: false,
       })
     );
-    expect(loadHealthPage).toHaveBeenCalledWith(db, '2026-04-04');
+    expect(loadHealthPageServer).toHaveBeenCalledWith('2026-04-04');
   });
 
-  it('dispatches health save actions through the action route', async () => {
-    const db = {} as HealthDatabase;
-    const state = {
-      loading: false,
-      localDay: '2026-04-04',
-      snapshot: null,
-      saveNotice: '',
-      symptomForm: { symptom: 'Headache', severity: '4', note: 'After lunch' },
-      anxietyForm: {
-        intensity: '4',
-        trigger: 'Crowded store',
-        durationMinutes: '15',
-        note: 'Walked it off',
-      },
-      sleepNoteForm: { note: 'Woke up twice', restfulness: '2', context: 'Stress' },
-      templateForm: {
-        label: 'Magnesium glycinate',
-        templateType: 'supplement',
-        defaultDose: '2',
-        defaultUnit: 'capsules',
-        note: 'Evening stack',
-      },
-    };
-    const saveSymptomPage = vi.fn(async () => ({ ...state, saveNotice: 'Symptom logged.' }));
-    const saveAnxietyPage = vi.fn(async () => ({
-      ...state,
+  it('dispatches health save actions through the server route', async () => {
+    const saveSymptomPageServer = vi.fn(async () => ({
+      ...requestState,
+      saveNotice: 'Symptom logged.',
+    }));
+    const saveAnxietyPageServer = vi.fn(async () => ({
+      ...requestState,
       saveNotice: 'Anxiety episode logged.',
     }));
-    const saveSleepNotePage = vi.fn(async () => ({
-      ...state,
+    const saveSleepNotePageServer = vi.fn(async () => ({
+      ...requestState,
       saveNotice: 'Sleep context logged.',
     }));
-    const saveTemplatePage = vi.fn(async () => ({ ...state, saveNotice: 'Template saved.' }));
-    const quickLogTemplatePage = vi.fn(async () => ({ ...state, saveNotice: 'Template logged.' }));
+    const saveTemplatePageServer = vi.fn(async () => ({
+      ...requestState,
+      saveNotice: 'Template saved.',
+    }));
+    const quickLogTemplatePageServer = vi.fn(async () => ({
+      ...requestState,
+      saveNotice: 'Template logged.',
+    }));
     const { POST } = await importRoute({
-      db,
-      saveSymptomPage,
-      saveAnxietyPage,
-      saveSleepNotePage,
-      saveTemplatePage,
-      quickLogTemplatePage,
+      saveSymptomPageServer,
+      saveAnxietyPageServer,
+      saveSleepNotePageServer,
+      saveTemplatePageServer,
+      quickLogTemplatePageServer,
     });
 
     const symptomResponse = await POST({
       request: new Request('http://health.test/api/health', {
         method: 'POST',
-        body: JSON.stringify({ action: 'saveSymptom', state }),
+        body: JSON.stringify({ action: 'saveSymptom', state: requestState }),
       }),
     } as Parameters<typeof POST>[0]);
     expect(await symptomResponse.json()).toEqual(
       expect.objectContaining({ saveNotice: 'Symptom logged.' })
     );
-    expect(saveSymptomPage).toHaveBeenCalledWith(db, state);
+    expect(saveSymptomPageServer).toHaveBeenCalledWith(mutationState);
 
     const anxietyResponse = await POST({
       request: new Request('http://health.test/api/health', {
         method: 'POST',
-        body: JSON.stringify({ action: 'saveAnxiety', state }),
+        body: JSON.stringify({ action: 'saveAnxiety', state: requestState }),
       }),
     } as Parameters<typeof POST>[0]);
     expect(await anxietyResponse.json()).toEqual(
       expect.objectContaining({ saveNotice: 'Anxiety episode logged.' })
     );
-    expect(saveAnxietyPage).toHaveBeenCalledWith(db, state);
+    expect(saveAnxietyPageServer).toHaveBeenCalledWith(mutationState);
 
     const sleepResponse = await POST({
       request: new Request('http://health.test/api/health', {
         method: 'POST',
-        body: JSON.stringify({ action: 'saveSleepNote', state }),
+        body: JSON.stringify({ action: 'saveSleepNote', state: requestState }),
       }),
     } as Parameters<typeof POST>[0]);
     expect(await sleepResponse.json()).toEqual(
       expect.objectContaining({ saveNotice: 'Sleep context logged.' })
     );
-    expect(saveSleepNotePage).toHaveBeenCalledWith(db, state);
+    expect(saveSleepNotePageServer).toHaveBeenCalledWith(mutationState);
 
     const templateResponse = await POST({
       request: new Request('http://health.test/api/health', {
         method: 'POST',
-        body: JSON.stringify({ action: 'saveTemplate', state }),
+        body: JSON.stringify({ action: 'saveTemplate', state: requestState }),
       }),
     } as Parameters<typeof POST>[0]);
     expect(await templateResponse.json()).toEqual(
       expect.objectContaining({ saveNotice: 'Template saved.' })
     );
-    expect(saveTemplatePage).toHaveBeenCalledWith(db, state);
+    expect(saveTemplatePageServer).toHaveBeenCalledWith(mutationState);
 
     const quickLogResponse = await POST({
       request: new Request('http://health.test/api/health', {
         method: 'POST',
-        body: JSON.stringify({ action: 'quickLogTemplate', state, templateId: 'template-1' }),
+        body: JSON.stringify({
+          action: 'quickLogTemplate',
+          state: requestState,
+          templateId: 'template-1',
+        }),
       }),
     } as Parameters<typeof POST>[0]);
     expect(await quickLogResponse.json()).toEqual(
       expect.objectContaining({ saveNotice: 'Template logged.' })
     );
-    expect(quickLogTemplatePage).toHaveBeenCalledWith(db, state, 'template-1');
+    expect(quickLogTemplatePageServer).toHaveBeenCalledWith(mutationState, 'template-1');
+  });
+
+  it('returns 400 for invalid health payloads', async () => {
+    const loadHealthPageServer = vi.fn();
+    const { POST } = await importRoute({ loadHealthPageServer });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/health', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'load' }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid health request payload.');
+    expect(loadHealthPageServer).not.toHaveBeenCalled();
   });
 });

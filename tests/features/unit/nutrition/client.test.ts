@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { FoodLookupResult } from '$lib/features/nutrition/service';
+import type { FoodLookupResult } from '$lib/features/nutrition/types';
 
 describe('nutrition client', () => {
   afterEach(() => {

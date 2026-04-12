@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getHealthDb } from '$lib/core/db/client';
+import { getTestHealthDb } from '$lib/core/db/test-client';
 import { currentLocalDay } from '$lib/core/domain/time';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import GroceriesPage from '../../../../src/routes/groceries/+page.svelte';
@@ -12,7 +12,7 @@ describe('Groceries route', () => {
   });
 
   it('renders recipe-linked grocery items and toggles checklist state', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     await db.recipeCatalogItems.put({
@@ -77,7 +77,7 @@ describe('Groceries route', () => {
   });
 
   it('surfaces grocery warnings when a planned recipe has no usable ingredients', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     await db.recipeCatalogItems.put({
@@ -115,7 +115,7 @@ describe('Groceries route', () => {
   });
 
   it('renders one merged grocery row when duplicate ingredients come from multiple recipes', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const localDay = currentLocalDay();
     const weeklyPlan = await ensureWeeklyPlan(db, localDay);
     await db.recipeCatalogItems.bulkPut([

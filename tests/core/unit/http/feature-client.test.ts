@@ -1,12 +1,17 @@
-import { describe, expect, it, vi } from 'vitest';
-import type { HealthDatabase } from '$lib/core/db/types';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import {
+  configureFeatureClientTestDb,
   createFeatureActionClient,
   createFeatureRequestClient,
   postFeatureRequest,
+  resetFeatureClientTestDb,
   runFeatureMode,
   type FeatureClientDeps,
 } from '$lib/core/http/feature-client';
+
+afterEach(() => {
+  resetFeatureClientTestDb();
+});
 
 function createDeps(overrides: Partial<FeatureClientDeps> = {}): FeatureClientDeps {
   const defaultPostSpy = vi.fn(async (...args: [string, unknown]) => {
@@ -16,7 +21,7 @@ function createDeps(overrides: Partial<FeatureClientDeps> = {}): FeatureClientDe
 
   return {
     inTestMode: () => false,
-    getDb: async () => ({}) as HealthDatabase,
+    getTestDb: async () => ({}),
     post: async <Result>(endpoint: string, body: unknown) =>
       (await defaultPostSpy(endpoint, body)) as Result,
     ...overrides,
@@ -25,8 +30,8 @@ function createDeps(overrides: Partial<FeatureClientDeps> = {}): FeatureClientDe
 
 describe('feature client helpers', () => {
   it('runs the test branch with the resolved db in test mode', async () => {
-    const db = { name: 'test-db' } as unknown as HealthDatabase;
-    const getDb = vi.fn(async () => db);
+    const db = { name: 'test-db' };
+    const getTestDb = vi.fn(async () => db);
     const apiRunner = vi.fn(async () => 'api-result');
 
     const result = await runFeatureMode(
@@ -37,28 +42,54 @@ describe('feature client helpers', () => {
       apiRunner,
       createDeps({
         inTestMode: () => true,
-        getDb,
+        getTestDb,
       })
     );
 
     expect(result).toBe('test-result');
-    expect(getDb).toHaveBeenCalledOnce();
+    expect(getTestDb).toHaveBeenCalledOnce();
     expect(apiRunner).not.toHaveBeenCalled();
   });
 
+  it('uses the configured default test db loader in test mode', async () => {
+    const db = { name: 'configured-db' };
+    const apiRunner = vi.fn(async () => 'api-result');
+
+    configureFeatureClientTestDb(async () => db);
+
+    const result = await runFeatureMode(async (loadedDb) => {
+      expect(loadedDb).toBe(db);
+      return 'test-result';
+    }, apiRunner);
+
+    expect(result).toBe('test-result');
+    expect(apiRunner).not.toHaveBeenCalled();
+  });
+
+  it('throws in test mode when no default test db loader is configured', async () => {
+    resetFeatureClientTestDb();
+
+    await expect(
+      runFeatureMode(
+        async () => 'test-result',
+        async () => 'api-result'
+      )
+    ).rejects.toThrow('Feature test DB is not configured for test mode');
+  });
+
   it('runs the api branch without opening the test db outside test mode', async () => {
-    const getDb = vi.fn(async () => ({}) as HealthDatabase);
+    const getTestDb = vi.fn(async () => ({}));
 
     const result = await runFeatureMode(
       async () => 'test-result',
       async () => 'api-result',
       createDeps({
-        getDb,
+        getTestDb,
       })
     );
 
     expect(result).toBe('api-result');
-    expect(getDb).not.toHaveBeenCalled();
+    expect(getTestDb).not.toHaveBeenCalled();
   });
 
   it('posts the provided request body when using the shared request helper', async () => {

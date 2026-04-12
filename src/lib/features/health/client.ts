@@ -3,17 +3,20 @@ import { createFeatureActionClient } from '$lib/core/http/feature-client';
 import {
   createHealthPageState,
   loadHealthPage as loadHealthPageController,
+  type HealthPageState,
+} from './state';
+import {
   quickLogTemplatePage as quickLogTemplatePageController,
   saveAnxietyPage as saveAnxietyPageController,
   saveSleepNotePage as saveSleepNotePageController,
   saveSymptomPage as saveSymptomPageController,
   saveTemplatePage as saveTemplatePageController,
-  type HealthPageState,
-} from './controller';
+  type HealthActionsStorage,
+} from './actions';
 
 export { createHealthPageState };
 
-const healthClient = createFeatureActionClient('/api/health');
+const healthClient = createFeatureActionClient<HealthActionsStorage>('/api/health');
 
 export async function loadHealthPage(localDay = currentLocalDay()): Promise<HealthPageState> {
   return await healthClient.action('load', (db) => loadHealthPageController(db, localDay), {

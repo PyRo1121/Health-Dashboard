@@ -9,7 +9,7 @@ import {
 } from '$lib/features/sobriety/controller';
 
 describe('sobriety controller', () => {
-  const getDb = useTestHealthDb('sobriety-page-controller');
+  const getDb = useTestHealthDb();
 
   it('loads sobriety state and runs sober/craving/lapse actions', async () => {
     const db = getDb();

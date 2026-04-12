@@ -1,7 +1,10 @@
 # Personal Health Cockpit Visual Spec
 
-Status: Active
+Historical note: this document is preserved as a planning/review record. Code paths, file references, and architecture details inside may be stale; use `ARCHITECTURE.md` and the living docs under `docs/` for current implementation truth.
+
+Status: Historical
 Date: 2026-04-02
+Superseded by: `DESIGN.md` plus the live route/feature docs
 Parent docs:
 
 - `DESIGN.md`

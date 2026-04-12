@@ -29,7 +29,7 @@ function buildHealthEvent(input: {
 }
 
 describe('integrations service', () => {
-  const getDb = useTestHealthDb('integrations-service');
+  const getDb = useTestHealthDb();
 
   it('returns an empty summary before any native companion import lands', async () => {
     const db = getDb();
@@ -90,7 +90,7 @@ describe('integrations service', () => {
       importedEvents: 3,
       deviceNames: ['Pyro iPhone', 'watch-series-9'],
       metricTypes: ['resting-heart-rate', 'sleep-duration', 'step-count'],
-      latestCaptureAt: '2026-04-02T15:00:00Z',
+      latestCaptureAt: '2026-04-02T15:00:00.000Z',
     });
   });
 });

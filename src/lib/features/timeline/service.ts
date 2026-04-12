@@ -1,6 +1,9 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import type { HealthDbHealthEventsStore } from '$lib/core/db/types';
 import type { HealthEvent, SourceType } from '$lib/core/domain/types';
-import { buildHealthEventDisplay, sortHealthEventTimestamp } from '$lib/core/shared/health-events';
+import {
+  buildHealthEventDisplay,
+  compareHealthEventsNewestFirst,
+} from '$lib/core/shared/health-events';
 export { humanizeSourceType } from '$lib/core/shared/health-events';
 
 export type TimelineSourceFilter = 'all' | SourceType;
@@ -12,6 +15,8 @@ export interface TimelineEventItem {
   sourceLabel: string;
 }
 
+export type TimelineEventsStore = HealthDbHealthEventsStore;
+
 function buildTimelineItem(event: HealthEvent): TimelineEventItem {
   return {
     event,
@@ -20,15 +25,13 @@ function buildTimelineItem(event: HealthEvent): TimelineEventItem {
 }
 
 export async function listTimelineEvents(
-  db: HealthDatabase,
+  store: TimelineEventsStore,
   filter: TimelineSourceFilter = 'all'
 ): Promise<TimelineEventItem[]> {
-  const events = await db.healthEvents.toArray();
+  const events = await store.healthEvents.toArray();
 
   return events
     .filter((event) => filter === 'all' || event.sourceType === filter)
-    .sort((left, right) =>
-      sortHealthEventTimestamp(right).localeCompare(sortHealthEventTimestamp(left))
-    )
+    .sort(compareHealthEventsNewestFirst)
     .map((event) => buildTimelineItem(event));
 }

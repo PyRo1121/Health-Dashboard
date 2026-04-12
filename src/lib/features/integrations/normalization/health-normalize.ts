@@ -1,4 +1,5 @@
 import { nowIso, toLocalDay } from '$lib/core/domain/time';
+import { isConnectorMetricSupported } from '$lib/core/domain/health-metrics';
 import type {
   HealthEvent,
   NativeCompanionBundle,
@@ -6,16 +7,9 @@ import type {
 } from '$lib/core/domain/types';
 import { createRecordId } from '$lib/core/shared/ids';
 import { createRecordMeta } from '$lib/core/shared/records';
-import { HEALTHKIT_SUPPORTED_METRICS } from '$lib/features/integrations/bridge/schema';
 
 function sourceRecordId(bundle: NativeCompanionBundle, record: NativeCompanionRecord): string {
   return `${bundle.connector}:${bundle.deviceId}:${record.id}`;
-}
-
-function isSupportedMetric(metricType: string): boolean {
-  return HEALTHKIT_SUPPORTED_METRICS.includes(
-    metricType as (typeof HEALTHKIT_SUPPORTED_METRICS)[number]
-  );
 }
 
 export function normalizeHealthKitBundle(bundle: NativeCompanionBundle): {
@@ -27,7 +21,7 @@ export function normalizeHealthKitBundle(bundle: NativeCompanionBundle): {
   const importedAt = nowIso();
 
   for (const record of bundle.records) {
-    if (!isSupportedMetric(record.metricType)) {
+    if (!isConnectorMetricSupported(bundle.connector, record.metricType)) {
       warnings.push(`Skipped unsupported HealthKit metric "${record.metricType}".`);
       continue;
     }

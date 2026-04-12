@@ -1,8 +1,10 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import type { HealthDbJournalEntriesStore } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
 import type { JournalEntry } from '$lib/core/domain/types';
 import { createRecordId } from '$lib/core/shared/ids';
 import { updateRecordMeta } from '$lib/core/shared/records';
+
+export type JournalEntriesStore = HealthDbJournalEntriesStore;
 
 export interface JournalDraft {
   id?: string;
@@ -14,15 +16,14 @@ export interface JournalDraft {
   linkedEventIds: string[];
 }
 
-export async function saveJournalEntry(
-  db: HealthDatabase,
-  draft: JournalDraft
-): Promise<JournalEntry> {
-  const existing = draft.id ? await db.journalEntries.get(draft.id) : null;
-  const timestamp = nowIso();
+export function buildJournalEntryRecord(
+  draft: JournalDraft,
+  existing: JournalEntry | null | undefined,
+  timestamp: string = nowIso()
+): JournalEntry {
   const recordId = draft.id ?? createRecordId('journal');
 
-  const entry: JournalEntry = {
+  return {
     ...updateRecordMeta(existing, recordId, timestamp),
     localDay: draft.localDay,
     entryType: draft.entryType,
@@ -31,19 +32,32 @@ export async function saveJournalEntry(
     tags: draft.tags,
     linkedEventIds: draft.linkedEventIds,
   };
+}
 
-  await db.journalEntries.put(entry);
+export async function saveJournalEntry(
+  store: JournalEntriesStore,
+  draft: JournalDraft
+): Promise<JournalEntry> {
+  const existing = draft.id ? await store.journalEntries.get(draft.id) : null;
+  const entry = buildJournalEntryRecord(draft, existing);
+
+  await store.journalEntries.put(entry);
   return entry;
 }
 
-export async function deleteJournalEntry(db: HealthDatabase, id: string): Promise<void> {
-  await db.journalEntries.delete(id);
+export async function deleteJournalEntry(store: JournalEntriesStore, id: string): Promise<void> {
+  await store.journalEntries.delete(id);
+}
+
+export function sortJournalEntries(entries: JournalEntry[]): JournalEntry[] {
+  return [...entries].sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
 }
 
 export async function listJournalEntriesForDay(
-  db: HealthDatabase,
+  store: JournalEntriesStore,
   localDay: string
 ): Promise<JournalEntry[]> {
-  const entries = await db.journalEntries.where('localDay').equals(localDay).toArray();
-  return entries.sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  return sortJournalEntries(
+    await store.journalEntries.where('localDay').equals(localDay).toArray()
+  );
 }

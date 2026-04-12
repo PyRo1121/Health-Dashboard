@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { PlanningPageState } from './controller';
+import type { PlanningPageState } from './state';
 
 const planSlotStatusSchema = z.enum(['planned', 'done', 'skipped']);
 const planSlotTypeSchema = z.enum(['meal', 'workout', 'note']);

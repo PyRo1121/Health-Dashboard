@@ -1,11 +1,11 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getHealthDb, resetHealthDb } from '$lib/core/db/client';
+import { getTestHealthDb, resetTestHealthDb } from '$lib/core/db/test-client';
 import NutritionPage from '../../../../src/routes/nutrition/+page.svelte';
 
 describe('Nutrition route', () => {
   beforeEach(async () => {
-    await resetHealthDb();
+    await resetTestHealthDb();
     window.history.replaceState({}, '', '/nutrition');
   });
 
@@ -64,7 +64,7 @@ describe('Nutrition route', () => {
   });
 
   it('loads cached recipe ideas and uses a recipe to prefill the meal form', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     await db.recipeCatalogItems.put({
       id: 'themealdb:52772',
       createdAt: '2026-04-03T00:00:00.000Z',
@@ -102,7 +102,7 @@ describe('Nutrition route', () => {
   });
 
   it('loads a recommended food directly into the meal draft', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     await db.foodCatalogItems.put({
       id: 'food-catalog-1',
       createdAt: '2026-04-03T00:00:00.000Z',
@@ -132,7 +132,7 @@ describe('Nutrition route', () => {
   });
 
   it('plans the current draft and can reload it later', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     render(NutritionPage);
 
     await screen.findByLabelText('Meal name');
@@ -170,7 +170,7 @@ describe('Nutrition route', () => {
   });
 
   it('hydrates a review strategy deep link into the meal draft and clears the query', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     await db.foodCatalogItems.put({
       id: 'food-catalog-1',
       createdAt: '2026-04-03T00:00:00.000Z',
@@ -198,7 +198,7 @@ describe('Nutrition route', () => {
   });
 
   it('searches cached packaged foods and loads barcode hits locally', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     await db.foodCatalogItems.put({
       id: 'off:049000028911',
       createdAt: '2026-04-03T00:00:00.000Z',

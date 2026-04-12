@@ -35,7 +35,7 @@ function buildHealthEvent(input: {
 }
 
 describe('timeline service', () => {
-  const getDb = useTestHealthDb('timeline-service');
+  const getDb = useTestHealthDb();
 
   it('humanizes stored source types for the UI', () => {
     expect(humanizeSourceType('native-companion')).toBe('Native companion');
@@ -90,6 +90,37 @@ describe('timeline service', () => {
       valueLabel: '4',
       sourceLabel: 'Manual',
     });
+  });
+
+  it('uses event type as a stable tie-breaker when timestamps are identical', async () => {
+    const db = getDb();
+    await db.healthEvents.bulkAdd([
+      buildHealthEvent({
+        id: 'manual-stress',
+        eventType: 'stress',
+        sourceType: 'manual',
+        sourceTimestamp: '2026-04-02T08:00:00Z',
+        value: 2,
+      }),
+      buildHealthEvent({
+        id: 'manual-energy',
+        eventType: 'energy',
+        sourceType: 'manual',
+        sourceTimestamp: '2026-04-02T08:00:00Z',
+        value: 4,
+      }),
+      buildHealthEvent({
+        id: 'manual-focus',
+        eventType: 'focus',
+        sourceType: 'manual',
+        sourceTimestamp: '2026-04-02T08:00:00Z',
+        value: 3,
+      }),
+    ]);
+
+    const items = await listTimelineEvents(db);
+
+    expect(items.map((item) => item.event.eventType)).toEqual(['energy', 'focus', 'stress']);
   });
 
   it('filters the timeline down to the selected source', async () => {

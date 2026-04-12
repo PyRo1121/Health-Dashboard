@@ -7,7 +7,6 @@
 const BITBUCKET_WORKSPACE = process.env.BITBUCKET_WORKSPACE || process.env.BITBUCKET_REPO_OWNER;
 const BITBUCKET_REPO_SLUG = process.env.BITBUCKET_REPO_SLUG || process.env.BITBUCKET_REPO_NAME;
 const BITBUCKET_TOKEN = process.env.BITBUCKET_TOKEN || process.env.BB_API_TOKEN;
-const BITBUCKET_USERNAME = process.env.BITBUCKET_USERNAME;
 const BITBUCKET_PR_ID = process.env.BITBUCKET_PR_ID;
 
 const BITBUCKET_API_BASE = `https://api.bitbucket.org/2.0`;

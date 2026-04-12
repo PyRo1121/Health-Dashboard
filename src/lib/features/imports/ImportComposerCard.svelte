@@ -5,7 +5,7 @@
   import { Button, Field, SectionCard, StatusBanner } from '$lib/core/ui/primitives';
   import ImportPayloadSummaryCard from './ImportPayloadSummaryCard.svelte';
   import type { ImportSourceConfig } from './source-config';
-  import type { ImportPayloadSummary } from './service';
+  import type { ImportPayloadSummary } from './core';
   import type { ImportSourceHelperCopy } from '$lib/features/integrations/setup-presenters';
 
   type SampleBundle = NonNullable<ImportSourceConfig['sampleBundle']>;

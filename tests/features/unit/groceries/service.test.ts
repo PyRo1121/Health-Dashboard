@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import { useTestHealthDb } from '../../../support/unit/testDb';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
-import * as nutritionService from '$lib/features/nutrition/service';
+import * as nutritionStore from '$lib/features/nutrition/store';
 import {
   deriveWeeklyGroceries,
   deriveWeeklyGroceriesWithWarnings,
@@ -11,12 +11,12 @@ import {
 } from '$lib/features/groceries/service';
 
 describe('groceries service', () => {
-  const getDb = useTestHealthDb('groceries-service');
+  const getDb = useTestHealthDb();
 
   it('derives grocery items from planned recipe slots and keeps stable item state', async () => {
     const db = getDb();
     const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-07');
-    await nutritionService.upsertRecipeCatalogItem(db, {
+    await nutritionStore.upsertRecipeCatalogItem(db, {
       id: 'themealdb:52772',
       createdAt: '2026-04-03T00:00:00.000Z',
       updatedAt: '2026-04-03T00:00:00.000Z',
@@ -76,7 +76,7 @@ describe('groceries service', () => {
   it('drops stale grocery items when the recipe-backed slots disappear', async () => {
     const db = getDb();
     const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-07');
-    await nutritionService.upsertRecipeCatalogItem(db, {
+    await nutritionStore.upsertRecipeCatalogItem(db, {
       id: 'themealdb:52772',
       createdAt: '2026-04-03T00:00:00.000Z',
       updatedAt: '2026-04-03T00:00:00.000Z',
@@ -111,7 +111,7 @@ describe('groceries service', () => {
   it('keeps excluded state, merges duplicate ingredients, and reports recipes with no usable ingredients', async () => {
     const db = getDb();
     const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-07');
-    await nutritionService.upsertRecipeCatalogItem(db, {
+    await nutritionStore.upsertRecipeCatalogItem(db, {
       id: 'themealdb:52772',
       createdAt: '2026-04-03T00:00:00.000Z',
       updatedAt: '2026-04-03T00:00:00.000Z',
@@ -123,7 +123,7 @@ describe('groceries service', () => {
       cuisine: 'Japanese',
       ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
     });
-    await nutritionService.upsertRecipeCatalogItem(db, {
+    await nutritionStore.upsertRecipeCatalogItem(db, {
       id: 'themealdb:52773',
       createdAt: '2026-04-03T00:00:00.000Z',
       updatedAt: '2026-04-03T00:00:00.000Z',
@@ -135,7 +135,7 @@ describe('groceries service', () => {
       cuisine: 'Japanese',
       ingredients: ['1 tbsp soy sauce'],
     });
-    await nutritionService.upsertRecipeCatalogItem(db, {
+    await nutritionStore.upsertRecipeCatalogItem(db, {
       id: 'themealdb:52774',
       createdAt: '2026-04-03T00:00:00.000Z',
       updatedAt: '2026-04-03T00:00:00.000Z',
@@ -220,7 +220,7 @@ describe('groceries service', () => {
       title: 'Teriyaki Chicken Casserole',
     });
 
-    const listRecipeCatalogItemsSpy = vi.spyOn(nutritionService, 'listRecipeCatalogItems');
+    const listRecipeCatalogItemsSpy = vi.spyOn(nutritionStore, 'listRecipeCatalogItems');
 
     const result = await deriveWeeklyGroceriesWithWarnings(db, weeklyPlan.id, recipes);
 
@@ -232,7 +232,7 @@ describe('groceries service', () => {
   it('preserves manual grocery items through recipe recompute and can merge them with derived rows', async () => {
     const db = getDb();
     const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-07');
-    await nutritionService.upsertRecipeCatalogItem(db, {
+    await nutritionStore.upsertRecipeCatalogItem(db, {
       id: 'themealdb:52772',
       createdAt: '2026-04-03T00:00:00.000Z',
       updatedAt: '2026-04-03T00:00:00.000Z',

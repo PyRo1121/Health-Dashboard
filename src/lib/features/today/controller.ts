@@ -1,4 +1,3 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import {
   createDailyCheckinPayload,
   createTodayForm,
@@ -6,15 +5,21 @@ import {
   type TodayFormState,
 } from './model';
 import {
-  applyTodayRecoveryAction,
-  clearTodayPlannedMeal,
-  getTodaySnapshot,
   logPlannedMealForToday,
-  loadTodaySnapshotWithNotice,
   saveDailyCheckin,
+  clearTodayPlannedMeal,
   updateTodayPlanSlotStatus,
+  applyTodayRecoveryAction,
+  type TodayActionsStorage,
+} from './actions';
+import {
+  getTodaySnapshot,
+  loadTodaySnapshotWithNotice,
   type TodaySnapshot,
-} from '$lib/features/today/service';
+  type TodaySnapshotStore,
+} from './snapshot';
+
+export interface TodayPageStorage extends TodayActionsStorage, TodaySnapshotStore {}
 
 export interface TodayPageState {
   loading: boolean;
@@ -55,16 +60,27 @@ function createLoadedTodayPageState(
 }
 
 async function reloadTodayPageState(
-  db: HealthDatabase,
+  store: TodayPageStorage,
   state: TodayPageState,
   overrides: Partial<TodayPageState> = {}
 ): Promise<TodayPageState> {
-  const snapshot = await getTodaySnapshot(db, state.todayDate);
+  const snapshot = await getTodaySnapshot(store, state.todayDate);
   return createLoadedTodayPageState(state, state.todayDate, snapshot, overrides);
 }
 
-export async function loadTodayPage(db: HealthDatabase, localDay: string): Promise<TodayPageState> {
-  const { snapshot, notice } = await loadTodaySnapshotWithNotice(db, localDay);
+async function reloadTodayPageWithNotice(
+  store: TodayPageStorage,
+  state: TodayPageState,
+  saveNotice: string
+): Promise<TodayPageState> {
+  return await reloadTodayPageState(store, state, { saveNotice });
+}
+
+export async function loadTodayPage(
+  store: TodayPageStorage,
+  localDay: string
+): Promise<TodayPageState> {
+  const { snapshot, notice } = await loadTodaySnapshotWithNotice(store, localDay);
   return createLoadedTodayPageState(createTodayPageState(), localDay, snapshot, {
     saveNotice: notice ?? '',
   });
@@ -79,58 +95,56 @@ export function beginTodaySave(state: TodayPageState): TodayPageState {
 }
 
 export async function saveTodayPage(
-  db: HealthDatabase,
+  store: TodayPageStorage,
   state: TodayPageState
 ): Promise<TodayPageState> {
-  await saveDailyCheckin(db, createDailyCheckinPayload(state.todayDate, state.form));
-  return await reloadTodayPageState(db, state, {
-    saveNotice: 'Saved for today.',
-  });
+  await saveDailyCheckin(store, createDailyCheckinPayload(state.todayDate, state.form));
+  return await reloadTodayPageWithNotice(store, state, 'Saved for today.');
 }
 
 export async function logTodayPlannedMealPage(
-  db: HealthDatabase,
+  store: TodayPageStorage,
   state: TodayPageState
 ): Promise<TodayPageState> {
-  const entry = await logPlannedMealForToday(db, state.todayDate);
-  return await reloadTodayPageState(db, state, {
-    saveNotice: entry ? 'Planned meal logged.' : 'No planned meal to log.',
-  });
+  const entry = await logPlannedMealForToday(store, state.todayDate);
+  return await reloadTodayPageWithNotice(
+    store,
+    state,
+    entry ? 'Planned meal logged.' : 'No planned meal to log.'
+  );
 }
 
 export async function clearTodayPlannedMealPage(
-  db: HealthDatabase,
+  store: TodayPageStorage,
   state: TodayPageState
 ): Promise<TodayPageState> {
-  await clearTodayPlannedMeal(db, state.todayDate);
-  return await reloadTodayPageState(db, state, {
-    saveNotice: 'Planned meal cleared.',
-  });
+  await clearTodayPlannedMeal(store, state.todayDate);
+  return await reloadTodayPageWithNotice(store, state, 'Planned meal cleared.');
 }
 
 export async function markTodayPlanSlotStatusPage(
-  db: HealthDatabase,
+  store: TodayPageStorage,
   state: TodayPageState,
   slotId: string,
   status: 'planned' | 'done' | 'skipped'
 ): Promise<TodayPageState> {
-  await updateTodayPlanSlotStatus(db, slotId, status);
-  return await reloadTodayPageState(db, state, {
-    saveNotice: `Plan item marked ${status}.`,
-  });
+  await updateTodayPlanSlotStatus(store, slotId, status);
+  return await reloadTodayPageWithNotice(store, state, `Plan item marked ${status}.`);
 }
 
 export async function applyTodayRecoveryActionPage(
-  db: HealthDatabase,
+  store: TodayPageStorage,
   state: TodayPageState,
   actionId: 'apply-recovery-meal' | 'apply-recovery-workout'
 ): Promise<TodayPageState> {
-  const applied = await applyTodayRecoveryAction(db, state.todayDate, actionId);
-  return await reloadTodayPageState(db, state, {
-    saveNotice: applied
+  const applied = await applyTodayRecoveryAction(store, state.todayDate, actionId);
+  return await reloadTodayPageWithNotice(
+    store,
+    state,
+    applied
       ? actionId === 'apply-recovery-meal'
         ? 'Recovery meal applied.'
         : 'Recovery workout applied.'
-      : 'Recovery action unavailable.',
-  });
+      : 'Recovery action unavailable.'
+  );
 }

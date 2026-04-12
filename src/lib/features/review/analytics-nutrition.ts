@@ -1,3 +1,4 @@
+import { countHealthMetricEvents, hasHealthMetricEvent } from '$lib/core/domain/health-metrics';
 import type {
   DailyRecord,
   FoodCatalogItem,
@@ -27,7 +28,7 @@ function inferRecommendationMealType(
   const hadLowSleep = records.some(
     (record) => (record.sleepHours ?? 0) > 0 && (record.sleepHours ?? 0) < MIN_SLEEP_HOURS
   );
-  const hadAnxiety = healthEvents.some((event) => event.eventType === 'anxiety-episode');
+  const hadAnxiety = hasHealthMetricEvent(healthEvents, 'anxiety-episode');
 
   if (averageProtein < HIGH_PROTEIN_GRAMS) return 'breakfast';
   if (hadLowSleep || hadAnxiety) return 'lunch';
@@ -137,8 +138,8 @@ export function buildNutritionStrategy(
     mealType: inferRecommendationMealType(records, foodEntries, healthEvents),
     sleepHours: averageRecordMetric(records, (record) => record.sleepHours),
     sleepQuality: averageRecordMetric(records, (record) => record.sleepQuality),
-    anxietyCount: healthEvents.filter((event) => event.eventType === 'anxiety-episode').length,
-    symptomCount: healthEvents.filter((event) => event.eventType === 'symptom').length,
+    anxietyCount: countHealthMetricEvents(healthEvents, 'anxiety-episode'),
+    symptomCount: countHealthMetricEvents(healthEvents, 'symptom'),
   };
 
   const recommendations = buildNutritionRecommendations({

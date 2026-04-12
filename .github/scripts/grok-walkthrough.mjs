@@ -80,48 +80,6 @@ function loadCustomInstructions() {
   }
 }
 
-function categorizeFiles(files, diff) {
-  const categories = {
-    core: [],      // Main application logic
-    config: [],   // Config, env, setup
-    tests: [],     // Test files
-    docs: [],      // Documentation
-    infra: [],     // CI/CD, infrastructure
-    deps: [],      // Dependencies
-    styles: [],    // CSS, styling
-    types: [],     // TypeScript types
-    other: [],
-  };
-
-  const fileContents = {};
-  for (const file of files) {
-    const lower = file.toLowerCase();
-    if (lower.includes('/src/lib/') || lower.includes('/src/routes/')) {
-      if (lower.includes('test') || lower.includes('spec')) {
-        categories.tests.push(file);
-      } else if (lower.includes('.svelte') || lower.includes('.ts') || lower.includes('.js')) {
-        categories.core.push(file);
-      } else {
-        categories.other.push(file);
-      }
-    } else if (lower.includes('.github/workflows') || lower.includes('.github/scripts')) {
-      categories.infra.push(file);
-    } else if (lower.includes('config') || lower.includes('.json') || lower.includes('.yaml') || lower.includes('.yml') || lower.includes('.toml')) {
-      categories.config.push(file);
-    } else if (lower.includes('package') || lower.includes('lock') || lower.includes('bun.lock')) {
-      categories.deps.push(file);
-    } else if (lower.includes('.css') || lower.includes('.scss') || lower.includes('.svelte')) {
-      categories.styles.push(file);
-    } else if (lower.includes('.md') || lower.includes('docs/')) {
-      categories.docs.push(file);
-    } else {
-      categories.other.push(file);
-    }
-  }
-
-  return categories;
-}
-
 async function generateFileWalkthrough(files, diff, apiKey, model, customInstructions) {
   const payload = {
     model,

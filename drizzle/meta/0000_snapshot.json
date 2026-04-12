@@ -1,0 +1,1334 @@
+{
+  "version": "6",
+  "dialect": "sqlite",
+  "id": "1ccbb7e5-b3b1-46ac-876c-5d5e2fa34970",
+  "prevId": "00000000-0000-0000-0000-000000000000",
+  "tables": {
+    "adherenceMatches": {
+      "name": "adherenceMatches",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weekStart": {
+          "name": "weekStart",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "planSlotId": {
+          "name": "planSlotId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "localDay": {
+          "name": "localDay",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "outcome": {
+          "name": "outcome",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "fingerprint": {
+          "name": "fingerprint",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_adherenceMatches_weekStart": {
+          "name": "idx_adherenceMatches_weekStart",
+          "columns": ["weekStart"],
+          "isUnique": false
+        },
+        "idx_adherenceMatches_planSlotId": {
+          "name": "idx_adherenceMatches_planSlotId",
+          "columns": ["planSlotId"],
+          "isUnique": false
+        },
+        "idx_adherenceMatches_localDay": {
+          "name": "idx_adherenceMatches_localDay",
+          "columns": ["localDay"],
+          "isUnique": false
+        },
+        "idx_adherenceMatches_outcome": {
+          "name": "idx_adherenceMatches_outcome",
+          "columns": ["outcome"],
+          "isUnique": false
+        },
+        "idx_adherenceMatches_fingerprint": {
+          "name": "idx_adherenceMatches_fingerprint",
+          "columns": ["fingerprint"],
+          "isUnique": false
+        },
+        "idx_adherenceMatches_updatedAt": {
+          "name": "idx_adherenceMatches_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "assessmentResults": {
+      "name": "assessmentResults",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "localDay": {
+          "name": "localDay",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "instrument": {
+          "name": "instrument",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_assessmentResults_localDay": {
+          "name": "idx_assessmentResults_localDay",
+          "columns": ["localDay"],
+          "isUnique": false
+        },
+        "idx_assessmentResults_instrument": {
+          "name": "idx_assessmentResults_instrument",
+          "columns": ["instrument"],
+          "isUnique": false
+        },
+        "idx_assessmentResults_updatedAt": {
+          "name": "idx_assessmentResults_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "dailyRecords": {
+      "name": "dailyRecords",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "date": {
+          "name": "date",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_dailyRecords_date": {
+          "name": "idx_dailyRecords_date",
+          "columns": ["date"],
+          "isUnique": false
+        },
+        "idx_dailyRecords_updatedAt": {
+          "name": "idx_dailyRecords_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "derivedGroceryItems": {
+      "name": "derivedGroceryItems",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weeklyPlanId": {
+          "name": "weeklyPlanId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "aisle": {
+          "name": "aisle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "checked": {
+          "name": "checked",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "excluded": {
+          "name": "excluded",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_derivedGroceryItems_weeklyPlanId": {
+          "name": "idx_derivedGroceryItems_weeklyPlanId",
+          "columns": ["weeklyPlanId"],
+          "isUnique": false
+        },
+        "idx_derivedGroceryItems_aisle": {
+          "name": "idx_derivedGroceryItems_aisle",
+          "columns": ["aisle"],
+          "isUnique": false
+        },
+        "idx_derivedGroceryItems_checked": {
+          "name": "idx_derivedGroceryItems_checked",
+          "columns": ["checked"],
+          "isUnique": false
+        },
+        "idx_derivedGroceryItems_excluded": {
+          "name": "idx_derivedGroceryItems_excluded",
+          "columns": ["excluded"],
+          "isUnique": false
+        },
+        "idx_derivedGroceryItems_updatedAt": {
+          "name": "idx_derivedGroceryItems_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "exerciseCatalogItems": {
+      "name": "exerciseCatalogItems",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sourceType": {
+          "name": "sourceType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_exerciseCatalogItems_title": {
+          "name": "idx_exerciseCatalogItems_title",
+          "columns": ["title"],
+          "isUnique": false
+        },
+        "idx_exerciseCatalogItems_sourceType": {
+          "name": "idx_exerciseCatalogItems_sourceType",
+          "columns": ["sourceType"],
+          "isUnique": false
+        },
+        "idx_exerciseCatalogItems_updatedAt": {
+          "name": "idx_exerciseCatalogItems_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "favoriteMeals": {
+      "name": "favoriteMeals",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "mealType": {
+          "name": "mealType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_favoriteMeals_mealType": {
+          "name": "idx_favoriteMeals_mealType",
+          "columns": ["mealType"],
+          "isUnique": false
+        },
+        "idx_favoriteMeals_updatedAt": {
+          "name": "idx_favoriteMeals_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "foodCatalogItems": {
+      "name": "foodCatalogItems",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "name": {
+          "name": "name",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sourceType": {
+          "name": "sourceType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "barcode": {
+          "name": "barcode",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_foodCatalogItems_name": {
+          "name": "idx_foodCatalogItems_name",
+          "columns": ["name"],
+          "isUnique": false
+        },
+        "idx_foodCatalogItems_sourceType": {
+          "name": "idx_foodCatalogItems_sourceType",
+          "columns": ["sourceType"],
+          "isUnique": false
+        },
+        "idx_foodCatalogItems_barcode": {
+          "name": "idx_foodCatalogItems_barcode",
+          "columns": ["barcode"],
+          "isUnique": false
+        },
+        "idx_foodCatalogItems_updatedAt": {
+          "name": "idx_foodCatalogItems_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "foodEntries": {
+      "name": "foodEntries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "localDay": {
+          "name": "localDay",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "mealType": {
+          "name": "mealType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_foodEntries_localDay": {
+          "name": "idx_foodEntries_localDay",
+          "columns": ["localDay"],
+          "isUnique": false
+        },
+        "idx_foodEntries_mealType": {
+          "name": "idx_foodEntries_mealType",
+          "columns": ["mealType"],
+          "isUnique": false
+        },
+        "idx_foodEntries_updatedAt": {
+          "name": "idx_foodEntries_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "healthEvents": {
+      "name": "healthEvents",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "localDay": {
+          "name": "localDay",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "eventType": {
+          "name": "eventType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sourceType": {
+          "name": "sourceType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "sourceRecordId": {
+          "name": "sourceRecordId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_healthEvents_localDay": {
+          "name": "idx_healthEvents_localDay",
+          "columns": ["localDay"],
+          "isUnique": false
+        },
+        "idx_healthEvents_eventType": {
+          "name": "idx_healthEvents_eventType",
+          "columns": ["eventType"],
+          "isUnique": false
+        },
+        "idx_healthEvents_sourceType": {
+          "name": "idx_healthEvents_sourceType",
+          "columns": ["sourceType"],
+          "isUnique": false
+        },
+        "idx_healthEvents_sourceRecordId": {
+          "name": "idx_healthEvents_sourceRecordId",
+          "columns": ["sourceRecordId"],
+          "isUnique": false
+        },
+        "idx_healthEvents_updatedAt": {
+          "name": "idx_healthEvents_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "healthTemplates": {
+      "name": "healthTemplates",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "templateType": {
+          "name": "templateType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "label": {
+          "name": "label",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_healthTemplates_templateType": {
+          "name": "idx_healthTemplates_templateType",
+          "columns": ["templateType"],
+          "isUnique": false
+        },
+        "idx_healthTemplates_label": {
+          "name": "idx_healthTemplates_label",
+          "columns": ["label"],
+          "isUnique": false
+        },
+        "idx_healthTemplates_updatedAt": {
+          "name": "idx_healthTemplates_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "importArtifacts": {
+      "name": "importArtifacts",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "batchId": {
+          "name": "batchId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "artifactType": {
+          "name": "artifactType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_importArtifacts_batchId": {
+          "name": "idx_importArtifacts_batchId",
+          "columns": ["batchId"],
+          "isUnique": false
+        },
+        "idx_importArtifacts_artifactType": {
+          "name": "idx_importArtifacts_artifactType",
+          "columns": ["artifactType"],
+          "isUnique": false
+        },
+        "idx_importArtifacts_createdAt": {
+          "name": "idx_importArtifacts_createdAt",
+          "columns": ["createdAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "importBatches": {
+      "name": "importBatches",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "sourceType": {
+          "name": "sourceType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_importBatches_sourceType": {
+          "name": "idx_importBatches_sourceType",
+          "columns": ["sourceType"],
+          "isUnique": false
+        },
+        "idx_importBatches_status": {
+          "name": "idx_importBatches_status",
+          "columns": ["status"],
+          "isUnique": false
+        },
+        "idx_importBatches_createdAt": {
+          "name": "idx_importBatches_createdAt",
+          "columns": ["createdAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "journalEntries": {
+      "name": "journalEntries",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "localDay": {
+          "name": "localDay",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "entryType": {
+          "name": "entryType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_journalEntries_localDay": {
+          "name": "idx_journalEntries_localDay",
+          "columns": ["localDay"],
+          "isUnique": false
+        },
+        "idx_journalEntries_entryType": {
+          "name": "idx_journalEntries_entryType",
+          "columns": ["entryType"],
+          "isUnique": false
+        },
+        "idx_journalEntries_updatedAt": {
+          "name": "idx_journalEntries_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "manualGroceryItems": {
+      "name": "manualGroceryItems",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weeklyPlanId": {
+          "name": "weeklyPlanId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "aisle": {
+          "name": "aisle",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "checked": {
+          "name": "checked",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "excluded": {
+          "name": "excluded",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_manualGroceryItems_weeklyPlanId": {
+          "name": "idx_manualGroceryItems_weeklyPlanId",
+          "columns": ["weeklyPlanId"],
+          "isUnique": false
+        },
+        "idx_manualGroceryItems_aisle": {
+          "name": "idx_manualGroceryItems_aisle",
+          "columns": ["aisle"],
+          "isUnique": false
+        },
+        "idx_manualGroceryItems_checked": {
+          "name": "idx_manualGroceryItems_checked",
+          "columns": ["checked"],
+          "isUnique": false
+        },
+        "idx_manualGroceryItems_excluded": {
+          "name": "idx_manualGroceryItems_excluded",
+          "columns": ["excluded"],
+          "isUnique": false
+        },
+        "idx_manualGroceryItems_updatedAt": {
+          "name": "idx_manualGroceryItems_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "planSlots": {
+      "name": "planSlots",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weeklyPlanId": {
+          "name": "weeklyPlanId",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "localDay": {
+          "name": "localDay",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "slotType": {
+          "name": "slotType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "status": {
+          "name": "status",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_planSlots_weeklyPlanId": {
+          "name": "idx_planSlots_weeklyPlanId",
+          "columns": ["weeklyPlanId"],
+          "isUnique": false
+        },
+        "idx_planSlots_localDay": {
+          "name": "idx_planSlots_localDay",
+          "columns": ["localDay"],
+          "isUnique": false
+        },
+        "idx_planSlots_slotType": {
+          "name": "idx_planSlots_slotType",
+          "columns": ["slotType"],
+          "isUnique": false
+        },
+        "idx_planSlots_status": {
+          "name": "idx_planSlots_status",
+          "columns": ["status"],
+          "isUnique": false
+        },
+        "idx_planSlots_updatedAt": {
+          "name": "idx_planSlots_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "recipeCatalogItems": {
+      "name": "recipeCatalogItems",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "mealType": {
+          "name": "mealType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "cuisine": {
+          "name": "cuisine",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_recipeCatalogItems_title": {
+          "name": "idx_recipeCatalogItems_title",
+          "columns": ["title"],
+          "isUnique": false
+        },
+        "idx_recipeCatalogItems_mealType": {
+          "name": "idx_recipeCatalogItems_mealType",
+          "columns": ["mealType"],
+          "isUnique": false
+        },
+        "idx_recipeCatalogItems_cuisine": {
+          "name": "idx_recipeCatalogItems_cuisine",
+          "columns": ["cuisine"],
+          "isUnique": false
+        },
+        "idx_recipeCatalogItems_updatedAt": {
+          "name": "idx_recipeCatalogItems_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "reviewSnapshots": {
+      "name": "reviewSnapshots",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weekStart": {
+          "name": "weekStart",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_reviewSnapshots_weekStart": {
+          "name": "idx_reviewSnapshots_weekStart",
+          "columns": ["weekStart"],
+          "isUnique": false
+        },
+        "idx_reviewSnapshots_updatedAt": {
+          "name": "idx_reviewSnapshots_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "sobrietyEvents": {
+      "name": "sobrietyEvents",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "localDay": {
+          "name": "localDay",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "eventType": {
+          "name": "eventType",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_sobrietyEvents_localDay": {
+          "name": "idx_sobrietyEvents_localDay",
+          "columns": ["localDay"],
+          "isUnique": false
+        },
+        "idx_sobrietyEvents_eventType": {
+          "name": "idx_sobrietyEvents_eventType",
+          "columns": ["eventType"],
+          "isUnique": false
+        },
+        "idx_sobrietyEvents_updatedAt": {
+          "name": "idx_sobrietyEvents_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "weeklyPlans": {
+      "name": "weeklyPlans",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "weekStart": {
+          "name": "weekStart",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_weeklyPlans_weekStart": {
+          "name": "idx_weeklyPlans_weekStart",
+          "columns": ["weekStart"],
+          "isUnique": false
+        },
+        "idx_weeklyPlans_updatedAt": {
+          "name": "idx_weeklyPlans_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    },
+    "workoutTemplates": {
+      "name": "workoutTemplates",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "text",
+          "primaryKey": true,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "title": {
+          "name": "title",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "updatedAt": {
+          "name": "updatedAt",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "record_json": {
+          "name": "record_json",
+          "type": "text",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        }
+      },
+      "indexes": {
+        "idx_workoutTemplates_title": {
+          "name": "idx_workoutTemplates_title",
+          "columns": ["title"],
+          "isUnique": false
+        },
+        "idx_workoutTemplates_updatedAt": {
+          "name": "idx_workoutTemplates_updatedAt",
+          "columns": ["updatedAt"],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
+      "checkConstraints": {}
+    }
+  },
+  "views": {},
+  "enums": {},
+  "_meta": {
+    "schemas": {},
+    "tables": {},
+    "columns": {}
+  },
+  "internal": {
+    "indexes": {}
+  }
+}

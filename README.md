@@ -4,11 +4,12 @@ Private, local-first health operating system for daily check-ins, planning, nutr
 
 ## Stack
 
-- SvelteKit 2 + Svelte 5
+- SvelteKit 2 + Svelte 5 + `@sveltejs/adapter-node`
 - Bun 1.3.10
+- Bun SQLite / Drizzle on the server path
 - Vitest for unit and component coverage
 - Playwright for end-to-end coverage
-- Local SQLite / Dexie-backed data storage
+- In-memory test-store facade for unit and component flows
 
 ## Quickstart
 
@@ -31,6 +32,7 @@ bun run test:unit
 bun run test:component
 bun run test:e2e
 bun run build
+bun run check:operational
 ```
 
 For Playwright on a fresh machine:
@@ -60,6 +62,7 @@ The app runs without external APIs for most flows. These variables are optional 
 - `apps/ios-shortcuts/` shortcut export assets
 
 Start with [docs/README.md](docs/README.md) for the doc map and [DESIGN.md](DESIGN.md) for the visual system.
+For the live codebase structure, read [ARCHITECTURE.md](ARCHITECTURE.md).
 
 ## CI
 

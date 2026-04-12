@@ -1,7 +1,8 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import type { FoodCatalogItem, PlanSlot, PlannedMeal } from '$lib/core/domain/types';
-import { listPlanSlotsForDay } from '$lib/features/planning/service';
-import { listFoodCatalogItems } from './service';
+import { listPlanSlotsForDay, type PlanSlotsStore } from '$lib/features/planning/service';
+import { listFoodCatalogItems, type FoodCatalogItemsStore } from './store';
+
+export interface NutritionPlannedMealStore extends PlanSlotsStore, FoodCatalogItemsStore {}
 
 export interface NutritionPlannedMealCandidate {
   kind: 'plan-slot-food';
@@ -84,27 +85,10 @@ export function resolveNutritionPlannedMeal(
   };
 }
 
-export async function getNutritionPlannedMealResolution(
-  db: HealthDatabase,
-  localDay: string
-): Promise<NutritionPlannedMealResolution> {
-  const [planSlots, foodCatalogItems] = await Promise.all([
-    listPlanSlotsForDay(db, localDay),
-    listFoodCatalogItems(db),
-  ]);
-
-  return resolveNutritionPlannedMeal(planSlots, foodCatalogItems);
-}
-
-export async function listStalePlannedFoodSlotIds(
-  db: HealthDatabase,
-  localDay: string
-): Promise<string[]> {
-  const [planSlots, foodCatalogItems] = await Promise.all([
-    listPlanSlotsForDay(db, localDay),
-    listFoodCatalogItems(db),
-  ]);
-
+export function listStalePlannedFoodSlotIdsFromData(
+  planSlots: PlanSlot[],
+  foodCatalogItems: FoodCatalogItem[]
+): string[] {
   return planSlots
     .filter(
       (slot) =>
@@ -115,4 +99,28 @@ export async function listStalePlannedFoodSlotIds(
         !foodCatalogItems.some((candidate) => candidate.id === slot.itemId)
     )
     .map((slot) => slot.id);
+}
+
+export async function getNutritionPlannedMealResolution(
+  store: NutritionPlannedMealStore,
+  localDay: string
+): Promise<NutritionPlannedMealResolution> {
+  const [planSlots, foodCatalogItems] = await Promise.all([
+    listPlanSlotsForDay(store, localDay),
+    listFoodCatalogItems(store),
+  ]);
+
+  return resolveNutritionPlannedMeal(planSlots, foodCatalogItems);
+}
+
+export async function listStalePlannedFoodSlotIds(
+  store: NutritionPlannedMealStore,
+  localDay: string
+): Promise<string[]> {
+  const [planSlots, foodCatalogItems] = await Promise.all([
+    listPlanSlotsForDay(store, localDay),
+    listFoodCatalogItems(store),
+  ]);
+
+  return listStalePlannedFoodSlotIdsFromData(planSlots, foodCatalogItems);
 }

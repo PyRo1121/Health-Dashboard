@@ -1,8 +1,9 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getHealthDb } from '$lib/core/db/client';
+import { getTestHealthDb } from '$lib/core/db/test-client';
 import { currentLocalDay } from '$lib/core/domain/time';
 import JournalPage from '../../../../src/routes/journal/+page.svelte';
+import { buildStoredJournalIntentHref } from '$lib/features/journal/navigation';
 import { expectHeading, resetRouteDb, waitForText } from '../../../support/component/routeHarness';
 
 describe('Journal route', () => {
@@ -36,11 +37,16 @@ describe('Journal route', () => {
   });
 
   it('hydrates the journal draft from a query intent and clears the url params', async () => {
-    window.history.replaceState(
-      {},
-      '',
-      '/journal?source=today-recovery&localDay=2026-04-05&entryType=symptom_note&title=Recovery%20note&body=Crowded%20store%20and%20headache%20drained%20the%20afternoon.&linkedEventIds=symptom-1%2Canxiety-1'
-    );
+    const href = buildStoredJournalIntentHref({
+      source: 'today-recovery',
+      localDay: '2026-04-05',
+      entryType: 'symptom_note',
+      title: 'Recovery note',
+      body: 'Crowded store and headache drained the afternoon.',
+      linkedEventIds: ['symptom-1', 'anxiety-1'],
+    });
+
+    window.history.replaceState({}, '', href);
 
     render(JournalPage);
     expectHeading('Journal');
@@ -58,7 +64,7 @@ describe('Journal route', () => {
   });
 
   it('lets the user link a same-day signal before saving the entry', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const today = currentLocalDay();
     const todayISO = `${today}T09:00:00.000Z`;
     await db.healthEvents.put({

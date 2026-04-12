@@ -1,4 +1,3 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import type { AssessmentResult } from '$lib/core/domain/types';
 import { createAssessmentDraftResponses } from './model';
 import {
@@ -7,8 +6,14 @@ import {
   renderAssessment,
   saveAssessmentProgress,
   submitAssessment,
+  type AssessmentResultsStore,
 } from '$lib/features/assessments/service';
-import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
+import {
+  refreshWeeklyReviewArtifactsSafely,
+  type ReviewStorage,
+} from '$lib/features/review/service';
+
+export interface AssessmentsPageStorage extends AssessmentResultsStore, ReviewStorage {}
 
 export interface AssessmentsPageState {
   loading: boolean;
@@ -74,11 +79,11 @@ export function setAssessmentsInstrument(
 }
 
 export async function loadAssessmentsPage(
-  db: HealthDatabase,
+  store: AssessmentsPageStorage,
   localDay: string,
   state: AssessmentsPageState
 ): Promise<AssessmentsPageState> {
-  const latest = await getLatestAssessment(db, localDay, state.instrument);
+  const latest = await getLatestAssessment(store, localDay, state.instrument);
   const definition = renderAssessment(state.instrument);
 
   return {
@@ -90,35 +95,40 @@ export async function loadAssessmentsPage(
   };
 }
 
+async function refreshAssessmentsAfterMutation(
+  store: AssessmentsPageStorage,
+  state: AssessmentsPageState,
+  overrides: Partial<AssessmentsPageState> = {}
+): Promise<AssessmentsPageState> {
+  await refreshWeeklyReviewArtifactsSafely(store, state.localDay);
+  return withClearedAssessmentValidation(state, overrides);
+}
+
 export async function saveAssessmentsProgressPage(
-  db: HealthDatabase,
+  store: AssessmentsPageStorage,
   state: AssessmentsPageState
 ): Promise<AssessmentsPageState> {
-  await saveAssessmentProgress(db, {
+  await saveAssessmentProgress(store, {
     localDay: state.localDay,
     instrument: state.instrument,
     itemResponses: state.draftResponses.filter((value) => value >= 0),
   });
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-
-  return withClearedAssessmentValidation(state, {
+  return await refreshAssessmentsAfterMutation(store, state, {
     saveNotice: 'Progress saved.',
   });
 }
 
 export async function submitAssessmentsPage(
-  db: HealthDatabase,
+  store: AssessmentsPageStorage,
   state: AssessmentsPageState
 ): Promise<AssessmentsPageState> {
   try {
-    const latest = await submitAssessment(db, {
+    const latest = await submitAssessment(store, {
       localDay: state.localDay,
       instrument: state.instrument,
       itemResponses: state.draftResponses,
     });
-    await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-
-    return withClearedAssessmentValidation(state, {
+    return await refreshAssessmentsAfterMutation(store, state, {
       latest,
       saveNotice: 'Assessment saved.',
       safetyMessage:

@@ -17,42 +17,44 @@
   } = $props();
 </script>
 
-<SectionCard title="Quick check-in">
-  <div class="field-grid">
-    {#each todayMetricFields as field (field.key)}
-      <Field label={field.label}>
-        <input
-          value={form[field.key]}
-          aria-label={field.label}
-          type={field.type}
-          min={field.min}
-          max={field.max}
-          step={field.step}
-          oninput={(event) =>
-            onFormFieldChange(field.key, (event.currentTarget as HTMLInputElement).value)}
-        />
-      </Field>
-    {/each}
-  </div>
+<div id="today-check-in">
+  <SectionCard title="Quick check-in">
+    <div class="field-grid">
+      {#each todayMetricFields as field (field.key)}
+        <Field label={field.label}>
+          <input
+            value={form[field.key]}
+            aria-label={field.label}
+            type={field.type}
+            min={field.min}
+            max={field.max}
+            step={field.step}
+            oninput={(event) =>
+              onFormFieldChange(field.key, (event.currentTarget as HTMLInputElement).value)}
+          />
+        </Field>
+      {/each}
+    </div>
 
-  <Field className="note-field" label="Today note">
-    <textarea
-      value={form.freeformNote}
-      aria-label="Today note"
-      rows="4"
-      oninput={(event) =>
-        onFormFieldChange('freeformNote', (event.currentTarget as HTMLTextAreaElement).value)}
-    ></textarea>
-  </Field>
+    <Field className="note-field" label="Today note">
+      <textarea
+        value={form.freeformNote}
+        aria-label="Today note"
+        rows="4"
+        oninput={(event) =>
+          onFormFieldChange('freeformNote', (event.currentTarget as HTMLTextAreaElement).value)}
+      ></textarea>
+    </Field>
 
-  <Button onclick={onSave} disabled={saving}>
-    {saving ? 'Saving…' : 'Save check-in'}
-  </Button>
+    <Button onclick={onSave} disabled={saving}>
+      {saving ? 'Saving…' : 'Save check-in'}
+    </Button>
 
-  {#if saveNotice}
-    <p class="status-copy">{saveNotice}</p>
-  {/if}
-</SectionCard>
+    {#if saveNotice}
+      <p class="status-copy">{saveNotice}</p>
+    {/if}
+  </SectionCard>
+</div>
 
 <style>
   .field-grid {

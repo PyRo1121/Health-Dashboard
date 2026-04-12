@@ -1,3 +1,4 @@
+import { getCanonicalHealthMetricKey } from '$lib/core/domain/health-metrics';
 import { nowIso } from '$lib/core/domain/time';
 import type { HealthEvent, JournalEntry } from '$lib/core/domain/types';
 import { createRecordId } from '$lib/core/shared/ids';
@@ -22,7 +23,7 @@ export function parseAppleHealthXml(xml: string): HealthEvent[] {
       localDay: sourceTimestamp.slice(0, 10),
       timezone: 'UTC',
       confidence: 0.95,
-      eventType: attributes.type ?? 'unknown',
+      eventType: getCanonicalHealthMetricKey(attributes.type ?? 'unknown'),
       value: Number(attributes.value ?? 0),
       unit: attributes.unit ?? undefined,
     } satisfies HealthEvent;
