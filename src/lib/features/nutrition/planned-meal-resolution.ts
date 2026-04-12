@@ -2,7 +2,6 @@ import type { FoodCatalogItem, PlanSlot, PlannedMeal } from '$lib/core/domain/ty
 import { listPlanSlotsForDay, type PlanSlotsStore } from '$lib/features/planning/service';
 import { listFoodCatalogItems, type FoodCatalogItemsStore } from './store';
 
-
 export interface NutritionPlannedMealStore extends PlanSlotsStore, FoodCatalogItemsStore {}
 
 export interface NutritionPlannedMealCandidate {

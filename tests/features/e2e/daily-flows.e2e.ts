@@ -811,7 +811,9 @@ test('today shows recovery-aware fallback when sleep and symptoms are rough', as
   await expect(recommendationSection.getByText('Keep today lighter')).toBeVisible();
   await expect(recommendationSection.getByText(/High confidence/i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Capture recovery note' })).toBeVisible();
-  await expect(page.getByText('Sleep landed under 6 hours.', { exact: true }).first()).toBeVisible();
+  await expect(
+    page.getByText('Sleep landed under 6 hours.', { exact: true }).first()
+  ).toBeVisible();
   await expect(
     page.getByText('Meal fallback: keep the next meal familiar, easy, and protein-forward.')
   ).toBeVisible();
@@ -820,8 +822,14 @@ test('today shows recovery-aware fallback when sleep and symptoms are rough', as
       'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
     )
   ).toBeVisible();
-  await expect(page.getByText(/Meal fallback: keep the next meal familiar, easy, and protein-forward\./i)).toBeVisible();
-  await expect(page.getByText(/Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest\./i)).toBeVisible();
+  await expect(
+    page.getByText(/Meal fallback: keep the next meal familiar, easy, and protein-forward\./i)
+  ).toBeVisible();
+  await expect(
+    page.getByText(
+      /Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest\./i
+    )
+  ).toBeVisible();
   await expect(page.getByRole('button', { name: 'Swap to recovery meal' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Swap to recovery walk' })).toBeVisible();
 });

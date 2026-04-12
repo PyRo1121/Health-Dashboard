@@ -1,5 +1,8 @@
 import type { WeeklyReviewData } from '$lib/features/review/service';
-import { buildStoredJournalIntentHref, type JournalIntentHref } from '$lib/features/journal/navigation';
+import {
+  buildStoredJournalIntentHref,
+  type JournalIntentHref,
+} from '$lib/features/journal/navigation';
 import {
   buildNutritionIntentHref,
   type NutritionIntentHref,

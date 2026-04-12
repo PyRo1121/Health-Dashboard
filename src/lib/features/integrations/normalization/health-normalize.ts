@@ -1,7 +1,5 @@
 import { nowIso, toLocalDay } from '$lib/core/domain/time';
-import {
-  isConnectorMetricSupported,
-} from '$lib/core/domain/health-metrics';
+import { isConnectorMetricSupported } from '$lib/core/domain/health-metrics';
 import type {
   HealthEvent,
   NativeCompanionBundle,

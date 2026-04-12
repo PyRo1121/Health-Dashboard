@@ -6,7 +6,10 @@ import {
 } from '$lib/features/groceries/service';
 import { createWorkoutTemplateForm, normalizeExerciseDrafts } from '$lib/features/movement/model';
 import { saveWorkoutTemplate } from '$lib/features/movement/service';
-import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
+import {
+  refreshWeeklyReviewArtifactsSafely,
+  type ReviewStorage,
+} from '$lib/features/review/service';
 import {
   deletePlanSlot,
   movePlanSlot,

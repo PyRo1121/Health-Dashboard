@@ -1,4 +1,10 @@
-import type { HealthDbHealthEventsStore, HealthDbImportArtifactsStore, HealthDbImportBatchesStore, HealthDbJournalEntriesStore, HealthDbTable } from '$lib/core/db/types';
+import type {
+  HealthDbHealthEventsStore,
+  HealthDbImportArtifactsStore,
+  HealthDbImportBatchesStore,
+  HealthDbJournalEntriesStore,
+  HealthDbTable,
+} from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
 import type {
   HealthEvent,
@@ -17,7 +23,10 @@ import type {
 import { resolveClinicalPatientMatch } from '$lib/features/integrations/identity/patient-match';
 import { createRecordId } from '$lib/core/shared/ids';
 import { createRecordMeta, updateRecordMeta } from '$lib/core/shared/records';
-import { refreshWeeklyReviewArtifactsForDaysSafely, type ReviewStorage } from '$lib/features/review/service';
+import {
+  refreshWeeklyReviewArtifactsForDaysSafely,
+  type ReviewStorage,
+} from '$lib/features/review/service';
 import { type ImportPayloadAnalysis, textFingerprint, warningCount } from './core';
 import { analyzeImportPayload } from './analyze';
 import { parseAppleHealthXml, parseDayOneExport } from './parsers';
@@ -26,13 +35,11 @@ export type ImportBatchesStore = HealthDbImportBatchesStore;
 
 export type ImportArtifactsStore = HealthDbImportArtifactsStore;
 
-export interface ImportedRecordsStore extends HealthDbHealthEventsStore, HealthDbJournalEntriesStore {}
+export interface ImportedRecordsStore
+  extends HealthDbHealthEventsStore, HealthDbJournalEntriesStore {}
 
 export interface ImportsStorage
-  extends ImportBatchesStore,
-    ImportArtifactsStore,
-    ImportedRecordsStore,
-    ReviewStorage {}
+  extends ImportBatchesStore, ImportArtifactsStore, ImportedRecordsStore, ReviewStorage {}
 
 async function stageHealthEventBatch(
   store: ImportsStorage,
@@ -198,7 +205,10 @@ export async function previewImport(
   return batch;
 }
 
-export async function commitImportBatch(store: ImportsStorage, batchId: string): Promise<ImportBatch> {
+export async function commitImportBatch(
+  store: ImportsStorage,
+  batchId: string
+): Promise<ImportBatch> {
   const batch = await store.importBatches.get(batchId);
   if (!batch) throw new Error('Import batch not found');
 

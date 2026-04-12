@@ -9,7 +9,6 @@ import {
   type FeatureClientDeps,
 } from '$lib/core/http/feature-client';
 
-
 afterEach(() => {
   resetFeatureClientTestDb();
 });
@@ -58,13 +57,10 @@ describe('feature client helpers', () => {
 
     configureFeatureClientTestDb(async () => db);
 
-    const result = await runFeatureMode(
-      async (loadedDb) => {
-        expect(loadedDb).toBe(db);
-        return 'test-result';
-      },
-      apiRunner
-    );
+    const result = await runFeatureMode(async (loadedDb) => {
+      expect(loadedDb).toBe(db);
+      return 'test-result';
+    }, apiRunner);
 
     expect(result).toBe('test-result');
     expect(apiRunner).not.toHaveBeenCalled();
@@ -73,9 +69,12 @@ describe('feature client helpers', () => {
   it('throws in test mode when no default test db loader is configured', async () => {
     resetFeatureClientTestDb();
 
-    await expect(runFeatureMode(async () => 'test-result', async () => 'api-result')).rejects.toThrow(
-      'Feature test DB is not configured for test mode'
-    );
+    await expect(
+      runFeatureMode(
+        async () => 'test-result',
+        async () => 'api-result'
+      )
+    ).rejects.toThrow('Feature test DB is not configured for test mode');
   });
 
   it('runs the api branch without opening the test db outside test mode', async () => {

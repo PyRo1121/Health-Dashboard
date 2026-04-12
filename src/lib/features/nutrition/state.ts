@@ -6,13 +6,17 @@ import type {
   RecipeCatalogItem,
 } from '$lib/core/domain/types';
 import { createNutritionForm, mergeNutritionFormWithDraft, type NutritionFormState } from './model';
-import { getNutritionPlannedMealResolution, type NutritionPlannedMealStore } from './planned-meal-resolution';
 import {
-  attachNutrientsToFoodEntry,
-  searchFoodData,
-} from './lookup';
+  getNutritionPlannedMealResolution,
+  type NutritionPlannedMealStore,
+} from './planned-meal-resolution';
+import { attachNutrientsToFoodEntry, searchFoodData } from './lookup';
 import type { FoodLookupResult } from './types';
-import { buildNutritionRecommendationContext, buildDailyNutritionSummary, type NutritionRecommendationContextStore } from './summary';
+import {
+  buildNutritionRecommendationContext,
+  buildDailyNutritionSummary,
+  type NutritionRecommendationContextStore,
+} from './summary';
 import {
   listFoodCatalogItems,
   listFavoriteMeals,
@@ -39,7 +43,8 @@ type NutritionRecommendationContext = {
 };
 
 export interface NutritionPageStorage
-  extends NutritionRecommendationContextStore,
+  extends
+    NutritionRecommendationContextStore,
     FavoriteMealsStore,
     FoodCatalogItemsStore,
     RecipeCatalogItemsStore,

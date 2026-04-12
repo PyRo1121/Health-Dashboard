@@ -3,8 +3,9 @@
 Status: Historical Foundation
 Date: 2026-04-12
 Superseded by:
+
 - `docs/designs/2026-04-12-bleeding-edge-health-os-plan.md`
-Basis:
+  Basis:
 - `ARCHITECTURE.md`
 - `docs/api-reference.md`
 - `docs/data-model.md`
@@ -87,6 +88,7 @@ This is where the user feels the product every day.
 Improving Today has the highest product leverage.
 
 What to build:
+
 - stronger prioritization of today signals
 - explicit recommendation ranking
 - “why this is suggested” provenance on every recovery or meal/workout suggestion
@@ -95,6 +97,7 @@ What to build:
 - tighter link-outs from Today into Journal, Health, Nutrition, and Plan when the best action is “capture more context”
 
 Primary touchpoints:
+
 - `src/lib/features/today/**`
 - `src/lib/features/review/**`
 - `src/lib/features/health/**`
@@ -102,6 +105,7 @@ Primary touchpoints:
 - `src/lib/features/planning/**`
 
 Acceptance bar:
+
 - Today always produces one clear primary recommendation when sufficient signal exists
 - every recommendation explains inputs and confidence
 - no silent stale planned-meal/workout behavior
@@ -116,6 +120,7 @@ Why second:
 The product differentiator is the loop from weekly synthesis into next-week action.
 
 What to build:
+
 - ranked weekly experiments with expected impact and confidence
 - explicit “continue / stop / adjust” recommendations for prior experiments
 - stronger causal and contextual summaries, not just correlations
@@ -124,6 +129,7 @@ What to build:
 - a simple “what changed enough to matter” section
 
 Primary touchpoints:
+
 - `src/lib/features/review/**`
 - `src/lib/features/adherence/**`
 - `src/lib/features/groceries/**`
@@ -131,6 +137,7 @@ Primary touchpoints:
 - `src/lib/server/review/service.ts`
 
 Acceptance bar:
+
 - weekly review outputs at least one clear next-step recommendation
 - recommendation cards cite provenance and confidence
 - review snapshots stay deterministic under seeded replay
@@ -145,6 +152,7 @@ Why third:
 As more health and fitness data lands, trust becomes a product feature.
 
 What to build:
+
 - explicit provenance display on timeline, review, and today signals
 - confidence tiers for manual, imported, inferred, and derived records
 - source filters and source badges that are actually useful, not decorative
@@ -152,6 +160,7 @@ What to build:
 - “show raw source details” drill-down for imported records
 
 Primary touchpoints:
+
 - `src/lib/features/imports/**`
 - `src/lib/features/timeline/**`
 - `src/lib/features/review/**`
@@ -159,6 +168,7 @@ Primary touchpoints:
 - server import/timeline/review services
 
 Acceptance bar:
+
 - a user can tell where a health signal came from in one click
 - inferred and derived signals are visually distinct
 - identity mismatch paths remain explicit and safe
@@ -172,6 +182,7 @@ Why fourth:
 The code is now clean enough that operational discipline will compound instead of fighting churn.
 
 What to build:
+
 - stronger CI policy on the now-stable lanes
 - explicit release and rollback runbook for local preview and production targets
 - artifact-level health checks beyond `/api/status`
@@ -180,6 +191,7 @@ What to build:
 - docs for deploy expectations, oncall-style triage, and verification proof
 
 Primary touchpoints:
+
 - `.github/workflows/**`
 - `docs/operations-runbook.md`
 - `docs/testing-and-verification.md`
@@ -187,6 +199,7 @@ Primary touchpoints:
 - `docs/maintenance-guide.md`
 
 Acceptance bar:
+
 - CI gating aligns with current architecture, not historical assumptions
 - operational docs match real commands and failure modes
 - one-command operational proof remains green after every structural tranche
@@ -200,22 +213,26 @@ Why fifth:
 More inputs without better synthesis just creates noise.
 
 Priority order:
+
 1. stronger HealthKit read path / companion polish
 2. Android Health Connect parity plan
 3. SMART-on-FHIR expansion beyond sandbox
 
 Rules:
+
 - every new source must normalize into the same canonical event graph
 - no source gets privileged product logic without provenance
 - no platform integration can degrade the local manual loop
 
 Primary touchpoints:
+
 - `apps/ios-companion/**`
 - `src/lib/features/imports/**`
 - `src/lib/features/integrations/**`
 - future Android lane docs, not code-first
 
 Acceptance bar:
+
 - import lanes remain optional
 - owner identity and provenance model stays intact
 - no platform-specific data path forks the product loop

@@ -64,7 +64,9 @@ describe('nutrition dynamic routes', () => {
   });
 
   it('uses the direct packaged search service', async () => {
-    const searchPackagedFoodsServer = vi.fn(async () => [{ id: 'off:049000028911', name: 'Diet Cola' }]);
+    const searchPackagedFoodsServer = vi.fn(async () => [
+      { id: 'off:049000028911', name: 'Diet Cola' },
+    ]);
     vi.doMock('$lib/server/nutrition/service', () => ({
       lookupNutritionBarcodeServer: vi.fn(),
       enrichNutritionFoodServer: vi.fn(),
@@ -73,7 +75,8 @@ describe('nutrition dynamic routes', () => {
       searchRecipesServer: vi.fn(),
     }));
 
-    const { POST } = await import('../../../../src/routes/api/nutrition/search-packaged/+server.ts');
+    const { POST } =
+      await import('../../../../src/routes/api/nutrition/search-packaged/+server.ts');
     const response = await POST({
       request: new Request('http://health.test/api/nutrition/search-packaged', {
         method: 'POST',
@@ -95,7 +98,8 @@ describe('nutrition dynamic routes', () => {
       searchRecipesServer: vi.fn(),
     }));
 
-    const { POST } = await import('../../../../src/routes/api/nutrition/search-packaged/+server.ts');
+    const { POST } =
+      await import('../../../../src/routes/api/nutrition/search-packaged/+server.ts');
     const response = await POST({
       request: new Request('http://health.test/api/nutrition/search-packaged', {
         method: 'POST',

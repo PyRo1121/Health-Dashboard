@@ -28,17 +28,25 @@ const SNAPSHOT_TABLES = [
   'adherenceMatches',
 ] as const satisfies ReadonlyArray<keyof HealthDbSnapshot>;
 
-export async function importHealthDbSnapshot(db: DrizzleDb, snapshot: HealthDbSnapshot): Promise<void> {
+export async function importHealthDbSnapshot(
+  db: DrizzleDb,
+  snapshot: HealthDbSnapshot
+): Promise<void> {
   for (const tableName of SNAPSHOT_TABLES) {
     const records = snapshot[tableName] ?? [];
     if (!records.length) continue;
 
     await db
       .insert((drizzleSchema as Record<string, unknown>)[tableName] as never)
-      .values(records.map((record) => toMirrorInsertRecord(tableName, record as { id: string })) as never);
+      .values(
+        records.map((record) => toMirrorInsertRecord(tableName, record as { id: string })) as never
+      );
   }
 }
 
 export function countMigratedRecords(snapshot: HealthDbSnapshot): number {
-  return SNAPSHOT_TABLES.reduce((total, tableName) => total + (snapshot[tableName]?.length ?? 0), 0);
+  return SNAPSHOT_TABLES.reduce(
+    (total, tableName) => total + (snapshot[tableName]?.length ?? 0),
+    0
+  );
 }

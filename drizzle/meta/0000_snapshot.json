@@ -67,44 +67,32 @@
       "indexes": {
         "idx_adherenceMatches_weekStart": {
           "name": "idx_adherenceMatches_weekStart",
-          "columns": [
-            "weekStart"
-          ],
+          "columns": ["weekStart"],
           "isUnique": false
         },
         "idx_adherenceMatches_planSlotId": {
           "name": "idx_adherenceMatches_planSlotId",
-          "columns": [
-            "planSlotId"
-          ],
+          "columns": ["planSlotId"],
           "isUnique": false
         },
         "idx_adherenceMatches_localDay": {
           "name": "idx_adherenceMatches_localDay",
-          "columns": [
-            "localDay"
-          ],
+          "columns": ["localDay"],
           "isUnique": false
         },
         "idx_adherenceMatches_outcome": {
           "name": "idx_adherenceMatches_outcome",
-          "columns": [
-            "outcome"
-          ],
+          "columns": ["outcome"],
           "isUnique": false
         },
         "idx_adherenceMatches_fingerprint": {
           "name": "idx_adherenceMatches_fingerprint",
-          "columns": [
-            "fingerprint"
-          ],
+          "columns": ["fingerprint"],
           "isUnique": false
         },
         "idx_adherenceMatches_updatedAt": {
           "name": "idx_adherenceMatches_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -155,23 +143,17 @@
       "indexes": {
         "idx_assessmentResults_localDay": {
           "name": "idx_assessmentResults_localDay",
-          "columns": [
-            "localDay"
-          ],
+          "columns": ["localDay"],
           "isUnique": false
         },
         "idx_assessmentResults_instrument": {
           "name": "idx_assessmentResults_instrument",
-          "columns": [
-            "instrument"
-          ],
+          "columns": ["instrument"],
           "isUnique": false
         },
         "idx_assessmentResults_updatedAt": {
           "name": "idx_assessmentResults_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -215,16 +197,12 @@
       "indexes": {
         "idx_dailyRecords_date": {
           "name": "idx_dailyRecords_date",
-          "columns": [
-            "date"
-          ],
+          "columns": ["date"],
           "isUnique": false
         },
         "idx_dailyRecords_updatedAt": {
           "name": "idx_dailyRecords_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -289,37 +267,27 @@
       "indexes": {
         "idx_derivedGroceryItems_weeklyPlanId": {
           "name": "idx_derivedGroceryItems_weeklyPlanId",
-          "columns": [
-            "weeklyPlanId"
-          ],
+          "columns": ["weeklyPlanId"],
           "isUnique": false
         },
         "idx_derivedGroceryItems_aisle": {
           "name": "idx_derivedGroceryItems_aisle",
-          "columns": [
-            "aisle"
-          ],
+          "columns": ["aisle"],
           "isUnique": false
         },
         "idx_derivedGroceryItems_checked": {
           "name": "idx_derivedGroceryItems_checked",
-          "columns": [
-            "checked"
-          ],
+          "columns": ["checked"],
           "isUnique": false
         },
         "idx_derivedGroceryItems_excluded": {
           "name": "idx_derivedGroceryItems_excluded",
-          "columns": [
-            "excluded"
-          ],
+          "columns": ["excluded"],
           "isUnique": false
         },
         "idx_derivedGroceryItems_updatedAt": {
           "name": "idx_derivedGroceryItems_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -370,23 +338,17 @@
       "indexes": {
         "idx_exerciseCatalogItems_title": {
           "name": "idx_exerciseCatalogItems_title",
-          "columns": [
-            "title"
-          ],
+          "columns": ["title"],
           "isUnique": false
         },
         "idx_exerciseCatalogItems_sourceType": {
           "name": "idx_exerciseCatalogItems_sourceType",
-          "columns": [
-            "sourceType"
-          ],
+          "columns": ["sourceType"],
           "isUnique": false
         },
         "idx_exerciseCatalogItems_updatedAt": {
           "name": "idx_exerciseCatalogItems_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -430,16 +392,12 @@
       "indexes": {
         "idx_favoriteMeals_mealType": {
           "name": "idx_favoriteMeals_mealType",
-          "columns": [
-            "mealType"
-          ],
+          "columns": ["mealType"],
           "isUnique": false
         },
         "idx_favoriteMeals_updatedAt": {
           "name": "idx_favoriteMeals_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -497,30 +455,22 @@
       "indexes": {
         "idx_foodCatalogItems_name": {
           "name": "idx_foodCatalogItems_name",
-          "columns": [
-            "name"
-          ],
+          "columns": ["name"],
           "isUnique": false
         },
         "idx_foodCatalogItems_sourceType": {
           "name": "idx_foodCatalogItems_sourceType",
-          "columns": [
-            "sourceType"
-          ],
+          "columns": ["sourceType"],
           "isUnique": false
         },
         "idx_foodCatalogItems_barcode": {
           "name": "idx_foodCatalogItems_barcode",
-          "columns": [
-            "barcode"
-          ],
+          "columns": ["barcode"],
           "isUnique": false
         },
         "idx_foodCatalogItems_updatedAt": {
           "name": "idx_foodCatalogItems_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -571,23 +521,17 @@
       "indexes": {
         "idx_foodEntries_localDay": {
           "name": "idx_foodEntries_localDay",
-          "columns": [
-            "localDay"
-          ],
+          "columns": ["localDay"],
           "isUnique": false
         },
         "idx_foodEntries_mealType": {
           "name": "idx_foodEntries_mealType",
-          "columns": [
-            "mealType"
-          ],
+          "columns": ["mealType"],
           "isUnique": false
         },
         "idx_foodEntries_updatedAt": {
           "name": "idx_foodEntries_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -652,37 +596,27 @@
       "indexes": {
         "idx_healthEvents_localDay": {
           "name": "idx_healthEvents_localDay",
-          "columns": [
-            "localDay"
-          ],
+          "columns": ["localDay"],
           "isUnique": false
         },
         "idx_healthEvents_eventType": {
           "name": "idx_healthEvents_eventType",
-          "columns": [
-            "eventType"
-          ],
+          "columns": ["eventType"],
           "isUnique": false
         },
         "idx_healthEvents_sourceType": {
           "name": "idx_healthEvents_sourceType",
-          "columns": [
-            "sourceType"
-          ],
+          "columns": ["sourceType"],
           "isUnique": false
         },
         "idx_healthEvents_sourceRecordId": {
           "name": "idx_healthEvents_sourceRecordId",
-          "columns": [
-            "sourceRecordId"
-          ],
+          "columns": ["sourceRecordId"],
           "isUnique": false
         },
         "idx_healthEvents_updatedAt": {
           "name": "idx_healthEvents_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -733,23 +667,17 @@
       "indexes": {
         "idx_healthTemplates_templateType": {
           "name": "idx_healthTemplates_templateType",
-          "columns": [
-            "templateType"
-          ],
+          "columns": ["templateType"],
           "isUnique": false
         },
         "idx_healthTemplates_label": {
           "name": "idx_healthTemplates_label",
-          "columns": [
-            "label"
-          ],
+          "columns": ["label"],
           "isUnique": false
         },
         "idx_healthTemplates_updatedAt": {
           "name": "idx_healthTemplates_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -800,23 +728,17 @@
       "indexes": {
         "idx_importArtifacts_batchId": {
           "name": "idx_importArtifacts_batchId",
-          "columns": [
-            "batchId"
-          ],
+          "columns": ["batchId"],
           "isUnique": false
         },
         "idx_importArtifacts_artifactType": {
           "name": "idx_importArtifacts_artifactType",
-          "columns": [
-            "artifactType"
-          ],
+          "columns": ["artifactType"],
           "isUnique": false
         },
         "idx_importArtifacts_createdAt": {
           "name": "idx_importArtifacts_createdAt",
-          "columns": [
-            "createdAt"
-          ],
+          "columns": ["createdAt"],
           "isUnique": false
         }
       },
@@ -867,23 +789,17 @@
       "indexes": {
         "idx_importBatches_sourceType": {
           "name": "idx_importBatches_sourceType",
-          "columns": [
-            "sourceType"
-          ],
+          "columns": ["sourceType"],
           "isUnique": false
         },
         "idx_importBatches_status": {
           "name": "idx_importBatches_status",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "idx_importBatches_createdAt": {
           "name": "idx_importBatches_createdAt",
-          "columns": [
-            "createdAt"
-          ],
+          "columns": ["createdAt"],
           "isUnique": false
         }
       },
@@ -934,23 +850,17 @@
       "indexes": {
         "idx_journalEntries_localDay": {
           "name": "idx_journalEntries_localDay",
-          "columns": [
-            "localDay"
-          ],
+          "columns": ["localDay"],
           "isUnique": false
         },
         "idx_journalEntries_entryType": {
           "name": "idx_journalEntries_entryType",
-          "columns": [
-            "entryType"
-          ],
+          "columns": ["entryType"],
           "isUnique": false
         },
         "idx_journalEntries_updatedAt": {
           "name": "idx_journalEntries_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -1015,37 +925,27 @@
       "indexes": {
         "idx_manualGroceryItems_weeklyPlanId": {
           "name": "idx_manualGroceryItems_weeklyPlanId",
-          "columns": [
-            "weeklyPlanId"
-          ],
+          "columns": ["weeklyPlanId"],
           "isUnique": false
         },
         "idx_manualGroceryItems_aisle": {
           "name": "idx_manualGroceryItems_aisle",
-          "columns": [
-            "aisle"
-          ],
+          "columns": ["aisle"],
           "isUnique": false
         },
         "idx_manualGroceryItems_checked": {
           "name": "idx_manualGroceryItems_checked",
-          "columns": [
-            "checked"
-          ],
+          "columns": ["checked"],
           "isUnique": false
         },
         "idx_manualGroceryItems_excluded": {
           "name": "idx_manualGroceryItems_excluded",
-          "columns": [
-            "excluded"
-          ],
+          "columns": ["excluded"],
           "isUnique": false
         },
         "idx_manualGroceryItems_updatedAt": {
           "name": "idx_manualGroceryItems_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -1110,37 +1010,27 @@
       "indexes": {
         "idx_planSlots_weeklyPlanId": {
           "name": "idx_planSlots_weeklyPlanId",
-          "columns": [
-            "weeklyPlanId"
-          ],
+          "columns": ["weeklyPlanId"],
           "isUnique": false
         },
         "idx_planSlots_localDay": {
           "name": "idx_planSlots_localDay",
-          "columns": [
-            "localDay"
-          ],
+          "columns": ["localDay"],
           "isUnique": false
         },
         "idx_planSlots_slotType": {
           "name": "idx_planSlots_slotType",
-          "columns": [
-            "slotType"
-          ],
+          "columns": ["slotType"],
           "isUnique": false
         },
         "idx_planSlots_status": {
           "name": "idx_planSlots_status",
-          "columns": [
-            "status"
-          ],
+          "columns": ["status"],
           "isUnique": false
         },
         "idx_planSlots_updatedAt": {
           "name": "idx_planSlots_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -1198,30 +1088,22 @@
       "indexes": {
         "idx_recipeCatalogItems_title": {
           "name": "idx_recipeCatalogItems_title",
-          "columns": [
-            "title"
-          ],
+          "columns": ["title"],
           "isUnique": false
         },
         "idx_recipeCatalogItems_mealType": {
           "name": "idx_recipeCatalogItems_mealType",
-          "columns": [
-            "mealType"
-          ],
+          "columns": ["mealType"],
           "isUnique": false
         },
         "idx_recipeCatalogItems_cuisine": {
           "name": "idx_recipeCatalogItems_cuisine",
-          "columns": [
-            "cuisine"
-          ],
+          "columns": ["cuisine"],
           "isUnique": false
         },
         "idx_recipeCatalogItems_updatedAt": {
           "name": "idx_recipeCatalogItems_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -1265,16 +1147,12 @@
       "indexes": {
         "idx_reviewSnapshots_weekStart": {
           "name": "idx_reviewSnapshots_weekStart",
-          "columns": [
-            "weekStart"
-          ],
+          "columns": ["weekStart"],
           "isUnique": false
         },
         "idx_reviewSnapshots_updatedAt": {
           "name": "idx_reviewSnapshots_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -1325,23 +1203,17 @@
       "indexes": {
         "idx_sobrietyEvents_localDay": {
           "name": "idx_sobrietyEvents_localDay",
-          "columns": [
-            "localDay"
-          ],
+          "columns": ["localDay"],
           "isUnique": false
         },
         "idx_sobrietyEvents_eventType": {
           "name": "idx_sobrietyEvents_eventType",
-          "columns": [
-            "eventType"
-          ],
+          "columns": ["eventType"],
           "isUnique": false
         },
         "idx_sobrietyEvents_updatedAt": {
           "name": "idx_sobrietyEvents_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -1385,16 +1257,12 @@
       "indexes": {
         "idx_weeklyPlans_weekStart": {
           "name": "idx_weeklyPlans_weekStart",
-          "columns": [
-            "weekStart"
-          ],
+          "columns": ["weekStart"],
           "isUnique": false
         },
         "idx_weeklyPlans_updatedAt": {
           "name": "idx_weeklyPlans_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },
@@ -1438,16 +1306,12 @@
       "indexes": {
         "idx_workoutTemplates_title": {
           "name": "idx_workoutTemplates_title",
-          "columns": [
-            "title"
-          ],
+          "columns": ["title"],
           "isUnique": false
         },
         "idx_workoutTemplates_updatedAt": {
           "name": "idx_workoutTemplates_updatedAt",
-          "columns": [
-            "updatedAt"
-          ],
+          "columns": ["updatedAt"],
           "isUnique": false
         }
       },

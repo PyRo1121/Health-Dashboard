@@ -1,6 +1,9 @@
 import type { HealthDbHealthEventsStore, HealthDbHealthTemplatesStore } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
-import { isHealthMetricVisibleOnSurface, matchesHealthMetric } from '$lib/core/domain/health-metrics';
+import {
+  isHealthMetricVisibleOnSurface,
+  matchesHealthMetric,
+} from '$lib/core/domain/health-metrics';
 import type {
   AnxietyHealthEventPayload,
   HealthEvent,
@@ -121,7 +124,9 @@ export function isHealthPageEvent(event: Pick<HealthEvent, 'eventType'>): boolea
 export function sortHealthPageEvents(events: HealthEvent[]): HealthEvent[] {
   return [...events]
     .filter((event) => isHealthPageEvent(event))
-    .sort((left, right) => sortHealthEventTimestamp(right).localeCompare(sortHealthEventTimestamp(left)));
+    .sort((left, right) =>
+      sortHealthEventTimestamp(right).localeCompare(sortHealthEventTimestamp(left))
+    );
 }
 
 export function sortActiveHealthTemplates(templates: HealthTemplate[]): HealthTemplate[] {

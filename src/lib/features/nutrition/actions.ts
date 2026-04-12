@@ -15,8 +15,15 @@ import {
   savePlanSlot,
   type WeeklyPlansStore,
 } from '$lib/features/planning/service';
-import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
-import { type NutritionPageState, type NutritionPageStorage, reloadNutritionPageState } from './state';
+import {
+  refreshWeeklyReviewArtifactsSafely,
+  type ReviewStorage,
+} from '$lib/features/review/service';
+import {
+  type NutritionPageState,
+  type NutritionPageStorage,
+  reloadNutritionPageState,
+} from './state';
 
 interface NutritionMacroDraft {
   name: string;
@@ -52,7 +59,8 @@ export interface NutritionCatalogItemDraft {
   fat: number;
 }
 
-export interface NutritionActionsStorage extends NutritionPageStorage, WeeklyPlansStore, ReviewStorage {}
+export interface NutritionActionsStorage
+  extends NutritionPageStorage, WeeklyPlansStore, ReviewStorage {}
 
 async function resolveNutritionPlannedFoodId(
   store: FoodCatalogItemsStore,

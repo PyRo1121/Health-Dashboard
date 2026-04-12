@@ -18,11 +18,19 @@ import {
   type PlanSlotsStore,
   type WeeklyPlansStore,
 } from '$lib/features/planning/service';
-import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
-import { getTodayPlannedMealResolution, getTodaySnapshot, type TodaySnapshotStore } from './snapshot';
+import {
+  refreshWeeklyReviewArtifactsSafely,
+  type ReviewStorage,
+} from '$lib/features/review/service';
+import {
+  getTodayPlannedMealResolution,
+  getTodaySnapshot,
+  type TodaySnapshotStore,
+} from './snapshot';
 
 export interface TodayActionsStorage
-  extends TodaySnapshotStore,
+  extends
+    TodaySnapshotStore,
     DailyRecordsStore,
     FoodEntriesStore,
     FoodCatalogItemsStore,
@@ -133,7 +141,10 @@ export async function logPlannedMealForToday(
   return entry;
 }
 
-export async function clearTodayPlannedMeal(store: TodayActionsStorage, date: string): Promise<void> {
+export async function clearTodayPlannedMeal(
+  store: TodayActionsStorage,
+  date: string
+): Promise<void> {
   const resolution = await getTodayPlannedMealResolution(store, date);
   if (resolution.candidate?.slotId) {
     await deletePlanSlot(store, resolution.candidate.slotId);

@@ -6,6 +6,7 @@ Date: 2026-04-10
 This file documents the live local-first data model.
 
 Use it when you need to answer:
+
 - which table owns which record type
 - which records are source-of-truth vs derived
 - what gets refreshed when a mutation lands
@@ -27,6 +28,7 @@ in-memory test tables
 ```
 
 Core sources:
+
 - [src/lib/core/db/schema.ts](/home/pyro1121/Documents/Health/src/lib/core/db/schema.ts)
 - [src/lib/core/db/types.ts](/home/pyro1121/Documents/Health/src/lib/core/db/types.ts)
 - [src/lib/core/domain/types.ts](/home/pyro1121/Documents/Health/src/lib/core/domain/types.ts)
@@ -36,48 +38,60 @@ Core sources:
 ### Daily records
 
 Table:
+
 - `dailyRecords`
 
 Record:
+
 - `DailyRecord`
 
 Purpose:
+
 - one row per local day for daily check-in metrics
 - mood, energy, stress, focus, sleep, note
 
 Primary feature owners:
+
 - today
 - review
 
 ### Journal entries
 
 Table:
+
 - `journalEntries`
 
 Record:
+
 - `JournalEntry`
 
 Purpose:
+
 - daily narrative layer
 - linked event IDs for context-aware journaling
 
 Primary feature owners:
+
 - journal
 - review
 
 ### Food entries
 
 Table:
+
 - `foodEntries`
 
 Record:
+
 - `FoodEntry`
 
 Purpose:
+
 - logged meals for a local day
 - nutrition summary source-of-truth
 
 Primary feature owners:
+
 - nutrition
 - today
 - review
@@ -85,18 +99,22 @@ Primary feature owners:
 ### Food catalog items
 
 Table:
+
 - `foodCatalogItems`
 
 Record:
+
 - `FoodCatalogItem`
 
 Purpose:
+
 - local food catalog
 - custom foods
 - cached packaged/Open Food Facts items
 - cached USDA enrich results
 
 Primary feature owners:
+
 - nutrition
 - planning
 - today
@@ -104,16 +122,20 @@ Primary feature owners:
 ### Recipe catalog items
 
 Table:
+
 - `recipeCatalogItems`
 
 Record:
+
 - `RecipeCatalogItem`
 
 Purpose:
+
 - local cache of recipe entities
 - planning and grocery derivation input
 
 Primary feature owners:
+
 - nutrition
 - planning
 - groceries
@@ -122,15 +144,19 @@ Primary feature owners:
 ### Weekly plans
 
 Table:
+
 - `weeklyPlans`
 
 Record:
+
 - `WeeklyPlan`
 
 Purpose:
+
 - one weekly planning container per week start
 
 Primary feature owners:
+
 - plan
 - groceries
 - review
@@ -138,16 +164,20 @@ Primary feature owners:
 ### Plan slots
 
 Table:
+
 - `planSlots`
 
 Record:
+
 - `PlanSlot`
 
 Purpose:
+
 - per-day weekly plan items
 - meals, workouts, notes
 
 Primary feature owners:
+
 - plan
 - today
 - groceries
@@ -157,15 +187,19 @@ Primary feature owners:
 ### Derived grocery items
 
 Table:
+
 - `derivedGroceryItems`
 
 Record:
+
 - `DerivedGroceryItem`
 
 Purpose:
+
 - grocery rows derived from recipe-backed plan slots
 
 Primary feature owners:
+
 - groceries
 - planning
 - review
@@ -173,30 +207,38 @@ Primary feature owners:
 ### Manual grocery items
 
 Table:
+
 - `manualGroceryItems`
 
 Record:
+
 - `ManualGroceryItem`
 
 Purpose:
+
 - user-added grocery rows layered on top of derived rows
 
 Primary feature owners:
+
 - groceries
 - planning
 
 ### Workout templates
 
 Table:
+
 - `workoutTemplates`
 
 Record:
+
 - `WorkoutTemplate`
 
 Purpose:
+
 - reusable workout plans
 
 Primary feature owners:
+
 - movement
 - planning
 - today
@@ -204,44 +246,56 @@ Primary feature owners:
 ### Exercise catalog items
 
 Table:
+
 - `exerciseCatalogItems`
 
 Record:
+
 - `ExerciseCatalogItem`
 
 Purpose:
+
 - cached exercise search results
 
 Primary feature owners:
+
 - movement
 - planning
 
 ### Favorite meals
 
 Table:
+
 - `favoriteMeals`
 
 Record:
+
 - `FavoriteMeal`
 
 Purpose:
+
 - reusable recurring meals
 
 Primary feature owners:
+
 - nutrition
 
 ### Health events
 
 Table:
+
 - `healthEvents`
 
 Record:
+
 - `HealthEvent`
 
 Purpose:
+
 - normalized event timeline across manual, import, and native-companion sources
 
 Primary feature owners:
+
 - health
 - today
 - timeline
@@ -251,102 +305,130 @@ Primary feature owners:
 ### Health templates
 
 Table:
+
 - `healthTemplates`
 
 Record:
+
 - `HealthTemplate`
 
 Purpose:
+
 - reusable medication/supplement templates
 
 Primary feature owners:
+
 - health
 
 ### Sobriety events
 
 Table:
+
 - `sobrietyEvents`
 
 Record:
+
 - `SobrietyEvent`
 
 Purpose:
+
 - sober/recovery status, craving, lapse context
 
 Primary feature owners:
+
 - sobriety
 - review
 
 ### Assessment results
 
 Table:
+
 - `assessmentResults`
 
 Record:
+
 - `AssessmentResult`
 
 Purpose:
+
 - saved assessment progress and completed results
 
 Primary feature owners:
+
 - assessments
 - review
 
 ### Import batches
 
 Table:
+
 - `importBatches`
 
 Record:
+
 - `ImportBatch`
 
 Purpose:
+
 - staged and committed import lifecycle
 
 Primary feature owners:
+
 - imports
 - integrations
 
 ### Import artifacts
 
 Table:
+
 - `importArtifacts`
 
 Record:
+
 - `ImportArtifact`
 
 Purpose:
+
 - staged per-record import payloads prior to commit
 
 Primary feature owners:
+
 - imports
 
 ### Review snapshots
 
 Table:
+
 - `reviewSnapshots`
 
 Record:
+
 - `ReviewSnapshot`
 
 Purpose:
+
 - materialized weekly review outputs
 
 Primary feature owners:
+
 - review
 
 ### Adherence matches
 
 Table:
+
 - `adherenceMatches`
 
 Record:
+
 - `AdherenceMatch`
 
 Purpose:
+
 - per-slot inferred or direct adherence evidence
 
 Primary feature owners:
+
 - review
 - planning
 
@@ -378,6 +460,7 @@ derived / materialized:
 ```
 
 Rule:
+
 - if a record can be recomputed from canonical data, prefer recomputing or materializing it as derived data
 - if a record is user intent or source evidence, treat it as canonical
 
@@ -398,6 +481,7 @@ HealthEvent
 ```
 
 This is why:
+
 - imports can be deduped
 - timeline can merge manual and imported events
 - review can reason over cross-source evidence
@@ -451,6 +535,7 @@ That separation matters. Canonical data is what happened. Derived data is our in
 ## Docs Rule
 
 If you change:
+
 - a table name
 - a record shape
 - canonical vs derived ownership

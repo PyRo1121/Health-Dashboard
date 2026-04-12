@@ -125,7 +125,8 @@ export interface HealthDbAdherenceMatchesStore {
 }
 
 export interface HealthDbStores
-  extends HealthDbDailyRecordsStore,
+  extends
+    HealthDbDailyRecordsStore,
     HealthDbJournalEntriesStore,
     HealthDbFoodEntriesStore,
     HealthDbFoodCatalogItemsStore,
@@ -155,7 +156,6 @@ export interface HealthDbLifecycle {
   close(): void;
   delete(): Promise<void>;
 }
-
 
 export interface HealthDbSnapshot {
   dailyRecords: DailyRecord[];

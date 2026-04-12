@@ -26,7 +26,8 @@ export {
   updateWorkoutTemplateExerciseField,
 };
 
-const movementClient = createFeatureActionClient<Parameters<typeof loadMovementPageController>[0]>('/api/movement');
+const movementClient =
+  createFeatureActionClient<Parameters<typeof loadMovementPageController>[0]>('/api/movement');
 const movementSearchClient = createFeatureRequestClient<never>('/api/movement/search-exercises');
 
 export async function loadMovementPage(): Promise<MovementPageState> {

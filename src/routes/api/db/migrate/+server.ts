@@ -2,7 +2,10 @@ import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import type { HealthDbSnapshot } from '$lib/core/db/types';
 import { getServerDrizzleClient } from '$lib/server/db/drizzle/client';
-import { countMigratedRecords, importHealthDbSnapshot } from '$lib/server/db/drizzle/import-snapshot';
+import {
+  countMigratedRecords,
+  importHealthDbSnapshot,
+} from '$lib/server/db/drizzle/import-snapshot';
 
 type MigrationRequest = {
   snapshot: HealthDbSnapshot & {

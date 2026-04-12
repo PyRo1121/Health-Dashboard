@@ -153,7 +153,9 @@ describe('today route', () => {
         body: JSON.stringify({ action: 'save', state }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await saveResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Saved for today.' }));
+    expect(await saveResponse.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Saved for today.' })
+    );
     expect(saveTodayPageServer).toHaveBeenCalledWith(state);
 
     const logResponse = await POST({
@@ -162,7 +164,9 @@ describe('today route', () => {
         body: JSON.stringify({ action: 'logPlannedMeal', state }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await logResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Planned meal logged.' }));
+    expect(await logResponse.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Planned meal logged.' })
+    );
     expect(logTodayPlannedMealPageServer).toHaveBeenCalledWith(state);
 
     const clearResponse = await POST({
@@ -171,7 +175,9 @@ describe('today route', () => {
         body: JSON.stringify({ action: 'clearPlannedMeal', state }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await clearResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Planned meal cleared.' }));
+    expect(await clearResponse.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Planned meal cleared.' })
+    );
     expect(clearTodayPlannedMealPageServer).toHaveBeenCalledWith(state);
 
     const markResponse = await POST({
@@ -185,7 +191,9 @@ describe('today route', () => {
         }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await markResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Plan item marked done.' }));
+    expect(await markResponse.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Plan item marked done.' })
+    );
     expect(markTodayPlanSlotStatusPageServer).toHaveBeenCalledWith(state, 'slot-1', 'done');
 
     const recoveryResponse = await POST({

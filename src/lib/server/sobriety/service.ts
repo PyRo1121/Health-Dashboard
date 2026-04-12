@@ -1,15 +1,28 @@
 import type { SobrietyEvent } from '$lib/core/domain/types';
 import { updateRecordMeta } from '$lib/core/shared/records';
-import { buildSobrietyEvent, buildSobrietyTrendSummaryFromData } from '$lib/features/sobriety/service';
+import {
+  buildSobrietyEvent,
+  buildSobrietyTrendSummaryFromData,
+} from '$lib/features/sobriety/service';
 import type { SobrietyPageState } from '$lib/features/sobriety/controller';
 import { refreshWeeklyReviewArtifactsServer } from '$lib/server/review/service';
 import { getServerDrizzleClient } from '$lib/server/db/drizzle/client';
 import { drizzleSchema } from '$lib/server/db/drizzle/schema';
 import { selectMirrorRecordsByField, upsertMirrorRecord } from '$lib/server/db/drizzle/mirror';
 
-async function upsertDailyRecordPatch(localDay: string, patch: { sobrietyStatus?: 'sober' | 'lapse' | 'recovery'; cravingScore?: number }) {
+async function upsertDailyRecordPatch(
+  localDay: string,
+  patch: { sobrietyStatus?: 'sober' | 'lapse' | 'recovery'; cravingScore?: number }
+) {
   const { db } = getServerDrizzleClient();
-  const existing = (await selectMirrorRecordsByField<{ id: string; createdAt: string } & Record<string, unknown>>(db, drizzleSchema.dailyRecords, 'date', localDay))[0];
+  const existing = (
+    await selectMirrorRecordsByField<{ id: string; createdAt: string } & Record<string, unknown>>(
+      db,
+      drizzleSchema.dailyRecords,
+      'date',
+      localDay
+    )
+  )[0];
   const timestamp = new Date().toISOString();
   await upsertMirrorRecord(db, 'dailyRecords', drizzleSchema.dailyRecords, {
     ...existing,
@@ -22,8 +35,18 @@ async function upsertDailyRecordPatch(localDay: string, patch: { sobrietyStatus?
 async function loadSobrietySummaryServer(localDay: string) {
   const { db } = getServerDrizzleClient();
   const [statusEvents, todayEvents] = await Promise.all([
-    selectMirrorRecordsByField<SobrietyEvent>(db, drizzleSchema.sobrietyEvents, 'eventType', 'status'),
-    selectMirrorRecordsByField<SobrietyEvent>(db, drizzleSchema.sobrietyEvents, 'localDay', localDay),
+    selectMirrorRecordsByField<SobrietyEvent>(
+      db,
+      drizzleSchema.sobrietyEvents,
+      'eventType',
+      'status'
+    ),
+    selectMirrorRecordsByField<SobrietyEvent>(
+      db,
+      drizzleSchema.sobrietyEvents,
+      'localDay',
+      localDay
+    ),
   ]);
   return buildSobrietyTrendSummaryFromData(statusEvents, todayEvents, localDay);
 }
@@ -42,7 +65,9 @@ async function reloadSobrietyPageStateServer(
 
 async function refreshSobrietyPageAfterMutationServer(
   state: SobrietyPageState,
-  overrides: Partial<Pick<SobrietyPageState, 'saveNotice' | 'cravingNote' | 'lapseNote' | 'recoveryAction'>>
+  overrides: Partial<
+    Pick<SobrietyPageState, 'saveNotice' | 'cravingNote' | 'lapseNote' | 'recoveryAction'>
+  >
 ): Promise<SobrietyPageState> {
   await refreshWeeklyReviewArtifactsServer(state.localDay);
   return await reloadSobrietyPageStateServer(state, overrides);
@@ -77,7 +102,9 @@ export async function markSobrietyStatusServer(
   return await refreshSobrietyPageAfterMutationServer(state, { saveNotice: notice });
 }
 
-export async function saveSobrietyCravingServer(state: SobrietyPageState): Promise<SobrietyPageState> {
+export async function saveSobrietyCravingServer(
+  state: SobrietyPageState
+): Promise<SobrietyPageState> {
   const { db } = getServerDrizzleClient();
   const event = buildSobrietyEvent({
     id: `sobriety:craving:${state.localDay}:${crypto.randomUUID()}`,
@@ -94,7 +121,9 @@ export async function saveSobrietyCravingServer(state: SobrietyPageState): Promi
   });
 }
 
-export async function saveSobrietyLapseServer(state: SobrietyPageState): Promise<SobrietyPageState> {
+export async function saveSobrietyLapseServer(
+  state: SobrietyPageState
+): Promise<SobrietyPageState> {
   const { db } = getServerDrizzleClient();
   const event = buildSobrietyEvent({
     id: `sobriety:lapse:${state.localDay}:${crypto.randomUUID()}`,

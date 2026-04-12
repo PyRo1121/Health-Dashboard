@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { buildTodayIntelligence, type TodayIntelligenceInput } from '$lib/features/today/intelligence';
+import {
+  buildTodayIntelligence,
+  type TodayIntelligenceInput,
+} from '$lib/features/today/intelligence';
 
 function createBaseInput(overrides: Partial<TodayIntelligenceInput> = {}): TodayIntelligenceInput {
   return {
@@ -69,7 +72,9 @@ describe('today intelligence', () => {
             'Anxiety intensity spiked today.',
           ],
           mealFallback: ['Meal fallback: keep the next meal familiar, easy, and protein-forward.'],
-          workoutFallback: ['Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'],
+          workoutFallback: [
+            'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.',
+          ],
           mealRecommendation: {
             title: 'Greek yogurt bowl',
             subtitle: '310 kcal · 24g protein · easy to log',

@@ -140,6 +140,7 @@ That supports this product direction:
 - keep the interpretation and weekly review layer in our own app
 
 Relevant references:
+
 - Apple HealthKit overview: https://developer.apple.com/documentation/healthkit/about-the-healthkit-framework
 - Apple Health Records: https://developer.apple.com/documentation/healthkit/accessing-health-records
 - Apple HealthKit setup: https://developer.apple.com/documentation/healthkit/setting-up-healthkit
@@ -159,6 +160,7 @@ That means future Android support should follow the same model as iOS:
 - keep product value in synthesis, review, and execution
 
 Relevant reference:
+
 - Android Health Connect overview: https://developer.android.com/health-and-fitness/guides/health-connect/overview
 
 ### 3. SMART on FHIR is the right standards lane for future clinical import
@@ -180,6 +182,7 @@ For this product, the right near-term posture is:
 - keep provider/EHR access as additive, not foundational
 
 Relevant reference:
+
 - SMART on FHIR auth best practices: https://docs.smarthealthit.org/authorization/best-practices
 
 ### 4. USDA FoodData Central remains the right nutrition enrichment baseline
@@ -198,6 +201,7 @@ That supports the current nutrition architecture:
 - fallback/local behavior when unavailable
 
 Relevant reference:
+
 - USDA FoodData Central API guide: https://fdc.nal.usda.gov/api-guide
 
 ### 5. Current Svelte/SvelteKit guidance supports explicit ownership and typed feature slices
@@ -218,6 +222,7 @@ That matches the code cleanup direction already underway:
 - test-backed structural changes
 
 Relevant references:
+
 - SvelteKit project structure
 - Svelte best practices
 - Svelte testing
@@ -308,58 +313,68 @@ These are the most coherent future directions.
 ### Lane A: Better clinical import, not full portal replication
 
 Good:
+
 - expand SMART sandbox path
 - add more normalized clinical resource mappings
 - improve provider-import provenance
 - add review-aware clinical context summaries
 
 Bad:
+
 - trying to become a full provider portal
 - duplicating scheduling, billing, or hospital workflow systems
 
 ### Lane B: Better native companion and device import
 
 Good:
+
 - strengthen iPhone companion flows
 - add Android companion / Health Connect import paths
 - improve background sync and trustable device summaries
 - enrich timeline and weekly review with better device context
 
 Bad:
+
 - trying to be a generalized wearable cloud
 
 ### Lane C: Better planning and execution
 
 Good:
+
 - recovery-aware planning
 - meal plan to grocery to Today execution
 - workout template to Today execution
 - better adherence matching
 
 Bad:
+
 - complex planner abstractions that do not improve execution quality
 
 ### Lane D: Better interpretation layer
 
 Good:
+
 - stronger weekly review signals
 - explainable trend detection
 - experiment tracking
 - clearer “what changed and why” summaries
 
 Bad:
+
 - black-box pseudo-AI health scoring
 - opaque recommendation systems with no traceability
 
 ### Lane E: Better user trust and maintenance
 
 Good:
+
 - operational verification
 - docs that match the code
 - privacy and provenance clarity
 - regression-heavy cleanup
 
 Bad:
+
 - clever architecture nobody can maintain
 
 ## Future Expansion Lanes That Do Not Fit
@@ -436,6 +451,7 @@ For AI agents and humans, the source-of-truth reading order should be:
 11. planning / tranche / implementation packets
 
 This order gives:
+
 - product intent
 - live architecture
 - coding rules

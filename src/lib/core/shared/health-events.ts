@@ -19,7 +19,9 @@ export function sortHealthEventTimestamp(event: HealthEvent): string {
 }
 
 export function compareHealthEventsNewestFirst(left: HealthEvent, right: HealthEvent): number {
-  const timestampCompare = sortHealthEventTimestamp(right).localeCompare(sortHealthEventTimestamp(left));
+  const timestampCompare = sortHealthEventTimestamp(right).localeCompare(
+    sortHealthEventTimestamp(left)
+  );
   if (timestampCompare != 0) {
     return timestampCompare;
   }

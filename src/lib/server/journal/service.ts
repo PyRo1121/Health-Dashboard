@@ -10,19 +10,33 @@ import type { JournalIntent } from '$lib/features/journal/navigation';
 import { buildJournalEntryRecord, sortJournalEntries } from '$lib/features/journal/service';
 import { getServerDrizzleClient } from '$lib/server/db/drizzle/client';
 import { drizzleSchema } from '$lib/server/db/drizzle/schema';
-import { selectMirrorRecordById, selectMirrorRecordsByField, upsertMirrorRecord } from '$lib/server/db/drizzle/mirror';
+import {
+  selectMirrorRecordById,
+  selectMirrorRecordsByField,
+  upsertMirrorRecord,
+} from '$lib/server/db/drizzle/mirror';
 
 async function listJournalEntriesForDayServer(localDay: string): Promise<JournalEntry[]> {
   const { db } = getServerDrizzleClient();
   return sortJournalEntries(
-    await selectMirrorRecordsByField<JournalEntry>(db, drizzleSchema.journalEntries, 'localDay', localDay)
+    await selectMirrorRecordsByField<JournalEntry>(
+      db,
+      drizzleSchema.journalEntries,
+      'localDay',
+      localDay
+    )
   );
 }
 
 async function listLinkedJournalEventsServer(localDay: string): Promise<HealthEvent[]> {
   const { db } = getServerDrizzleClient();
   return (
-    await selectMirrorRecordsByField<HealthEvent>(db, drizzleSchema.healthEvents, 'localDay', localDay)
+    await selectMirrorRecordsByField<HealthEvent>(
+      db,
+      drizzleSchema.healthEvents,
+      'localDay',
+      localDay
+    )
   ).sort((left, right) =>
     (right.sourceTimestamp ?? right.updatedAt).localeCompare(left.sourceTimestamp ?? left.updatedAt)
   );

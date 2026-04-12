@@ -4,7 +4,12 @@ import type {
   FoodEntry,
   RecipeCatalogItem,
 } from '$lib/core/domain/types';
-import type { HealthDbFavoriteMealsStore, HealthDbFoodCatalogItemsStore, HealthDbFoodEntriesStore, HealthDbRecipeCatalogItemsStore } from '$lib/core/db/types';
+import type {
+  HealthDbFavoriteMealsStore,
+  HealthDbFoodCatalogItemsStore,
+  HealthDbFoodEntriesStore,
+  HealthDbRecipeCatalogItemsStore,
+} from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
 import { createRecordId } from '$lib/core/shared/ids';
 import { createRecordMeta, updateRecordMeta } from '$lib/core/shared/records';
@@ -21,12 +26,12 @@ export type RecipeCatalogItemsStore = HealthDbRecipeCatalogItemsStore;
 export type FavoriteMealsStore = HealthDbFavoriteMealsStore;
 
 export interface NutritionStore
-  extends FoodEntriesStore,
-    FoodCatalogItemsStore,
-    RecipeCatalogItemsStore,
-    FavoriteMealsStore {}
+  extends FoodEntriesStore, FoodCatalogItemsStore, RecipeCatalogItemsStore, FavoriteMealsStore {}
 
-export function buildFoodEntryRecord(draft: FoodEntryDraft, timestamp: string = nowIso()): FoodEntry {
+export function buildFoodEntryRecord(
+  draft: FoodEntryDraft,
+  timestamp: string = nowIso()
+): FoodEntry {
   return {
     ...createRecordMeta(createRecordId('food'), timestamp),
     localDay: draft.localDay,
@@ -66,13 +71,16 @@ export async function createFoodEntry(
   return entry;
 }
 
-export function buildFavoriteMealRecord(input: {
-  name: string;
-  mealType: string;
-  items: Array<
-    Pick<FoodEntry, 'name' | 'calories' | 'protein' | 'fiber' | 'carbs' | 'fat' | 'sourceName'>
-  >;
-}, timestamp: string = nowIso()): FavoriteMeal {
+export function buildFavoriteMealRecord(
+  input: {
+    name: string;
+    mealType: string;
+    items: Array<
+      Pick<FoodEntry, 'name' | 'calories' | 'protein' | 'fiber' | 'carbs' | 'fat' | 'sourceName'>
+    >;
+  },
+  timestamp: string = nowIso()
+): FavoriteMeal {
   return {
     ...createRecordMeta(createRecordId('favorite-meal'), timestamp),
     name: input.name,
@@ -154,7 +162,9 @@ export async function saveFoodCatalogItem(
   });
 }
 
-export async function listFoodCatalogItems(store: FoodCatalogItemsStore): Promise<FoodCatalogItem[]> {
+export async function listFoodCatalogItems(
+  store: FoodCatalogItemsStore
+): Promise<FoodCatalogItem[]> {
   return (await store.foodCatalogItems.toArray()).sort((left, right) =>
     left.name.localeCompare(right.name)
   );
@@ -182,14 +192,18 @@ export async function upsertRecipeCatalogItem(
   return item;
 }
 
-export async function listRecipeCatalogItems(store: RecipeCatalogItemsStore): Promise<RecipeCatalogItem[]> {
+export async function listRecipeCatalogItems(
+  store: RecipeCatalogItemsStore
+): Promise<RecipeCatalogItem[]> {
   return (await store.recipeCatalogItems.toArray()).sort((left, right) =>
     left.title.localeCompare(right.title)
   );
 }
 
 export async function listFavoriteMeals(store: FavoriteMealsStore): Promise<FavoriteMeal[]> {
-  return (await store.favoriteMeals.toArray()).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+  return (await store.favoriteMeals.toArray()).sort((a, b) =>
+    b.updatedAt.localeCompare(a.updatedAt)
+  );
 }
 
 export async function reuseRecurringMeal(

@@ -34,17 +34,23 @@ function sortByTitle<T extends { title: string }>(items: T[]): T[] {
 
 export async function listFoodCatalogItemsServer(): Promise<FoodCatalogItem[]> {
   const { db } = getServerDrizzleClient();
-  return sortByName(await selectAllMirrorRecords<FoodCatalogItem>(db, drizzleSchema.foodCatalogItems));
+  return sortByName(
+    await selectAllMirrorRecords<FoodCatalogItem>(db, drizzleSchema.foodCatalogItems)
+  );
 }
 
 export async function listRecipeCatalogItemsServer(): Promise<RecipeCatalogItem[]> {
   const { db } = getServerDrizzleClient();
-  return sortByTitle(await selectAllMirrorRecords<RecipeCatalogItem>(db, drizzleSchema.recipeCatalogItems));
+  return sortByTitle(
+    await selectAllMirrorRecords<RecipeCatalogItem>(db, drizzleSchema.recipeCatalogItems)
+  );
 }
 
 export async function listWorkoutTemplatesServer(): Promise<WorkoutTemplate[]> {
   const { db } = getServerDrizzleClient();
-  return sortByTitle(await selectAllMirrorRecords<WorkoutTemplate>(db, drizzleSchema.workoutTemplates));
+  return sortByTitle(
+    await selectAllMirrorRecords<WorkoutTemplate>(db, drizzleSchema.workoutTemplates)
+  );
 }
 
 export async function listExerciseCatalogItemsServer(): Promise<ExerciseCatalogItem[]> {
@@ -57,7 +63,12 @@ export async function listExerciseCatalogItemsServer(): Promise<ExerciseCatalogI
 export async function listWeeklyPlanSlotsServer(weeklyPlanId: string): Promise<PlanSlot[]> {
   const { db } = getServerDrizzleClient();
   return sortPlanSlots(
-    await selectMirrorRecordsByField<PlanSlot>(db, drizzleSchema.planSlots, 'weeklyPlanId', weeklyPlanId)
+    await selectMirrorRecordsByField<PlanSlot>(
+      db,
+      drizzleSchema.planSlots,
+      'weeklyPlanId',
+      weeklyPlanId
+    )
   );
 }
 
@@ -80,7 +91,9 @@ export async function listDerivedGroceriesServer(
   );
 }
 
-export async function listManualGroceriesServer(weeklyPlanId: string): Promise<ManualGroceryItem[]> {
+export async function listManualGroceriesServer(
+  weeklyPlanId: string
+): Promise<ManualGroceryItem[]> {
   const { db } = getServerDrizzleClient();
   return await selectMirrorRecordsByField<ManualGroceryItem>(
     db,
@@ -94,7 +107,12 @@ export async function ensureWeeklyPlanServer(anchorDay: string): Promise<WeeklyP
   const { db } = getServerDrizzleClient();
   const weekStart = startOfWeek(anchorDay);
   const existing = (
-    await selectMirrorRecordsByField<WeeklyPlan>(db, drizzleSchema.weeklyPlans, 'weekStart', weekStart)
+    await selectMirrorRecordsByField<WeeklyPlan>(
+      db,
+      drizzleSchema.weeklyPlans,
+      'weekStart',
+      weekStart
+    )
   )[0];
   if (existing) {
     return existing;
@@ -122,7 +140,12 @@ export async function savePlanSlotServer(input: {
 }): Promise<PlanSlot> {
   const { db } = getServerDrizzleClient();
   const siblings = (
-    await selectMirrorRecordsByField<PlanSlot>(db, drizzleSchema.planSlots, 'weeklyPlanId', input.weeklyPlanId)
+    await selectMirrorRecordsByField<PlanSlot>(
+      db,
+      drizzleSchema.planSlots,
+      'weeklyPlanId',
+      input.weeklyPlanId
+    )
   ).filter((slot) => slot.localDay === input.localDay);
   const timestamp = new Date().toISOString();
   const slot: PlanSlot = {

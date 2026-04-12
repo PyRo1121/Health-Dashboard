@@ -12,6 +12,7 @@ Read this after [ARCHITECTURE.md](../ARCHITECTURE.md).
 This project is a private, local-first health operating system.
 
 That means:
+
 - one user
 - no default dependency on remote APIs for core usefulness
 - personal health data is treated as sensitive by default
@@ -45,6 +46,7 @@ Use targeted unit or E2E runs whenever a change is local to one feature.
 Use the real owner module, not a convenience wrapper.
 
 Examples:
+
 - feature-local persistence and lookup logic lives in `service.ts`, `store.ts`, `lookup.ts`, or `summary.ts`
 - page state and pure state transitions live in `state.ts`
 - mutation orchestration lives in `actions.ts`
@@ -76,6 +78,7 @@ Use current Svelte 5 style.
 - Keep UI state near the component or feature state module that owns it.
 
 Quick checklist:
+
 - no `export let` in new code
 - no `on:click` in new code
 - no `$:` legacy reactive statements in new code
@@ -102,22 +105,26 @@ Use this sequence:
 ### UI change
 
 Touch:
+
 - `Page.svelte`
 - child components
 - `model.ts`
 
 Verification:
+
 - component test first
 - E2E only if the user flow matters
 
 ### Mutation change
 
 Touch:
+
 - `actions.ts` or `controller.ts`
 - route handler if request shape changes
 - service layer only if persistence changes
 
 Verification:
+
 - unit tests for the action/controller
 - route test when request contract changed
 - downstream regression if the mutation refreshes review state
@@ -125,9 +132,11 @@ Verification:
 ### Persistence / computation change
 
 Touch:
+
 - `service.ts`, `store.ts`, `summary.ts`, `snapshot.ts`
 
 Verification:
+
 - unit tests around affected behavior
 - review any consumers using the returned shape
 
@@ -136,6 +145,7 @@ Verification:
 Many mutations intentionally refresh weekly review artifacts.
 
 If you touch any of these flows, assume review can regress:
+
 - health
 - nutrition
 - planning
@@ -161,6 +171,7 @@ If a diagram is stale, fix it now. Stale diagrams are worse than no diagrams.
 ## Cleanup Rule
 
 Good cleanup:
+
 - removes repeated orchestration
 - removes dead wrappers
 - makes ownership clearer
@@ -168,6 +179,7 @@ Good cleanup:
 - keeps the tests green
 
 Bad cleanup:
+
 - “improves architecture” without a concrete smell
 - creates a shared base abstraction after seeing two similar functions
 - changes behavior while claiming refactor-only
@@ -176,6 +188,7 @@ Bad cleanup:
 ## World-Class Health App Bar
 
 For this product, “clean” means:
+
 - personal data flow is obvious
 - failure states are explicit
 - local-first flows remain reliable

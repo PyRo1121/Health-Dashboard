@@ -290,7 +290,9 @@ describe('Today route', () => {
 
     await waitFor(() => {
       expect(
-        screen.getAllByText('That planned meal no longer exists. Replace it in Plan before using it.').length
+        screen.getAllByText(
+          'That planned meal no longer exists. Replace it in Plan before using it.'
+        ).length
       ).toBeGreaterThan(0);
       expect(
         screen.getAllByText(

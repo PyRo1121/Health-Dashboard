@@ -29,7 +29,8 @@ import { searchExerciseCatalog } from '$lib/features/movement/service';
 
 export { createGroceryDraftState, createPlanningPageState };
 
-const planningClient = createFeatureActionClient<Parameters<typeof savePlanningSlotPageController>[0]>('/api/plan');
+const planningClient =
+  createFeatureActionClient<Parameters<typeof savePlanningSlotPageController>[0]>('/api/plan');
 const movementSearchClient = createFeatureRequestClient<never>('/api/movement/search-exercises');
 
 export async function loadPlanningPage(

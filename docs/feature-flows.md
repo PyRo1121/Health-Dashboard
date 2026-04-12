@@ -6,6 +6,7 @@ Date: 2026-04-10
 This file describes the user and data flows that matter most in the live app.
 
 Use it when you need to answer:
+
 - what a feature is supposed to do for the user
 - which other features it depends on
 - what data gets refreshed when a user action happens
@@ -24,6 +25,7 @@ Today
 The app is not a dashboard full of disconnected tools.
 
 It is a loop:
+
 - log what is true today
 - capture important context
 - see the timeline of what happened
@@ -34,6 +36,7 @@ It is a loop:
 ## Today Loop
 
 User goal:
+
 - understand the current day quickly
 - log the minimum useful truth
 - act on today’s planned meal or workout
@@ -49,12 +52,14 @@ Flow:
 ```
 
 Today also pulls:
+
 - planned meal from planning/nutrition resolution
 - planned workout from planning
 - recovery adaptation from existing signals
 - event stream from health events
 
 Dependencies:
+
 - planning
 - nutrition
 - health
@@ -63,6 +68,7 @@ Dependencies:
 ## Journal Loop
 
 User goal:
+
 - write a narrative entry with the right context attached
 
 Flow:
@@ -76,10 +82,12 @@ Flow:
 ```
 
 Journal can also hydrate from:
+
 - Today recovery actions
 - Review context links
 
 Dependencies:
+
 - health events
 - review
 - today
@@ -87,6 +95,7 @@ Dependencies:
 ## Health Loop
 
 User goal:
+
 - log symptoms, anxiety, sleep context, and medication/supplement templates without friction
 
 Flow:
@@ -100,11 +109,13 @@ Flow:
 ```
 
 Dependencies:
+
 - review
 
 ## Nutrition Loop
 
 User goal:
+
 - search foods quickly
 - save meals
 - reuse recurring meals
@@ -122,6 +133,7 @@ Flow:
 ```
 
 Nutrition depends on:
+
 - food catalog
 - recipe catalog
 - favorite meals
@@ -129,6 +141,7 @@ Nutrition depends on:
 - review refresh
 
 Dependencies:
+
 - planning
 - review
 - today
@@ -136,6 +149,7 @@ Dependencies:
 ## Sobriety Loop
 
 User goal:
+
 - mark status
 - log cravings
 - capture lapse context without shame
@@ -152,11 +166,13 @@ Flow:
 ```
 
 Dependencies:
+
 - review
 
 ## Assessments Loop
 
 User goal:
+
 - save structured progress
 - submit an assessment
 - get safety-aware feedback
@@ -173,11 +189,13 @@ Flow:
 ```
 
 Dependencies:
+
 - review
 
 ## Timeline Loop
 
 User goal:
+
 - inspect cross-source event history
 - verify imported or manual events actually landed
 
@@ -192,6 +210,7 @@ Flow:
 Timeline is the proof surface. If data is missing here, imports and manual logging are not trustworthy.
 
 Dependencies:
+
 - health
 - imports
 - today
@@ -200,6 +219,7 @@ Dependencies:
 ## Review Loop
 
 User goal:
+
 - understand what moved this week
 - see correlations and adherence signals
 - carry an experiment into next week
@@ -215,6 +235,7 @@ Flow:
 ```
 
 Review depends on nearly everything:
+
 - today
 - journal
 - health
@@ -230,6 +251,7 @@ This is why so many mutations refresh weekly review artifacts.
 ## Planning Loop
 
 User goal:
+
 - build a weekly plan that can actually be executed
 
 Flow:
@@ -246,6 +268,7 @@ Flow:
 ```
 
 Dependencies:
+
 - movement
 - nutrition
 - groceries
@@ -255,6 +278,7 @@ Dependencies:
 ## Groceries Loop
 
 User goal:
+
 - get a usable grocery checklist from the plan
 - merge manual items with derived rows
 
@@ -271,6 +295,7 @@ Flow:
 ```
 
 Dependencies:
+
 - planning
 - nutrition
 - review
@@ -278,6 +303,7 @@ Dependencies:
 ## Imports Loop
 
 User goal:
+
 - preview imported data before it lands
 - trust the resulting timeline
 
@@ -295,6 +321,7 @@ Flow:
 ```
 
 Dependencies:
+
 - integrations
 - timeline
 - review
@@ -302,6 +329,7 @@ Dependencies:
 ## Integrations Loop
 
 User goal:
+
 - understand what import paths exist
 - see connection status
 - jump into import center
@@ -315,23 +343,27 @@ Flow:
 ```
 
 Dependencies:
+
 - imports
 - native companion guidance
 
 ## Settings Loop
 
 User goal:
+
 - configure owner profile
 - understand local-first posture
 - access setup paths
 
 Dependencies:
+
 - imports
 - integrations
 
 ## Failure Mode Rule
 
 If a cleanup touches any mutation path in:
+
 - today
 - health
 - nutrition

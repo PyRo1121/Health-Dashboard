@@ -14,6 +14,8 @@ export const POST: RequestHandler = async ({ params }) => {
     return Response.json((await enrichNutritionFoodServer(fdcId)) satisfies FoodLookupResult);
   } catch (error) {
     const message = error instanceof Error ? error.message : 'USDA enrich failed.';
-    return new Response(message, { status: message === 'USDA API key is not configured.' ? 503 : 500 });
+    return new Response(message, {
+      status: message === 'USDA API key is not configured.' ? 503 : 500,
+    });
   }
 };

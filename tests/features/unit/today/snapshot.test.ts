@@ -345,8 +345,12 @@ describe('today snapshot', () => {
       confidence: 'high',
       supportingAction: { label: 'Capture recovery note' },
     });
-    expect(snapshot.intelligence.primaryRecommendation?.reasons).toContain('Sleep landed under 6 hours.');
-    expect(snapshot.intelligence.primaryRecommendation?.provenance.map((row) => row.label).join(' ')).toMatch(/Sleep hours: 5.5, daily check-in/i);
+    expect(snapshot.intelligence.primaryRecommendation?.reasons).toContain(
+      'Sleep landed under 6 hours.'
+    );
+    expect(
+      snapshot.intelligence.primaryRecommendation?.provenance.map((row) => row.label).join(' ')
+    ).toMatch(/Sleep hours: 5.5, daily check-in/i);
     expect(snapshot.intelligence.primaryRecommendation?.primaryAction).toMatchObject({
       kind: 'recovery-action',
       actionId: 'apply-recovery-workout',

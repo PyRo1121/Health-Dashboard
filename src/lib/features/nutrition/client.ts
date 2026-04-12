@@ -33,11 +33,7 @@ import type {
   NutritionPlannedMealDraft,
   NutritionRecurringMealDraft,
 } from './actions';
-import {
-  findFoodCatalogItemByBarcode,
-  searchFoodData,
-  searchPackagedFoodCatalog,
-} from './lookup';
+import { findFoodCatalogItemByBarcode, searchFoodData, searchPackagedFoodCatalog } from './lookup';
 import type { FoodLookupResult } from './types';
 import { listFoodCatalogItems, listRecipeCatalogItems } from './store';
 import type { RecipeCatalogItem } from '$lib/core/domain/types';
@@ -51,9 +47,15 @@ export {
 };
 
 const nutritionClient = createFeatureActionClient<NutritionActionsStorage>('/api/nutrition');
-const packagedSearchClient = createFeatureRequestClient<Parameters<typeof loadNutritionPageController>[0]>('/api/nutrition/search-packaged');
-const usdaSearchClient = createFeatureRequestClient<Parameters<typeof loadNutritionPageController>[0]>('/api/nutrition/search-usda');
-const recipeSearchClient = createFeatureRequestClient<Parameters<typeof loadNutritionPageController>[0]>('/api/nutrition/search-recipes');
+const packagedSearchClient = createFeatureRequestClient<
+  Parameters<typeof loadNutritionPageController>[0]
+>('/api/nutrition/search-packaged');
+const usdaSearchClient = createFeatureRequestClient<
+  Parameters<typeof loadNutritionPageController>[0]
+>('/api/nutrition/search-usda');
+const recipeSearchClient = createFeatureRequestClient<
+  Parameters<typeof loadNutritionPageController>[0]
+>('/api/nutrition/search-recipes');
 
 function createNutritionLookupClient(endpoint: string) {
   return createFeatureRequestClient<Parameters<typeof loadNutritionPageController>[0]>(endpoint);

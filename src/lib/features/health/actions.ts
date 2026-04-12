@@ -12,7 +12,10 @@ import {
   createSymptomForm,
   createTemplateForm,
 } from './model';
-import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
+import {
+  refreshWeeklyReviewArtifactsSafely,
+  type ReviewStorage,
+} from '$lib/features/review/service';
 import { type HealthPageState, type HealthPageStorage, reloadHealthPageState } from './state';
 
 function parseOptionalNumber(value: string | number | undefined): number | undefined {
@@ -29,7 +32,10 @@ async function refreshHealthPageAfterMutation(
   store: HealthActionsStorage,
   state: HealthPageState,
   overrides: Partial<
-    Pick<HealthPageState, 'saveNotice' | 'symptomForm' | 'anxietyForm' | 'sleepNoteForm' | 'templateForm'>
+    Pick<
+      HealthPageState,
+      'saveNotice' | 'symptomForm' | 'anxietyForm' | 'sleepNoteForm' | 'templateForm'
+    >
   >
 ): Promise<HealthPageState> {
   await refreshWeeklyReviewArtifactsSafely(store, state.localDay);

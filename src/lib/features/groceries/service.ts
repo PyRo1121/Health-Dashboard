@@ -1,4 +1,8 @@
-import type { HealthDbDerivedGroceryItemsStore, HealthDbManualGroceryItemsStore, HealthDbPlanSlotsStore } from '$lib/core/db/types';
+import type {
+  HealthDbDerivedGroceryItemsStore,
+  HealthDbManualGroceryItemsStore,
+  HealthDbPlanSlotsStore,
+} from '$lib/core/db/types';
 import type {
   DerivedGroceryItem,
   GroceryItem,
@@ -8,7 +12,10 @@ import type {
 } from '$lib/core/domain/types';
 import { sortPlanSlots } from '$lib/core/shared/plan-slots';
 import { updateRecordMeta } from '$lib/core/shared/records';
-import { listRecipeCatalogItems, type RecipeCatalogItemsStore } from '$lib/features/nutrition/store';
+import {
+  listRecipeCatalogItems,
+  type RecipeCatalogItemsStore,
+} from '$lib/features/nutrition/store';
 import {
   buildDerivedGroceryItemId,
   buildManualGroceryItemId,

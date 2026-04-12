@@ -5,6 +5,7 @@ Private, local-first health web app built on SvelteKit 2, Svelte 5, Bun, SQLite,
 This file is the implementation-facing map of the live codebase.
 
 Use it when you need to answer:
+
 - where feature logic lives
 - how routes talk to feature modules
 - where state belongs
@@ -129,12 +130,14 @@ Rules:
 ### Today
 
 Purpose:
+
 - daily check-in
 - planned meal / workout execution
 - recovery actions
 - event stream for the day
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/today/Page.svelte)
 - [client.ts](/home/pyro1121/Documents/Health/src/lib/features/today/client.ts)
 - [controller.ts](/home/pyro1121/Documents/Health/src/lib/features/today/controller.ts)
@@ -145,11 +148,13 @@ Core files:
 ### Plan
 
 Purpose:
+
 - weekly plan slots
 - workout-template creation
 - grocery derivation surface
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/planning/Page.svelte)
 - [state.ts](/home/pyro1121/Documents/Health/src/lib/features/planning/state.ts)
 - [actions.ts](/home/pyro1121/Documents/Health/src/lib/features/planning/actions.ts)
@@ -160,10 +165,12 @@ Core files:
 ### Movement
 
 Purpose:
+
 - workout template authoring
 - exercise search
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/movement/Page.svelte)
 - [client.ts](/home/pyro1121/Documents/Health/src/lib/features/movement/client.ts)
 - [controller.ts](/home/pyro1121/Documents/Health/src/lib/features/movement/controller.ts)
@@ -174,11 +181,13 @@ Core files:
 ### Groceries
 
 Purpose:
+
 - derived grocery list from weekly recipes
 - manual grocery overlays
 - grocery status toggles
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/groceries/Page.svelte)
 - [client.ts](/home/pyro1121/Documents/Health/src/lib/features/groceries/client.ts)
 - [controller.ts](/home/pyro1121/Documents/Health/src/lib/features/groceries/controller.ts)
@@ -187,11 +196,13 @@ Core files:
 ### Journal
 
 Purpose:
+
 - daily journal entries
 - linked health-event context
 - hydration from Today/Review intents
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/journal/Page.svelte)
 - [client.ts](/home/pyro1121/Documents/Health/src/lib/features/journal/client.ts)
 - [controller.ts](/home/pyro1121/Documents/Health/src/lib/features/journal/controller.ts)
@@ -201,9 +212,11 @@ Core files:
 ### Health
 
 Purpose:
+
 - manual symptom, anxiety, sleep-note, and template logging
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/health/Page.svelte)
 - [state.ts](/home/pyro1121/Documents/Health/src/lib/features/health/state.ts)
 - [actions.ts](/home/pyro1121/Documents/Health/src/lib/features/health/actions.ts)
@@ -212,6 +225,7 @@ Core files:
 ### Nutrition
 
 Purpose:
+
 - food search
 - packaged lookup
 - recipe search
@@ -220,6 +234,7 @@ Purpose:
 - planned meal handoff into Today/Plan
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/nutrition/Page.svelte)
 - [state.ts](/home/pyro1121/Documents/Health/src/lib/features/nutrition/state.ts)
 - [actions.ts](/home/pyro1121/Documents/Health/src/lib/features/nutrition/actions.ts)
@@ -233,11 +248,13 @@ Core files:
 ### Sobriety
 
 Purpose:
+
 - sober / recovery status
 - craving logging
 - lapse context logging
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/sobriety/Page.svelte)
 - [client.ts](/home/pyro1121/Documents/Health/src/lib/features/sobriety/client.ts)
 - [controller.ts](/home/pyro1121/Documents/Health/src/lib/features/sobriety/controller.ts)
@@ -246,11 +263,13 @@ Core files:
 ### Assessments
 
 Purpose:
+
 - PHQ-9 / WHO-5 style assessment flow
 - draft save and final submit
 - safety messaging
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/assessments/Page.svelte)
 - [controller.ts](/home/pyro1121/Documents/Health/src/lib/features/assessments/controller.ts)
 - [service.ts](/home/pyro1121/Documents/Health/src/lib/features/assessments/service.ts)
@@ -259,9 +278,11 @@ Core files:
 ### Timeline
 
 Purpose:
+
 - normalized cross-source event feed
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/timeline/Page.svelte)
 - [client.ts](/home/pyro1121/Documents/Health/src/lib/features/timeline/client.ts)
 - [controller.ts](/home/pyro1121/Documents/Health/src/lib/features/timeline/controller.ts)
@@ -270,12 +291,14 @@ Core files:
 ### Review
 
 Purpose:
+
 - weekly synthesis across all feature data
 - adherence scoring
 - context signals
 - experiment persistence
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/review/Page.svelte)
 - [client.ts](/home/pyro1121/Documents/Health/src/lib/features/review/client.ts)
 - [controller.ts](/home/pyro1121/Documents/Health/src/lib/features/review/controller.ts)
@@ -286,11 +309,13 @@ Core files:
 ### Imports
 
 Purpose:
+
 - staged import preview and commit
 - source inference
 - payload validation
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/imports/Page.svelte)
 - [client.ts](/home/pyro1121/Documents/Health/src/lib/features/imports/client.ts)
 - [store.ts](/home/pyro1121/Documents/Health/src/lib/features/imports/store.ts)
@@ -302,11 +327,13 @@ Core files:
 ### Integrations
 
 Purpose:
+
 - connector guidance
 - shortcut kit downloads
 - import handoff
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/integrations/Page.svelte)
 - [controller.ts](/home/pyro1121/Documents/Health/src/lib/features/integrations/controller.ts)
 - [service.ts](/home/pyro1121/Documents/Health/src/lib/features/integrations/service.ts)
@@ -316,11 +343,13 @@ Core files:
 ### Settings
 
 Purpose:
+
 - owner profile
 - local-first posture explanation
 - integration setup guidance
 
 Core files:
+
 - [Page.svelte](/home/pyro1121/Documents/Health/src/lib/features/settings/Page.svelte)
 - [controller.ts](/home/pyro1121/Documents/Health/src/lib/features/settings/controller.ts)
 - [service.ts](/home/pyro1121/Documents/Health/src/lib/features/settings/service.ts)

@@ -42,6 +42,8 @@ export const POST: RequestHandler = async ({ request }) => {
     case 'clearPlannedMeal':
       return Response.json(await clearNutritionPlannedMealServer(parsed.data.state));
     case 'reuseMeal':
-      return Response.json(await reuseNutritionMealServer(parsed.data.state, parsed.data.favoriteMealId));
+      return Response.json(
+        await reuseNutritionMealServer(parsed.data.state, parsed.data.favoriteMealId)
+      );
   }
 };

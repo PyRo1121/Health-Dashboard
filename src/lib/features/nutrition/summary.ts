@@ -4,8 +4,8 @@ import type { FoodEntry } from '$lib/core/domain/types';
 import type { NutritionRecommendationContextSnapshot } from './types';
 import { listFoodEntriesForDay, type FoodEntriesStore } from './store';
 
-
-export interface NutritionRecommendationContextStore extends FoodEntriesStore, HealthDbDailyRecordsStore, HealthDbHealthEventsStore {}
+export interface NutritionRecommendationContextStore
+  extends FoodEntriesStore, HealthDbDailyRecordsStore, HealthDbHealthEventsStore {}
 
 function sumFoodMetric(
   entries: FoodEntry[],

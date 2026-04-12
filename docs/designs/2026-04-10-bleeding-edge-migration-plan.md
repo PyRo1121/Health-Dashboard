@@ -1,4 +1,5 @@
 # Bleeding-Edge Migration Plan
+
 Historical note: this document is preserved as a planning/review record. Code paths, file references, and architecture details inside may be stale; use `ARCHITECTURE.md` and the living docs under `docs/` for current implementation truth.
 
 Status: Historical (Implemented)
@@ -6,6 +7,7 @@ Date: 2026-04-10
 Branch: `fix/grok-pr-enhancements`
 Superseded by: `ARCHITECTURE.md`, `docs/api-reference.md`, `docs/data-model.md`, `docs/feature-reference.md`
 Review basis:
+
 - `docs/designs/2026-04-10-bleeding-edge-health-fitness-eng-review.md`
 - `ARCHITECTURE.md`
 - `docs/data-model.md`
@@ -190,12 +192,14 @@ No provider write-back.
 ## Phase 1: Lock runtime and data-plane direction
 
 Outcome:
+
 - one explicit runtime target
 - one explicit canonical persistence story
 - migration document accepted
 - Phase 1 executes as one tightly coupled migration wave
 
 Work:
+
 - replace `adapter-auto`
 - introduce Drizzle schema and queries as the new canonical data layer
 - remove the existing `HealthDatabase` abstraction in the first migration wave
@@ -203,12 +207,14 @@ Work:
 - keep this as one coordinated migration wave rather than separate subphases
 
 Modules touched:
+
 - `svelte.config.js`
 - `package.json`
 - `src/lib/server/db/`
 - `src/lib/core/db/`
 
 Verification:
+
 - `bun run check`
 - `bun run build`
 - `bun run test:unit`
@@ -217,16 +223,19 @@ Verification:
 ## Phase 2: Introduce the typed metric registry
 
 Outcome:
+
 - every imported or manual metric is defined explicitly
 - page surfacing logic stops using ad hoc strings
 
 Work:
+
 - add one typed health metric registry module
 - define labels, unit semantics, source support, and surfacing rules in that registry
 - refactor normalization and display helpers to use it
 - refactor health/timeline/review/today gates to use registry metadata
 
 First metric expansion set:
+
 - HRV
 - active energy
 - workouts
@@ -240,6 +249,7 @@ First metric expansion set:
 - temperature
 
 Modules touched:
+
 - `src/lib/core/domain/`
 - `src/lib/features/integrations/`
 - `src/lib/features/health/`
@@ -248,6 +258,7 @@ Modules touched:
 - `src/lib/features/timeline/`
 
 Verification:
+
 - new metric registry unit tests
 - review/today/timeline unit tests for representative new metrics
 - full review-module rewrite onto Drizzle-first boundaries in the same migration wave
@@ -255,9 +266,11 @@ Verification:
 ## Phase 3: Scale review, timeline, and dedupe
 
 Outcome:
+
 - broader health history stays fast and trustworthy
 
 Work:
+
 - remove full-table scans from review/timeline paths where possible
 - add pagination or bounded queries to timeline
 - batch dedupe by source record IDs instead of per-event lookup
@@ -265,12 +278,14 @@ Work:
 - introduce pre-aggregated daily summaries where helpful
 
 Modules touched:
+
 - `src/lib/features/review/`
 - `src/lib/features/timeline/`
 - `src/lib/features/imports/`
 - `src/lib/server/db/`
 
 Verification:
+
 - high-volume unit tests
 - import scale tests
 - targeted e2e checks for timeline/review latency-sensitive flows
@@ -278,15 +293,18 @@ Verification:
 ## Phase 4: Harden clinical imports
 
 Outcome:
+
 - clinical import is trustworthy enough for real use
 
 Work:
+
 - keep owner profile identity gate
 - harden patient-match logic
 - make provenance visible in timeline/review
 - keep clinical records read-only
 
 Modules touched:
+
 - `src/lib/features/imports/`
 - `src/lib/features/integrations/identity/`
 - `src/lib/features/timeline/`
@@ -294,6 +312,7 @@ Modules touched:
 - `src/lib/features/settings/`
 
 Verification:
+
 - exact-match / mismatch / partial-match tests
 - e2e clinical identity gate tests
 
@@ -308,9 +327,11 @@ Question:
 Should this app commit to a Bun-native deployment path now, or should we keep pretending it is host-agnostic while it uses `bun:sqlite` already?
 
 Recommendation:
+
 - commit now
 
 Default recommendation if accepted:
+
 - explicit Bun target in this migration plan
 
 ### Issue 2
@@ -322,9 +343,11 @@ Question:
 Should we collapse onto Bun SQLite now, or invest in a bigger migration to PGlite while the product graph is still moving?
 
 Recommendation:
+
 - collapse onto Bun SQLite now, revisit PGlite only if we later need browser-native SQL symmetry or Electric-style sync
 
 Default recommendation if accepted:
+
 - Bun SQLite + Drizzle canonical
 
 ### Issue 3
@@ -336,6 +359,7 @@ Decision:
 Deferred. Native companions are not part of the current migration because you do not use iOS or Android right now.
 
 Accepted posture:
+
 - keep the import and metric contracts future-ready
 - do not spend current migration effort on companion apps
 
@@ -348,6 +372,7 @@ Decision:
 Accepted. Remove the `HealthDatabase` abstraction in the first migration wave instead of keeping a temporary compatibility shell.
 
 Accepted posture:
+
 - Drizzle-backed queries become the real service boundary early
 - tests carry the regression risk instead of a long-lived adapter layer
 
@@ -360,6 +385,7 @@ Decision:
 Accepted. Introduce one typed metric registry now instead of letting imported health and fitness metrics stay as open strings.
 
 Accepted posture:
+
 - one registry owns labels, units, source support, and surfacing rules
 - Health, Timeline, Today, and Review consume registry metadata instead of per-feature ad hoc gates
 
@@ -372,6 +398,7 @@ Decision:
 Accepted. Rewrite the review module around Drizzle-first boundaries in the same migration wave instead of preserving the current service shape.
 
 Accepted posture:
+
 - review data loading and review assembly can be redesigned together
 - the user-facing review behavior still needs regression coverage during the rewrite
 
@@ -384,6 +411,7 @@ Decision:
 Accepted. Rewrite the import subsystem in the migration wave instead of just porting the current store module onto Drizzle.
 
 Accepted posture:
+
 - imports can be restructured around explicit ingestion stages
 - import UX stays stable, but internal pipeline boundaries can change completely
 - regression coverage carries the trust risk during the rewrite
@@ -397,6 +425,7 @@ Decision:
 Accepted. Add a pre-migration golden regression harness with seeded fixtures for imports, review, today, and timeline before the rewrite lands.
 
 Accepted posture:
+
 - current user-visible behavior gets locked before storage, review, and import rewrites
 - rewritten paths must prove parity on seeded datasets, not just pass happy-path e2e tests
 
@@ -435,11 +464,13 @@ CODE PATH COVERAGE
 ### Required tests
 
 Pre-migration golden regression harness:
+
 - seeded fixtures for imports, review, today, and timeline
 - assert current user-visible outputs before the rewrite
 - require rewritten Drizzle stack to match those outputs for current supported flows
 
 Unit:
+
 - metric registry contract tests
 - storage migration tests
 - dedupe batch tests
@@ -449,12 +480,14 @@ Unit:
 - golden fixture parity tests for current review and import outputs
 
 Component:
+
 - health page with mixed manual + imported metrics
 - imports page error states for expanded bundles
 - review page fitness highlight sections
 - timeline page parity on seeded migrated datasets
 
 E2E:
+
 - migrated legacy dataset still renders the same key screens
 - expanded Apple Health XML import flow
 - duplicate import warning flow
@@ -476,18 +509,19 @@ If the rewritten system misses these numbers, the migration is not done.
 
 ## Failure modes
 
-| Area | Failure | Protection |
-|---|---|---|
-| Runtime target | ambiguous deploy environment breaks DB at runtime | explicit adapter + build verification |
-| Storage migration | local data lost or partially migrated | one-way migration tests + snapshot import/export checks |
-| Metric registry | unsupported metrics disappear silently | loud validation + warning surfaces + tests |
-| Import pipeline | duplicate or malformed payloads corrupt trends or block the wrong records | sourceRecordId dedupe + schema validation + regression tests |
-| Import pipeline | timezone skew lands data on the wrong day | localDay normalization tests + cross-timezone fixtures |
-| Review | full-table scans become slow at scale | bounded reads + summary projections |
-| Timeline | event history becomes unusable | paging and filter tests |
-| Clinical import | wrong patient gets merged | exact-match gate + hard-block on mismatch |
+| Area              | Failure                                                                   | Protection                                                   |
+| ----------------- | ------------------------------------------------------------------------- | ------------------------------------------------------------ |
+| Runtime target    | ambiguous deploy environment breaks DB at runtime                         | explicit adapter + build verification                        |
+| Storage migration | local data lost or partially migrated                                     | one-way migration tests + snapshot import/export checks      |
+| Metric registry   | unsupported metrics disappear silently                                    | loud validation + warning surfaces + tests                   |
+| Import pipeline   | duplicate or malformed payloads corrupt trends or block the wrong records | sourceRecordId dedupe + schema validation + regression tests |
+| Import pipeline   | timezone skew lands data on the wrong day                                 | localDay normalization tests + cross-timezone fixtures       |
+| Review            | full-table scans become slow at scale                                     | bounded reads + summary projections                          |
+| Timeline          | event history becomes unusable                                            | paging and filter tests                                      |
+| Clinical import   | wrong patient gets merged                                                 | exact-match gate + hard-block on mismatch                    |
 
 Critical gaps if skipped:
+
 - timezone correctness
 - duplicate import handling
 - identity mismatch blocking
@@ -505,15 +539,16 @@ Critical gaps if skipped:
 
 ## Parallelization strategy
 
-| Step | Modules touched | Depends on |
-|---|---|---|
-| Runtime + Drizzle migration | `src/lib/server/db`, `src/lib/core/db`, config | none |
-| Metric registry | `src/lib/core/domain`, `src/lib/features/integrations`, shared display logic | none |
-| Review/today/timeline scaling | `src/lib/features/review`, `today`, `timeline`, `imports` | runtime + metric registry |
-| Clinical hardening | `src/lib/features/imports`, `src/lib/features/integrations/identity`, settings/review/timeline | runtime + metric registry |
-| Test expansion | `tests/features`, `tests/support` | follows each lane |
+| Step                          | Modules touched                                                                                | Depends on                |
+| ----------------------------- | ---------------------------------------------------------------------------------------------- | ------------------------- |
+| Runtime + Drizzle migration   | `src/lib/server/db`, `src/lib/core/db`, config                                                 | none                      |
+| Metric registry               | `src/lib/core/domain`, `src/lib/features/integrations`, shared display logic                   | none                      |
+| Review/today/timeline scaling | `src/lib/features/review`, `today`, `timeline`, `imports`                                      | runtime + metric registry |
+| Clinical hardening            | `src/lib/features/imports`, `src/lib/features/integrations/identity`, settings/review/timeline | runtime + metric registry |
+| Test expansion                | `tests/features`, `tests/support`                                                              | follows each lane         |
 
 Lanes:
+
 - Lane A: runtime + Drizzle
 - Lane B: metric registry
 - Lane C: review/today/timeline scaling after A + B
@@ -521,6 +556,7 @@ Lanes:
 - Lane E: tests alongside every lane
 
 Execution order:
+
 - Launch A + B in parallel.
 - Launch C after A and B are in.
 - Launch D after A and B are in.
@@ -529,6 +565,7 @@ Execution order:
 ## Verification commands
 
 Core:
+
 - `bun run check`
 - `bun run lint`
 - `bun run test:unit`
@@ -537,6 +574,7 @@ Core:
 - `bun run build`
 
 Targeted:
+
 - `bun run test:e2e --grep "health loop"`
 - `bun run test:e2e --grep "imports"`
 - `bun run test:e2e --grep "weekly review"`
@@ -567,7 +605,6 @@ We are done with the migration plan when:
 4. required tests are enumerated
 5. not-in-scope items are explicit
 6. implementation can start without reopening architecture arguments
-
 
 ## Completion summary
 

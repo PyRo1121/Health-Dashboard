@@ -34,25 +34,43 @@
       ...next,
       symptomForm: preserve.includes('symptomForm') ? current.symptomForm : next.symptomForm,
       anxietyForm: preserve.includes('anxietyForm') ? current.anxietyForm : next.anxietyForm,
-      sleepNoteForm: preserve.includes('sleepNoteForm') ? current.sleepNoteForm : next.sleepNoteForm,
+      sleepNoteForm: preserve.includes('sleepNoteForm')
+        ? current.sleepNoteForm
+        : next.sleepNoteForm,
       templateForm: preserve.includes('templateForm') ? current.templateForm : next.templateForm,
     };
   }
 
   async function saveSymptom() {
-    mergeMutationResult(await saveSymptomPage(page), ['anxietyForm', 'sleepNoteForm', 'templateForm']);
+    mergeMutationResult(await saveSymptomPage(page), [
+      'anxietyForm',
+      'sleepNoteForm',
+      'templateForm',
+    ]);
   }
 
   async function saveAnxiety() {
-    mergeMutationResult(await saveAnxietyPage(page), ['symptomForm', 'sleepNoteForm', 'templateForm']);
+    mergeMutationResult(await saveAnxietyPage(page), [
+      'symptomForm',
+      'sleepNoteForm',
+      'templateForm',
+    ]);
   }
 
   async function saveSleepNote() {
-    mergeMutationResult(await saveSleepNotePage(page), ['symptomForm', 'anxietyForm', 'templateForm']);
+    mergeMutationResult(await saveSleepNotePage(page), [
+      'symptomForm',
+      'anxietyForm',
+      'templateForm',
+    ]);
   }
 
   async function saveTemplate() {
-    mergeMutationResult(await saveTemplatePage(page), ['symptomForm', 'anxietyForm', 'sleepNoteForm']);
+    mergeMutationResult(await saveTemplatePage(page), [
+      'symptomForm',
+      'anxietyForm',
+      'sleepNoteForm',
+    ]);
   }
 
   async function quickLogTemplate(templateId: string) {

@@ -6,6 +6,7 @@ Date: 2026-04-10
 This file is for keeping the repo healthy over time.
 
 Use it when you need to answer:
+
 - how to approach refactors safely
 - how to choose the next cleanup slice
 - how to avoid rebuilding wrapper soup
@@ -41,6 +42,7 @@ twenty files
 ### Remove low-value wrappers
 
 Safe when:
+
 - the wrapper is a pure pass-through barrel
 - ownership becomes clearer after removal
 - import rewiring is mechanical
@@ -49,11 +51,13 @@ Safe when:
 ### Extract local helpers
 
 Safe when:
+
 - duplication is exact
 - repeated orchestration stays inside one feature
 - helper names describe the actual behavior
 
 Examples:
+
 - refresh + reload + notice paths
 - repeated linked-context row assembly
 - repeated persistence merge logic
@@ -61,16 +65,19 @@ Examples:
 ### Extract shared helpers
 
 Only when:
+
 - the logic is genuinely domain-shared
 - at least two modules need the same behavior
 - the helper has a stable home under `src/lib/core/shared`
 
 Current good examples:
+
 - [plan-slots.ts](../src/lib/core/shared/plan-slots.ts)
 
 ## When Not To Refactor
 
 Stop if:
+
 - the next step is no longer based on a concrete smell
 - the diff is getting too wide to reason about
 - tests are broad and slow instead of precise
@@ -118,6 +125,7 @@ bun run test:e2e --grep "<targeted flow>"
 ## Test Mapping Rule
 
 If a cleanup touches:
+
 - mutation logic
 - route contracts
 - import flows
@@ -129,17 +137,20 @@ then there should be a targeted regression test proving it still works.
 ## Documentation Maintenance Rule
 
 If you change the code structure, update:
+
 - [README.md](../README.md)
 - [docs/README.md](README.md)
 - [ARCHITECTURE.md](../ARCHITECTURE.md)
 
 If you change:
+
 - route ownership
 - action names
 - data ownership
 - user flow behavior
 
 update:
+
 - [api-reference.md](api-reference.md)
 - [data-model.md](data-model.md)
 - [feature-flows.md](feature-flows.md)

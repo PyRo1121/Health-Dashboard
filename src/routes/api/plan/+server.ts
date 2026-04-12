@@ -28,9 +28,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
   switch (parsed.data.action) {
     case 'load':
-      return Response.json(
-        await loadPlanningPageServer(parsed.data.localDay, parsed.data.state)
-      );
+      return Response.json(await loadPlanningPageServer(parsed.data.localDay, parsed.data.state));
     case 'saveSlot':
       return Response.json(await savePlanningSlotPageServer(parsed.data.state));
     case 'saveWorkoutTemplate':
@@ -52,7 +50,9 @@ export const POST: RequestHandler = async ({ request }) => {
         )
       );
     case 'deleteSlot':
-      return Response.json(await deletePlanningSlotPageServer(parsed.data.state, parsed.data.slotId));
+      return Response.json(
+        await deletePlanningSlotPageServer(parsed.data.state, parsed.data.slotId)
+      );
     case 'toggleGrocery':
       return Response.json(
         await togglePlanningGroceryStatePageServer(

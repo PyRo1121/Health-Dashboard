@@ -14,6 +14,7 @@ This app is useful without a cloud account.
 That is not a marketing line. It is the actual architecture constraint.
 
 The app should remain valuable when:
+
 - external APIs are down
 - integration credentials are missing
 - the user is offline
@@ -37,6 +38,7 @@ optional external systems
 ```
 
 Examples:
+
 - daily check-ins are local
 - journal entries are local
 - sobriety history is local
@@ -47,6 +49,7 @@ Examples:
 ## Sensitive Data
 
 These domains should be treated as sensitive by default:
+
 - mental health notes
 - sobriety events
 - symptom logs
@@ -55,6 +58,7 @@ These domains should be treated as sensitive by default:
 - imported clinical or wearable history
 
 That means:
+
 - no casual logging of payloads
 - no unnecessary serialization into third-party systems
 - no vague “temporary” remote caching
@@ -63,6 +67,7 @@ That means:
 ## Data Ownership Model
 
 Canonical local records:
+
 - daily records
 - journal entries
 - food entries
@@ -74,11 +79,13 @@ Canonical local records:
 - import batches / staged artifacts
 
 Derived local records:
+
 - review snapshots
 - adherence matches
 - derived grocery items
 
 Remote or external systems may:
+
 - provide source data for import
 - provide enrichment for food lookup
 - provide advisory automation in CI
@@ -90,37 +97,45 @@ They do not own the core user state.
 ### USDA
 
 Used for:
+
 - nutrition enrichment
 - optional live search
 
 Failure mode:
+
 - app should fall back to local search behavior
 
 ### Open Food Facts
 
 Used for:
+
 - packaged-food search and barcode enrichment
 
 Failure mode:
+
 - app should still function with local catalog items
 
 ### SMART / HealthKit / Day One imports
 
 Used for:
+
 - import into local timeline and review system
 
 Failure mode:
+
 - import should fail safely before commit
 - local existing data should remain intact
 
 ### xAI / Grok automation
 
 Used for:
+
 - PR review
 - CI automation
 - advisory or bounded repair lanes
 
 Failure mode:
+
 - developer workflows degrade, but user health data flows should not
 
 ## Review Refresh Model
@@ -140,6 +155,7 @@ This is why many feature mutations trigger review refreshes. Review is not a sep
 ## Safe Engineering Rules
 
 Good changes:
+
 - make ownership more explicit
 - keep imports direct to real owner modules
 - keep side effects visible
@@ -147,6 +163,7 @@ Good changes:
 - add regression tests when a cleanup touches shared derived data
 
 Bad changes:
+
 - hide important writes behind a generic abstraction
 - make remote enrichment mandatory for a core flow
 - add logs that expose health payloads casually
@@ -167,6 +184,7 @@ If the answer is bad, stop and fix the design, not just the code.
 ## Documentation Rule
 
 If a change modifies:
+
 - data ownership
 - remote dependency role
 - import behavior

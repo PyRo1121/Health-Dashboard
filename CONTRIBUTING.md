@@ -36,12 +36,14 @@ Use targeted unit or E2E runs whenever possible.
 This repo should track current Svelte 5 and SvelteKit 2 practices.
 
 Do:
+
 - use explicit module ownership
 - keep feature-local helpers local
 - prefer typed imports from the real module owner
 - keep UI logic in components and feature state/model modules
 
 Do not:
+
 - introduce `export let` in new code
 - introduce `on:click` in new code
 - introduce `$:` legacy reactive statements in new code
@@ -70,6 +72,7 @@ The rule is ownership clarity, not file-count symmetry.
 ## Cleanup Rules
 
 Good cleanup:
+
 - removes dead wrappers
 - removes repeated orchestration
 - adds one local helper for one real repeated pattern
@@ -77,6 +80,7 @@ Good cleanup:
 - keeps tests focused
 
 Bad cleanup:
+
 - giant “clean up everything” diff
 - generic base controller/service abstractions
 - moving code around without changing clarity
@@ -92,6 +96,7 @@ If you change structure or feature ownership, update the docs in the same tranch
 - any relevant file under `docs/`
 
 Important docs:
+
 - [ARCHITECTURE.md](ARCHITECTURE.md)
 - [docs/developer-guide.md](docs/developer-guide.md)
 - [docs/testing-and-verification.md](docs/testing-and-verification.md)
@@ -107,12 +112,14 @@ Important docs:
 ### Structural cleanup
 
 Run:
+
 - targeted unit tests
 - `bun run check`
 
 ### Mutation path changes
 
 Run:
+
 - action/controller tests
 - route tests if contract changed
 - downstream review/timeline/today regressions if refresh behavior is involved
@@ -120,6 +127,7 @@ Run:
 ### User-visible flow changes
 
 Run:
+
 - component tests if available
 - targeted E2E grep
 - `bun run check`
@@ -127,6 +135,7 @@ Run:
 ## Health App Quality Bar
 
 This repo is not allowed to get sloppy around:
+
 - journal entries
 - sobriety events
 - symptom logs
@@ -139,6 +148,7 @@ If a change makes those flows harder to trace, harder to test, or more dependent
 ## PR / Change Notes
 
 When describing a change:
+
 - name the files
 - name the exact verification commands
 - say what user-visible behavior changed, if any

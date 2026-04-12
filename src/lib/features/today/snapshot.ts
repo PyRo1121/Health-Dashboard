@@ -42,7 +42,8 @@ import {
 export type JournalEntriesStore = HealthDbJournalEntriesStore;
 
 export interface TodaySnapshotStore
-  extends NutritionRecommendationContextStore,
+  extends
+    NutritionRecommendationContextStore,
     NutritionPlannedMealStore,
     RecipeCatalogItemsStore,
     MovementStorage,
@@ -269,7 +270,10 @@ export function buildTodaySnapshotFromData(input: {
   };
 }
 
-async function buildTodaySnapshotData(store: TodaySnapshotStore, date: string): Promise<TodaySnapshot> {
+async function buildTodaySnapshotData(
+  store: TodaySnapshotStore,
+  date: string
+): Promise<TodaySnapshot> {
   const [
     dailyRecord,
     nutritionSummary,
@@ -306,7 +310,10 @@ async function buildTodaySnapshotData(store: TodaySnapshotStore, date: string): 
   });
 }
 
-export async function getTodaySnapshot(store: TodaySnapshotStore, date: string): Promise<TodaySnapshot> {
+export async function getTodaySnapshot(
+  store: TodaySnapshotStore,
+  date: string
+): Promise<TodaySnapshot> {
   return await buildTodaySnapshotData(store, date);
 }
 

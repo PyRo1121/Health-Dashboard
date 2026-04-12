@@ -76,7 +76,6 @@ async function loadReviewSourceData(): Promise<ReviewSourceData> {
   };
 }
 
-
 export async function resolveReviewAnchorDayServer(requestedAnchorDay: string): Promise<string> {
   return resolveReviewAnchorDayFromSourceData(await loadReviewSourceData(), requestedAnchorDay);
 }
@@ -160,12 +159,16 @@ async function persistWeeklyReviewSnapshotServer(
       };
 }
 
-export async function refreshWeeklyReviewArtifactsServer(anchorDay: string): Promise<WeeklyReviewData> {
+export async function refreshWeeklyReviewArtifactsServer(
+  anchorDay: string
+): Promise<WeeklyReviewData> {
   const weekly = await buildWeeklySnapshotServer(anchorDay);
   return await persistWeeklyReviewSnapshotServer(weekly);
 }
 
-export async function refreshWeeklyReviewArtifactsForDaysServer(anchorDays: string[]): Promise<void> {
+export async function refreshWeeklyReviewArtifactsForDaysServer(
+  anchorDays: string[]
+): Promise<void> {
   const refreshedWeeks = new Set<string>();
 
   for (const anchorDay of anchorDays) {
@@ -195,7 +198,9 @@ export async function loadReviewPageServer(localDay: string): Promise<ReviewPage
   };
 }
 
-export async function saveReviewExperimentPageServer(state: ReviewPageState): Promise<ReviewPageState> {
+export async function saveReviewExperimentPageServer(
+  state: ReviewPageState
+): Promise<ReviewPageState> {
   if (!state.weekly || !state.selectedExperiment) {
     return state;
   }

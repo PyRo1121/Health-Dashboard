@@ -8,7 +8,10 @@ import {
   submitAssessment,
   type AssessmentResultsStore,
 } from '$lib/features/assessments/service';
-import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
+import {
+  refreshWeeklyReviewArtifactsSafely,
+  type ReviewStorage,
+} from '$lib/features/review/service';
 
 export interface AssessmentsPageStorage extends AssessmentResultsStore, ReviewStorage {}
 

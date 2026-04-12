@@ -142,7 +142,10 @@ describe('health route', () => {
   });
 
   it('dispatches health save actions through the server route', async () => {
-    const saveSymptomPageServer = vi.fn(async () => ({ ...requestState, saveNotice: 'Symptom logged.' }));
+    const saveSymptomPageServer = vi.fn(async () => ({
+      ...requestState,
+      saveNotice: 'Symptom logged.',
+    }));
     const saveAnxietyPageServer = vi.fn(async () => ({
       ...requestState,
       saveNotice: 'Anxiety episode logged.',
@@ -151,8 +154,14 @@ describe('health route', () => {
       ...requestState,
       saveNotice: 'Sleep context logged.',
     }));
-    const saveTemplatePageServer = vi.fn(async () => ({ ...requestState, saveNotice: 'Template saved.' }));
-    const quickLogTemplatePageServer = vi.fn(async () => ({ ...requestState, saveNotice: 'Template logged.' }));
+    const saveTemplatePageServer = vi.fn(async () => ({
+      ...requestState,
+      saveNotice: 'Template saved.',
+    }));
+    const quickLogTemplatePageServer = vi.fn(async () => ({
+      ...requestState,
+      saveNotice: 'Template logged.',
+    }));
     const { POST } = await importRoute({
       saveSymptomPageServer,
       saveAnxietyPageServer,
@@ -167,7 +176,9 @@ describe('health route', () => {
         body: JSON.stringify({ action: 'saveSymptom', state: requestState }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await symptomResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Symptom logged.' }));
+    expect(await symptomResponse.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Symptom logged.' })
+    );
     expect(saveSymptomPageServer).toHaveBeenCalledWith(mutationState);
 
     const anxietyResponse = await POST({
@@ -176,7 +187,9 @@ describe('health route', () => {
         body: JSON.stringify({ action: 'saveAnxiety', state: requestState }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await anxietyResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Anxiety episode logged.' }));
+    expect(await anxietyResponse.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Anxiety episode logged.' })
+    );
     expect(saveAnxietyPageServer).toHaveBeenCalledWith(mutationState);
 
     const sleepResponse = await POST({
@@ -185,7 +198,9 @@ describe('health route', () => {
         body: JSON.stringify({ action: 'saveSleepNote', state: requestState }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await sleepResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Sleep context logged.' }));
+    expect(await sleepResponse.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Sleep context logged.' })
+    );
     expect(saveSleepNotePageServer).toHaveBeenCalledWith(mutationState);
 
     const templateResponse = await POST({
@@ -194,16 +209,24 @@ describe('health route', () => {
         body: JSON.stringify({ action: 'saveTemplate', state: requestState }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await templateResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Template saved.' }));
+    expect(await templateResponse.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Template saved.' })
+    );
     expect(saveTemplatePageServer).toHaveBeenCalledWith(mutationState);
 
     const quickLogResponse = await POST({
       request: new Request('http://health.test/api/health', {
         method: 'POST',
-        body: JSON.stringify({ action: 'quickLogTemplate', state: requestState, templateId: 'template-1' }),
+        body: JSON.stringify({
+          action: 'quickLogTemplate',
+          state: requestState,
+          templateId: 'template-1',
+        }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await quickLogResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Template logged.' }));
+    expect(await quickLogResponse.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Template logged.' })
+    );
     expect(quickLogTemplatePageServer).toHaveBeenCalledWith(mutationState, 'template-1');
   });
 

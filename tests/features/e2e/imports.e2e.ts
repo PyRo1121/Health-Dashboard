@@ -54,7 +54,9 @@ test('smart sandbox import requires an owner profile and lands in timeline once 
   await importsPage.expectCommitted();
 
   await page.goto('/timeline');
-  await expect(page.getByText(new RegExp(formatHealthMetricLabel('Systolic blood pressure'), 'i'))).toBeVisible();
+  await expect(
+    page.getByText(new RegExp(formatHealthMetricLabel('Systolic blood pressure'), 'i'))
+  ).toBeVisible();
   await expect(page.getByText(/SMART on FHIR sandbox/i).first()).toBeVisible();
 });
 

@@ -5,7 +5,6 @@ import {
 } from '$lib/features/journal/navigation';
 
 describe('journal navigation', () => {
-
   it('builds and consumes a stored journal intent without exposing body text in the URL', () => {
     const href = buildStoredJournalIntentHref({
       source: 'today-recovery',

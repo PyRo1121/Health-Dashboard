@@ -4,7 +4,11 @@ import { deriveWeeklyGroceries, setGroceryItemState } from '$lib/features/grocer
 import { logAnxietyEvent, logSymptomEvent } from '$lib/features/health/service';
 import { commitImportBatch, previewImport } from '$lib/features/imports/store';
 import { saveJournalEntry } from '$lib/features/journal/service';
-import { createFoodEntry, saveFoodCatalogItem, upsertRecipeCatalogItem } from '$lib/features/nutrition/store';
+import {
+  createFoodEntry,
+  saveFoodCatalogItem,
+  upsertRecipeCatalogItem,
+} from '$lib/features/nutrition/store';
 import {
   ensureWeeklyPlan,
   savePlanSlot,

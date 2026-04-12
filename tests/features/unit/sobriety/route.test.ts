@@ -68,16 +68,71 @@ describe('sobriety route', () => {
 
   it('loads and dispatches sobriety actions through the server route', async () => {
     const { POST } = await importRoute({});
-    const state = { loading: false, localDay: '2026-04-04', summary: { streak: 1, todayEvents: [] }, saveNotice: '', cravingScore: '4', cravingNote: 'Stress spike after lunch.', lapseNote: 'Had a lapse after a rough evening.', recoveryAction: 'Text sponsor' };
-    expect(await (await POST({ request: new Request('http://health.test/api/sobriety', { method: 'POST', body: JSON.stringify({ action: 'load', localDay: '2026-04-04', state }) }) } as Parameters<typeof POST>[0])).json()).toEqual(expect.objectContaining({ localDay: '2026-04-04' }));
-    expect(await (await POST({ request: new Request('http://health.test/api/sobriety', { method: 'POST', body: JSON.stringify({ action: 'markStatus', state, status: 'sober', notice: 'Marked sober for today.' }) }) } as Parameters<typeof POST>[0])).json()).toEqual(expect.objectContaining({ saveNotice: 'Marked sober for today.' }));
-    expect(await (await POST({ request: new Request('http://health.test/api/sobriety', { method: 'POST', body: JSON.stringify({ action: 'saveCraving', state }) }) } as Parameters<typeof POST>[0])).json()).toEqual(expect.objectContaining({ saveNotice: 'Craving logged.' }));
-    expect(await (await POST({ request: new Request('http://health.test/api/sobriety', { method: 'POST', body: JSON.stringify({ action: 'saveLapse', state }) }) } as Parameters<typeof POST>[0])).json()).toEqual(expect.objectContaining({ saveNotice: 'Lapse context logged.' }));
+    const state = {
+      loading: false,
+      localDay: '2026-04-04',
+      summary: { streak: 1, todayEvents: [] },
+      saveNotice: '',
+      cravingScore: '4',
+      cravingNote: 'Stress spike after lunch.',
+      lapseNote: 'Had a lapse after a rough evening.',
+      recoveryAction: 'Text sponsor',
+    };
+    expect(
+      await (
+        await POST({
+          request: new Request('http://health.test/api/sobriety', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'load', localDay: '2026-04-04', state }),
+          }),
+        } as Parameters<typeof POST>[0])
+      ).json()
+    ).toEqual(expect.objectContaining({ localDay: '2026-04-04' }));
+    expect(
+      await (
+        await POST({
+          request: new Request('http://health.test/api/sobriety', {
+            method: 'POST',
+            body: JSON.stringify({
+              action: 'markStatus',
+              state,
+              status: 'sober',
+              notice: 'Marked sober for today.',
+            }),
+          }),
+        } as Parameters<typeof POST>[0])
+      ).json()
+    ).toEqual(expect.objectContaining({ saveNotice: 'Marked sober for today.' }));
+    expect(
+      await (
+        await POST({
+          request: new Request('http://health.test/api/sobriety', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'saveCraving', state }),
+          }),
+        } as Parameters<typeof POST>[0])
+      ).json()
+    ).toEqual(expect.objectContaining({ saveNotice: 'Craving logged.' }));
+    expect(
+      await (
+        await POST({
+          request: new Request('http://health.test/api/sobriety', {
+            method: 'POST',
+            body: JSON.stringify({ action: 'saveLapse', state }),
+          }),
+        } as Parameters<typeof POST>[0])
+      ).json()
+    ).toEqual(expect.objectContaining({ saveNotice: 'Lapse context logged.' }));
   });
 
   it('returns 400 for invalid sobriety payloads', async () => {
     const { POST } = await importRoute({});
-    const response = await POST({ request: new Request('http://health.test/api/sobriety', { method: 'POST', body: JSON.stringify({ action: 'markStatus', status: 'sober' }) }) } as Parameters<typeof POST>[0]);
+    const response = await POST({
+      request: new Request('http://health.test/api/sobriety', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'markStatus', status: 'sober' }),
+      }),
+    } as Parameters<typeof POST>[0]);
     expect(response.status).toBe(400);
     expect(await response.text()).toBe('Invalid sobriety request payload.');
   });

@@ -41,9 +41,7 @@ export async function saveMovementWorkoutTemplatePageServer(
   };
 }
 
-export async function searchMovementExercisesServer(
-  query: string
-): Promise<ExerciseCatalogItem[]> {
+export async function searchMovementExercisesServer(query: string): Promise<ExerciseCatalogItem[]> {
   const normalizedQuery = query.trim();
   if (!normalizedQuery) {
     return [];

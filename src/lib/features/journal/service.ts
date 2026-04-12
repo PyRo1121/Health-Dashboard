@@ -57,5 +57,7 @@ export async function listJournalEntriesForDay(
   store: JournalEntriesStore,
   localDay: string
 ): Promise<JournalEntry[]> {
-  return sortJournalEntries(await store.journalEntries.where('localDay').equals(localDay).toArray());
+  return sortJournalEntries(
+    await store.journalEntries.where('localDay').equals(localDay).toArray()
+  );
 }

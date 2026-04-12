@@ -32,11 +32,38 @@ describe('movement route', () => {
       searchMovementExercisesServer: vi.fn(),
     }));
     const mod = await import('../../../../src/routes/api/movement/+server.ts');
-    let response = await mod.POST({ request: new Request('http://health.test/api/movement', { method: 'POST', body: JSON.stringify({ action: 'load' }) }) } as Parameters<typeof mod.POST>[0]);
-    expect(await response.json()).toEqual(expect.objectContaining({ exerciseCatalogItems: [expect.objectContaining({ title: 'Goblet squat' })] }));
+    let response = await mod.POST({
+      request: new Request('http://health.test/api/movement', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'load' }),
+      }),
+    } as Parameters<typeof mod.POST>[0]);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        exerciseCatalogItems: [expect.objectContaining({ title: 'Goblet squat' })],
+      })
+    );
     expect(loadMovementPageServer).toHaveBeenCalledTimes(1);
-    response = await mod.POST({ request: new Request('http://health.test/api/movement', { method: 'POST', body: JSON.stringify({ action: 'saveWorkoutTemplate', state: { loading: false, saveNotice: '', workoutTemplateForm: { title: 'Full body reset', goal: 'Recovery', exercises: [] }, workoutTemplates: [], exerciseCatalogItems: [], exerciseSearchQuery: '', exerciseSearchResults: [] } }) }) } as Parameters<typeof mod.POST>[0]);
-    expect(await response.json()).toEqual(expect.objectContaining({ saveNotice: 'Workout template saved.' }));
+    response = await mod.POST({
+      request: new Request('http://health.test/api/movement', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'saveWorkoutTemplate',
+          state: {
+            loading: false,
+            saveNotice: '',
+            workoutTemplateForm: { title: 'Full body reset', goal: 'Recovery', exercises: [] },
+            workoutTemplates: [],
+            exerciseCatalogItems: [],
+            exerciseSearchQuery: '',
+            exerciseSearchResults: [],
+          },
+        }),
+      }),
+    } as Parameters<typeof mod.POST>[0]);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({ saveNotice: 'Workout template saved.' })
+    );
     expect(saveMovementWorkoutTemplatePageServer).toHaveBeenCalled();
   });
 
@@ -47,7 +74,12 @@ describe('movement route', () => {
       searchMovementExercisesServer: vi.fn(),
     }));
     const { POST } = await import('../../../../src/routes/api/movement/+server.ts');
-    const response = await POST({ request: new Request('http://health.test/api/movement', { method: 'POST', body: JSON.stringify({ action: 'saveWorkoutTemplate' }) }) } as Parameters<typeof POST>[0]);
+    const response = await POST({
+      request: new Request('http://health.test/api/movement', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'saveWorkoutTemplate' }),
+      }),
+    } as Parameters<typeof POST>[0]);
     expect(response.status).toBe(400);
     expect(await response.text()).toBe('Invalid movement request payload.');
   });
@@ -67,8 +99,14 @@ describe('movement search route', () => {
       saveMovementWorkoutTemplatePageServer: vi.fn(),
       searchMovementExercisesServer,
     }));
-    const { POST } = await import('../../../../src/routes/api/movement/search-exercises/+server.ts');
-    const response = await POST({ request: new Request('http://health.test/api/movement/search-exercises', { method: 'POST', body: JSON.stringify({ query: '   ' }) }) } as Parameters<typeof POST>[0]);
+    const { POST } =
+      await import('../../../../src/routes/api/movement/search-exercises/+server.ts');
+    const response = await POST({
+      request: new Request('http://health.test/api/movement/search-exercises', {
+        method: 'POST',
+        body: JSON.stringify({ query: '   ' }),
+      }),
+    } as Parameters<typeof POST>[0]);
     expect(await response.json()).toEqual([]);
     expect(searchMovementExercisesServer).not.toHaveBeenCalled();
   });
@@ -81,8 +119,14 @@ describe('movement search route', () => {
       saveMovementWorkoutTemplatePageServer: vi.fn(),
       searchMovementExercisesServer,
     }));
-    const { POST } = await import('../../../../src/routes/api/movement/search-exercises/+server.ts');
-    const response = await POST({ request: new Request('http://health.test/api/movement/search-exercises', { method: 'POST', body: JSON.stringify({ query: 'goblet squat' }) }) } as Parameters<typeof POST>[0]);
+    const { POST } =
+      await import('../../../../src/routes/api/movement/search-exercises/+server.ts');
+    const response = await POST({
+      request: new Request('http://health.test/api/movement/search-exercises', {
+        method: 'POST',
+        body: JSON.stringify({ query: 'goblet squat' }),
+      }),
+    } as Parameters<typeof POST>[0]);
     expect(await response.json()).toEqual(results);
     expect(searchMovementExercisesServer).toHaveBeenCalledWith('goblet squat');
   });
@@ -93,8 +137,14 @@ describe('movement search route', () => {
       saveMovementWorkoutTemplatePageServer: vi.fn(),
       searchMovementExercisesServer: vi.fn(),
     }));
-    const { POST } = await import('../../../../src/routes/api/movement/search-exercises/+server.ts');
-    const response = await POST({ request: new Request('http://health.test/api/movement/search-exercises', { method: 'POST', body: JSON.stringify({ query: 42 }) }) } as Parameters<typeof POST>[0]);
+    const { POST } =
+      await import('../../../../src/routes/api/movement/search-exercises/+server.ts');
+    const response = await POST({
+      request: new Request('http://health.test/api/movement/search-exercises', {
+        method: 'POST',
+        body: JSON.stringify({ query: 42 }),
+      }),
+    } as Parameters<typeof POST>[0]);
     expect(response.status).toBe(400);
     expect(await response.text()).toBe('Invalid exercise search request payload.');
   });

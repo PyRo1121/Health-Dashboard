@@ -1,5 +1,10 @@
 import type { AssessmentResult } from '$lib/core/domain/types';
-import { buildAssessmentRecord, classifyAssessmentBand, handleHighRiskAssessmentState, scoreAssessment } from '$lib/features/assessments/service';
+import {
+  buildAssessmentRecord,
+  classifyAssessmentBand,
+  handleHighRiskAssessmentState,
+  scoreAssessment,
+} from '$lib/features/assessments/service';
 import { createAssessmentDraftResponses } from '$lib/features/assessments/model';
 import { getAssessmentDefinition, renderAssessment } from '$lib/features/assessments/definitions';
 import type { AssessmentsPageState } from '$lib/features/assessments/controller';
@@ -14,7 +19,12 @@ async function getStoredAssessmentServer(
 ): Promise<AssessmentResult | undefined> {
   const { db } = getServerDrizzleClient();
   return (
-    await selectMirrorRecordsByField<AssessmentResult>(db, drizzleSchema.assessmentResults, 'localDay', localDay)
+    await selectMirrorRecordsByField<AssessmentResult>(
+      db,
+      drizzleSchema.assessmentResults,
+      'localDay',
+      localDay
+    )
   ).find((entry) => entry.instrument === instrument);
 }
 
@@ -51,7 +61,10 @@ export async function saveAssessmentsProgressPageServer(
 ): Promise<AssessmentsPageState> {
   const existing = await getStoredAssessmentServer(state.localDay, state.instrument);
   const definition = getAssessmentDefinition(state.instrument);
-  const highRisk = handleHighRiskAssessmentState(state.instrument, state.draftResponses.filter((value) => value >= 0)).highRisk;
+  const highRisk = handleHighRiskAssessmentState(
+    state.instrument,
+    state.draftResponses.filter((value) => value >= 0)
+  ).highRisk;
   const record = buildAssessmentRecord({
     definition,
     existing,

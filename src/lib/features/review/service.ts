@@ -63,9 +63,9 @@ import {
 export type { ReviewCorrelation, WeeklyReviewData } from './analytics';
 export { computeCorrelations, generateReviewFlags } from './analytics';
 
-
 export interface ReviewStorage
-  extends HealthDbDailyRecordsStore,
+  extends
+    HealthDbDailyRecordsStore,
     HealthDbFoodEntriesStore,
     HealthDbSobrietyEventsStore,
     HealthDbAssessmentResultsStore,
@@ -109,7 +109,12 @@ export interface ReviewWeekData {
 }
 
 function latestDay(days: Array<string | null | undefined>): string | null {
-  return days.filter((day): day is string => Boolean(day)).sort().at(-1) ?? null;
+  return (
+    days
+      .filter((day): day is string => Boolean(day))
+      .sort()
+      .at(-1) ?? null
+  );
 }
 
 async function loadReviewSourceData(store: ReviewStorage): Promise<ReviewSourceData> {
@@ -317,7 +322,6 @@ export function buildWeeklySnapshotFromWeekData(input: {
   };
 }
 
-
 async function listAdherenceMatchesForWeek(
   store: ReviewStorage,
   weekStart: string
@@ -375,7 +379,10 @@ export async function resolveReviewAnchorDay(
   store: ReviewStorage,
   requestedAnchorDay: string
 ): Promise<string> {
-  return resolveReviewAnchorDayFromSourceData(await loadReviewSourceData(store), requestedAnchorDay);
+  return resolveReviewAnchorDayFromSourceData(
+    await loadReviewSourceData(store),
+    requestedAnchorDay
+  );
 }
 
 export async function computeTrendComparisons(
@@ -389,7 +396,11 @@ export async function computeTrendComparisons(
   averageProtein: number;
 }> {
   const weekData = selectReviewWeekData(await loadReviewSourceData(store), anchorDay);
-  return computeTrendComparisonsFromData(weekData.weekStart, weekData.weekRecords, weekData.weekFood);
+  return computeTrendComparisonsFromData(
+    weekData.weekStart,
+    weekData.weekRecords,
+    weekData.weekFood
+  );
 }
 
 export async function buildWeeklySnapshot(

@@ -14,7 +14,8 @@ import type { JournalIntent } from './navigation';
 
 export { beginJournalSave, createJournalPageState };
 
-const journalClient = createFeatureActionClient<Parameters<typeof loadJournalPageController>[0]>('/api/journal');
+const journalClient =
+  createFeatureActionClient<Parameters<typeof loadJournalPageController>[0]>('/api/journal');
 
 export async function loadJournalPage(
   state: JournalPageState,

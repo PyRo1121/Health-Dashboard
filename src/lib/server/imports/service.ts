@@ -27,7 +27,11 @@ import {
   upsertMirrorRecords,
 } from '$lib/server/db/drizzle/mirror';
 import { refreshWeeklyReviewArtifactsForDaysServer } from '$lib/server/review/service';
-import { type ImportPayloadAnalysis, textFingerprint, warningCount } from '$lib/features/imports/core';
+import {
+  type ImportPayloadAnalysis,
+  textFingerprint,
+  warningCount,
+} from '$lib/features/imports/core';
 import { analyzeImportPayload } from '$lib/features/imports/analyze';
 import { parseAppleHealthXml, parseDayOneExport } from '$lib/features/imports/parsers';
 
@@ -78,7 +82,11 @@ async function stageArtifacts(input: {
 
 export async function listImportBatchesServer(): Promise<ImportBatch[]> {
   const { db } = getServerDrizzleClient();
-  return (await selectAllMirrorRecordsDesc<ImportBatch>(db, drizzleSchema.importBatches, 'updatedAt')).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.createdAt.localeCompare(a.createdAt));
+  return (
+    await selectAllMirrorRecordsDesc<ImportBatch>(db, drizzleSchema.importBatches, 'updatedAt')
+  ).sort(
+    (a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.createdAt.localeCompare(a.createdAt)
+  );
 }
 
 export async function createImportBatchServer(sourceType: ImportSourceType): Promise<ImportBatch> {
@@ -119,7 +127,10 @@ export async function dedupeImportedEventsServer(
 }
 
 async function stageHealthEventBatch(
-  sourceType: Extract<ImportSourceType, 'apple-health-xml' | 'healthkit-companion' | 'smart-fhir-sandbox'>,
+  sourceType: Extract<
+    ImportSourceType,
+    'apple-health-xml' | 'healthkit-companion' | 'smart-fhir-sandbox'
+  >,
   events: HealthEvent[],
   analysis: ImportPayloadAnalysis | null
 ): Promise<ImportBatch> {
@@ -165,7 +176,9 @@ export async function previewImportServer(input: {
 
   if (resolvedSourceType === 'smart-fhir-sandbox') {
     if (!input.ownerProfile) {
-      throw new Error('Configure your owner profile in Settings before previewing SMART clinical imports.');
+      throw new Error(
+        'Configure your owner profile in Settings before previewing SMART clinical imports.'
+      );
     }
 
     const normalized = analysis ?? analyzeImportPayload(input.rawText);

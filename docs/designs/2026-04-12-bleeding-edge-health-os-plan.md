@@ -3,9 +3,11 @@
 Status: Active
 Date: 2026-04-12
 Supersedes:
+
 - `docs/designs/2026-04-12-world-class-forward-plan.md`
 
 Basis:
+
 - `README.md`
 - `ARCHITECTURE.md`
 - `docs/feature-flows.md`
@@ -16,6 +18,7 @@ Basis:
 - current feature/test surfaces under `src/lib/features/**`, `tests/features/**`, `.github/workflows/**`, and `apps/ios-companion/**`
 
 External references:
+
 - MyFitnessPal barcode scan help: https://support.myfitnesspal.com/hc/en-us/articles/360032624771-How-do-I-use-the-barcode-scanner-to-log-foods-
 - Cronometer barcode scanner: https://cronometer.com/blog/best-barcode-scanner/
 - MacroFactor app overview: https://macrofactor.com/energy-expenditure-calculator-app/
@@ -38,6 +41,7 @@ External references:
 The current repo is no longer in bootstrap mode.
 
 It already has:
+
 - a real daily loop
 - review and planning surfaces
 - local-first persistence
@@ -45,6 +49,7 @@ It already has:
 - unit, component, and E2E coverage
 
 What it does not yet have is the thing that would make it beat category leaders:
+
 - one trusted guidance engine
 - one content and protocol system for action, not just logging
 - one clear operating model for workouts, recovery, sleep, and mental health support
@@ -56,23 +61,28 @@ That is the gap this plan closes.
 The current field is split by category.
 
 Nutrition leaders win with speed and data density:
+
 - MyFitnessPal wins on logging convenience and recognizable consumer habits, but premium-gates useful capture like barcode scan.
 - Cronometer wins on nutrient depth and free barcode value.
 - MacroFactor wins on adaptive nutrition coaching, fast logging, and algorithmic calorie adjustment.
 
 Workout leaders win with guided execution:
+
 - Hevy wins on routines, exercise history, and gym progression.
 - Apple Fitness+, Nike Training Club, and Peloton win on guided media, trainer-led sessions, and polished content loops.
 
 Recovery and wearable leaders win on daily readiness:
+
 - WHOOP wins on 24/7 strain, sleep, stress, and performance framing.
 - Oura wins on sleep, readiness, and stress/resilience language that feels actionable.
 
 Mindfulness leaders win on content quality and in-the-moment relief:
+
 - Headspace wins on breadth across stress, sleep, anxiety, and therapy-adjacent support.
 - Calm wins on sleep, breathing, grounding, and structured daily plans.
 
 What they still keep fragmented:
+
 - meal planning is separate from workout execution
 - recovery guidance is separate from grocery and meal adaptation
 - mental health support is separate from daily physiology and planning
@@ -113,6 +123,7 @@ Keep the current core stack.
 - native iPhone companion for HealthKit export
 
 Reason:
+
 - the current stack already matches the local-first, deterministic, testable product shape
 - the codebase now has explicit feature seams and test/store injection paths
 - a rewrite would burn time without improving the actual user loop
@@ -141,6 +152,7 @@ Add missing systems. Do not rewrite the foundation.
 ### 1. Guidance Graph
 
 Today and Review need one pure decision layer that ranks actions from:
+
 - physiology
 - plan state
 - nutrition progress
@@ -157,6 +169,7 @@ No opaque model first.
 The app needs structured action objects, not just notices and buttons.
 
 Examples:
+
 - recovery walk
 - 10-minute downshift breathing sequence
 - low-effort high-protein meal fallback
@@ -165,6 +178,7 @@ Examples:
 - short mobility reset
 
 Each protocol should have:
+
 - `id`
 - `kind`
 - `goal`
@@ -182,6 +196,7 @@ Each protocol should have:
 Do not build a giant streaming library first.
 
 Start with:
+
 - structured exercise clips
 - short guided audio routines
 - protocol cards
@@ -197,6 +212,7 @@ That is fine for the current repo size. It will become a bottleneck once more si
 
 The next architecture step is not event-sourcing theater.
 It is targeted projections:
+
 - daily signal projection
 - protocol effectiveness projection
 - weekly experiment projection
@@ -228,18 +244,22 @@ That always sounds elegant and usually ships slower and worse.
 ### Phase 1: Today Intelligence
 
 Status:
+
 - already packetized in `docs/designs/2026-04-12-today-intelligence-implementation-packet.md`
 
 Goal:
+
 - make `/today` the single best operating surface in the app
 
 What ships:
+
 - ranked primary recommendation
 - confidence and provenance
 - stronger low-signal and stale-plan handling
 - explicit action routing into Journal, Health, Nutrition, and Plan
 
 Acceptance bar:
+
 - one clear primary recommendation
 - one obvious CTA
 - provenance rows on every recommendation
@@ -248,9 +268,11 @@ Acceptance bar:
 ### Phase 2: Review Decision Engine
 
 Goal:
+
 - make `/review` produce clear experiments, adjustments, and stop/continue calls
 
 What ships:
+
 - ranked weekly experiment recommendations
 - continue / stop / adjust decisions
 - why-this-matters summaries
@@ -258,6 +280,7 @@ What ships:
 - early protocol outcome reporting
 
 Acceptance bar:
+
 - each weekly review ends with a next-week decision
 - each decision cites evidence and confidence
 - seeded replay yields stable output
@@ -265,15 +288,18 @@ Acceptance bar:
 ### Phase 3: Guidance Graph And Protocol Catalog
 
 Goal:
+
 - unify Today and Review around the same action vocabulary
 
 What ships:
+
 - `guidance` domain contracts
 - protocol catalog and content manifests
 - action classes shared by Today and Review
 - capture hooks after protocol completion
 
 Acceptance bar:
+
 - Today and Review use the same recommendation primitives
 - at least one workout, one recovery, one nutrition, and one coping protocol ship end-to-end
 - protocol manifests validate in tests
@@ -281,9 +307,11 @@ Acceptance bar:
 ### Phase 4: Guided Movement And Recovery
 
 Goal:
+
 - make movement execution feel guided, adaptive, and recovery-aware
 
 What ships:
+
 - structured routine player for workout templates
 - per-exercise media clips
 - recovery-day substitutions
@@ -291,6 +319,7 @@ What ships:
 - short mobility and low-energy sessions
 
 Acceptance bar:
+
 - a planned workout can become a guided execution flow
 - recovery logic can safely downgrade a workout
 - media failure still leaves usable text guidance
@@ -298,15 +327,18 @@ Acceptance bar:
 ### Phase 5: Mental Health Support And Coping
 
 Goal:
+
 - add useful, non-fake mental health help inside the same loop
 
 What ships:
+
 - breathing, grounding, downshift, and sleep wind-down protocols
 - coping kits linked from anxiety, stress, sleep debt, and journal context
 - assessment-driven support routing
 - explicit crisis / professional-support escalation copy
 
 Acceptance bar:
+
 - mental-health flows are framed as support and coping, not diagnosis or treatment
 - anxiety, poor sleep, and overload signals can trigger concrete coping protocols
 - safety and escalation paths are test-covered
@@ -314,15 +346,18 @@ Acceptance bar:
 ### Phase 6: Nutrition Intelligence And Execution
 
 Goal:
+
 - close the gap with nutrition-first leaders without becoming nutrition-only
 
 What ships:
+
 - lower-friction meal capture
 - saved meal and recovery meal intelligence
 - nutrient-gap summaries that feed Today and Review
 - stronger packaged and recipe execution with local caching
 
 Acceptance bar:
+
 - nutrition guidance feeds daily action, not just reports
 - local catalog remains useful without live upstream APIs
 - barcode, enrichment, and saved-meal paths stay deterministic under test
@@ -330,9 +365,11 @@ Acceptance bar:
 ### Phase 7: Provenance, Platform Expansion, And Clinical Trust
 
 Goal:
+
 - make external records usable without trust collapse
 
 What ships:
+
 - source-scoped provenance surfaces
 - Android Health Connect native companion
 - stronger HealthKit incremental bridge
@@ -340,6 +377,7 @@ What ships:
 - import identity and normalization explainability
 
 Acceptance bar:
+
 - one-click provenance for important signals
 - Android and iPhone imports land in the same canonical event graph
 - identity mismatches stay explicit and safe
@@ -347,9 +385,11 @@ Acceptance bar:
 ### Phase 8: Enterprise Operations And Release Discipline
 
 Goal:
+
 - make every phase shippable without heroics
 
 What ships:
+
 - stricter CI gates by surface area
 - golden snapshot and replay suites
 - performance budgets for Today, Review, and Imports
@@ -357,6 +397,7 @@ What ships:
 - runbooks for release, triage, and regression response
 
 Acceptance bar:
+
 - the main user loops are release-gated by the right tests
 - operational docs match the real commands
 - no architecture tranche lands without proof commands and rollback notes
@@ -413,6 +454,7 @@ That means:
 ### For guidance and review changes
 
 Required:
+
 - pure unit tests for ranking, confidence, and provenance
 - seeded golden snapshots
 - component tests for the rendered recommendation surface
@@ -421,6 +463,7 @@ Required:
 ### For protocol and content changes
 
 Required:
+
 - schema validation tests for protocol manifests
 - accessibility assertions for timed and guided flows
 - component tests for media fallback and step progression
@@ -429,6 +472,7 @@ Required:
 ### For platform and import changes
 
 Required:
+
 - normalization unit tests
 - identity/provenance regression tests
 - seeded import replay tests
@@ -437,6 +481,7 @@ Required:
 ### For ops and release changes
 
 Required:
+
 - `bun run check`
 - `bun run build`
 - `bun run check:operational`
@@ -478,6 +523,7 @@ Additional gate for guided media / protocol phases:
 Start enforcing budgets now.
 
 Initial targets:
+
 - Today cold load, local seeded data: under 1 second on a normal laptop
 - Review seeded 12-week rebuild: under 1.5 seconds
 - typical import preview: under 2 seconds
@@ -490,6 +536,7 @@ If a feature cannot hit these budgets, it needs a projection or cache strategy b
 The content model decides whether this becomes useful software or a content treadmill.
 
 Rules:
+
 - keep protocol definitions versioned and testable
 - use curated content packs, not open internet search
 - store media references in structured manifests
@@ -503,6 +550,7 @@ Rules:
 Trying to be a tracker, a coach, a workout app, and a meditation app at once.
 
 Mitigation:
+
 - force every feature through the Today -> action -> capture -> Review loop
 
 ### Clinical and trust risk
@@ -510,6 +558,7 @@ Mitigation:
 Making support flows sound like treatment or diagnosis.
 
 Mitigation:
+
 - coping/support framing only
 - explicit escalation boundaries
 - provenance and confidence on every important recommendation
@@ -519,6 +568,7 @@ Mitigation:
 Committing to a giant media catalog too early.
 
 Mitigation:
+
 - protocol-first
 - curated small library
 - fallback text-first execution
@@ -528,14 +578,17 @@ Mitigation:
 Adding more signals without tightening read-model and projection discipline.
 
 Mitigation:
+
 - targeted projections before broad platform expansion
 
 ## Next Concrete Move
 
 The next code tranche stays the same:
+
 - implement `Today Intelligence`
 
 But do it under this larger rule:
+
 - Phase 1 is not just a nicer Today page
 - it is the first slice of the future guidance graph
 

@@ -11,7 +11,10 @@ import {
   setSobrietyStatusForDay,
   type SobrietyStorage,
 } from '$lib/features/sobriety/service';
-import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
+import {
+  refreshWeeklyReviewArtifactsSafely,
+  type ReviewStorage,
+} from '$lib/features/review/service';
 
 export interface SobrietyPageStorage extends SobrietyStorage, ReviewStorage {}
 
@@ -74,7 +77,9 @@ async function reloadSobrietyPageState(
 async function refreshSobrietyPageAfterMutation(
   store: SobrietyPageStorage,
   state: SobrietyPageState,
-  overrides: Partial<Pick<SobrietyPageState, 'saveNotice' | 'cravingNote' | 'lapseNote' | 'recoveryAction'>>
+  overrides: Partial<
+    Pick<SobrietyPageState, 'saveNotice' | 'cravingNote' | 'lapseNote' | 'recoveryAction'>
+  >
 ): Promise<SobrietyPageState> {
   await refreshWeeklyReviewArtifactsSafely(store, state.localDay);
   return await reloadSobrietyPageState(store, state, overrides);

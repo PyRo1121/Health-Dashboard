@@ -22,7 +22,9 @@ export const POST: RequestHandler = async ({ request }) => {
 
   switch (parsed.data.action) {
     case 'load':
-      return Response.json(await loadAssessmentsPageServer(parsed.data.localDay, parsed.data.state));
+      return Response.json(
+        await loadAssessmentsPageServer(parsed.data.localDay, parsed.data.state)
+      );
     case 'saveProgress':
       return Response.json(await saveAssessmentsProgressPageServer(parsed.data.state));
     case 'submit':

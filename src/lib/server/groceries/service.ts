@@ -1,5 +1,12 @@
-import { createGroceriesPageState, type GroceriesPageState } from '$lib/features/groceries/controller';
-import { ensureWeeklyPlanServer, listRecipeCatalogItemsServer, listWeeklyPlanSlotsServer } from '$lib/server/planning/store';
+import {
+  createGroceriesPageState,
+  type GroceriesPageState,
+} from '$lib/features/groceries/controller';
+import {
+  ensureWeeklyPlanServer,
+  listRecipeCatalogItemsServer,
+  listWeeklyPlanSlotsServer,
+} from '$lib/server/planning/store';
 import {
   removeManualGroceryItemServer,
   saveManualGroceryItemServer,

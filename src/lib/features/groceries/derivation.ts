@@ -311,7 +311,11 @@ export function deriveWeeklyGroceriesFromData(
     const manual = manualByKey.get(ingredientKey);
 
     return {
-      ...updateRecordMeta(existing, buildDerivedGroceryItemId(weeklyPlanId, ingredientKey), timestamp),
+      ...updateRecordMeta(
+        existing,
+        buildDerivedGroceryItemId(weeklyPlanId, ingredientKey),
+        timestamp
+      ),
       weeklyPlanId,
       ingredientKey,
       label: item.label,

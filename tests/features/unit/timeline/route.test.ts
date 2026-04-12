@@ -7,9 +7,7 @@ describe('timeline route', () => {
     vi.resetModules();
   });
 
-  async function importRoute(overrides: {
-    loadTimelinePageServer?: ReturnType<typeof vi.fn>;
-  }) {
+  async function importRoute(overrides: { loadTimelinePageServer?: ReturnType<typeof vi.fn> }) {
     vi.doMock('$lib/server/timeline/service', () => ({
       loadTimelinePageServer:
         overrides.loadTimelinePageServer ??

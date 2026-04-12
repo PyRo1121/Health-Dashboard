@@ -53,10 +53,13 @@ export async function upsertMirrorRecord<T extends { id: string }>(
 ): Promise<void> {
   const payload = toMirrorInsertRecord(tableName, record);
   const t = asTable(table);
-  await db.insert(table as never).values(payload as never).onConflictDoUpdate({
-    target: t.id as never,
-    set: payload as never,
-  });
+  await db
+    .insert(table as never)
+    .values(payload as never)
+    .onConflictDoUpdate({
+      target: t.id as never,
+      set: payload as never,
+    });
 }
 
 export async function upsertMirrorRecords<T extends { id: string }>(
@@ -110,7 +113,9 @@ export async function selectMirrorRecordsByFieldValues<T>(
   field: string,
   values: unknown[]
 ): Promise<T[]> {
-  const normalized = [...new Set(values.map(serializeColumnValue).filter((value) => value !== null))];
+  const normalized = [
+    ...new Set(values.map(serializeColumnValue).filter((value) => value !== null)),
+  ];
   if (!normalized.length) return [];
 
   const t = asTable(table);

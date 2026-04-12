@@ -35,6 +35,8 @@ export const POST: RequestHandler = async ({ request }) => {
     case 'saveTemplate':
       return Response.json(await saveTemplatePageServer(parsed.data.state));
     case 'quickLogTemplate':
-      return Response.json(await quickLogTemplatePageServer(parsed.data.state, parsed.data.templateId));
+      return Response.json(
+        await quickLogTemplatePageServer(parsed.data.state, parsed.data.templateId)
+      );
   }
 };

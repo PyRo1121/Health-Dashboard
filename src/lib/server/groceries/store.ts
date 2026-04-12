@@ -25,7 +25,9 @@ import {
   listRecipeCatalogItemsServer,
 } from '$lib/server/planning/store';
 
-export async function listMergedWeeklyGroceriesServer(weeklyPlanId: string): Promise<GroceryItem[]> {
+export async function listMergedWeeklyGroceriesServer(
+  weeklyPlanId: string
+): Promise<GroceryItem[]> {
   const [derivedItems, manualItems] = await Promise.all([
     listDerivedGroceriesServer(weeklyPlanId),
     listManualGroceriesServer(weeklyPlanId),
@@ -58,7 +60,9 @@ export async function syncDerivedGroceriesServer(
   }
   for (const stale of existingDerivedItems) {
     if (!result.derivedItems.find((item) => item.id === stale.id)) {
-      await db.delete(drizzleSchema.derivedGroceryItems).where(eq(drizzleSchema.derivedGroceryItems.id, stale.id));
+      await db
+        .delete(drizzleSchema.derivedGroceryItems)
+        .where(eq(drizzleSchema.derivedGroceryItems.id, stale.id));
     }
   }
 
@@ -72,8 +76,16 @@ export async function setGroceryItemStateServer(
   const { db } = getServerDrizzleClient();
   const { weeklyPlanId, ingredientKey } = parseMergedGroceryItemId(itemId);
   const [derivedItem, manualItem] = await Promise.all([
-    selectMirrorRecordById<DerivedGroceryItem>(db, drizzleSchema.derivedGroceryItems, `derived-grocery:${weeklyPlanId}:${ingredientKey}`),
-    selectMirrorRecordById<ManualGroceryItem>(db, drizzleSchema.manualGroceryItems, `manual-grocery:${weeklyPlanId}:${ingredientKey}`),
+    selectMirrorRecordById<DerivedGroceryItem>(
+      db,
+      drizzleSchema.derivedGroceryItems,
+      `derived-grocery:${weeklyPlanId}:${ingredientKey}`
+    ),
+    selectMirrorRecordById<ManualGroceryItem>(
+      db,
+      drizzleSchema.manualGroceryItems,
+      `manual-grocery:${weeklyPlanId}:${ingredientKey}`
+    ),
   ]);
   if (!derivedItem && !manualItem) {
     throw new Error('Grocery item not found');
@@ -125,8 +137,16 @@ export async function saveManualGroceryItemServer(
 
   const { db } = getServerDrizzleClient();
   const [existingManual, existingDerived] = await Promise.all([
-    selectMirrorRecordById<ManualGroceryItem>(db, drizzleSchema.manualGroceryItems, buildManualGroceryItemId(weeklyPlanId, parsed.ingredientKey)),
-    selectMirrorRecordById<DerivedGroceryItem>(db, drizzleSchema.derivedGroceryItems, `derived-grocery:${weeklyPlanId}:${parsed.ingredientKey}`),
+    selectMirrorRecordById<ManualGroceryItem>(
+      db,
+      drizzleSchema.manualGroceryItems,
+      buildManualGroceryItemId(weeklyPlanId, parsed.ingredientKey)
+    ),
+    selectMirrorRecordById<DerivedGroceryItem>(
+      db,
+      drizzleSchema.derivedGroceryItems,
+      `derived-grocery:${weeklyPlanId}:${parsed.ingredientKey}`
+    ),
   ]);
 
   const item = buildManualGroceryItemRecord({
@@ -148,13 +168,23 @@ export async function removeManualGroceryItemServer(itemId: string): Promise<Gro
   const { db } = getServerDrizzleClient();
   const { weeklyPlanId, ingredientKey } = parseMergedGroceryItemId(itemId);
   const [manualItem, derivedItem] = await Promise.all([
-    selectMirrorRecordById<ManualGroceryItem>(db, drizzleSchema.manualGroceryItems, buildManualGroceryItemId(weeklyPlanId, ingredientKey)),
-    selectMirrorRecordById<DerivedGroceryItem>(db, drizzleSchema.derivedGroceryItems, `derived-grocery:${weeklyPlanId}:${ingredientKey}`),
+    selectMirrorRecordById<ManualGroceryItem>(
+      db,
+      drizzleSchema.manualGroceryItems,
+      buildManualGroceryItemId(weeklyPlanId, ingredientKey)
+    ),
+    selectMirrorRecordById<DerivedGroceryItem>(
+      db,
+      drizzleSchema.derivedGroceryItems,
+      `derived-grocery:${weeklyPlanId}:${ingredientKey}`
+    ),
   ]);
   if (!manualItem) {
     throw new Error('Grocery item not found');
   }
 
-  await db.delete(drizzleSchema.manualGroceryItems).where(eq(drizzleSchema.manualGroceryItems.id, manualItem.id));
+  await db
+    .delete(drizzleSchema.manualGroceryItems)
+    .where(eq(drizzleSchema.manualGroceryItems.id, manualItem.id));
   return derivedItem ? buildMergedGroceryItem(weeklyPlanId, ingredientKey, derivedItem) : null;
 }

@@ -1,4 +1,5 @@
 # Personal Health Cockpit Tranche Plan
+
 Historical note: this document is preserved as a planning/review record. Code paths, file references, and architecture details inside may be stale; use `ARCHITECTURE.md` and the living docs under `docs/` for current implementation truth.
 
 Status: Historical

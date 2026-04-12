@@ -66,7 +66,8 @@
         {#if recommendation.primaryAction.href.startsWith('#')}
           <button
             class="recommendation-button recommendation-button--primary"
-            onclick={() => document.getElementById('today-check-in')?.scrollIntoView({ behavior: 'smooth' })}
+            onclick={() =>
+              document.getElementById('today-check-in')?.scrollIntoView({ behavior: 'smooth' })}
           >
             {recommendation.primaryAction.label}
           </button>
@@ -79,7 +80,10 @@
           </a>
         {/if}
       {:else}
-        <button class="recommendation-button recommendation-button--primary" onclick={() => onRecommendationAction(recommendation.primaryAction)}>
+        <button
+          class="recommendation-button recommendation-button--primary"
+          onclick={() => onRecommendationAction(recommendation.primaryAction)}
+        >
           {recommendation.primaryAction.label}
         </button>
       {/if}
@@ -90,17 +94,24 @@
           {#if secondaryAction.href.startsWith('#')}
             <button
               class="recommendation-button"
-              onclick={() => document.getElementById('today-check-in')?.scrollIntoView({ behavior: 'smooth' })}
+              onclick={() =>
+                document.getElementById('today-check-in')?.scrollIntoView({ behavior: 'smooth' })}
             >
               {secondaryAction.label}
             </button>
           {:else}
-            <a class="recommendation-link" href={resolve(secondaryAction.href as '/journal' | '/nutrition' | '/plan')}>
+            <a
+              class="recommendation-link"
+              href={resolve(secondaryAction.href as '/journal' | '/nutrition' | '/plan')}
+            >
               {secondaryAction.label}
             </a>
           {/if}
         {:else}
-          <button class="recommendation-button" onclick={() => onRecommendationAction(secondaryAction)}>
+          <button
+            class="recommendation-button"
+            onclick={() => onRecommendationAction(secondaryAction)}
+          >
             {secondaryAction.label}
           </button>
         {/if}
@@ -119,9 +130,17 @@
       {@const supportingAction = recommendation.supportingAction}
       <div class="supporting-link-row">
         {#if isTodayRecommendationHrefAction(supportingAction)}
-          <a class="recommendation-link recommendation-link--support" href={resolve(supportingAction.href as '/journal' | '/nutrition' | '/plan')}>{supportingAction.label}</a>
+          <a
+            class="recommendation-link recommendation-link--support"
+            href={resolve(supportingAction.href as '/journal' | '/nutrition' | '/plan')}
+            >{supportingAction.label}</a
+          >
         {:else}
-          <button class="recommendation-button" onclick={() => onRecommendationAction(supportingAction)}>{supportingAction.label}</button>
+          <button
+            class="recommendation-button"
+            onclick={() => onRecommendationAction(supportingAction)}
+            >{supportingAction.label}</button
+          >
         {/if}
       </div>
     {/if}
@@ -133,12 +152,16 @@
           {#if fallbackState.action.href.startsWith('#')}
             <button
               class="recommendation-button recommendation-button--primary"
-              onclick={() => document.getElementById('today-check-in')?.scrollIntoView({ behavior: 'smooth' })}
+              onclick={() =>
+                document.getElementById('today-check-in')?.scrollIntoView({ behavior: 'smooth' })}
             >
               {fallbackState.action.label}
             </button>
           {:else}
-            <a class="recommendation-link recommendation-link--primary" href={resolve(fallbackState.action.href as '/journal' | '/nutrition' | '/plan')}>
+            <a
+              class="recommendation-link recommendation-link--primary"
+              href={resolve(fallbackState.action.href as '/journal' | '/nutrition' | '/plan')}
+            >
               {fallbackState.action.label}
             </a>
           {/if}

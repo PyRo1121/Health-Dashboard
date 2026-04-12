@@ -36,7 +36,8 @@ export type WeeklyPlansStore = HealthDbWeeklyPlansStore;
 export type PlanSlotsStore = HealthDbPlanSlotsStore;
 
 export interface PlanningStorage
-  extends WeeklyPlansStore,
+  extends
+    WeeklyPlansStore,
     PlanSlotsStore,
     FoodCatalogItemsStore,
     RecipeCatalogItemsStore,
@@ -105,7 +106,10 @@ async function persistPlanSlot(
   return slot;
 }
 
-export async function ensureWeeklyPlan(store: WeeklyPlansStore, anchorDay: string): Promise<WeeklyPlan> {
+export async function ensureWeeklyPlan(
+  store: WeeklyPlansStore,
+  anchorDay: string
+): Promise<WeeklyPlan> {
   const weekStart = startOfWeek(anchorDay);
   const existing = await store.weeklyPlans.where('weekStart').equals(weekStart).first();
   if (existing) {

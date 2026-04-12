@@ -1,10 +1,14 @@
-import type { HealthDbExerciseCatalogItemsStore, HealthDbWorkoutTemplatesStore } from '$lib/core/db/types';
+import type {
+  HealthDbExerciseCatalogItemsStore,
+  HealthDbWorkoutTemplatesStore,
+} from '$lib/core/db/types';
 import type { ExerciseCatalogItem, WorkoutTemplate } from '$lib/core/domain/types';
 import { nowIso } from '$lib/core/domain/time';
 import { createRecordMeta, updateRecordMeta } from '$lib/core/shared/records';
 import { createRecordId } from '$lib/core/shared/ids';
 
-export interface MovementStorage extends HealthDbExerciseCatalogItemsStore, HealthDbWorkoutTemplatesStore {}
+export interface MovementStorage
+  extends HealthDbExerciseCatalogItemsStore, HealthDbWorkoutTemplatesStore {}
 
 export async function upsertExerciseCatalogItem(
   store: MovementStorage,

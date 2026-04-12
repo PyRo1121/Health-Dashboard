@@ -11,7 +11,10 @@ export async function buildWeekAdherenceMatches(
   foodEntries: FoodEntry[],
   anchorDay: string
 ): Promise<AdherenceMatch[]> {
-  const existingMatches = await store.adherenceMatches.where('weekStart').equals(weekStart).toArray();
+  const existingMatches = await store.adherenceMatches
+    .where('weekStart')
+    .equals(weekStart)
+    .toArray();
   const computation = computeWeekAdherenceMatches({
     existingMatches,
     weekStart,

@@ -4,7 +4,10 @@ import {
   type RecipeCatalogItemsStore,
 } from '$lib/features/nutrition/store';
 import { ensureWeeklyPlan, type WeeklyPlansStore } from '$lib/features/planning/service';
-import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
+import {
+  refreshWeeklyReviewArtifactsSafely,
+  type ReviewStorage,
+} from '$lib/features/review/service';
 import {
   deriveWeeklyGroceriesWithWarnings,
   removeManualGroceryItem,
@@ -14,10 +17,7 @@ import {
 } from './service';
 
 export interface GroceriesPageStorage
-  extends WeeklyPlansStore,
-    RecipeCatalogItemsStore,
-    GroceryServiceStore,
-    ReviewStorage {}
+  extends WeeklyPlansStore, RecipeCatalogItemsStore, GroceryServiceStore, ReviewStorage {}
 
 export interface ManualGroceryDraft {
   label: string;

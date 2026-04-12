@@ -45,26 +45,31 @@ tests/features/e2e/
 ### Structural cleanup
 
 Examples:
+
 - removing wrappers
 - changing import ownership
 - extracting local helpers
 - moving types between modules
 
 Run:
+
 - focused unit tests for touched features
 - `bun run check`
 
 Usually do not need:
+
 - full E2E
 
 ### Route contract change
 
 Examples:
+
 - request body parsing
 - route schema changes
 - action routing changes
 
 Run:
+
 - route unit tests
 - affected controller/service tests
 - `bun run check`
@@ -72,12 +77,14 @@ Run:
 ### Mutation path change
 
 Examples:
+
 - saving today check-in
 - logging health events
 - import preview/commit
 - saving review experiment
 
 Run:
+
 - affected action/controller tests
 - downstream review/timeline/today regressions if the mutation updates shared artifacts
 - `bun run check`
@@ -85,12 +92,14 @@ Run:
 ### User-visible flow change
 
 Examples:
+
 - imports flow
 - review page output
 - daily check-in journey
 - shell navigation
 
 Run:
+
 - component tests if available
 - targeted E2E grep
 - `bun run check`
@@ -98,11 +107,13 @@ Run:
 ### Operational / serving change
 
 Examples:
+
 - preview serving
 - health/status endpoint
 - startup checks
 
 Run:
+
 - `bun run build`
 - `bun run test:smoke`
 - `bun run check:operational`

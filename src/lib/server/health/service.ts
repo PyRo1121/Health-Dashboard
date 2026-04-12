@@ -53,10 +53,14 @@ async function reloadHealthPageStateServer(
   state: HealthMutationState,
   overrides: Partial<HealthPageState> = {}
 ): Promise<HealthPageState> {
-  return createLoadedHealthPageState(state.localDay, await buildHealthSnapshotServer(state.localDay), {
-    ...state,
-    ...overrides,
-  });
+  return createLoadedHealthPageState(
+    state.localDay,
+    await buildHealthSnapshotServer(state.localDay),
+    {
+      ...state,
+      ...overrides,
+    }
+  );
 }
 
 async function refreshHealthPageAfterMutationServer(
@@ -149,7 +153,9 @@ export async function saveAnxietyPageServer(state: HealthMutationState): Promise
   });
 }
 
-export async function saveSleepNotePageServer(state: HealthMutationState): Promise<HealthPageState> {
+export async function saveSleepNotePageServer(
+  state: HealthMutationState
+): Promise<HealthPageState> {
   if (!state.sleepNoteForm.note.trim()) {
     return await reloadHealthPageStateServer(state, {
       saveNotice: 'Sleep note is required.',

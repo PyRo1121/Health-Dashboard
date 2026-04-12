@@ -245,7 +245,10 @@ export function formatHealthMetricValue(value: unknown, unit?: string): string {
   return String(value ?? '');
 }
 
-export function isHealthMetricVisibleOnSurface(metricType: string, surface: HealthMetricSurface): boolean {
+export function isHealthMetricVisibleOnSurface(
+  metricType: string,
+  surface: HealthMetricSurface
+): boolean {
   return getHealthMetricDefinition(metricType)?.surfaces[surface] ?? false;
 }
 
@@ -272,7 +275,9 @@ export function hasHealthMetricEvent(
 }
 
 export function getConnectorSupportedMetricTypes(connector: NativeCompanionConnector): string[] {
-  return ALL_HEALTH_METRIC_KEYS.filter((key) => HEALTH_METRIC_REGISTRY[key].connectors.includes(connector));
+  return ALL_HEALTH_METRIC_KEYS.filter((key) =>
+    HEALTH_METRIC_REGISTRY[key].connectors.includes(connector)
+  );
 }
 
 export function isConnectorMetricSupported(

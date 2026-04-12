@@ -7,8 +7,16 @@ import { previewImportsPage, commitImportsPage } from '$lib/features/imports/pag
 import { createImportsPageState } from '$lib/features/imports/page-state';
 import { analyzeImportPayload } from '$lib/features/imports/analyze';
 import { saveJournalEntry } from '$lib/features/journal/service';
-import { createFoodEntry, saveFoodCatalogItem, upsertRecipeCatalogItem } from '$lib/features/nutrition/store';
-import { ensureWeeklyPlan, savePlanSlot, updatePlanSlotStatus } from '$lib/features/planning/service';
+import {
+  createFoodEntry,
+  saveFoodCatalogItem,
+  upsertRecipeCatalogItem,
+} from '$lib/features/nutrition/store';
+import {
+  ensureWeeklyPlan,
+  savePlanSlot,
+  updatePlanSlotStatus,
+} from '$lib/features/planning/service';
 import { loadReviewPage } from '$lib/features/review/controller';
 import { setSobrietyStatusForDay } from '$lib/features/sobriety/service';
 import { createTimelinePageState, loadTimelinePage } from '$lib/features/timeline/controller';
@@ -34,21 +42,22 @@ function stripKeys(value: unknown): unknown {
 
   if (value && typeof value === 'object') {
     const entries = Object.entries(value as Record<string, unknown>)
-      .filter(([key]) =>
-        ![
-          'id',
-          'createdAt',
-          'updatedAt',
-          'sourceRecordId',
-          'sourceTimestamp',
-          'fingerprint',
-          'batchId',
-          'planSlotId',
-          'matchedRecordId',
-          'recommendationId',
-          'contextCaptureLinkedEventIds',
-          'journalReflectionLinkedEventIds',
-        ].includes(key)
+      .filter(
+        ([key]) =>
+          ![
+            'id',
+            'createdAt',
+            'updatedAt',
+            'sourceRecordId',
+            'sourceTimestamp',
+            'fingerprint',
+            'batchId',
+            'planSlotId',
+            'matchedRecordId',
+            'recommendationId',
+            'contextCaptureLinkedEventIds',
+            'journalReflectionLinkedEventIds',
+          ].includes(key)
       )
       .map(([key, nested]) => [key, stripKeys(nested)]);
 
@@ -219,7 +228,9 @@ describe('migration golden parity', () => {
         sourceType: 'smart-fhir-sandbox',
         rawText: SMART_FHIR_BUNDLE_JSON,
       })
-    ).rejects.toThrow('Configure your owner profile in Settings before previewing SMART clinical imports.');
+    ).rejects.toThrow(
+      'Configure your owner profile in Settings before previewing SMART clinical imports.'
+    );
 
     await expect(
       previewImport(db, {
@@ -227,7 +238,9 @@ describe('migration golden parity', () => {
         rawText: SMART_FHIR_BUNDLE_MISMATCH_JSON,
         ownerProfile: OWNER_PROFILE,
       })
-    ).rejects.toThrow('No verified local person match found. Keep the record source-scoped and blocked.');
+    ).rejects.toThrow(
+      'No verified local person match found. Keep the record source-scoped and blocked.'
+    );
   });
 
   it('keeps import payload analysis stable for the current healthkit bundle', () => {

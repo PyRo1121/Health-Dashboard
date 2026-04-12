@@ -45,8 +45,11 @@ async function listLinkedJournalEvents(
   store: JournalPageStorage,
   localDay: string
 ): Promise<HealthEvent[]> {
-  return (await store.healthEvents.where('localDay').equals(localDay).toArray()).sort((left, right) =>
-    (right.sourceTimestamp ?? right.updatedAt).localeCompare(left.sourceTimestamp ?? left.updatedAt)
+  return (await store.healthEvents.where('localDay').equals(localDay).toArray()).sort(
+    (left, right) =>
+      (right.sourceTimestamp ?? right.updatedAt).localeCompare(
+        left.sourceTimestamp ?? left.updatedAt
+      )
   );
 }
 
@@ -111,7 +114,11 @@ async function refreshJournalEntries(
 
   return {
     ...next,
-    linkedContextRows: await loadJournalContextRows(store, next.localDay, next.draft.linkedEventIds),
+    linkedContextRows: await loadJournalContextRows(
+      store,
+      next.localDay,
+      next.draft.linkedEventIds
+    ),
   };
 }
 

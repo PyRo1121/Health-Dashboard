@@ -13,7 +13,8 @@ import {
 
 export { createGroceryDraftState, createGroceriesPageState };
 
-const groceriesClient = createFeatureActionClient<Parameters<typeof loadGroceriesPageController>[0]>('/api/groceries');
+const groceriesClient =
+  createFeatureActionClient<Parameters<typeof loadGroceriesPageController>[0]>('/api/groceries');
 
 export async function loadGroceriesPage(localDay = currentLocalDay()): Promise<GroceriesPageState> {
   return await groceriesClient.action('load', (db) => loadGroceriesPageController(db, localDay), {

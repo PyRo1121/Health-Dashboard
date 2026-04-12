@@ -68,7 +68,9 @@ export function ensureSqliteMirrorSchema(sqlite: Database): void {
 
     for (const column of indexedColumns) {
       if (column === 'id') continue;
-      sqlite.exec(`CREATE INDEX IF NOT EXISTS idx_${tableName}_${column} ON ${tableName} (${column})`);
+      sqlite.exec(
+        `CREATE INDEX IF NOT EXISTS idx_${tableName}_${column} ON ${tableName} (${column})`
+      );
     }
   }
 

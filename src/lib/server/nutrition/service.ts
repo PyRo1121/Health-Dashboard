@@ -33,7 +33,11 @@ import {
   normalizeOpenFoodFactsProduct,
   searchOpenFoodFactsProducts,
 } from '$lib/server/nutrition/open-food-facts';
-import { searchUsdaFoods, fetchUsdaFoodDetail, normalizeUsdaFoodDetail } from '$lib/server/nutrition/usda';
+import {
+  searchUsdaFoods,
+  fetchUsdaFoodDetail,
+  normalizeUsdaFoodDetail,
+} from '$lib/server/nutrition/usda';
 import { searchThemealdbRecipes } from '$lib/server/nutrition/themealdb';
 import {
   deletePlanSlotServer,
@@ -75,14 +79,18 @@ function dedupeRecipesById(items: RecipeCatalogItem[]): RecipeCatalogItem[] {
 
 async function listFavoriteMealsServer(): Promise<FavoriteMeal[]> {
   const { db } = getServerDrizzleClient();
-  return (
-    await selectAllMirrorRecords<FavoriteMeal>(db, drizzleSchema.favoriteMeals)
-  ).sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+  return (await selectAllMirrorRecords<FavoriteMeal>(db, drizzleSchema.favoriteMeals)).sort(
+    (left, right) => right.updatedAt.localeCompare(left.updatedAt)
+  );
 }
 
 async function upsertFoodCatalogItemServer(input: FoodCatalogItem): Promise<FoodCatalogItem> {
   const { db } = getServerDrizzleClient();
-  const existing = await selectMirrorRecordById<FoodCatalogItem>(db, drizzleSchema.foodCatalogItems, input.id);
+  const existing = await selectMirrorRecordById<FoodCatalogItem>(
+    db,
+    drizzleSchema.foodCatalogItems,
+    input.id
+  );
   const item = buildFoodCatalogItemRecord(input, existing);
   await upsertMirrorRecord(db, 'foodCatalogItems', drizzleSchema.foodCatalogItems, item);
   return item;
@@ -90,20 +98,28 @@ async function upsertFoodCatalogItemServer(input: FoodCatalogItem): Promise<Food
 
 async function upsertRecipeCatalogItemServer(input: RecipeCatalogItem): Promise<RecipeCatalogItem> {
   const { db } = getServerDrizzleClient();
-  const existing = await selectMirrorRecordById<RecipeCatalogItem>(db, drizzleSchema.recipeCatalogItems, input.id);
+  const existing = await selectMirrorRecordById<RecipeCatalogItem>(
+    db,
+    drizzleSchema.recipeCatalogItems,
+    input.id
+  );
   const item = buildRecipeCatalogItemRecord(input, existing);
   await upsertMirrorRecord(db, 'recipeCatalogItems', drizzleSchema.recipeCatalogItems, item);
   return item;
 }
 
-async function createFoodEntryServer(draft: Parameters<typeof buildFoodEntryRecord>[0]): Promise<FoodEntry> {
+async function createFoodEntryServer(
+  draft: Parameters<typeof buildFoodEntryRecord>[0]
+): Promise<FoodEntry> {
   const { db } = getServerDrizzleClient();
   const entry = buildFoodEntryRecord(draft);
   await upsertMirrorRecord(db, 'foodEntries', drizzleSchema.foodEntries, entry);
   return entry;
 }
 
-async function saveFavoriteMealServer(input: Parameters<typeof buildFavoriteMealRecord>[0]): Promise<FavoriteMeal> {
+async function saveFavoriteMealServer(
+  input: Parameters<typeof buildFavoriteMealRecord>[0]
+): Promise<FavoriteMeal> {
   const { db } = getServerDrizzleClient();
   const meal = buildFavoriteMealRecord(input);
   await upsertMirrorRecord(db, 'favoriteMeals', drizzleSchema.favoriteMeals, meal);
@@ -114,12 +130,24 @@ function createLoadedNutritionPageState(
   state: NutritionPageState,
   localDay: string,
   data: {
-    summary: { calories: number; protein: number; fiber: number; carbs: number; fat: number; entries: FoodEntry[] };
+    summary: {
+      calories: number;
+      protein: number;
+      fiber: number;
+      carbs: number;
+      fat: number;
+      entries: FoodEntry[];
+    };
     favoriteMeals: FavoriteMeal[];
     catalogItems: FoodCatalogItem[];
     recipeCatalogItems: RecipeCatalogItem[];
     plannedMeal: ReturnType<typeof resolveNutritionPlannedMeal>;
-    recommendationContext: { sleepHours?: number; sleepQuality?: number; anxietyCount: number; symptomCount: number };
+    recommendationContext: {
+      sleepHours?: number;
+      sleepQuality?: number;
+      anxietyCount: number;
+      symptomCount: number;
+    };
   }
 ): NutritionPageState {
   return {
@@ -209,7 +237,9 @@ async function resolveNutritionPlannedFoodIdServer(draft: {
   foodCatalogItemId?: string;
 }): Promise<string> {
   if (draft.foodCatalogItemId) {
-    const existing = (await listFoodCatalogItemsServer()).find((item) => item.id === draft.foodCatalogItemId);
+    const existing = (await listFoodCatalogItemsServer()).find(
+      (item) => item.id === draft.foodCatalogItemId
+    );
     if (existing) {
       return existing.id;
     }
@@ -256,7 +286,11 @@ export async function saveNutritionMealServer(
   }
 ): Promise<NutritionPageState> {
   await createFoodEntryServer(draft);
-  return await refreshNutritionPageAfterMutationServer(state, { saveNotice: 'Meal saved.' }, draft.localDay);
+  return await refreshNutritionPageAfterMutationServer(
+    state,
+    { saveNotice: 'Meal saved.' },
+    draft.localDay
+  );
 }
 
 export async function saveNutritionRecurringMealServer(
@@ -275,23 +309,34 @@ export async function saveNutritionRecurringMealServer(
   await saveFavoriteMealServer({
     name: draft.name || 'Quick oatmeal',
     mealType: draft.mealType,
-    items: [{
-      name: draft.name || 'Untitled meal',
-      calories: draft.calories,
-      protein: draft.protein,
-      fiber: draft.fiber,
-      carbs: draft.carbs,
-      fat: draft.fat,
-      sourceName: draft.sourceName,
-    }],
+    items: [
+      {
+        name: draft.name || 'Untitled meal',
+        calories: draft.calories,
+        protein: draft.protein,
+        fiber: draft.fiber,
+        carbs: draft.carbs,
+        fat: draft.fat,
+        sourceName: draft.sourceName,
+      },
+    ],
   });
 
-  return await refreshNutritionPageAfterMutationServer(state, { saveNotice: 'Recurring meal saved.' });
+  return await refreshNutritionPageAfterMutationServer(state, {
+    saveNotice: 'Recurring meal saved.',
+  });
 }
 
 export async function saveNutritionCatalogItemServer(
   state: NutritionPageState,
-  draft: { name: string; calories: number; protein: number; fiber: number; carbs: number; fat: number }
+  draft: {
+    name: string;
+    calories: number;
+    protein: number;
+    fiber: number;
+    carbs: number;
+    fat: number;
+  }
 ): Promise<NutritionPageState> {
   if (!draft.name.trim()) {
     return { ...state, saveNotice: 'Custom food name is required.' };
@@ -319,7 +364,9 @@ export async function saveNutritionCatalogItemServer(
     updatedAt: timestamp,
   });
 
-  return await refreshNutritionPageAfterMutationServer(state, { saveNotice: 'Saved to custom food catalog.' });
+  return await refreshNutritionPageAfterMutationServer(state, {
+    saveNotice: 'Saved to custom food catalog.',
+  });
 }
 
 export async function planNutritionMealServer(
@@ -346,7 +393,10 @@ export async function planNutritionMealServer(
   ]);
   const resolution = resolveNutritionPlannedMeal(planSlots, catalogItems);
   if (resolution.candidate?.kind === 'plan-slot-food') {
-    return { ...state, saveNotice: 'Today already has a planned meal from Plan. Update it there instead.' };
+    return {
+      ...state,
+      saveNotice: 'Today already has a planned meal from Plan. Update it there instead.',
+    };
   }
 
   const weeklyPlan = await ensureWeeklyPlanServer(state.localDay);
@@ -362,10 +412,16 @@ export async function planNutritionMealServer(
     notes: draft.notes.trim() || undefined,
   });
 
-  return await refreshNutritionPageAfterMutationServer(state, { saveNotice: 'Planned next meal saved.' }, state.localDay);
+  return await refreshNutritionPageAfterMutationServer(
+    state,
+    { saveNotice: 'Planned next meal saved.' },
+    state.localDay
+  );
 }
 
-export async function clearNutritionPlannedMealServer(state: NutritionPageState): Promise<NutritionPageState> {
+export async function clearNutritionPlannedMealServer(
+  state: NutritionPageState
+): Promise<NutritionPageState> {
   if (state.plannedMealSlotId) {
     await deletePlanSlotServer(state.plannedMealSlotId);
   }
@@ -382,7 +438,11 @@ export async function reuseNutritionMealServer(
   favoriteMealId: string
 ): Promise<NutritionPageState> {
   const { db } = getServerDrizzleClient();
-  const favorite = await selectMirrorRecordById<FavoriteMeal>(db, drizzleSchema.favoriteMeals, favoriteMealId);
+  const favorite = await selectMirrorRecordById<FavoriteMeal>(
+    db,
+    drizzleSchema.favoriteMeals,
+    favoriteMealId
+  );
   if (!favorite) {
     throw new Error('Favorite meal not found');
   }
@@ -402,7 +462,11 @@ export async function reuseNutritionMealServer(
     });
   }
 
-  return await refreshNutritionPageAfterMutationServer(state, { saveNotice: 'Recurring meal reused.' }, state.localDay);
+  return await refreshNutritionPageAfterMutationServer(
+    state,
+    { saveNotice: 'Recurring meal reused.' },
+    state.localDay
+  );
 }
 
 export async function searchPackagedFoodsServer(query: string): Promise<FoodLookupResult[]> {
@@ -496,7 +560,11 @@ export async function enrichNutritionFoodServer(fdcId: string): Promise<FoodLook
 
   const detail = await fetchUsdaFoodDetail(fdcId, apiKey);
   const { db } = getServerDrizzleClient();
-  const existing = await selectMirrorRecordById<FoodCatalogItem>(db, drizzleSchema.foodCatalogItems, `usda:${fdcId}`);
+  const existing = await selectMirrorRecordById<FoodCatalogItem>(
+    db,
+    drizzleSchema.foodCatalogItems,
+    `usda:${fdcId}`
+  );
   const normalized = normalizeUsdaFoodDetail(detail, existing);
   const item = await upsertFoodCatalogItemServer(normalized);
   return foodLookupResultFromCatalogItem(item);

@@ -644,7 +644,7 @@ function buildContextCaptureRecommendation(
     id: `recommendation:context-capture:${input.date}`,
     kind: 'context_capture',
     title: 'Capture a quick context note',
-    summary: 'A short note will make today\'s signals easier to interpret later.',
+    summary: "A short note will make today's signals easier to interpret later.",
     confidence: 'medium',
     score: 68,
     reasons: ['Today has stress or recovery signals without a narrative note attached yet.'],
@@ -704,7 +704,7 @@ function buildTodayFallbackState(input: TodayIntelligenceInput): TodayFallbackSt
   if (!input.dailyRecord) {
     return {
       title: 'No strong recommendation yet.',
-      message: 'Start with today\'s check-in to unlock the rest of Today.',
+      message: "Start with today's check-in to unlock the rest of Today.",
       action: {
         kind: 'href',
         label: 'Open check-in',

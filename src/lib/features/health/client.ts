@@ -1,6 +1,10 @@
 import { currentLocalDay } from '$lib/core/domain/time';
 import { createFeatureActionClient } from '$lib/core/http/feature-client';
-import { createHealthPageState, loadHealthPage as loadHealthPageController, type HealthPageState } from './state';
+import {
+  createHealthPageState,
+  loadHealthPage as loadHealthPageController,
+  type HealthPageState,
+} from './state';
 import {
   quickLogTemplatePage as quickLogTemplatePageController,
   saveAnxietyPage as saveAnxietyPageController,

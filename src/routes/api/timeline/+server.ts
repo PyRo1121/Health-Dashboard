@@ -1,6 +1,10 @@
 import { z } from 'zod';
 import type { RequestHandler } from './$types';
-import { loadTimelinePageServer, type TimelineEventItem, type TimelineSourceFilter } from '$lib/server/timeline/service';
+import {
+  loadTimelinePageServer,
+  type TimelineEventItem,
+  type TimelineSourceFilter,
+} from '$lib/server/timeline/service';
 
 const timelinePageStateSchema = z.object({
   loading: z.boolean(),

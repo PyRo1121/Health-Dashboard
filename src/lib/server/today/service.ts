@@ -13,10 +13,7 @@ import { updateRecordMeta } from '$lib/core/shared/records';
 import { buildDailyNutritionSummaryFromEntries } from '$lib/features/nutrition/summary';
 import { buildFoodEntryRecord } from '$lib/features/nutrition/store';
 import { resolveNutritionPlannedMeal } from '$lib/features/nutrition/planned-meal-resolution';
-import {
-  CHECKIN_EVENT_FIELDS,
-  buildDailyCheckinEvent,
-} from '$lib/features/today/actions';
+import { CHECKIN_EVENT_FIELDS, buildDailyCheckinEvent } from '$lib/features/today/actions';
 import { createDailyCheckinPayload, createTodayFormFromSnapshot } from '$lib/features/today/model';
 import { buildTodaySnapshotFromData, type TodaySnapshot } from '$lib/features/today/snapshot';
 import type { TodayPageState } from '$lib/features/today/controller';
@@ -93,12 +90,19 @@ async function loadTodaySourceData(localDay: string): Promise<{
     listWorkoutTemplatesServer(),
     listExerciseCatalogItemsServer(),
     selectMirrorRecordsByField<HealthEvent>(db, drizzleSchema.healthEvents, 'localDay', localDay),
-    selectMirrorRecordsByField<JournalEntry>(db, drizzleSchema.journalEntries, 'localDay', localDay),
+    selectMirrorRecordsByField<JournalEntry>(
+      db,
+      drizzleSchema.journalEntries,
+      'localDay',
+      localDay
+    ),
   ]);
 
   return {
     dailyRecord: dailyRecords[0] ?? null,
-    foodEntries: [...foodEntries].sort((left, right) => left.createdAt.localeCompare(right.createdAt)),
+    foodEntries: [...foodEntries].sort((left, right) =>
+      left.createdAt.localeCompare(right.createdAt)
+    ),
     planSlots,
     foodCatalogItems,
     recipeCatalogItems,
@@ -129,7 +133,14 @@ async function upsertDailyRecordServer(
   input: ReturnType<typeof createDailyCheckinPayload>
 ): Promise<DailyRecord> {
   const { db } = getServerDrizzleClient();
-  const existing = (await selectMirrorRecordsByField<DailyRecord>(db, drizzleSchema.dailyRecords, 'date', input.date))[0];
+  const existing = (
+    await selectMirrorRecordsByField<DailyRecord>(
+      db,
+      drizzleSchema.dailyRecords,
+      'date',
+      input.date
+    )
+  )[0];
   const timestamp = new Date().toISOString();
   const record: DailyRecord = {
     ...existing,
@@ -177,7 +188,9 @@ export async function saveTodayPageServer(state: TodayPageState): Promise<TodayP
   return await loadTodayPageServerWithNotice(state.todayDate, 'Saved for today.');
 }
 
-export async function logTodayPlannedMealPageServer(state: TodayPageState): Promise<TodayPageState> {
+export async function logTodayPlannedMealPageServer(
+  state: TodayPageState
+): Promise<TodayPageState> {
   const source = await loadTodaySourceData(state.todayDate);
   const resolution = resolveNutritionPlannedMeal(source.planSlots, source.foodCatalogItems);
   if (!resolution.candidate) {
@@ -204,7 +217,9 @@ export async function logTodayPlannedMealPageServer(state: TodayPageState): Prom
   );
 
   if (resolution.candidate.slotId) {
-    const slot = source.planSlots.find((candidate) => candidate.id === resolution.candidate?.slotId);
+    const slot = source.planSlots.find(
+      (candidate) => candidate.id === resolution.candidate?.slotId
+    );
     if (slot) {
       await updatePlanSlotServer(slot.id, { status: 'done' });
     }
@@ -214,11 +229,15 @@ export async function logTodayPlannedMealPageServer(state: TodayPageState): Prom
   return await loadTodayPageServerWithNotice(state.todayDate, 'Planned meal logged.');
 }
 
-export async function clearTodayPlannedMealPageServer(state: TodayPageState): Promise<TodayPageState> {
+export async function clearTodayPlannedMealPageServer(
+  state: TodayPageState
+): Promise<TodayPageState> {
   const source = await loadTodaySourceData(state.todayDate);
   const resolution = resolveNutritionPlannedMeal(source.planSlots, source.foodCatalogItems);
   if (resolution.candidate?.slotId) {
-    const slot = source.planSlots.find((candidate) => candidate.id === resolution.candidate?.slotId);
+    const slot = source.planSlots.find(
+      (candidate) => candidate.id === resolution.candidate?.slotId
+    );
     if (slot) {
       await deletePlanSlotServer(slot.id);
       await refreshWeeklyReviewArtifactsServer(state.todayDate);

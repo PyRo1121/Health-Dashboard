@@ -1,8 +1,5 @@
 import type { RequestHandler } from './$types';
-import {
-  loadReviewPageServer,
-  saveReviewExperimentPageServer,
-} from '$lib/server/review/service';
+import { loadReviewPageServer, saveReviewExperimentPageServer } from '$lib/server/review/service';
 import { reviewRequestSchema } from '$lib/features/review/contracts';
 
 export const POST: RequestHandler = async ({ request }) => {

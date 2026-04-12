@@ -1,4 +1,5 @@
 # Bleeding-Edge Health + Fitness Engineering Review
+
 Historical note: this document is preserved as a planning/review record. Code paths, file references, and architecture details inside may be stale; use `ARCHITECTURE.md` and the living docs under `docs/` for current implementation truth.
 
 Status: Historical Review Record  
@@ -6,6 +7,7 @@ Date: 2026-04-10
 Branch: `fix/grok-pr-enhancements`  
 Superseded by: `ARCHITECTURE.md` and the living docs under `docs/`  
 Related docs:
+
 - [engineering plan](./2026-04-02-personal-health-cockpit-engineering-plan.md)
 - [health integration options](../research/2026-04-02-health-integration-options.md)
 - [external data sources](../external-data-sources.md)
@@ -193,23 +195,23 @@ Context
 
 ## Tech Stack Scorecard
 
-| Area | Current | Recommendation | Why |
-|---|---|---|---|
-| App framework | SvelteKit 2 | Keep | Still a top-tier fit for a private app shell, SSR, file routes, and typed server boundaries |
-| Component model | Svelte 5 runes | Keep | Modern and already aligned with the codebase |
-| Runtime | Bun 1.3.10 | Keep | Fast local dev, native SQLite, good fit for a local dashboard |
-| Deployment target | `adapter-auto` | Change now | The app imports `bun:sqlite`, so runtime is not abstract anymore |
-| Persistence | Bun SQLite server + legacy Dexie path | Collapse to one canonical path | Current abstraction is carrying migration weight and future complexity |
-| SQL layer | hand-rolled JSON row wrapper | Replace with Drizzle on Bun SQLite | Better schema discipline, migrations, indexes, and future analytics |
-| Browser DB | legacy Dexie migration path | Keep only as migration/import tooling for now | Live runtime is not using Dexie as primary storage anymore |
-| Sync | none | Defer Electric until multi-device/cloud is truly next | Good future lane, wrong current focus |
-| Validation | Zod | Keep | Correct choice for import and write contracts |
-| E2E | Playwright | Keep | Already strong and still best-in-class |
-| Unit/component tests | Vitest + Testing Library | Keep | Good fit for SvelteKit |
-| UI primitives | Bits UI | Keep | Svelte-native, accessible, low-chrome |
-| Auth | none | Keep none for local single-user | Do not add auth just to feel enterprise |
-| Future auth | not present | Better Auth when remote sync/user accounts actually exist | Official Svelte packages page points here, but you do not need it yet |
-| Native ingestion | iOS companion only | Expand to iOS + Android companions | This is where the real product edge lives |
+| Area                 | Current                               | Recommendation                                            | Why                                                                                         |
+| -------------------- | ------------------------------------- | --------------------------------------------------------- | ------------------------------------------------------------------------------------------- |
+| App framework        | SvelteKit 2                           | Keep                                                      | Still a top-tier fit for a private app shell, SSR, file routes, and typed server boundaries |
+| Component model      | Svelte 5 runes                        | Keep                                                      | Modern and already aligned with the codebase                                                |
+| Runtime              | Bun 1.3.10                            | Keep                                                      | Fast local dev, native SQLite, good fit for a local dashboard                               |
+| Deployment target    | `adapter-auto`                        | Change now                                                | The app imports `bun:sqlite`, so runtime is not abstract anymore                            |
+| Persistence          | Bun SQLite server + legacy Dexie path | Collapse to one canonical path                            | Current abstraction is carrying migration weight and future complexity                      |
+| SQL layer            | hand-rolled JSON row wrapper          | Replace with Drizzle on Bun SQLite                        | Better schema discipline, migrations, indexes, and future analytics                         |
+| Browser DB           | legacy Dexie migration path           | Keep only as migration/import tooling for now             | Live runtime is not using Dexie as primary storage anymore                                  |
+| Sync                 | none                                  | Defer Electric until multi-device/cloud is truly next     | Good future lane, wrong current focus                                                       |
+| Validation           | Zod                                   | Keep                                                      | Correct choice for import and write contracts                                               |
+| E2E                  | Playwright                            | Keep                                                      | Already strong and still best-in-class                                                      |
+| Unit/component tests | Vitest + Testing Library              | Keep                                                      | Good fit for SvelteKit                                                                      |
+| UI primitives        | Bits UI                               | Keep                                                      | Svelte-native, accessible, low-chrome                                                       |
+| Auth                 | none                                  | Keep none for local single-user                           | Do not add auth just to feel enterprise                                                     |
+| Future auth          | not present                           | Better Auth when remote sync/user accounts actually exist | Official Svelte packages page points here, but you do not need it yet                       |
+| Native ingestion     | iOS companion only                    | Expand to iOS + Android companions                        | This is where the real product edge lives                                                   |
 
 ### Dependency posture right now
 
@@ -249,11 +251,11 @@ Recommendation:
 
 Options:
 
-| Option | Tradeoff | Completeness |
-|---|---|---|
-| A. Keep `adapter-auto` | Lowest work, keeps target ambiguous, likely bites later | 3/10 |
-| B. Switch to an explicit Bun-compatible adapter now | Slightly more work, but runtime and storage model finally match | 9/10 |
-| C. Remove Bun-specific server code and go back to generic Node/hosted SSR | Bigger rewrite, loses the local-SQL advantage | 4/10 |
+| Option                                                                    | Tradeoff                                                        | Completeness |
+| ------------------------------------------------------------------------- | --------------------------------------------------------------- | ------------ |
+| A. Keep `adapter-auto`                                                    | Lowest work, keeps target ambiguous, likely bites later         | 3/10         |
+| B. Switch to an explicit Bun-compatible adapter now                       | Slightly more work, but runtime and storage model finally match | 9/10         |
+| C. Remove Bun-specific server code and go back to generic Node/hosted SSR | Bigger rewrite, loses the local-SQL advantage                   | 4/10         |
 
 Opinionated call: **B**.
 
@@ -278,11 +280,11 @@ Recommendation:
 
 Options:
 
-| Option | Tradeoff | Completeness |
-|---|---|---|
-| A. Keep dual Dexie + Bun SQLite long-term | Lowest migration cost, highest long-term complexity | 4/10 |
-| B. Commit to Bun SQLite as canonical, keep Dexie only for one-way migration/export tooling | Strongest near-term simplification, fits the live runtime | 9/10 |
-| C. Jump now to PGlite everywhere | More novel and elegant on paper, much bigger migration while product scope is still moving | 7/10 |
+| Option                                                                                     | Tradeoff                                                                                   | Completeness |
+| ------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------ | ------------ |
+| A. Keep dual Dexie + Bun SQLite long-term                                                  | Lowest migration cost, highest long-term complexity                                        | 4/10         |
+| B. Commit to Bun SQLite as canonical, keep Dexie only for one-way migration/export tooling | Strongest near-term simplification, fits the live runtime                                  | 9/10         |
+| C. Jump now to PGlite everywhere                                                           | More novel and elegant on paper, much bigger migration while product scope is still moving | 7/10         |
 
 Opinionated call: **B**.
 
@@ -306,11 +308,11 @@ Recommendation:
 
 Options:
 
-| Option | Tradeoff | Completeness |
-|---|---|---|
-| A. Keep open strings and add metrics ad hoc | Fastest, but drift and duplicate label logic start immediately | 3/10 |
-| B. Introduce a `HealthMetricType` registry with source capabilities and display metadata | Slight design work now, much easier expansion later | 10/10 |
-| C. Split every metric family into its own table immediately | More explicit, but overbuilt for the current product stage | 6/10 |
+| Option                                                                                   | Tradeoff                                                       | Completeness |
+| ---------------------------------------------------------------------------------------- | -------------------------------------------------------------- | ------------ |
+| A. Keep open strings and add metrics ad hoc                                              | Fastest, but drift and duplicate label logic start immediately | 3/10         |
+| B. Introduce a `HealthMetricType` registry with source capabilities and display metadata | Slight design work now, much easier expansion later            | 10/10        |
+| C. Split every metric family into its own table immediately                              | More explicit, but overbuilt for the current product stage     | 6/10         |
 
 Opinionated call: **B**.
 
@@ -539,16 +541,16 @@ Recommendation:
 
 ## Failure Modes
 
-| Codepath | Failure mode | Test today? | Error handling? | User sees? | Severity |
-|---|---:|---:|---:|---|---|
-| iOS companion import | duplicate bundle double-counts events | partial | partial | likely misleading trends | High |
-| Android Health Connect import | wrong timezone day assignment | no | no | silent wrong day | Critical |
-| Clinical import | wrong patient matched to local owner | partial sandbox only | yes | blocked if exact gate works | Critical |
-| Expanded metric registry | unsupported metric silently dropped | no | partial | maybe warning, maybe invisible | High |
-| Review build | large metric volume makes weekly review slow or stale | no | no | spinner / stale insight | High |
-| Today adaptation | imported biometrics fail to influence recommendations | no | no | silent underpowered product | Medium |
-| Timeline | too many events make load/filter unusable | no | no | sluggish history view | Medium |
-| Native companion release | no signed build path for testers | no | no | companion stays "local dev only" | Medium |
+| Codepath                      |                                          Failure mode |          Test today? | Error handling? | User sees?                       | Severity |
+| ----------------------------- | ----------------------------------------------------: | -------------------: | --------------: | -------------------------------- | -------- |
+| iOS companion import          |                 duplicate bundle double-counts events |              partial |         partial | likely misleading trends         | High     |
+| Android Health Connect import |                         wrong timezone day assignment |                   no |              no | silent wrong day                 | Critical |
+| Clinical import               |                  wrong patient matched to local owner | partial sandbox only |             yes | blocked if exact gate works      | Critical |
+| Expanded metric registry      |                   unsupported metric silently dropped |                   no |         partial | maybe warning, maybe invisible   | High     |
+| Review build                  | large metric volume makes weekly review slow or stale |                   no |              no | spinner / stale insight          | High     |
+| Today adaptation              | imported biometrics fail to influence recommendations |                   no |              no | silent underpowered product      | Medium   |
+| Timeline                      |             too many events make load/filter unusable |                   no |              no | sluggish history view            | Medium   |
+| Native companion release      |                      no signed build path for testers |                   no |              no | companion stays "local dev only" | Medium   |
 
 ### Critical gaps
 
@@ -603,14 +605,14 @@ Clinical SMART on FHIR
 
 ## Worktree Parallelization Strategy
 
-| Step | Modules touched | Depends on |
-|---|---|---|
-| Metric registry + domain typing | `src/lib/core/domain`, `src/lib/features/integrations`, `src/lib/core/shared` | - |
-| Bun SQLite + Drizzle migration | `src/lib/server/db`, `src/lib/core/db`, config/runtime | metric registry can be parallel, final merge later |
-| iOS companion metric expansion | `apps/ios-companion`, `src/lib/features/integrations/bridge` | metric registry |
-| Android companion bootstrap | `apps/android-companion`, `src/lib/features/integrations/bridge` | metric registry |
-| Review / Today fitness surfacing | `src/lib/features/review`, `src/lib/features/today`, `src/lib/features/health`, `src/lib/features/timeline` | metric registry + ingestion contracts |
-| Test expansion | `tests/features`, `tests/support` | each lane can add its own tests |
+| Step                             | Modules touched                                                                                             | Depends on                                         |
+| -------------------------------- | ----------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| Metric registry + domain typing  | `src/lib/core/domain`, `src/lib/features/integrations`, `src/lib/core/shared`                               | -                                                  |
+| Bun SQLite + Drizzle migration   | `src/lib/server/db`, `src/lib/core/db`, config/runtime                                                      | metric registry can be parallel, final merge later |
+| iOS companion metric expansion   | `apps/ios-companion`, `src/lib/features/integrations/bridge`                                                | metric registry                                    |
+| Android companion bootstrap      | `apps/android-companion`, `src/lib/features/integrations/bridge`                                            | metric registry                                    |
+| Review / Today fitness surfacing | `src/lib/features/review`, `src/lib/features/today`, `src/lib/features/health`, `src/lib/features/timeline` | metric registry + ingestion contracts              |
+| Test expansion                   | `tests/features`, `tests/support`                                                                           | each lane can add its own tests                    |
 
 ### Parallel lanes
 

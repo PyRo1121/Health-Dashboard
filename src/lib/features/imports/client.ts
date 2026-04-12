@@ -2,7 +2,8 @@ import type { ImportBatch, ImportSourceType, OwnerProfile } from '$lib/core/doma
 import { createFeatureActionClient } from '$lib/core/http/feature-client';
 import { commitImportBatch, listImportBatches, previewImport } from './store';
 
-const importsClient = createFeatureActionClient<Parameters<typeof previewImport>[0]>('/api/imports');
+const importsClient =
+  createFeatureActionClient<Parameters<typeof previewImport>[0]>('/api/imports');
 
 export async function listImportBatchesClient(): Promise<ImportBatch[]> {
   return await importsClient.action('list', (db) => listImportBatches(db));

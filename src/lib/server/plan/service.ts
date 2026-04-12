@@ -81,12 +81,22 @@ async function reloadPlanningPageStateServer(
   state: PlanningPageState,
   overrides: Partial<PlanningPageState> = {}
 ): Promise<PlanningPageState> {
-  return createLoadedPlanningPageState(state, state.localDay, await buildPlanningSnapshotServer(state.localDay), overrides);
+  return createLoadedPlanningPageState(
+    state,
+    state.localDay,
+    await buildPlanningSnapshotServer(state.localDay),
+    overrides
+  );
 }
 
 async function refreshPlanningPageAfterMutationServer(
   state: PlanningPageState,
-  notice: Partial<Pick<PlanningPageState, 'planNotice' | 'workoutTemplateNotice' | 'groceryNotice' | 'slotForm' | 'workoutTemplateForm'>>
+  notice: Partial<
+    Pick<
+      PlanningPageState,
+      'planNotice' | 'workoutTemplateNotice' | 'groceryNotice' | 'slotForm' | 'workoutTemplateForm'
+    >
+  >
 ): Promise<PlanningPageState> {
   await refreshWeeklyReviewArtifactsServer(state.localDay);
   return await reloadPlanningPageStateServer(state, notice);
@@ -96,10 +106,16 @@ export async function loadPlanningPageServer(
   localDay: string,
   state: PlanningPageState = createPlanningPageState()
 ): Promise<PlanningPageState> {
-  return createLoadedPlanningPageState(state, localDay, await buildPlanningSnapshotServer(localDay));
+  return createLoadedPlanningPageState(
+    state,
+    localDay,
+    await buildPlanningSnapshotServer(localDay)
+  );
 }
 
-export async function savePlanningSlotPageServer(state: PlanningPageState): Promise<PlanningPageState> {
+export async function savePlanningSlotPageServer(
+  state: PlanningPageState
+): Promise<PlanningPageState> {
   if (!state.weeklyPlan) {
     return state;
   }
@@ -132,7 +148,10 @@ export async function savePlanningSlotPageServer(state: PlanningPageState): Prom
     if (state.slotForm.mealSource === 'recipe') {
       const recipe = recipes.find((candidate) => candidate.id === state.slotForm.recipeId);
       if (!recipe) {
-        return { ...state, planNotice: 'That recipe no longer exists. Choose another before adding it to the week.' };
+        return {
+          ...state,
+          planNotice: 'That recipe no longer exists. Choose another before adding it to the week.',
+        };
       }
       title = recipe.title;
       itemType = 'recipe';
@@ -140,7 +159,11 @@ export async function savePlanningSlotPageServer(state: PlanningPageState): Prom
     } else {
       const food = foods.find((candidate) => candidate.id === state.slotForm.foodCatalogItemId);
       if (!food) {
-        return { ...state, planNotice: 'That saved food no longer exists. Choose another before adding it to the week.' };
+        return {
+          ...state,
+          planNotice:
+            'That saved food no longer exists. Choose another before adding it to the week.',
+        };
       }
       title = food.name;
       itemType = 'food';
@@ -149,9 +172,15 @@ export async function savePlanningSlotPageServer(state: PlanningPageState): Prom
   }
 
   if (slotType === 'workout') {
-    const template = workoutTemplates.find((candidate) => candidate.id === state.slotForm.workoutTemplateId);
+    const template = workoutTemplates.find(
+      (candidate) => candidate.id === state.slotForm.workoutTemplateId
+    );
     if (!template) {
-      return { ...state, planNotice: 'That workout template no longer exists. Choose another before adding it to the week.' };
+      return {
+        ...state,
+        planNotice:
+          'That workout template no longer exists. Choose another before adding it to the week.',
+      };
     }
     title = template.title;
     itemType = 'workout-template';
@@ -174,7 +203,9 @@ export async function savePlanningSlotPageServer(state: PlanningPageState): Prom
   });
 }
 
-export async function saveWorkoutTemplatePageServer(state: PlanningPageState): Promise<PlanningPageState> {
+export async function saveWorkoutTemplatePageServer(
+  state: PlanningPageState
+): Promise<PlanningPageState> {
   await saveWorkoutTemplateServer({
     title: state.workoutTemplateForm.title,
     goal: state.workoutTemplateForm.goal,
@@ -225,7 +256,9 @@ export async function togglePlanningGroceryStatePageServer(
   patch: Pick<GroceryItem, 'checked' | 'excluded' | 'onHand'>
 ): Promise<PlanningPageState> {
   await setGroceryItemStateServer(itemId, patch);
-  return await refreshPlanningPageAfterMutationServer(state, { groceryNotice: 'Grocery item updated.' });
+  return await refreshPlanningPageAfterMutationServer(state, {
+    groceryNotice: 'Grocery item updated.',
+  });
 }
 
 export async function addManualPlanningGroceryItemPageServer(
@@ -245,7 +278,9 @@ export async function addManualPlanningGroceryItemPageServer(
     [draft.quantityText.trim(), draft.label.trim()].filter(Boolean).join(' ')
   );
 
-  return await refreshPlanningPageAfterMutationServer(state, { groceryNotice: 'Manual grocery item added.' });
+  return await refreshPlanningPageAfterMutationServer(state, {
+    groceryNotice: 'Manual grocery item added.',
+  });
 }
 
 export async function removeManualPlanningGroceryItemPageServer(
@@ -253,5 +288,7 @@ export async function removeManualPlanningGroceryItemPageServer(
   itemId: string
 ): Promise<PlanningPageState> {
   await removeManualGroceryItemServer(itemId);
-  return await refreshPlanningPageAfterMutationServer(state, { groceryNotice: 'Manual grocery item removed.' });
+  return await refreshPlanningPageAfterMutationServer(state, {
+    groceryNotice: 'Manual grocery item removed.',
+  });
 }

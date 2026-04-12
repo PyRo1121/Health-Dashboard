@@ -160,4 +160,3 @@ export function createInMemoryHealthDb(): InMemoryHealthDb {
     },
   } satisfies InMemoryHealthDb;
 }
-

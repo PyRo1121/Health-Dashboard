@@ -20,6 +20,7 @@ They should not become the sole owner of core product value.
 ## Current Position
 
 The app should remain useful without:
+
 - Apple Health
 - Health Connect
 - SMART on FHIR
@@ -50,30 +51,36 @@ Those are optional lanes, not the app’s reason to exist.
 ## USDA FoodData Central
 
 Role in this product:
+
 - nutrition lookup enrichment
 - detail fetch by FDC ID
 - optional live search
 
 Current documented constraints:
+
 - requires a data.gov API key for normal use
 - default rate limit is `1,000 requests/hour/IP`
 - public-domain data, but the API key must not be exposed publicly
 
 Product implication:
+
 - use USDA as an enrichment lane, not the only nutrition path
 - keep local nutrition logging and local catalog useful without USDA
 - treat missing USDA keys as a graceful-degradation case, not a fatal product error
 
 Reference:
+
 - USDA FoodData Central API Guide: https://fdc.nal.usda.gov/api-guide
 
 ## Open Food Facts
 
 Role in this product:
+
 - packaged-food search
 - barcode lookup and enrichment
 
 Current documented constraints:
+
 - API v2 is current production API
 - rate limits apply:
   - `100 req/min` for product reads
@@ -83,6 +90,7 @@ Current documented constraints:
 - data quality is community-generated and not guaranteed to be complete or perfectly reliable
 
 Product implication:
+
 - Open Food Facts is good for packaged lookup, but results should be treated as useful external input, not perfect truth
 - do not design search-as-you-type against OFF search
 - cache normalized results locally
@@ -90,20 +98,24 @@ Product implication:
 - document the custom `User-Agent` requirement in any future production client that talks to OFF directly
 
 References:
+
 - API introduction: https://openfoodfacts.github.io/openfoodfacts-server/api/
 - API tutorial: https://openfoodfacts.github.io/openfoodfacts-server/api/tutorial-off-api/
 
 ## TheMealDB
 
 Role in this product:
+
 - recipe discovery / lightweight recipe catalog seed
 
 Current documented constraints:
+
 - public test key `1` is available for development and educational use
 - premium/supporter access unlocks more capabilities
 - commercial/public release usage should not assume the free test-key posture is the long-term production contract
 
 Product implication:
+
 - TheMealDB is fine for local development, prototyping, and seeding recipe flows
 - it is not strong enough to be the sole long-term recipe backbone for a serious health product
 - if recipe discovery becomes core to the product, move to:
@@ -112,39 +124,47 @@ Product implication:
   - explicit production support path
 
 References:
+
 - API docs: https://www.themealdb.com/api.php
 - FAQ: https://www.themealdb.com/faq.php
 
 ## SMART on FHIR
 
 Role in this product:
+
 - future clinical import and sandbox validation lane
 
 Current documented constraints:
+
 - security-first standards posture
 - TLS required
 - explicit authorization scope handling
 - refresh token and access token handling need discipline
 
 Product implication:
+
 - use SMART for standards-aligned future clinical import
 - do not promise broad provider portal behavior
 - keep clinical import narrow, explicit, and provenance-heavy
 
 Reference:
+
 - SMART on FHIR authorization best practices: https://docs.smarthealthit.org/authorization/best-practices/
 
 ## Apple Health / Health Connect
 
 Role in this product:
+
 - future device and health-record import lanes
 
 Current product posture:
+
 - not required for the core product loop
 - should remain optional
 - should feed the local timeline and review system, not replace it
 
 That means:
+
 - do not make the white paper or core app docs sound dependent on Apple Health
 - keep the product valuable with manual logging + imports + review even if native platform integrations never land
 

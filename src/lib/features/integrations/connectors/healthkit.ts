@@ -1,7 +1,4 @@
-import {
-  formatHealthMetricLabel,
-  formatHealthMetricValue,
-} from '$lib/core/domain/health-metrics';
+import { formatHealthMetricLabel, formatHealthMetricValue } from '$lib/core/domain/health-metrics';
 import type { HealthEvent, NativeCompanionBundle } from '$lib/core/domain/types';
 import { parseHealthKitCompanionBundle } from '$lib/features/integrations/bridge/validate';
 import { normalizeHealthKitBundle } from '$lib/features/integrations/normalization/health-normalize';
