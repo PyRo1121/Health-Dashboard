@@ -1,7 +1,9 @@
 # Personal Health Cockpit Implementation Packet: T9 + T10
+Historical note: this document is preserved as a planning/review record. Code paths, file references, and architecture details inside may be stale; use `ARCHITECTURE.md` and the living docs under `docs/` for current implementation truth.
 
-Status: Active
+Status: Historical
 Date: 2026-04-02
+Superseded by: `ARCHITECTURE.md` and the living docs under `docs/`
 Parent:
 
 - `docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md`

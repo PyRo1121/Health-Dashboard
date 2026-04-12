@@ -1,10 +1,12 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import type { HealthDbDailyRecordsStore, HealthDbSobrietyEventsStore } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
-import type { SobrietyEvent } from '$lib/core/domain/types';
+import type { DailyRecord, SobrietyEvent } from '$lib/core/domain/types';
 import { upsertDailyRecord } from '$lib/core/shared/daily-records';
 import { createRecordMeta } from '$lib/core/shared/records';
 
-function buildSobrietyEvent(input: {
+export interface SobrietyStorage extends HealthDbDailyRecordsStore, HealthDbSobrietyEventsStore {}
+
+export function buildSobrietyEvent(input: {
   id: string;
   localDay: string;
   eventType: SobrietyEvent['eventType'];
@@ -29,7 +31,7 @@ function buildSobrietyEvent(input: {
 }
 
 export async function setSobrietyStatusForDay(
-  db: HealthDatabase,
+  store: SobrietyStorage,
   input: { localDay: string; status: 'sober' | 'lapse' | 'recovery'; note?: string }
 ): Promise<SobrietyEvent> {
   const event = buildSobrietyEvent({
@@ -40,13 +42,13 @@ export async function setSobrietyStatusForDay(
     note: input.note,
   });
 
-  await db.sobrietyEvents.put(event);
-  await upsertDailyRecord(db, input.localDay, { sobrietyStatus: input.status });
+  await store.sobrietyEvents.put(event);
+  await upsertDailyRecord(store, input.localDay, { sobrietyStatus: input.status });
   return event;
 }
 
 export async function logCravingEvent(
-  db: HealthDatabase,
+  store: SobrietyStorage,
   input: { localDay: string; cravingScore: number; triggerTags?: string[]; note?: string }
 ): Promise<SobrietyEvent> {
   const event = buildSobrietyEvent({
@@ -58,13 +60,13 @@ export async function logCravingEvent(
     note: input.note,
   });
 
-  await db.sobrietyEvents.put(event);
-  await upsertDailyRecord(db, input.localDay, { cravingScore: input.cravingScore });
+  await store.sobrietyEvents.put(event);
+  await upsertDailyRecord(store, input.localDay, { cravingScore: input.cravingScore });
   return event;
 }
 
 export async function logLapseEvent(
-  db: HealthDatabase,
+  store: SobrietyStorage,
   input: { localDay: string; note: string; triggerTags?: string[]; recoveryAction?: string }
 ): Promise<SobrietyEvent> {
   const event = buildSobrietyEvent({
@@ -77,23 +79,25 @@ export async function logLapseEvent(
     note: input.note,
   });
 
-  await db.sobrietyEvents.put(event);
-  await upsertDailyRecord(db, input.localDay, { sobrietyStatus: 'lapse' });
+  await store.sobrietyEvents.put(event);
+  await upsertDailyRecord(store, input.localDay, { sobrietyStatus: 'lapse' });
   return event;
 }
 
 export async function listSobrietyEventsForDay(
-  db: HealthDatabase,
+  store: SobrietyStorage,
   localDay: string
 ): Promise<SobrietyEvent[]> {
-  const events = await db.sobrietyEvents.where('localDay').equals(localDay).toArray();
+  const events = await store.sobrietyEvents.where('localDay').equals(localDay).toArray();
   return events.sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
-export async function calculateCurrentStreak(db: HealthDatabase, asOfDay: string): Promise<number> {
-  const statusEvents = await db.sobrietyEvents.where('eventType').equals('status').toArray();
+export function calculateCurrentStreakFromStatusEvents(
+  statusEvents: SobrietyEvent[],
+  asOfDay: string
+): number {
   const statusByDay = new Map(
-    statusEvents
+    [...statusEvents]
       .sort((a, b) => a.localDay.localeCompare(b.localDay))
       .map((event) => [event.localDay, event.status ?? 'lapse'])
   );
@@ -111,14 +115,33 @@ export async function calculateCurrentStreak(db: HealthDatabase, asOfDay: string
   return streak;
 }
 
+export async function calculateCurrentStreak(
+  store: SobrietyStorage,
+  asOfDay: string
+): Promise<number> {
+  const statusEvents = await store.sobrietyEvents.where('eventType').equals('status').toArray();
+  return calculateCurrentStreakFromStatusEvents(statusEvents, asOfDay);
+}
+
+export function buildSobrietyTrendSummaryFromData(
+  statusEvents: SobrietyEvent[],
+  todayEvents: SobrietyEvent[],
+  asOfDay: string
+): { streak: number; todayEvents: SobrietyEvent[] } {
+  return {
+    streak: calculateCurrentStreakFromStatusEvents(statusEvents, asOfDay),
+    todayEvents: [...todayEvents].sort((a, b) => a.createdAt.localeCompare(b.createdAt)),
+  };
+}
+
 export async function buildSobrietyTrendSummary(
-  db: HealthDatabase,
+  store: SobrietyStorage,
   asOfDay: string
 ): Promise<{ streak: number; todayEvents: SobrietyEvent[] }> {
-  const [streak, todayEvents] = await Promise.all([
-    calculateCurrentStreak(db, asOfDay),
-    listSobrietyEventsForDay(db, asOfDay),
+  const [statusEvents, todayEvents] = await Promise.all([
+    store.sobrietyEvents.where('eventType').equals('status').toArray(),
+    listSobrietyEventsForDay(store, asOfDay),
   ]);
 
-  return { streak, todayEvents };
+  return buildSobrietyTrendSummaryFromData(statusEvents, todayEvents, asOfDay);
 }

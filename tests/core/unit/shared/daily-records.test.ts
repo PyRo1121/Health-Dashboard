@@ -3,7 +3,12 @@ import { upsertDailyRecord } from '$lib/core/shared/daily-records';
 import { useTestHealthDb } from '../../../support/unit/testDb';
 
 describe('daily-records', () => {
-  const getDb = useTestHealthDb('shared-daily-records');
+  const getDb = useTestHealthDb();
+  const getDailyRecordsStore = useTestHealthDb((db) => ({ dailyRecords: db.dailyRecords }));
+
+  it('supports projected unit test stores', async () => {
+    expect(await getDailyRecordsStore().dailyRecords.count()).toBe(0);
+  });
 
   it('upserts one record per day while preserving createdAt', async () => {
     const db = getDb();

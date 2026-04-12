@@ -1,17 +1,22 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import {
   createFoodEntry,
   reuseRecurringMeal,
   saveFavoriteMeal,
   saveFoodCatalogItem,
-} from './service';
+  type FoodCatalogItemsStore,
+} from './store';
 import {
   getNutritionPlannedMealResolution,
   listStalePlannedFoodSlotIds,
 } from './planned-meal-resolution';
-import { deletePlanSlot, ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
-import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
-import { type NutritionPageState, reloadNutritionPageState } from './state';
+import {
+  deletePlanSlot,
+  ensureWeeklyPlan,
+  savePlanSlot,
+  type WeeklyPlansStore,
+} from '$lib/features/planning/service';
+import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
+import { type NutritionPageState, type NutritionPageStorage, reloadNutritionPageState } from './state';
 
 interface NutritionMacroDraft {
   name: string;
@@ -47,18 +52,20 @@ export interface NutritionCatalogItemDraft {
   fat: number;
 }
 
+export interface NutritionActionsStorage extends NutritionPageStorage, WeeklyPlansStore, ReviewStorage {}
+
 async function resolveNutritionPlannedFoodId(
-  db: HealthDatabase,
+  store: FoodCatalogItemsStore,
   draft: NutritionPlannedMealDraft
 ): Promise<string> {
   if (draft.foodCatalogItemId) {
-    const existing = await db.foodCatalogItems.get(draft.foodCatalogItemId);
+    const existing = await store.foodCatalogItems.get(draft.foodCatalogItemId);
     if (existing) {
       return existing.id;
     }
   }
 
-  const food = await saveFoodCatalogItem(db, {
+  const food = await saveFoodCatalogItem(store, {
     name: draft.name.trim(),
     calories: draft.calories,
     protein: draft.protein,
@@ -82,36 +89,53 @@ function createRecurringMealItem(draft: NutritionRecurringMealDraft) {
   };
 }
 
+async function refreshNutritionPageAfterMutation(
+  store: NutritionActionsStorage,
+  state: NutritionPageState,
+  overrides: Partial<NutritionPageState> = {},
+  reviewLocalDay?: string
+): Promise<NutritionPageState> {
+  if (reviewLocalDay) {
+    await refreshWeeklyReviewArtifactsSafely(store, reviewLocalDay);
+  }
+
+  return await reloadNutritionPageState(store, state, overrides);
+}
+
 export async function saveNutritionMeal(
-  db: HealthDatabase,
+  store: NutritionActionsStorage,
   state: NutritionPageState,
   draft: NutritionMealDraft
 ): Promise<NutritionPageState> {
-  await createFoodEntry(db, draft);
-  await refreshWeeklyReviewArtifactsSafely(db, draft.localDay);
-  return await reloadNutritionPageState(db, state, {
-    saveNotice: 'Meal saved.',
-  });
+  await createFoodEntry(store, draft);
+  return await refreshNutritionPageAfterMutation(
+    store,
+    state,
+    {
+      saveNotice: 'Meal saved.',
+    },
+    draft.localDay
+  );
 }
 
 export async function saveNutritionRecurringMeal(
-  db: HealthDatabase,
+  store: NutritionActionsStorage,
   state: NutritionPageState,
   draft: NutritionRecurringMealDraft
 ): Promise<NutritionPageState> {
-  await saveFavoriteMeal(db, {
+  await saveFavoriteMeal(store, {
     name: draft.name || 'Quick oatmeal',
     mealType: draft.mealType,
     items: [createRecurringMealItem(draft)],
   });
 
-  return await reloadNutritionPageState(db, state, {
+  return await refreshNutritionPageAfterMutation(store, state, {
     saveNotice: 'Recurring meal saved.',
   });
 }
 
 export async function saveNutritionCatalogItem(
-  db: HealthDatabase,
+  store: NutritionActionsStorage,
   state: NutritionPageState,
   draft: NutritionCatalogItemDraft
 ): Promise<NutritionPageState> {
@@ -122,7 +146,7 @@ export async function saveNutritionCatalogItem(
     };
   }
 
-  await saveFoodCatalogItem(db, {
+  await saveFoodCatalogItem(store, {
     name: draft.name.trim(),
     calories: draft.calories,
     protein: draft.protein,
@@ -131,13 +155,13 @@ export async function saveNutritionCatalogItem(
     fat: draft.fat,
   });
 
-  return await reloadNutritionPageState(db, state, {
+  return await refreshNutritionPageAfterMutation(store, state, {
     saveNotice: 'Saved to custom food catalog.',
   });
 }
 
 export async function planNutritionMeal(
-  db: HealthDatabase,
+  store: NutritionActionsStorage,
   state: NutritionPageState,
   draft: NutritionPlannedMealDraft
 ): Promise<NutritionPageState> {
@@ -148,7 +172,7 @@ export async function planNutritionMeal(
     };
   }
 
-  const resolution = await getNutritionPlannedMealResolution(db, state.localDay);
+  const resolution = await getNutritionPlannedMealResolution(store, state.localDay);
   if (resolution.candidate?.kind === 'plan-slot-food') {
     return {
       ...state,
@@ -156,12 +180,12 @@ export async function planNutritionMeal(
     };
   }
 
-  const staleSlotIds = await listStalePlannedFoodSlotIds(db, state.localDay);
-  await Promise.all(staleSlotIds.map((slotId) => deletePlanSlot(db, slotId)));
+  const staleSlotIds = await listStalePlannedFoodSlotIds(store, state.localDay);
+  await Promise.all(staleSlotIds.map((slotId) => deletePlanSlot(store, slotId)));
 
-  const weeklyPlan = await ensureWeeklyPlan(db, state.localDay);
-  const foodCatalogItemId = await resolveNutritionPlannedFoodId(db, draft);
-  await savePlanSlot(db, {
+  const weeklyPlan = await ensureWeeklyPlan(store, state.localDay);
+  const foodCatalogItemId = await resolveNutritionPlannedFoodId(store, draft);
+  await savePlanSlot(store, {
     weeklyPlanId: weeklyPlan.id,
     localDay: state.localDay,
     slotType: 'meal',
@@ -171,35 +195,46 @@ export async function planNutritionMeal(
     title: draft.name.trim(),
     notes: draft.notes.trim() || undefined,
   });
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-
-  return await reloadNutritionPageState(db, state, {
-    saveNotice: 'Planned next meal saved.',
-  });
+  return await refreshNutritionPageAfterMutation(
+    store,
+    state,
+    {
+      saveNotice: 'Planned next meal saved.',
+    },
+    state.localDay
+  );
 }
 
 export async function clearNutritionPlannedMeal(
-  db: HealthDatabase,
+  store: NutritionActionsStorage,
   state: NutritionPageState
 ): Promise<NutritionPageState> {
   if (state.plannedMealSlotId) {
-    await deletePlanSlot(db, state.plannedMealSlotId);
-    await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
+    await deletePlanSlot(store, state.plannedMealSlotId);
   }
 
-  return await reloadNutritionPageState(db, state, {
-    saveNotice: 'Planned meal cleared.',
-  });
+  return await refreshNutritionPageAfterMutation(
+    store,
+    state,
+    {
+      saveNotice: 'Planned meal cleared.',
+    },
+    state.plannedMealSlotId ? state.localDay : undefined
+  );
 }
 
 export async function reuseNutritionMeal(
-  db: HealthDatabase,
+  store: NutritionActionsStorage,
   state: NutritionPageState,
   favoriteMealId: string
 ): Promise<NutritionPageState> {
-  await reuseRecurringMeal(db, { favoriteMealId, localDay: state.localDay });
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  return await reloadNutritionPageState(db, state, {
-    saveNotice: 'Recurring meal reused.',
-  });
+  await reuseRecurringMeal(store, { favoriteMealId, localDay: state.localDay });
+  return await refreshNutritionPageAfterMutation(
+    store,
+    state,
+    {
+      saveNotice: 'Recurring meal reused.',
+    },
+    state.localDay
+  );
 }

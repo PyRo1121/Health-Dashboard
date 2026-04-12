@@ -1,5 +1,8 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import { getCanonicalHealthMetricKey } from '$lib/core/domain/health-metrics';
+import type { HealthDbHealthEventsStore } from '$lib/core/db/types';
 import type { HealthEvent, NativeCompanionSummary } from '$lib/core/domain/types';
+
+export type NativeCompanionEventsStore = HealthDbHealthEventsStore;
 
 function asString(value: unknown): string | undefined {
   return typeof value === 'string' && value.length > 0 ? value : undefined;
@@ -24,16 +27,16 @@ function summarizeNativeCompanionEvent(event: HealthEvent): {
   const payload = event.payload ?? {};
   return {
     deviceName: asString(payload.deviceName) ?? event.deviceId,
-    metricType: asString(payload.metricType) ?? event.eventType,
+    metricType: getCanonicalHealthMetricKey(asString(payload.metricType) ?? event.eventType),
     latestCaptureAt:
       asString(payload.capturedAt) ?? event.sourceTimestamp ?? event.updatedAt ?? event.createdAt,
   };
 }
 
 export async function summarizeNativeCompanionEvents(
-  db: HealthDatabase
+  store: NativeCompanionEventsStore
 ): Promise<NativeCompanionSummary> {
-  const events = (await db.healthEvents.toArray()).filter(
+  const events = (await store.healthEvents.toArray()).filter(
     (event) => event.sourceType === 'native-companion'
   );
   const deviceNames = new Set<string>();

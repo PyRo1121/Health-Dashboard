@@ -17,7 +17,8 @@
   } = $props();
 </script>
 
-<SectionCard title="Quick check-in">
+<div id="today-check-in">
+  <SectionCard title="Quick check-in">
   <div class="field-grid">
     {#each todayMetricFields as field (field.key)}
       <Field label={field.label}>
@@ -52,7 +53,8 @@
   {#if saveNotice}
     <p class="status-copy">{saveNotice}</p>
   {/if}
-</SectionCard>
+  </SectionCard>
+</div>
 
 <style>
   .field-grid {

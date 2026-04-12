@@ -1,9 +1,11 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import {
   listTimelineEvents,
   type TimelineEventItem,
+  type TimelineEventsStore,
   type TimelineSourceFilter,
 } from '$lib/features/timeline/service';
+
+export type TimelinePageStorage = TimelineEventsStore;
 
 export interface TimelinePageState {
   loading: boolean;
@@ -30,10 +32,10 @@ export function setTimelineFilter(
 }
 
 export async function loadTimelinePage(
-  db: HealthDatabase,
+  store: TimelinePageStorage,
   state: TimelinePageState
 ): Promise<TimelinePageState> {
-  const items = await listTimelineEvents(db, state.filter);
+  const items = await listTimelineEvents(store, state.filter);
   return {
     ...state,
     loading: false,

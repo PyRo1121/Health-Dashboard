@@ -1,32 +1,36 @@
-import type { ImportBatch, ImportSourceType, OwnerProfile } from '$lib/core/domain/types';
-import { createDbActionPostHandler } from '$lib/server/http/action-route';
-import { commitImportBatch, listImportBatches, previewImport } from '$lib/features/imports/service';
+import type { RequestHandler } from './$types';
+import {
+  commitImportBatchServer,
+  listImportBatchesServer,
+  previewImportServer,
+} from '$lib/server/imports/service';
+import { importsRequestSchema } from '$lib/features/imports/contracts';
 
-type ImportsRequest =
-  | { action: 'list' }
-  | {
-      action: 'preview';
-      input: {
-        sourceType: ImportSourceType;
-        rawText: string;
-        ownerProfile?: OwnerProfile | null;
-      };
-    }
-  | { action: 'commit'; batchId: string };
+export const POST: RequestHandler = async ({ request }) => {
+  let body: unknown;
 
-const handleImportsPost = createDbActionPostHandler<ImportsRequest, ImportBatch[] | ImportBatch>(
-  {
-    list: (db) => listImportBatches(db),
-    preview: async (db, body) => (await previewImport(db, body.input)) satisfies ImportBatch,
-    commit: (db, body) => commitImportBatch(db, body.batchId),
-  },
-  undefined,
-  {
-    onActionError: (error) => {
-      const message = error instanceof Error ? error.message : 'Import request failed.';
-      return new Response(message, { status: 400 });
-    },
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Invalid import request payload.', { status: 400 });
   }
-);
 
-export const POST = handleImportsPost;
+  const parsed = importsRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response('Invalid import request payload.', { status: 400 });
+  }
+
+  try {
+    switch (parsed.data.action) {
+      case 'list':
+        return Response.json(await listImportBatchesServer());
+      case 'preview':
+        return Response.json(await previewImportServer(parsed.data.input));
+      case 'commit':
+        return Response.json(await commitImportBatchServer(parsed.data.batchId));
+    }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : 'Import request failed.';
+    return new Response(message, { status: 400 });
+  }
+};

@@ -2,7 +2,7 @@
   import type { PlannedMeal } from '$lib/core/domain/types';
   import { Button, EmptyState, SectionCard } from '$lib/core/ui/primitives';
   import type { TodayEventRow, TodayPlanRow } from '$lib/features/today/model';
-  import type { TodayPlannedWorkout } from '$lib/features/today/service';
+  import type { TodayPlannedWorkout } from '$lib/features/today/snapshot';
 
   let {
     todayDate,

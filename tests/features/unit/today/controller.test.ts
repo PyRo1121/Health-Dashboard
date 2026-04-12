@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { useTestHealthDb } from '../../../support/unit/testDb';
 import { logAnxietyEvent, logSymptomEvent } from '$lib/features/health/service';
-import { saveFoodCatalogItem } from '$lib/features/nutrition/service';
+import { saveFoodCatalogItem } from '$lib/features/nutrition/store';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import {
   applyTodayRecoveryActionPage,
@@ -13,7 +13,7 @@ import {
 } from '$lib/features/today/controller';
 
 describe('today controller', () => {
-  const getDb = useTestHealthDb('today-page-controller');
+  const getDb = useTestHealthDb();
 
   it('loads and saves the today page state', async () => {
     const db = getDb();
@@ -40,6 +40,10 @@ describe('today controller', () => {
     expect(state.saveNotice).toBe('Saved for today.');
     expect(state.snapshot?.dailyRecord?.mood).toBe(4);
     expect(state.snapshot?.events).toHaveLength(6);
+    expect(state.snapshot?.intelligence.primaryRecommendation).toMatchObject({
+      kind: 'nutrition_support',
+      confidence: 'low',
+    });
     expect(await db.reviewSnapshots.count()).toBe(1);
   });
 
@@ -205,6 +209,10 @@ describe('today controller', () => {
     expect(state.saveNotice).toBe('Recovery meal applied.');
     expect(state.snapshot?.plannedMeal?.name).toBe('Greek yogurt bowl');
     expect((await db.planSlots.get(mealSlot.id))?.itemId).toBe(yogurt.id);
+    expect(state.snapshot?.intelligence.primaryRecommendation).toMatchObject({
+      kind: 'recovery',
+      primaryAction: { kind: 'recovery-action', actionId: 'apply-recovery-workout' },
+    });
 
     state = await applyTodayRecoveryActionPage(db, state, 'apply-recovery-workout');
     expect(state.saveNotice).toBe('Recovery workout applied.');

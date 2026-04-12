@@ -1,5 +1,5 @@
 import type { ImportBatch, ImportSourceType } from '$lib/core/domain/types';
-import type { ImportPayloadSummary } from './service';
+import type { ImportPayloadSummary } from './core';
 import {
   applyLoadedPayloadState,
   applyManualPayloadEditState,

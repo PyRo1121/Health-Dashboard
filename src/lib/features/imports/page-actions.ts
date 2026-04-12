@@ -11,7 +11,6 @@ import { loadImportsFilePayloadState, type ImportsPageState } from './page-state
 
 export interface ImportsPreviewDeps {
   getOwnerProfile: () => OwnerProfile | null;
-  listImportBatches: () => Promise<ImportBatch[]>;
   previewImport: (input: {
     sourceType: ImportSourceType;
     rawText: string;
@@ -20,7 +19,6 @@ export interface ImportsPreviewDeps {
 }
 
 export interface ImportsCommitDeps {
-  listImportBatches: () => Promise<ImportBatch[]>;
   commitImportBatch: (batchId: string) => Promise<ImportBatch>;
 }
 
@@ -42,6 +40,13 @@ function withLoadedBatches(state: ImportsPageState, batches: ImportBatch[]): Imp
   };
 }
 
+function upsertBatch(batches: ImportBatch[], batch: ImportBatch): ImportBatch[] {
+  const withoutMatch = batches.filter((existing) => existing.id !== batch.id);
+  return [batch, ...withoutMatch].sort((left, right) =>
+    right.createdAt.localeCompare(left.createdAt)
+  );
+}
+
 function errorMessage(error: unknown, fallback: string): string {
   return error instanceof Error ? error.message : fallback;
 }
@@ -52,7 +57,7 @@ export async function loadImportsFilePayload(
   describeImportPayload: (
     rawText: string,
     filename?: string
-  ) => import('./service').ImportPayloadSummary
+  ) => import('./core').ImportPayloadSummary
 ): Promise<ImportsPageState> {
   try {
     return await loadImportsFilePayloadState(state, file, describeImportPayload);
@@ -91,12 +96,11 @@ export async function previewImportsPage(
       rawText: state.intake.payload,
       ownerProfile: deps.getOwnerProfile(),
     });
-    const batches = await deps.listImportBatches();
 
     return withUpdatedIntake(
       {
         ...state,
-        batches,
+        batches: upsertBatch(state.batches, latestPreview),
       },
       applyPreviewSuccessState(state.intake, latestPreview)
     );
@@ -118,12 +122,11 @@ export async function commitImportsPage(
 
   try {
     const committed = await deps.commitImportBatch(state.intake.latestPreview.id);
-    const batches = await deps.listImportBatches();
 
     return withUpdatedIntake(
       {
         ...state,
-        batches,
+        batches: upsertBatch(state.batches, committed),
       },
       applyCommitSuccessState(state.intake, committed)
     );

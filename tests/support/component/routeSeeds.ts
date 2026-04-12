@@ -1,20 +1,20 @@
-import { getHealthDb } from '$lib/core/db/client';
+import { getTestHealthDb } from '$lib/core/db/test-client';
 import { saveAssessmentProgress, submitAssessment } from '$lib/features/assessments/service';
 import { deriveWeeklyGroceries, setGroceryItemState } from '$lib/features/groceries/service';
-import { commitImportBatch, previewImport } from '$lib/features/imports/service';
+import { commitImportBatch, previewImport } from '$lib/features/imports/store';
 import {
   createFoodEntry,
   saveFoodCatalogItem,
   upsertRecipeCatalogItem,
-} from '$lib/features/nutrition/service';
+} from '$lib/features/nutrition/store';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import { setSobrietyStatusForDay } from '$lib/features/sobriety/service';
-import { saveDailyCheckin } from '$lib/features/today/service';
+import { saveDailyCheckin } from '$lib/features/today/actions';
 import { logAnxietyEvent } from '$lib/features/health/service';
 import { HEALTHKIT_BUNDLE_JSON } from '../fixtures/healthkit-bundle';
 
 export async function seedHealthkitImport() {
-  const db = getHealthDb();
+  const db = getTestHealthDb();
   const batch = await previewImport(db, {
     sourceType: 'healthkit-companion',
     rawText: HEALTHKIT_BUNDLE_JSON,
@@ -23,7 +23,7 @@ export async function seedHealthkitImport() {
 }
 
 export async function seedReviewSnapshotInputs() {
-  const db = getHealthDb();
+  const db = getTestHealthDb();
   await saveDailyCheckin(db, {
     date: '2026-03-31',
     mood: 3,
@@ -134,7 +134,7 @@ export async function seedReviewSnapshotInputs() {
 }
 
 export async function seedAssessmentSafetyCase() {
-  await submitAssessment(getHealthDb(), {
+  await submitAssessment(getTestHealthDb(), {
     localDay: '2026-04-02',
     instrument: 'PHQ-9',
     itemResponses: [1, 1, 1, 1, 1, 1, 1, 1, 1],

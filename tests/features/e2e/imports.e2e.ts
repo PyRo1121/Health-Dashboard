@@ -3,6 +3,7 @@ import { HEALTHKIT_BUNDLE_JSON } from '../../support/fixtures/healthkit-bundle';
 import { SMART_FHIR_BUNDLE_JSON } from '../../support/fixtures/smart-fhir-bundle';
 import { ImportsPage } from '../../support/e2e/pages/ImportsPage';
 import { SettingsPage } from '../../support/e2e/pages/SettingsPage';
+import { formatHealthMetricLabel } from '$lib/core/domain/health-metrics';
 
 const resetHeaders = { 'x-health-reset-token': 'codex-e2e' };
 
@@ -53,7 +54,7 @@ test('smart sandbox import requires an owner profile and lands in timeline once 
   await importsPage.expectCommitted();
 
   await page.goto('/timeline');
-  await expect(page.getByText(/Systolic blood pressure/i)).toBeVisible();
+  await expect(page.getByText(new RegExp(formatHealthMetricLabel('Systolic blood pressure'), 'i'))).toBeVisible();
   await expect(page.getByText(/SMART on FHIR sandbox/i).first()).toBeVisible();
 });
 

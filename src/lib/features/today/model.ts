@@ -1,10 +1,7 @@
-import type {
-  DailyCheckinInput,
-  TodayPlannedWorkout,
-  TodaySnapshot,
-} from '$lib/features/today/service';
+import type { DailyCheckinInput } from '$lib/features/today/actions';
+import type { TodayPlannedWorkout, TodaySnapshot } from '$lib/features/today/snapshot';
+import type { TodayConfidence, TodayRecommendationAction } from '$lib/features/today/intelligence';
 import { buildHealthEventDisplay } from '$lib/core/shared/health-events';
-import { buildJournalIntentHref, type JournalIntentHref } from '$lib/features/journal/navigation';
 import type { PlannedMeal } from '$lib/core/domain/types';
 
 export const DEFAULT_TODAY_FORM = {
@@ -254,33 +251,74 @@ export function createPlannedMealProjectionRows(snapshot: TodaySnapshot | null):
   ];
 }
 
-export function createRecoveryJournalIntentHref(
-  snapshot: TodaySnapshot | null
-): JournalIntentHref | null {
-  if (!snapshot?.recoveryAdaptation) {
-    return null;
+export function createTodayConfidenceLabel(confidence: TodayConfidence): string {
+  switch (confidence) {
+    case 'high':
+      return 'High confidence';
+    case 'medium':
+      return 'Medium confidence';
+    default:
+      return 'Low confidence';
+  }
+}
+
+export function createTodayRecommendationRows(snapshot: TodaySnapshot | null): string[] {
+  const recommendation = snapshot?.intelligence.primaryRecommendation;
+  if (!recommendation) {
+    return [];
   }
 
-  const linkedEventIds = snapshot.events
-    .filter((event) => event.eventType === 'symptom' || event.eventType === 'anxiety-episode')
-    .map((event) => event.id)
-    .slice(0, 3);
+  return [
+    createTodayConfidenceLabel(recommendation.confidence),
+    ...recommendation.reasons,
+    ...recommendation.provenance.map((row) => row.label),
+  ];
+}
 
-  return buildJournalIntentHref({
-    source: 'today-recovery',
-    localDay: snapshot.date,
-    entryType: 'symptom_note',
-    title: 'Recovery note',
-    body: [
-      `Recovery note for ${snapshot.date}.`,
-      '',
-      'Signals noticed:',
-      ...snapshot.recoveryAdaptation.reasons.map((line) => `- ${line}`),
-      '',
-      'What felt hardest? What would make the rest of the day lighter?',
-    ].join('\n'),
-    linkedEventIds,
-  });
+export function createTodayRecommendationSupportRows(snapshot: TodaySnapshot | null): string[] {
+  const recommendation = snapshot?.intelligence.primaryRecommendation;
+  const rows: string[] = [];
+
+  if (!snapshot || !recommendation) {
+    return rows;
+  }
+
+  if (snapshot.plannedWorkout) {
+    rows.push(`Plan: ${snapshot.plannedWorkout.title} is still queued.`);
+  } else if (snapshot.plannedMeal) {
+    rows.push(`Plan: ${snapshot.plannedMeal.name} is the next queued meal.`);
+  } else if (snapshot.planItems.length) {
+    rows.push(`Plan: ${snapshot.planItems.length} item(s) are still queued today.`);
+  } else if (snapshot.plannedMealIssue || snapshot.plannedWorkoutIssue) {
+    rows.push('Plan: one planned item needs repair before it can be used today.');
+  }
+
+  rows.push(
+    `Nutrition: protein ${snapshot.nutritionSummary.protein}g, fiber ${snapshot.nutritionSummary.fiber}g so far.`
+  );
+
+  if (snapshot.recoveryAdaptation) {
+    rows.push(...snapshot.recoveryAdaptation.mealFallback.slice(0, 1));
+    rows.push(...snapshot.recoveryAdaptation.workoutFallback.slice(0, 1));
+
+    if (snapshot.recoveryAdaptation.mealRecommendation) {
+      rows.push(`Recovery meal: ${snapshot.recoveryAdaptation.mealRecommendation.title}.`);
+    }
+
+    if (snapshot.recoveryAdaptation.workoutRecommendation) {
+      rows.push(`Recovery workout: ${snapshot.recoveryAdaptation.workoutRecommendation.title}.`);
+    }
+  } else {
+    rows.push(`Signals: ${recommendation.summary}`);
+  }
+
+  return rows.slice(0, 6);
+}
+
+export function isTodayRecommendationHrefAction(
+  action: TodayRecommendationAction | null
+): action is Extract<TodayRecommendationAction, { kind: 'href' }> {
+  return action?.kind === 'href';
 }
 
 export function createDailyCheckinPayload(date: string, form: TodayFormState): DailyCheckinInput {

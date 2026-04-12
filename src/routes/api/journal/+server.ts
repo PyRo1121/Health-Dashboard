@@ -1,22 +1,36 @@
-import { createDbActionPostHandler } from '$lib/server/http/action-route';
+import type { RequestHandler } from './$types';
+import { journalRequestSchema } from '$lib/features/journal/contracts';
 import {
-  deleteJournalPageEntry,
-  hydrateJournalIntentPage,
-  loadJournalPage,
-  saveJournalPage,
-  type JournalPageState,
-} from '$lib/features/journal/controller';
-import type { JournalIntent } from '$lib/features/journal/navigation';
+  deleteJournalPageEntryServer,
+  hydrateJournalIntentPageServer,
+  loadJournalPageServer,
+  saveJournalPageServer,
+} from '$lib/server/journal/service';
 
-type JournalRequest =
-  | { action: 'load'; localDay: string; state: JournalPageState }
-  | { action: 'hydrateIntent'; state: JournalPageState; intent: JournalIntent }
-  | { action: 'save'; state: JournalPageState }
-  | { action: 'delete'; state: JournalPageState; id: string };
+export const POST: RequestHandler = async ({ request }) => {
+  let body: unknown;
 
-export const POST = createDbActionPostHandler<JournalRequest, JournalPageState>({
-  load: (db, body) => loadJournalPage(db, body.localDay, body.state),
-  hydrateIntent: (db, body) => hydrateJournalIntentPage(db, body.state, body.intent),
-  save: (db, body) => saveJournalPage(db, body.state),
-  delete: (db, body) => deleteJournalPageEntry(db, body.state, body.id),
-});
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Invalid journal request payload.', { status: 400 });
+  }
+
+  const parsed = journalRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response('Invalid journal request payload.', { status: 400 });
+  }
+
+  switch (parsed.data.action) {
+    case 'load':
+      return Response.json(await loadJournalPageServer(parsed.data.localDay, parsed.data.state));
+    case 'hydrateIntent':
+      return Response.json(
+        await hydrateJournalIntentPageServer(parsed.data.state, parsed.data.intent)
+      );
+    case 'save':
+      return Response.json(await saveJournalPageServer(parsed.data.state));
+    case 'delete':
+      return Response.json(await deleteJournalPageEntryServer(parsed.data.state, parsed.data.id));
+  }
+};

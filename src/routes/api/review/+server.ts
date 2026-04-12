@@ -1,25 +1,28 @@
-import { createDbActionPostHandler } from '$lib/server/http/action-route';
+import type { RequestHandler } from './$types';
 import {
-  loadReviewPage,
-  saveReviewExperimentPage,
-  type ReviewPageState,
-} from '$lib/features/review/controller';
-import { reviewRequestSchema, type ReviewRequest } from '$lib/features/review/contracts';
+  loadReviewPageServer,
+  saveReviewExperimentPageServer,
+} from '$lib/server/review/service';
+import { reviewRequestSchema } from '$lib/features/review/contracts';
 
-export const POST = createDbActionPostHandler<ReviewRequest, ReviewPageState>(
-  {
-    load: (db, body) => loadReviewPage(db, body.localDay),
-    saveExperiment: (db, body) => saveReviewExperimentPage(db, body.state),
-  },
-  undefined,
-  {
-    parseBody: async (request) => {
-      const parsed = reviewRequestSchema.safeParse(await request.json());
-      if (!parsed.success) {
-        throw new Error('Invalid review request payload.');
-      }
-      return parsed.data;
-    },
-    onParseError: () => new Response('Invalid review request payload.', { status: 400 }),
+export const POST: RequestHandler = async ({ request }) => {
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Invalid review request payload.', { status: 400 });
   }
-);
+
+  const parsed = reviewRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response('Invalid review request payload.', { status: 400 });
+  }
+
+  switch (parsed.data.action) {
+    case 'load':
+      return Response.json(await loadReviewPageServer(parsed.data.localDay));
+    case 'saveExperiment':
+      return Response.json(await saveReviewExperimentPageServer(parsed.data.state));
+  }
+};

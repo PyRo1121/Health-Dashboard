@@ -1,37 +1,19 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { HealthDatabase } from '$lib/core/db/types';
 
 describe('timeline route', () => {
   afterEach(() => {
-    vi.doUnmock('$lib/features/timeline/controller');
-    vi.doUnmock('$lib/server/http/action-route');
+    vi.doUnmock('$lib/server/timeline/service');
     vi.restoreAllMocks();
     vi.resetModules();
   });
 
   async function importRoute(overrides: {
-    db?: HealthDatabase;
-    loadTimelinePage?: ReturnType<typeof vi.fn>;
+    loadTimelinePageServer?: ReturnType<typeof vi.fn>;
   }) {
-    const db = overrides.db ?? ({} as HealthDatabase);
-    const actual = await vi.importActual<typeof import('$lib/server/http/action-route')>(
-      '$lib/server/http/action-route'
-    );
-
-    vi.doMock('$lib/server/http/action-route', () => ({
-      ...actual,
-      createDbActionPostHandler: (
-        handlers: Parameters<typeof actual.createDbActionPostHandler>[0]
-      ) =>
-        actual.createDbActionPostHandler(handlers, {
-          withDb: async (run) => await run(db),
-          toResponse: (body) => Response.json(body),
-        }),
-    }));
-    vi.doMock('$lib/features/timeline/controller', () => ({
-      loadTimelinePage:
-        overrides.loadTimelinePage ??
-        vi.fn(async (_db: HealthDatabase, state: unknown) => ({
+    vi.doMock('$lib/server/timeline/service', () => ({
+      loadTimelinePageServer:
+        overrides.loadTimelinePageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
           loading: false,
           items: [],
@@ -41,14 +23,9 @@ describe('timeline route', () => {
     return await import('../../../../src/routes/api/timeline/+server.ts');
   }
 
-  it('loads timeline page state through the action route', async () => {
-    const db = {} as HealthDatabase;
-    const state = {
-      loading: true,
-      filter: 'native-companion',
-      items: [],
-    };
-    const loadTimelinePage = vi.fn(async () => ({
+  it('loads timeline page state through the server route', async () => {
+    const state = { loading: true, filter: 'native-companion', items: [] };
+    const loadTimelinePageServer = vi.fn(async () => ({
       ...state,
       loading: false,
       items: [
@@ -62,7 +39,7 @@ describe('timeline route', () => {
         },
       ],
     }));
-    const { POST } = await importRoute({ db, loadTimelinePage });
+    const { POST } = await importRoute({ loadTimelinePageServer });
 
     const response = await POST({
       request: new Request('http://health.test/api/timeline', {
@@ -78,6 +55,19 @@ describe('timeline route', () => {
         items: [expect.objectContaining({ title: 'Resting heart rate' })],
       })
     );
-    expect(loadTimelinePage).toHaveBeenCalledWith(db, state);
+    expect(loadTimelinePageServer).toHaveBeenCalledWith(state);
+  });
+
+  it('returns 400 for invalid timeline payloads', async () => {
+    const { POST } = await importRoute({});
+    const response = await POST({
+      request: new Request('http://health.test/api/timeline', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'load' }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid timeline request payload.');
   });
 });

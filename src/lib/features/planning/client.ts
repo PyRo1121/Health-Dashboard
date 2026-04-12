@@ -6,29 +6,31 @@ import {
 } from '$lib/core/http/feature-client';
 import {
   addManualPlanningGroceryItemPage as addManualPlanningGroceryItemPageController,
+  deletePlanningSlotPage as deletePlanningSlotPageController,
+  markPlanningSlotStatusPage as markPlanningSlotStatusPageController,
+  movePlanningSlotPage as movePlanningSlotPageController,
+  removeManualPlanningGroceryItemPage as removeManualPlanningGroceryItemPageController,
+  savePlanningSlotPage as savePlanningSlotPageController,
+  saveWorkoutTemplatePage as saveWorkoutTemplatePageController,
+  togglePlanningGroceryStatePage as togglePlanningGroceryStatePageController,
+} from './actions';
+import {
   addEmptyExerciseToWorkoutTemplate,
   addExerciseToWorkoutTemplate,
   applyExerciseSearchResults,
   createPlanningPageState,
-  deletePlanningSlotPage as deletePlanningSlotPageController,
   loadPlanningPage as loadPlanningPageController,
-  markPlanningSlotStatusPage as markPlanningSlotStatusPageController,
-  movePlanningSlotPage as movePlanningSlotPageController,
-  removeManualPlanningGroceryItemPage as removeManualPlanningGroceryItemPageController,
   removeWorkoutTemplateExercise,
-  savePlanningSlotPage as savePlanningSlotPageController,
-  saveWorkoutTemplatePage as saveWorkoutTemplatePageController,
-  togglePlanningGroceryStatePage as togglePlanningGroceryStatePageController,
   updateWorkoutTemplateExerciseField,
   updateExerciseSearchQuery,
   type PlanningPageState,
-} from './controller';
+} from './state';
 import { searchExerciseCatalog } from '$lib/features/movement/service';
 
 export { createGroceryDraftState, createPlanningPageState };
 
-const planningClient = createFeatureActionClient('/api/plan');
-const movementSearchClient = createFeatureRequestClient('/api/movement/search-exercises');
+const planningClient = createFeatureActionClient<Parameters<typeof savePlanningSlotPageController>[0]>('/api/plan');
+const movementSearchClient = createFeatureRequestClient<never>('/api/movement/search-exercises');
 
 export async function loadPlanningPage(
   localDay = currentLocalDay(),

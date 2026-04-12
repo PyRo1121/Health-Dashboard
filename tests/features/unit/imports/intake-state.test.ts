@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ImportBatch } from '$lib/core/domain/types';
-import type { ImportPayloadSummary } from '$lib/features/imports/service';
+import type { ImportPayloadSummary } from '$lib/features/imports/core';
 import {
   allowsHelperLinks,
   applyCommitErrorState,

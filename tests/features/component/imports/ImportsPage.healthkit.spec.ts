@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetHealthDb } from '$lib/core/db/client';
+import { resetTestHealthDb } from '$lib/core/db/test-client';
 import {
   HEALTHKIT_BUNDLE_JSON,
   INVALID_HEALTHKIT_BUNDLE_VERSION_JSON,
@@ -21,7 +21,7 @@ import {
 describe('Imports route healthkit flows', () => {
   beforeEach(async () => {
     clearOwnerProfile();
-    await resetHealthDb();
+    await resetTestHealthDb();
   });
 
   it('previews and commits a HealthKit companion bundle', async () => {

@@ -1,5 +1,5 @@
 import type { FoodEntry, PlannedMeal, RecipeCatalogItem } from '$lib/core/domain/types';
-import type { FoodLookupResult } from '$lib/features/nutrition/service';
+import type { FoodLookupResult } from '$lib/features/nutrition/types';
 import type { NutritionRecommendation } from './recommend';
 
 export const nutritionMealTypeOptions = [

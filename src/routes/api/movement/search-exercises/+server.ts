@@ -1,27 +1,26 @@
+import type { RequestHandler } from './$types';
 import type { ExerciseCatalogItem } from '$lib/core/domain/types';
-import { createDbQueryPostHandler } from '$lib/server/http/action-route';
-import {
-  movementQueryRequestSchema,
-  type MovementQueryRequest,
-} from '$lib/features/movement/contracts';
-import { upsertExerciseCatalogItems } from '$lib/features/movement/service';
-import { searchWgerExercises } from '$lib/server/movement/wger';
+import { movementQueryRequestSchema } from '$lib/features/movement/contracts';
+import { searchMovementExercisesServer } from '$lib/server/movement/service';
 
-export const POST = createDbQueryPostHandler<MovementQueryRequest, ExerciseCatalogItem[]>(
-  async (db, query) => {
-    const results = await searchWgerExercises(query);
-    return await upsertExerciseCatalogItems(db, results);
-  },
-  undefined,
-  {
-    parseBody: async (request) => {
-      const parsed = movementQueryRequestSchema.safeParse(await request.json());
-      if (!parsed.success) {
-        throw new Error('Invalid exercise search request payload.');
-      }
-      return parsed.data;
-    },
-    onParseError: () => new Response('Invalid exercise search request payload.', { status: 400 }),
-    emptyResult: [],
+export const POST: RequestHandler = async ({ request }) => {
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Invalid exercise search request payload.', { status: 400 });
   }
-);
+
+  const parsed = movementQueryRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response('Invalid exercise search request payload.', { status: 400 });
+  }
+
+  const query = parsed.data.query?.trim() ?? '';
+  if (!query) {
+    return Response.json([] satisfies ExerciseCatalogItem[]);
+  }
+
+  return Response.json(await searchMovementExercisesServer(query));
+};

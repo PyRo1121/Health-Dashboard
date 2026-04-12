@@ -1,4 +1,3 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import type {
   FavoriteMeal,
   FoodCatalogItem,
@@ -7,17 +6,21 @@ import type {
   RecipeCatalogItem,
 } from '$lib/core/domain/types';
 import { createNutritionForm, mergeNutritionFormWithDraft, type NutritionFormState } from './model';
-import { getNutritionPlannedMealResolution } from './planned-meal-resolution';
+import { getNutritionPlannedMealResolution, type NutritionPlannedMealStore } from './planned-meal-resolution';
 import {
   attachNutrientsToFoodEntry,
-  buildNutritionRecommendationContext,
-  buildDailyNutritionSummary,
+  searchFoodData,
+} from './lookup';
+import type { FoodLookupResult } from './types';
+import { buildNutritionRecommendationContext, buildDailyNutritionSummary, type NutritionRecommendationContextStore } from './summary';
+import {
   listFoodCatalogItems,
   listFavoriteMeals,
   listRecipeCatalogItems,
-  searchFoodData,
-  type FoodLookupResult,
-} from './service';
+  type FavoriteMealsStore,
+  type FoodCatalogItemsStore,
+  type RecipeCatalogItemsStore,
+} from './store';
 
 type NutritionSummary = {
   calories: number;
@@ -34,6 +37,13 @@ type NutritionRecommendationContext = {
   anxietyCount: number;
   symptomCount: number;
 };
+
+export interface NutritionPageStorage
+  extends NutritionRecommendationContextStore,
+    FavoriteMealsStore,
+    FoodCatalogItemsStore,
+    RecipeCatalogItemsStore,
+    NutritionPlannedMealStore {}
 
 export interface NutritionPageState {
   loading: boolean;
@@ -115,17 +125,17 @@ export function createNutritionPageState(): NutritionPageState {
 }
 
 export async function loadNutritionPage(
-  db: HealthDatabase,
+  store: NutritionPageStorage,
   localDay: string,
   state: NutritionPageState
 ): Promise<NutritionPageState> {
   const data = await Promise.all([
-    buildDailyNutritionSummary(db, localDay),
-    listFavoriteMeals(db),
-    listFoodCatalogItems(db),
-    listRecipeCatalogItems(db),
-    getNutritionPlannedMealResolution(db, localDay),
-    buildNutritionRecommendationContext(db, localDay),
+    buildDailyNutritionSummary(store, localDay),
+    listFavoriteMeals(store),
+    listFoodCatalogItems(store),
+    listRecipeCatalogItems(store),
+    getNutritionPlannedMealResolution(store, localDay),
+    buildNutritionRecommendationContext(store, localDay),
   ]);
   const [
     summary,
@@ -156,11 +166,11 @@ export async function loadNutritionPage(
 }
 
 export async function reloadNutritionPageState(
-  db: HealthDatabase,
+  store: NutritionPageStorage,
   state: NutritionPageState,
   overrides: Partial<NutritionPageState> = {}
 ): Promise<NutritionPageState> {
-  const next = await loadNutritionPage(db, state.localDay, state);
+  const next = await loadNutritionPage(store, state.localDay, state);
   return {
     ...next,
     ...overrides,

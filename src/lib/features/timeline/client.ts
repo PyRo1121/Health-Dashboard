@@ -8,7 +8,7 @@ import {
 
 export { createTimelinePageState, setTimelineFilter };
 
-const timelineClient = createFeatureActionClient('/api/timeline');
+const timelineClient = createFeatureActionClient<Parameters<typeof loadTimelinePageController>[0]>('/api/timeline');
 
 export async function loadTimelinePage(state: TimelinePageState): Promise<TimelinePageState> {
   return await timelineClient.stateAction('load', state, (db) =>

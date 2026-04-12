@@ -1,4 +1,3 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import {
   createLocalDayPageState,
   loadLocalDayPageState,
@@ -10,8 +9,11 @@ import {
   logCravingEvent,
   logLapseEvent,
   setSobrietyStatusForDay,
+  type SobrietyStorage,
 } from '$lib/features/sobriety/service';
-import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
+import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
+
+export interface SobrietyPageStorage extends SobrietyStorage, ReviewStorage {}
 
 export interface SobrietyPageState {
   loading: boolean;
@@ -35,14 +37,14 @@ export function createSobrietyPageState(): SobrietyPageState {
 }
 
 export async function loadSobrietyPage(
-  db: HealthDatabase,
+  store: SobrietyPageStorage,
   localDay: string,
   state: SobrietyPageState
 ): Promise<SobrietyPageState> {
   return await loadLocalDayPageState(
     state,
     localDay,
-    (day) => buildSobrietyTrendSummary(db, day),
+    (day) => buildSobrietyTrendSummary(store, day),
     (current, nextLocalDay, summary) => ({
       ...current,
       loading: false,
@@ -53,13 +55,13 @@ export async function loadSobrietyPage(
 }
 
 async function reloadSobrietyPageState(
-  db: HealthDatabase,
+  store: SobrietyPageStorage,
   state: SobrietyPageState,
   overrides: Partial<SobrietyPageState> = {}
 ): Promise<SobrietyPageState> {
   return await reloadLocalDayPageState(
     state,
-    (localDay) => buildSobrietyTrendSummary(db, localDay),
+    (localDay) => buildSobrietyTrendSummary(store, localDay),
     (current, summary) => ({
       ...current,
       loading: false,
@@ -69,46 +71,52 @@ async function reloadSobrietyPageState(
   );
 }
 
+async function refreshSobrietyPageAfterMutation(
+  store: SobrietyPageStorage,
+  state: SobrietyPageState,
+  overrides: Partial<Pick<SobrietyPageState, 'saveNotice' | 'cravingNote' | 'lapseNote' | 'recoveryAction'>>
+): Promise<SobrietyPageState> {
+  await refreshWeeklyReviewArtifactsSafely(store, state.localDay);
+  return await reloadSobrietyPageState(store, state, overrides);
+}
+
 export async function markSobrietyStatus(
-  db: HealthDatabase,
+  store: SobrietyPageStorage,
   state: SobrietyPageState,
   status: 'sober' | 'recovery',
   notice: string
 ): Promise<SobrietyPageState> {
-  await setSobrietyStatusForDay(db, { localDay: state.localDay, status });
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  return await reloadSobrietyPageState(db, state, {
+  await setSobrietyStatusForDay(store, { localDay: state.localDay, status });
+  return await refreshSobrietyPageAfterMutation(store, state, {
     saveNotice: notice,
   });
 }
 
 export async function saveSobrietyCraving(
-  db: HealthDatabase,
+  store: SobrietyPageStorage,
   state: SobrietyPageState
 ): Promise<SobrietyPageState> {
-  await logCravingEvent(db, {
+  await logCravingEvent(store, {
     localDay: state.localDay,
     cravingScore: Number(state.cravingScore),
     note: state.cravingNote.trim(),
   });
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  return await reloadSobrietyPageState(db, state, {
+  return await refreshSobrietyPageAfterMutation(store, state, {
     saveNotice: 'Craving logged.',
     cravingNote: '',
   });
 }
 
 export async function saveSobrietyLapse(
-  db: HealthDatabase,
+  store: SobrietyPageStorage,
   state: SobrietyPageState
 ): Promise<SobrietyPageState> {
-  await logLapseEvent(db, {
+  await logLapseEvent(store, {
     localDay: state.localDay,
     note: state.lapseNote.trim(),
     recoveryAction: state.recoveryAction.trim(),
   });
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  return await reloadSobrietyPageState(db, state, {
+  return await refreshSobrietyPageAfterMutation(store, state, {
     saveNotice: 'Lapse context logged.',
   });
 }

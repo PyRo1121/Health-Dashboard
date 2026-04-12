@@ -1,5 +1,6 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import type { HealthDbHealthEventsStore, HealthDbHealthTemplatesStore } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
+import { isHealthMetricVisibleOnSurface, matchesHealthMetric } from '$lib/core/domain/health-metrics';
 import type {
   AnxietyHealthEventPayload,
   HealthEvent,
@@ -22,6 +23,12 @@ const MANUAL_HEALTH_EVENT_TYPES: ReadonlySet<string> = new Set([
   'medication-dose',
   'supplement-dose',
 ]);
+
+export type HealthEventsStore = HealthDbHealthEventsStore;
+
+export type HealthTemplatesStore = HealthDbHealthTemplatesStore;
+
+export interface HealthStorage extends HealthEventsStore, HealthTemplatesStore {}
 
 export interface SymptomLogInput {
   localDay: string;
@@ -73,15 +80,16 @@ function normalizeOptionalNumber(value?: number): number | undefined {
   return Number.isFinite(value) ? value : undefined;
 }
 
-function createManualHealthEvent(input: {
+export function buildManualHealthEvent(input: {
   localDay: string;
   eventType: ManualHealthEventType;
   payload: ManualHealthEventPayload;
   value?: number;
   unit?: string;
   sourceRecordId?: string;
+  timestamp?: string;
 }): HealthEvent {
-  const timestamp = nowIso();
+  const timestamp = input.timestamp ?? nowIso();
   const sourceRecordId = input.sourceRecordId ?? `${input.eventType}:${crypto.randomUUID()}`;
 
   return {
@@ -104,24 +112,20 @@ function createManualHealthEvent(input: {
 }
 
 export function isHealthPageEvent(event: Pick<HealthEvent, 'eventType'>): boolean {
-  return event.eventType === 'sleep-duration' || MANUAL_HEALTH_EVENT_TYPES.has(event.eventType);
+  return (
+    isHealthMetricVisibleOnSurface(event.eventType, 'health') ||
+    MANUAL_HEALTH_EVENT_TYPES.has(event.eventType)
+  );
 }
 
-export async function listHealthEventsForDay(
-  db: HealthDatabase,
-  localDay: string
-): Promise<HealthEvent[]> {
-  const events = await db.healthEvents.where('localDay').equals(localDay).toArray();
-  return events
+export function sortHealthPageEvents(events: HealthEvent[]): HealthEvent[] {
+  return [...events]
     .filter((event) => isHealthPageEvent(event))
-    .sort((left, right) =>
-      sortHealthEventTimestamp(right).localeCompare(sortHealthEventTimestamp(left))
-    );
+    .sort((left, right) => sortHealthEventTimestamp(right).localeCompare(sortHealthEventTimestamp(left)));
 }
 
-export async function listHealthTemplates(db: HealthDatabase): Promise<HealthTemplate[]> {
-  const templates = await db.healthTemplates.toArray();
-  return templates
+export function sortActiveHealthTemplates(templates: HealthTemplate[]): HealthTemplate[] {
+  return [...templates]
     .filter((template) => !template.archived)
     .sort((left, right) => {
       if (left.templateType !== right.templateType) {
@@ -131,107 +135,58 @@ export async function listHealthTemplates(db: HealthDatabase): Promise<HealthTem
     });
 }
 
-export async function buildHealthSnapshot(
-  db: HealthDatabase,
-  localDay: string
-): Promise<HealthSnapshot> {
-  const [events, templates] = await Promise.all([
-    listHealthEventsForDay(db, localDay),
-    listHealthTemplates(db),
-  ]);
+export function buildHealthSnapshotFromData(
+  localDay: string,
+  events: HealthEvent[],
+  templates: HealthTemplate[]
+): HealthSnapshot {
+  const visibleEvents = sortHealthPageEvents(events);
+  const visibleTemplates = sortActiveHealthTemplates(templates);
 
   return {
     localDay,
-    events,
-    templates,
-    sleepEvent: events.find((event) => event.eventType === 'sleep-duration') ?? null,
+    events: visibleEvents,
+    templates: visibleTemplates,
+    sleepEvent:
+      visibleEvents.find((event) => matchesHealthMetric(event.eventType, 'sleep-duration')) ?? null,
   };
 }
 
-export async function logSymptomEvent(
-  db: HealthDatabase,
-  input: SymptomLogInput
-): Promise<HealthEvent> {
-  const payload: SymptomHealthEventPayload = {
-    kind: 'symptom',
-    symptom: input.symptom.trim(),
-    severity: input.severity,
-    note: normalizeOptionalText(input.note),
-  };
-
-  const event = createManualHealthEvent({
-    localDay: input.localDay,
-    eventType: 'symptom',
-    payload,
-    value: input.severity,
-  });
-
-  await db.healthEvents.put(event);
-  return event;
+export async function listHealthEventsForDay(
+  store: HealthEventsStore,
+  localDay: string
+): Promise<HealthEvent[]> {
+  const events = await store.healthEvents.where('localDay').equals(localDay).toArray();
+  return sortHealthPageEvents(events);
 }
 
-export async function logAnxietyEvent(
-  db: HealthDatabase,
-  input: AnxietyLogInput
-): Promise<HealthEvent> {
-  const payload: AnxietyHealthEventPayload = {
-    kind: 'anxiety',
-    intensity: input.intensity,
-    trigger: normalizeOptionalText(input.trigger),
-    durationMinutes: normalizeOptionalNumber(input.durationMinutes),
-    note: normalizeOptionalText(input.note),
-  };
-
-  const event = createManualHealthEvent({
-    localDay: input.localDay,
-    eventType: 'anxiety-episode',
-    payload,
-    value: input.intensity,
-  });
-
-  await db.healthEvents.put(event);
-  return event;
+export async function listHealthTemplates(store: HealthTemplatesStore): Promise<HealthTemplate[]> {
+  return sortActiveHealthTemplates(await store.healthTemplates.toArray());
 }
 
-export async function logSleepNoteEvent(
-  db: HealthDatabase,
-  input: SleepNoteLogInput
-): Promise<HealthEvent> {
-  const payload: SleepNoteHealthEventPayload = {
-    kind: 'sleep-note',
-    note: input.note.trim(),
-    restfulness: normalizeOptionalNumber(input.restfulness),
-    context: normalizeOptionalText(input.context),
-  };
+export async function buildHealthSnapshot(
+  store: HealthStorage,
+  localDay: string
+): Promise<HealthSnapshot> {
+  const [events, templates] = await Promise.all([
+    listHealthEventsForDay(store, localDay),
+    listHealthTemplates(store),
+  ]);
 
-  const event = createManualHealthEvent({
-    localDay: input.localDay,
-    eventType: 'sleep-note',
-    payload,
-    value: input.restfulness,
-  });
-
-  await db.healthEvents.put(event);
-  return event;
+  return buildHealthSnapshotFromData(localDay, events, templates);
 }
 
-export async function saveHealthTemplate(
-  db: HealthDatabase,
-  input: CreateHealthTemplateInput
-): Promise<HealthTemplate> {
-  const timestamp = nowIso();
+export function buildHealthTemplateRecord(
+  existing: HealthTemplate | undefined,
+  input: CreateHealthTemplateInput,
+  timestamp: string = nowIso()
+): HealthTemplate {
   const normalizedLabel = input.label.trim();
   const normalizedUnit = normalizeOptionalText(input.defaultUnit);
   const normalizedNote = normalizeOptionalText(input.note);
   const normalizedDose = normalizeOptionalNumber(input.defaultDose);
-  const existing = (await db.healthTemplates.toArray()).find(
-    (template) =>
-      !template.archived &&
-      template.templateType === input.templateType &&
-      template.label.toLowerCase() === normalizedLabel.toLowerCase()
-  );
 
-  const template: HealthTemplate = {
+  return {
     ...updateRecordMeta(
       existing,
       existing?.id ?? `health-template:${input.templateType}:${crypto.randomUUID()}`,
@@ -244,16 +199,97 @@ export async function saveHealthTemplate(
     note: normalizedNote,
     archived: false,
   };
+}
 
-  await db.healthTemplates.put(template);
+export async function logSymptomEvent(
+  store: HealthEventsStore,
+  input: SymptomLogInput
+): Promise<HealthEvent> {
+  const payload: SymptomHealthEventPayload = {
+    kind: 'symptom',
+    symptom: input.symptom.trim(),
+    severity: input.severity,
+    note: normalizeOptionalText(input.note),
+  };
+
+  const event = buildManualHealthEvent({
+    localDay: input.localDay,
+    eventType: 'symptom',
+    payload,
+    value: input.severity,
+  });
+
+  await store.healthEvents.put(event);
+  return event;
+}
+
+export async function logAnxietyEvent(
+  store: HealthEventsStore,
+  input: AnxietyLogInput
+): Promise<HealthEvent> {
+  const payload: AnxietyHealthEventPayload = {
+    kind: 'anxiety',
+    intensity: input.intensity,
+    trigger: normalizeOptionalText(input.trigger),
+    durationMinutes: normalizeOptionalNumber(input.durationMinutes),
+    note: normalizeOptionalText(input.note),
+  };
+
+  const event = buildManualHealthEvent({
+    localDay: input.localDay,
+    eventType: 'anxiety-episode',
+    payload,
+    value: input.intensity,
+  });
+
+  await store.healthEvents.put(event);
+  return event;
+}
+
+export async function logSleepNoteEvent(
+  store: HealthEventsStore,
+  input: SleepNoteLogInput
+): Promise<HealthEvent> {
+  const payload: SleepNoteHealthEventPayload = {
+    kind: 'sleep-note',
+    note: input.note.trim(),
+    restfulness: normalizeOptionalNumber(input.restfulness),
+    context: normalizeOptionalText(input.context),
+  };
+
+  const event = buildManualHealthEvent({
+    localDay: input.localDay,
+    eventType: 'sleep-note',
+    payload,
+    value: input.restfulness,
+  });
+
+  await store.healthEvents.put(event);
+  return event;
+}
+
+export async function saveHealthTemplate(
+  store: HealthTemplatesStore,
+  input: CreateHealthTemplateInput
+): Promise<HealthTemplate> {
+  const existing = (await store.healthTemplates.toArray()).find(
+    (template) =>
+      !template.archived &&
+      template.templateType === input.templateType &&
+      template.label.toLowerCase() === input.label.trim().toLowerCase()
+  );
+
+  const template = buildHealthTemplateRecord(existing, input);
+
+  await store.healthTemplates.put(template);
   return template;
 }
 
 export async function quickLogHealthTemplate(
-  db: HealthDatabase,
+  store: HealthStorage,
   input: { localDay: string; templateId: string }
 ): Promise<HealthEvent> {
-  const template = await db.healthTemplates.get(input.templateId);
+  const template = await store.healthTemplates.get(input.templateId);
   if (!template || template.archived) {
     throw new Error('Health template not found');
   }
@@ -270,7 +306,7 @@ export async function quickLogHealthTemplate(
 
   const eventType: ManualHealthEventType =
     template.templateType === 'medication' ? 'medication-dose' : 'supplement-dose';
-  const event = createManualHealthEvent({
+  const event = buildManualHealthEvent({
     localDay: input.localDay,
     eventType,
     payload,
@@ -279,6 +315,6 @@ export async function quickLogHealthTemplate(
     sourceRecordId: template.id,
   });
 
-  await db.healthEvents.put(event);
+  await store.healthEvents.put(event);
   return event;
 }

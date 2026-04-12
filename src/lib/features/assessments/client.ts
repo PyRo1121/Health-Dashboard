@@ -11,7 +11,7 @@ import {
 
 export { createAssessmentsPageState, setAssessmentsInstrument };
 
-const assessmentsClient = createFeatureActionClient('/api/assessments');
+const assessmentsClient = createFeatureActionClient<Parameters<typeof loadAssessmentsPageController>[0]>('/api/assessments');
 
 export async function loadAssessmentsPage(
   state: AssessmentsPageState,

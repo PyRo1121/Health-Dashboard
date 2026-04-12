@@ -1,13 +1,13 @@
 import { render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getHealthDb, resetHealthDb } from '$lib/core/db/client';
-import { commitImportBatch, previewImport } from '$lib/features/imports/service';
+import { getTestHealthDb, resetTestHealthDb } from '$lib/core/db/test-client';
+import { commitImportBatch, previewImport } from '$lib/features/imports/store';
 import { HEALTHKIT_BUNDLE_JSON } from '../../../support/fixtures/healthkit-bundle';
 import IntegrationsPage from '../../../../src/routes/integrations/+page.svelte';
 
 describe('Integrations route', () => {
   beforeEach(async () => {
-    await resetHealthDb();
+    await resetTestHealthDb();
   });
 
   it('shows the HealthKit companion manifest and import handoff', async () => {
@@ -36,7 +36,7 @@ describe('Integrations route', () => {
   });
 
   it('shows a connected summary after a native companion bundle is committed', async () => {
-    const db = getHealthDb();
+    const db = getTestHealthDb();
     const batch = await previewImport(db, {
       sourceType: 'healthkit-companion',
       rawText: HEALTHKIT_BUNDLE_JSON,

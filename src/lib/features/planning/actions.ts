@@ -1,4 +1,3 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import type { GroceryItem, PlanSlot } from '$lib/core/domain/types';
 import {
   removeManualGroceryItem,
@@ -7,13 +6,35 @@ import {
 } from '$lib/features/groceries/service';
 import { createWorkoutTemplateForm, normalizeExerciseDrafts } from '$lib/features/movement/model';
 import { saveWorkoutTemplate } from '$lib/features/movement/service';
-import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
-import { deletePlanSlot, movePlanSlot, savePlanSlot, updatePlanSlotStatus } from './service';
+import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
+import {
+  deletePlanSlot,
+  movePlanSlot,
+  savePlanSlot,
+  updatePlanSlotStatus,
+  type PlanningStorage,
+} from './service';
 import { createPlanningSlotForm } from './model';
 import { type PlanningPageState, reloadPlanningPageState } from './state';
 
+export interface PlanningActionsStorage extends PlanningStorage, ReviewStorage {}
+
+async function refreshPlanningPageAfterMutation(
+  store: PlanningActionsStorage,
+  state: PlanningPageState,
+  notice: Partial<
+    Pick<
+      PlanningPageState,
+      'planNotice' | 'workoutTemplateNotice' | 'groceryNotice' | 'slotForm' | 'workoutTemplateForm'
+    >
+  >
+): Promise<PlanningPageState> {
+  await refreshWeeklyReviewArtifactsSafely(store, state.localDay);
+  return await reloadPlanningPageState(store, state, notice);
+}
+
 export async function savePlanningSlotPage(
-  db: HealthDatabase,
+  store: PlanningActionsStorage,
   state: PlanningPageState
 ): Promise<PlanningPageState> {
   if (!state.weeklyPlan) {
@@ -50,7 +71,7 @@ export async function savePlanningSlotPage(
 
   if (slotType === 'meal') {
     if (state.slotForm.mealSource === 'recipe') {
-      const recipe = await db.recipeCatalogItems.get(state.slotForm.recipeId);
+      const recipe = await store.recipeCatalogItems.get(state.slotForm.recipeId);
       if (!recipe) {
         return {
           ...state,
@@ -61,7 +82,7 @@ export async function savePlanningSlotPage(
       itemType = 'recipe';
       itemId = recipe.id;
     } else {
-      const food = await db.foodCatalogItems.get(state.slotForm.foodCatalogItemId);
+      const food = await store.foodCatalogItems.get(state.slotForm.foodCatalogItemId);
       if (!food) {
         return {
           ...state,
@@ -76,7 +97,7 @@ export async function savePlanningSlotPage(
   }
 
   if (slotType === 'workout') {
-    const template = await db.workoutTemplates.get(state.slotForm.workoutTemplateId);
+    const template = await store.workoutTemplates.get(state.slotForm.workoutTemplateId);
     if (!template) {
       return {
         ...state,
@@ -89,7 +110,7 @@ export async function savePlanningSlotPage(
     itemId = template.id;
   }
 
-  await savePlanSlot(db, {
+  await savePlanSlot(store, {
     weeklyPlanId: state.weeklyPlan.id,
     localDay: state.slotForm.localDay,
     slotType,
@@ -98,84 +119,78 @@ export async function savePlanningSlotPage(
     title,
     notes: state.slotForm.notes,
   });
-  await refreshWeeklyReviewArtifactsSafely(db, state.slotForm.localDay);
-
-  return await reloadPlanningPageState(db, state, {
+  return await refreshPlanningPageAfterMutation(store, state, {
     planNotice: 'Plan slot saved.',
     slotForm: createPlanningSlotForm(state.slotForm.localDay),
   });
 }
 
 export async function saveWorkoutTemplatePage(
-  db: HealthDatabase,
+  store: PlanningActionsStorage,
   state: PlanningPageState
 ): Promise<PlanningPageState> {
   const exerciseRefs = normalizeExerciseDrafts(state.workoutTemplateForm.exercises);
-  await saveWorkoutTemplate(db, {
+  await saveWorkoutTemplate(store, {
     title: state.workoutTemplateForm.title,
     goal: state.workoutTemplateForm.goal,
     exerciseRefs,
   });
 
-  return await reloadPlanningPageState(db, state, {
+  return await refreshPlanningPageAfterMutation(store, state, {
     workoutTemplateNotice: 'Workout template saved.',
     workoutTemplateForm: createWorkoutTemplateForm(),
   });
 }
 
 export async function markPlanningSlotStatusPage(
-  db: HealthDatabase,
+  store: PlanningActionsStorage,
   state: PlanningPageState,
   slotId: string,
   status: PlanSlot['status']
 ): Promise<PlanningPageState> {
-  await updatePlanSlotStatus(db, slotId, status);
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  return await reloadPlanningPageState(db, state, {
+  await updatePlanSlotStatus(store, slotId, status);
+  return await refreshPlanningPageAfterMutation(store, state, {
     planNotice: `Plan slot marked ${status}.`,
   });
 }
 
 export async function deletePlanningSlotPage(
-  db: HealthDatabase,
+  store: PlanningActionsStorage,
   state: PlanningPageState,
   slotId: string
 ): Promise<PlanningPageState> {
-  await deletePlanSlot(db, slotId);
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  return await reloadPlanningPageState(db, state, {
+  await deletePlanSlot(store, slotId);
+  return await refreshPlanningPageAfterMutation(store, state, {
     planNotice: 'Plan slot removed.',
   });
 }
 
 export async function movePlanningSlotPage(
-  db: HealthDatabase,
+  store: PlanningActionsStorage,
   state: PlanningPageState,
   slotId: string,
   direction: 'up' | 'down'
 ): Promise<PlanningPageState> {
-  await movePlanSlot(db, slotId, direction);
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  return await reloadPlanningPageState(db, state, {
+  await movePlanSlot(store, slotId, direction);
+  return await refreshPlanningPageAfterMutation(store, state, {
     planNotice: `Plan slot moved ${direction}.`,
   });
 }
 
 export async function togglePlanningGroceryStatePage(
-  db: HealthDatabase,
+  store: PlanningActionsStorage,
   state: PlanningPageState,
   itemId: string,
   patch: Pick<GroceryItem, 'checked' | 'excluded' | 'onHand'>
 ): Promise<PlanningPageState> {
-  await setGroceryItemState(db, itemId, patch);
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  return await reloadPlanningPageState(db, state, {
+  await setGroceryItemState(store, itemId, patch);
+  return await refreshPlanningPageAfterMutation(store, state, {
     groceryNotice: 'Grocery item updated.',
   });
 }
 
 export async function addManualPlanningGroceryItemPage(
-  db: HealthDatabase,
+  store: PlanningActionsStorage,
   state: PlanningPageState,
   draft: { label: string; quantityText: string }
 ): Promise<PlanningPageState> {
@@ -190,23 +205,21 @@ export async function addManualPlanningGroceryItemPage(
     };
   }
 
-  await saveManualGroceryItem(db, state.weeklyPlan.id, {
+  await saveManualGroceryItem(store, state.weeklyPlan.id, {
     rawLabel: [draft.quantityText.trim(), draft.label.trim()].filter(Boolean).join(' '),
   });
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  return await reloadPlanningPageState(db, state, {
+  return await refreshPlanningPageAfterMutation(store, state, {
     groceryNotice: 'Manual grocery item added.',
   });
 }
 
 export async function removeManualPlanningGroceryItemPage(
-  db: HealthDatabase,
+  store: PlanningActionsStorage,
   state: PlanningPageState,
   itemId: string
 ): Promise<PlanningPageState> {
-  await removeManualGroceryItem(db, itemId);
-  await refreshWeeklyReviewArtifactsSafely(db, state.localDay);
-  return await reloadPlanningPageState(db, state, {
+  await removeManualGroceryItem(store, itemId);
+  return await refreshPlanningPageAfterMutation(store, state, {
     groceryNotice: 'Manual grocery item removed.',
   });
 }

@@ -1,13 +1,14 @@
-import 'fake-indexeddb/auto';
-
 import { afterEach, beforeEach } from 'vitest';
-import { createHealthDb, type HealthDatabase } from '$lib/core/db/client';
+import { createInMemoryHealthDb } from '$lib/core/db/in-memory';
+import type { InMemoryTestHealthRuntime } from '$lib/core/db/test-client';
 
-export function useTestHealthDb(prefix: string): () => HealthDatabase {
-  let db: HealthDatabase;
+export function useTestHealthDb<Store = InMemoryTestHealthRuntime>(
+  select?: (db: InMemoryTestHealthRuntime) => Store
+): () => Store {
+  let db: InMemoryTestHealthRuntime;
 
   beforeEach(() => {
-    db = createHealthDb(`${prefix}-${crypto.randomUUID()}`);
+    db = createInMemoryHealthDb();
   });
 
   afterEach(async () => {
@@ -15,11 +16,5 @@ export function useTestHealthDb(prefix: string): () => HealthDatabase {
     await db.delete();
   });
 
-  return () => db;
-}
-
-export async function deleteNamedHealthDb(name: string): Promise<void> {
-  const db = createHealthDb(name);
-  db.close();
-  await db.delete();
+  return () => (select ? select(db) : (db as unknown as Store));
 }

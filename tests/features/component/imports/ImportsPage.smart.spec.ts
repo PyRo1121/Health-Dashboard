@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetHealthDb } from '$lib/core/db/client';
+import { resetTestHealthDb } from '$lib/core/db/test-client';
 import { SMART_FHIR_BUNDLE_JSON } from '../../../support/fixtures/smart-fhir-bundle';
 import { clearOwnerProfile, saveOwnerProfile } from '$lib/features/settings/service';
 import {
@@ -14,7 +14,7 @@ import {
 describe('Imports route SMART clinical flows', () => {
   beforeEach(async () => {
     clearOwnerProfile();
-    await resetHealthDb();
+    await resetTestHealthDb();
   });
 
   it('blocks SMART sandbox preview until the owner profile is configured', async () => {

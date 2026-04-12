@@ -7,7 +7,7 @@ import {
 import { useTestHealthDb } from '../../../support/unit/testDb';
 
 describe('journal service', () => {
-  const getDb = useTestHealthDb('journal-service-test');
+  const getDb = useTestHealthDb();
 
   it('creates and updates a journal entry', async () => {
     const db = getDb();

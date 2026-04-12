@@ -1,4 +1,3 @@
-export const DB_NAME = 'personal-health-cockpit';
 export const DB_VERSION = 11;
 
 export const SCHEMA_STORES = {

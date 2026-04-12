@@ -1,6 +1,6 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { getHealthDb } from '$lib/core/db/client';
+import { getTestHealthDb } from '$lib/core/db/test-client';
 import MovementPage from '../../../../src/routes/movement/+page.svelte';
 import { expectHeading, resetRouteDb } from '../../../support/component/routeHarness';
 
@@ -10,7 +10,7 @@ describe('Movement route', () => {
   });
 
   it('renders the exercise picker and saves a workout template card', async () => {
-    await getHealthDb().exerciseCatalogItems.put({
+    await getTestHealthDb().exerciseCatalogItems.put({
       id: 'wger:1',
       createdAt: '2026-04-03T00:00:00.000Z',
       updatedAt: '2026-04-03T00:00:00.000Z',

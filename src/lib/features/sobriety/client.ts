@@ -11,7 +11,7 @@ import {
 
 export { createSobrietyPageState };
 
-const sobrietyClient = createFeatureActionClient('/api/sobriety');
+const sobrietyClient = createFeatureActionClient<Parameters<typeof loadSobrietyPageController>[0]>('/api/sobriety');
 
 export async function loadSobrietyPage(
   state: SobrietyPageState,

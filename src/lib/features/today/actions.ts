@@ -1,9 +1,13 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
-import type { FoodEntry, HealthEvent, PlanSlot } from '$lib/core/domain/types';
-import { upsertDailyRecord } from '$lib/core/shared/daily-records';
+import type { DailyRecord, FoodEntry, HealthEvent, PlanSlot } from '$lib/core/domain/types';
+import { upsertDailyRecord, type DailyRecordsStore } from '$lib/core/shared/daily-records';
 import { createRecordMeta } from '$lib/core/shared/records';
-import { createFoodEntry, listFoodCatalogItems } from '$lib/features/nutrition/service';
+import {
+  createFoodEntry,
+  listFoodCatalogItems,
+  type FoodCatalogItemsStore,
+  type FoodEntriesStore,
+} from '$lib/features/nutrition/store';
 import {
   deletePlanSlot,
   ensureWeeklyPlan,
@@ -11,9 +15,20 @@ import {
   savePlanSlot,
   updatePlanSlot,
   updatePlanSlotStatus,
+  type PlanSlotsStore,
+  type WeeklyPlansStore,
 } from '$lib/features/planning/service';
-import { refreshWeeklyReviewArtifactsSafely } from '$lib/features/review/service';
-import { getTodayPlannedMealResolution, getTodaySnapshot } from './snapshot';
+import { refreshWeeklyReviewArtifactsSafely, type ReviewStorage } from '$lib/features/review/service';
+import { getTodayPlannedMealResolution, getTodaySnapshot, type TodaySnapshotStore } from './snapshot';
+
+export interface TodayActionsStorage
+  extends TodaySnapshotStore,
+    DailyRecordsStore,
+    FoodEntriesStore,
+    FoodCatalogItemsStore,
+    PlanSlotsStore,
+    WeeklyPlansStore,
+    ReviewStorage {}
 
 export interface DailyCheckinInput {
   date: string;
@@ -26,7 +41,7 @@ export interface DailyCheckinInput {
   freeformNote?: string;
 }
 
-const CHECKIN_EVENT_FIELDS = [
+export const CHECKIN_EVENT_FIELDS = [
   'mood',
   'energy',
   'stress',
@@ -40,7 +55,7 @@ const CHECKIN_EVENT_FIELDS = [
   >
 >;
 
-function buildEvent(
+export function buildDailyCheckinEvent(
   localDay: string,
   eventType: string,
   value: number,
@@ -61,11 +76,11 @@ function buildEvent(
 }
 
 export async function saveDailyCheckin(
-  db: HealthDatabase,
+  store: TodayActionsStorage,
   input: DailyCheckinInput
-): Promise<import('$lib/core/domain/types').DailyRecord> {
+): Promise<DailyRecord> {
   const timestamp = nowIso();
-  const record = await upsertDailyRecord(db, input.date, {
+  const record = await upsertDailyRecord(store, input.date, {
     mood: input.mood,
     energy: input.energy,
     stress: input.stress,
@@ -77,25 +92,27 @@ export async function saveDailyCheckin(
 
   await Promise.all(
     CHECKIN_EVENT_FIELDS.map((eventType) =>
-      db.healthEvents.put(buildEvent(input.date, eventType, input[eventType], timestamp))
+      store.healthEvents.put(
+        buildDailyCheckinEvent(input.date, eventType, input[eventType], timestamp)
+      )
     )
   );
-  await refreshWeeklyReviewArtifactsSafely(db, input.date);
+  await refreshWeeklyReviewArtifactsSafely(store, input.date);
 
   return record;
 }
 
 export async function logPlannedMealForToday(
-  db: HealthDatabase,
+  store: TodayActionsStorage,
   date: string
 ): Promise<FoodEntry | null> {
-  const resolution = await getTodayPlannedMealResolution(db, date);
+  const resolution = await getTodayPlannedMealResolution(store, date);
   if (!resolution.candidate) {
     return null;
   }
 
   const candidate = resolution.candidate;
-  const entry = await createFoodEntry(db, {
+  const entry = await createFoodEntry(store, {
     localDay: date,
     mealType: candidate.meal.mealType,
     name: candidate.meal.name,
@@ -109,37 +126,37 @@ export async function logPlannedMealForToday(
   });
 
   if (candidate.slotId) {
-    await updatePlanSlotStatus(db, candidate.slotId, 'done');
+    await updatePlanSlotStatus(store, candidate.slotId, 'done');
   }
-  await refreshWeeklyReviewArtifactsSafely(db, date);
+  await refreshWeeklyReviewArtifactsSafely(store, date);
 
   return entry;
 }
 
-export async function clearTodayPlannedMeal(db: HealthDatabase, date: string): Promise<void> {
-  const resolution = await getTodayPlannedMealResolution(db, date);
+export async function clearTodayPlannedMeal(store: TodayActionsStorage, date: string): Promise<void> {
+  const resolution = await getTodayPlannedMealResolution(store, date);
   if (resolution.candidate?.slotId) {
-    await deletePlanSlot(db, resolution.candidate.slotId);
-    await refreshWeeklyReviewArtifactsSafely(db, date);
+    await deletePlanSlot(store, resolution.candidate.slotId);
+    await refreshWeeklyReviewArtifactsSafely(store, date);
   }
 }
 
 export async function updateTodayPlanSlotStatus(
-  db: HealthDatabase,
+  store: TodayActionsStorage,
   slotId: string,
   status: PlanSlot['status']
 ): Promise<PlanSlot> {
-  const slot = await updatePlanSlotStatus(db, slotId, status);
-  await refreshWeeklyReviewArtifactsSafely(db, slot.localDay);
+  const slot = await updatePlanSlotStatus(store, slotId, status);
+  await refreshWeeklyReviewArtifactsSafely(store, slot.localDay);
   return slot;
 }
 
 export async function applyTodayRecoveryAction(
-  db: HealthDatabase,
+  store: TodayActionsStorage,
   date: string,
   actionId: 'apply-recovery-meal' | 'apply-recovery-workout'
 ): Promise<boolean> {
-  const snapshot = await getTodaySnapshot(db, date);
+  const snapshot = await getTodaySnapshot(store, date);
   const adaptation = snapshot.recoveryAdaptation;
   if (!adaptation) {
     return false;
@@ -151,27 +168,27 @@ export async function applyTodayRecoveryAction(
       return false;
     }
 
-    const food = (await listFoodCatalogItems(db)).find(
+    const food = (await listFoodCatalogItems(store)).find(
       (item) => item.name === recommendation.title
     );
     if (!food) {
       return false;
     }
 
-    const currentMealSlot = (await listPlanSlotsForDay(db, date)).find(
+    const currentMealSlot = (await listPlanSlotsForDay(store, date)).find(
       (slot) => slot.slotType === 'meal' && slot.status === 'planned'
     );
 
     if (currentMealSlot) {
-      await updatePlanSlot(db, currentMealSlot.id, {
+      await updatePlanSlot(store, currentMealSlot.id, {
         itemType: 'food',
         itemId: food.id,
         mealType: currentMealSlot.mealType ?? snapshot.plannedMeal?.mealType ?? 'meal',
         title: food.name,
       });
     } else {
-      const weeklyPlan = await ensureWeeklyPlan(db, date);
-      await savePlanSlot(db, {
+      const weeklyPlan = await ensureWeeklyPlan(store, date);
+      await savePlanSlot(store, {
         weeklyPlanId: weeklyPlan.id,
         localDay: date,
         slotType: 'meal',
@@ -182,23 +199,23 @@ export async function applyTodayRecoveryAction(
       });
     }
 
-    await refreshWeeklyReviewArtifactsSafely(db, date);
+    await refreshWeeklyReviewArtifactsSafely(store, date);
     return true;
   }
 
-  const currentWorkoutSlot = (await listPlanSlotsForDay(db, date)).find(
+  const currentWorkoutSlot = (await listPlanSlotsForDay(store, date)).find(
     (slot) => slot.slotType === 'workout' && slot.status === 'planned'
   );
   if (!currentWorkoutSlot) {
     return false;
   }
 
-  await updatePlanSlot(db, currentWorkoutSlot.id, {
+  await updatePlanSlot(store, currentWorkoutSlot.id, {
     itemType: 'freeform',
     itemId: undefined,
     title: 'Recovery walk',
     notes: '10-20 minutes easy walk or mobility reset.',
   });
-  await refreshWeeklyReviewArtifactsSafely(db, date);
+  await refreshWeeklyReviewArtifactsSafely(store, date);
   return true;
 }

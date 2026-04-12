@@ -1,21 +1,36 @@
-import { createDbActionPostHandler } from '$lib/server/http/action-route';
+import type { RequestHandler } from './$types';
+import { sobrietyRequestSchema } from '$lib/features/sobriety/contracts';
 import {
-  loadSobrietyPage,
-  markSobrietyStatus,
-  saveSobrietyCraving,
-  saveSobrietyLapse,
-  type SobrietyPageState,
-} from '$lib/features/sobriety/controller';
+  loadSobrietyPageServer,
+  markSobrietyStatusServer,
+  saveSobrietyCravingServer,
+  saveSobrietyLapseServer,
+} from '$lib/server/sobriety/service';
 
-type SobrietyRequest =
-  | { action: 'load'; localDay: string; state: SobrietyPageState }
-  | { action: 'markStatus'; state: SobrietyPageState; status: 'sober' | 'recovery'; notice: string }
-  | { action: 'saveCraving'; state: SobrietyPageState }
-  | { action: 'saveLapse'; state: SobrietyPageState };
+export const POST: RequestHandler = async ({ request }) => {
+  let body: unknown;
 
-export const POST = createDbActionPostHandler<SobrietyRequest, SobrietyPageState>({
-  load: (db, body) => loadSobrietyPage(db, body.localDay, body.state),
-  markStatus: (db, body) => markSobrietyStatus(db, body.state, body.status, body.notice),
-  saveCraving: (db, body) => saveSobrietyCraving(db, body.state),
-  saveLapse: (db, body) => saveSobrietyLapse(db, body.state),
-});
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Invalid sobriety request payload.', { status: 400 });
+  }
+
+  const parsed = sobrietyRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response('Invalid sobriety request payload.', { status: 400 });
+  }
+
+  switch (parsed.data.action) {
+    case 'load':
+      return Response.json(await loadSobrietyPageServer(parsed.data.localDay, parsed.data.state));
+    case 'markStatus':
+      return Response.json(
+        await markSobrietyStatusServer(parsed.data.state, parsed.data.status, parsed.data.notice)
+      );
+    case 'saveCraving':
+      return Response.json(await saveSobrietyCravingServer(parsed.data.state));
+    case 'saveLapse':
+      return Response.json(await saveSobrietyLapseServer(parsed.data.state));
+  }
+};

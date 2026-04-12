@@ -12,19 +12,21 @@
     type ImportIntakeState,
   } from '$lib/features/imports/intake-state';
   import {
-    applyImportsManualPayloadEdit,
-    clearImportsLoadedPayload,
     commitImportsPage,
-    createImportsPageState,
-    finalizeImportsManualPayload,
     loadImportsFilePayload,
-    loadImportsSamplePayload,
     previewImportsPage,
     refreshImportsPage,
+  } from '$lib/features/imports/page-actions';
+  import {
+    applyImportsManualPayloadEdit,
+    clearImportsLoadedPayload,
+    createImportsPageState,
+    finalizeImportsManualPayload,
+    loadImportsSamplePayload,
     setImportsPageDragState,
     setImportsPageSourceType,
     type ImportsPageState,
-  } from '$lib/features/imports/page-controller';
+  } from '$lib/features/imports/page-state';
   import {
     buildImportSourceCatalog,
     isSampleBundleSourceType,
@@ -32,7 +34,7 @@
   import RoutePageHeader from '$lib/core/ui/shell/RoutePageHeader.svelte';
   import { onBrowserRouteMount } from '$lib/core/ui/route-runtime';
   import { getOwnerProfile } from '$lib/features/settings/service';
-  import { describeImportPayload } from '$lib/features/imports/service';
+  import { describeImportPayload } from '$lib/features/imports/analyze';
   import {
     commitImportBatchClient,
     listImportBatchesClient,
@@ -137,7 +139,6 @@
   async function runPreview() {
     const nextState = await previewImportsPage(readPageState(), {
       getOwnerProfile,
-      listImportBatches: listImportBatchesClient,
       previewImport: previewImportClient,
     });
 
@@ -146,7 +147,6 @@
 
   async function commitPreview() {
     const nextState = await commitImportsPage(readPageState(), {
-      listImportBatches: listImportBatchesClient,
       commitImportBatch: commitImportBatchClient,
     });
 

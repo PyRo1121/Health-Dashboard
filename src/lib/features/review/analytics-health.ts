@@ -1,3 +1,4 @@
+import { matchesHealthMetric } from '$lib/core/domain/health-metrics';
 import type {
   AssessmentResult,
   DailyRecord,
@@ -43,14 +44,14 @@ export function buildHealthHighlights(records: DailyRecord[], events: HealthEven
       .map((record) => record.date)
   );
 
-  const anxietyEvents = events.filter((event) => event.eventType === 'anxiety-episode');
+  const anxietyEvents = events.filter((event) => matchesHealthMetric(event.eventType, 'anxiety-episode'));
   const linkedAnxietyDay = anxietyEvents.find((event) => lowSleepDays.has(event.localDay));
   if (linkedAnxietyDay) {
     highlights.push(`Low sleep lined up with higher anxiety on ${linkedAnxietyDay.localDay}.`);
   }
 
   const strongSymptomEvent = events.find(
-    (event) => event.eventType === 'symptom' && typeof event.value === 'number' && event.value >= 4
+    (event) => matchesHealthMetric(event.eventType, 'symptom') && typeof event.value === 'number' && event.value >= 4
   );
   if (strongSymptomEvent) {
     highlights.push(`A high-severity symptom was logged on ${strongSymptomEvent.localDay}.`);
@@ -113,14 +114,14 @@ export function buildContextSignals(
   }
 
   const symptomJournalDay = events.find(
-    (event) => event.eventType === 'symptom' && journalDays.has(event.localDay)
+    (event) => matchesHealthMetric(event.eventType, 'symptom') && journalDays.has(event.localDay)
   )?.localDay;
   if (symptomJournalDay) {
     signals.push(`Symptoms and written context both surfaced on ${symptomJournalDay}.`);
   }
 
   const anxietyJournalDay = events.find(
-    (event) => event.eventType === 'anxiety-episode' && journalDays.has(event.localDay)
+    (event) => matchesHealthMetric(event.eventType, 'anxiety-episode') && journalDays.has(event.localDay)
   )?.localDay;
   if (anxietyJournalDay) {
     signals.push(`Anxiety and written context both surfaced on ${anxietyJournalDay}.`);

@@ -9,6 +9,9 @@ test.beforeEach(async ({ page }) => {
 
 test('today daily check-in flow', async ({ page }) => {
   await page.goto('/today');
+  await expect(page.getByText("Today's recommendation")).toBeVisible();
+  await expect(page.getByText(/No strong recommendation yet\./i)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Open check-in' })).toBeVisible();
   await page.getByLabel('Mood').fill('4');
   await page.getByLabel('Energy').fill('3');
   await page.getByLabel('Stress').fill('2');
@@ -374,7 +377,7 @@ test('today recovery links into a prefilled journal note', async ({ page }) => {
   expect(seedResponse.ok()).toBe(true);
 
   await page.goto('/today');
-  await page.getByRole('link', { name: 'Capture recovery note' }).click();
+  await page.getByRole('button', { name: 'Capture recovery note' }).click();
   await expect(page).toHaveURL(/\/journal/);
   await expect(page.getByLabel('Title')).toHaveValue('Recovery note');
   await expect(page.getByLabel('Body')).toHaveValue(/sleep landed under 6 hours/i);
@@ -637,14 +640,14 @@ test('today shows recovery-aware fallback when sleep and symptoms are rough', as
   expect(seedResponse.ok()).toBe(true);
 
   await page.goto('/today');
-  const recoverySection = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Recovery today' }),
+  const recommendationSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: "Today's recommendation" }),
   });
-  await expect(page.getByText('Recovery today')).toBeVisible();
-  await expect(page.getByText('Recovery mode: simplify the day.')).toBeVisible();
-  await expect(page.getByText('Sleep landed under 6 hours.')).toBeVisible();
-  await expect(page.getByText('Symptom load is elevated today.')).toBeVisible();
-  await expect(page.getByText('Anxiety intensity spiked today.')).toBeVisible();
+  await expect(page.getByText("Today's recommendation")).toBeVisible();
+  await expect(recommendationSection.getByText('Keep today lighter')).toBeVisible();
+  await expect(recommendationSection.getByText(/High confidence/i)).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Capture recovery note' })).toBeVisible();
+  await expect(page.getByText('Sleep landed under 6 hours.', { exact: true }).first()).toBeVisible();
   await expect(
     page.getByText('Meal fallback: keep the next meal familiar, easy, and protein-forward.')
   ).toBeVisible();
@@ -653,9 +656,8 @@ test('today shows recovery-aware fallback when sleep and symptoms are rough', as
       'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
     )
   ).toBeVisible();
-  await expect(recoverySection.getByText('Greek yogurt bowl')).toBeVisible();
-  await expect(recoverySection.getByText(/310 kcal/i)).toBeVisible();
-  await expect(recoverySection.locator('strong', { hasText: 'Recovery walk' })).toBeVisible();
+  await expect(page.getByText(/Meal fallback: keep the next meal familiar, easy, and protein-forward\./i)).toBeVisible();
+  await expect(page.getByText(/Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest\./i)).toBeVisible();
   await expect(page.getByRole('button', { name: 'Swap to recovery meal' })).toBeVisible();
   await expect(page.getByRole('button', { name: 'Swap to recovery walk' })).toBeVisible();
 });

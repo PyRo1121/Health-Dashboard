@@ -1,54 +1,26 @@
-import { createDbQueryPostHandler } from '$lib/server/http/action-route';
-import {
-  nutritionQueryRequestSchema,
-  type NutritionQueryRequest,
-} from '$lib/features/nutrition/contracts';
-import {
-  foodLookupResultFromCatalogItem,
-  listFoodCatalogItems,
-  searchPackagedFoodCatalog,
-  type FoodLookupResult,
-  upsertFoodCatalogItem,
-} from '$lib/features/nutrition/service';
-import {
-  normalizeOpenFoodFactsProduct,
-  searchOpenFoodFactsProducts,
-} from '$lib/server/nutrition/open-food-facts';
+import type { RequestHandler } from './$types';
+import type { FoodLookupResult } from '$lib/features/nutrition/types';
+import { nutritionQueryRequestSchema } from '$lib/features/nutrition/contracts';
+import { searchPackagedFoodsServer } from '$lib/server/nutrition/service';
 
-function dedupeLookupResults(items: FoodLookupResult[]): FoodLookupResult[] {
-  const deduped = new Map<string, FoodLookupResult>();
-  for (const item of items) {
-    deduped.set(item.id, item);
+export const POST: RequestHandler = async ({ request }) => {
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Invalid packaged search request payload.', { status: 400 });
   }
-  return [...deduped.values()];
-}
 
-export const POST = createDbQueryPostHandler<NutritionQueryRequest, FoodLookupResult[]>(
-  async (db, query) => {
-    const catalogItems = await listFoodCatalogItems(db);
-    const localMatches = searchPackagedFoodCatalog(query, catalogItems);
-    const remoteProducts = await searchOpenFoodFactsProducts(query);
-    const remoteMatches: FoodLookupResult[] = [];
-
-    for (const product of remoteProducts) {
-      const normalized = normalizeOpenFoodFactsProduct(product);
-      if (!normalized) continue;
-      const cached = await upsertFoodCatalogItem(db, normalized);
-      remoteMatches.push(foodLookupResultFromCatalogItem(cached));
-    }
-
-    return dedupeLookupResults([...localMatches, ...remoteMatches]);
-  },
-  undefined,
-  {
-    parseBody: async (request) => {
-      const parsed = nutritionQueryRequestSchema.safeParse(await request.json());
-      if (!parsed.success) {
-        throw new Error('Invalid packaged search request payload.');
-      }
-      return parsed.data;
-    },
-    onParseError: () => new Response('Invalid packaged search request payload.', { status: 400 }),
-    emptyResult: [],
+  const parsed = nutritionQueryRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response('Invalid packaged search request payload.', { status: 400 });
   }
-);
+
+  const query = parsed.data.query?.trim() ?? '';
+  if (!query) {
+    return Response.json([] satisfies FoodLookupResult[]);
+  }
+
+  return Response.json(await searchPackagedFoodsServer(query));
+};

@@ -1,6 +1,6 @@
 import { fireEvent, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
-import { resetHealthDb } from '$lib/core/db/client';
+import { resetTestHealthDb } from '$lib/core/db/test-client';
 import { clearOwnerProfile } from '$lib/features/settings/service';
 import { APPLE_HEALTH_XML, DAY_ONE_JSON } from '../../../support/fixtures/import-payloads';
 import {
@@ -15,7 +15,7 @@ import {
 describe('Imports route base flows', () => {
   beforeEach(async () => {
     clearOwnerProfile();
-    await resetHealthDb();
+    await resetTestHealthDb();
   });
 
   it('renders the import shell and empty state', async () => {

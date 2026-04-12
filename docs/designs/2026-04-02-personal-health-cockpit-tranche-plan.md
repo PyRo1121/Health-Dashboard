@@ -1,10 +1,12 @@
 # Personal Health Cockpit Tranche Plan
+Historical note: this document is preserved as a planning/review record. Code paths, file references, and architecture details inside may be stale; use `ARCHITECTURE.md` and the living docs under `docs/` for current implementation truth.
 
-Status: Active
+Status: Historical
 Date: 2026-04-02
 Parent: `docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md`
+Superseded by: `ARCHITECTURE.md` and the living docs under `docs/`
 Framework: SvelteKit
-Storage: Dexie / IndexedDB
+Storage: Historical Dexie / IndexedDB plan
 Design system: `DESIGN.md`
 Visual spec: `docs/designs/2026-04-02-personal-health-cockpit-visual-spec.md`
 Implementation packet: `docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t0-t1.md`

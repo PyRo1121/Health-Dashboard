@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
-import { createHealthDb } from '$lib/core/db/client';
-import { DB_NAME, SCHEMA_STORES } from '$lib/core/db/schema';
-import { deleteNamedHealthDb } from '../../../support/unit/testDb';
+import { createTestHealthDb, getTestHealthDb, resetTestHealthDb } from '$lib/core/db/test-client';
+import { SCHEMA_STORES } from '$lib/core/db/schema';
 
 describe('database schema', () => {
   it('opens with the expected table names', async () => {
-    const db = createHealthDb(DB_NAME);
+    const db = createTestHealthDb();
     await db.open();
 
     expect(db.tables.map((table) => table.name).sort()).toEqual(Object.keys(SCHEMA_STORES).sort());
     db.close();
-    await deleteNamedHealthDb(DB_NAME);
+    await db.delete();
+  });
+
+  it('supports projected selectors for the shared test db facade', async () => {
+    const projection = getTestHealthDb((db) => ({ dailyRecords: db.dailyRecords }));
+
+    expect(await projection.dailyRecords.count()).toBe(0);
+
+    await resetTestHealthDb();
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { useTestHealthDb } from '../../../support/unit/testDb';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
-import { upsertRecipeCatalogItem } from '$lib/features/nutrition/service';
+import { upsertRecipeCatalogItem } from '$lib/features/nutrition/store';
 import {
   addManualGroceryItemPage,
   createGroceriesPageState,
@@ -11,7 +11,7 @@ import {
 } from '$lib/features/groceries/controller';
 
 describe('groceries controller', () => {
-  const getDb = useTestHealthDb('groceries-page-controller');
+  const getDb = useTestHealthDb();
 
   it('loads and updates the grocery checklist for the current plan week', async () => {
     const db = getDb();

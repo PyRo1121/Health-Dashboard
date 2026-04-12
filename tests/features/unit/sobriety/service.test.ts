@@ -9,7 +9,7 @@ import {
 import { useTestHealthDb } from '../../../support/unit/testDb';
 
 describe('sobriety service', () => {
-  const getDb = useTestHealthDb('sobriety-service');
+  const getDb = useTestHealthDb();
 
   it('calculates a current streak across consecutive sober days', async () => {
     const db = getDb();

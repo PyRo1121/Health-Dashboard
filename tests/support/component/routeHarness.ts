@@ -1,10 +1,10 @@
 import { render, screen, waitFor } from '@testing-library/svelte';
-import { resetHealthDb } from '$lib/core/db/client';
+import { resetTestHealthDb } from '$lib/core/db/test-client';
 import { expect } from 'vitest';
 import type { Component } from 'svelte';
 
 export async function resetRouteDb() {
-  await resetHealthDb();
+  await resetTestHealthDb();
 }
 
 export function renderRoute(component: Component) {

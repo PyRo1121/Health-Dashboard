@@ -1,25 +1,28 @@
-import { createDbActionPostHandler } from '$lib/server/http/action-route';
+import type { RequestHandler } from './$types';
+import { movementRequestSchema } from '$lib/features/movement/contracts';
 import {
-  loadMovementPage,
-  saveMovementWorkoutTemplatePage,
-  type MovementPageState,
-} from '$lib/features/movement/controller';
-import { movementRequestSchema, type MovementRequest } from '$lib/features/movement/contracts';
+  loadMovementPageServer,
+  saveMovementWorkoutTemplatePageServer,
+} from '$lib/server/movement/service';
 
-export const POST = createDbActionPostHandler<MovementRequest, MovementPageState>(
-  {
-    load: (db) => loadMovementPage(db),
-    saveWorkoutTemplate: (db, body) => saveMovementWorkoutTemplatePage(db, body.state),
-  },
-  undefined,
-  {
-    parseBody: async (request) => {
-      const parsed = movementRequestSchema.safeParse(await request.json());
-      if (!parsed.success) {
-        throw new Error('Invalid movement request payload.');
-      }
-      return parsed.data;
-    },
-    onParseError: () => new Response('Invalid movement request payload.', { status: 400 }),
+export const POST: RequestHandler = async ({ request }) => {
+  let body: unknown;
+
+  try {
+    body = await request.json();
+  } catch {
+    return new Response('Invalid movement request payload.', { status: 400 });
   }
-);
+
+  const parsed = movementRequestSchema.safeParse(body);
+  if (!parsed.success) {
+    return new Response('Invalid movement request payload.', { status: 400 });
+  }
+
+  switch (parsed.data.action) {
+    case 'load':
+      return Response.json(await loadMovementPageServer());
+    case 'saveWorkoutTemplate':
+      return Response.json(await saveMovementWorkoutTemplatePageServer(parsed.data.state));
+  }
+};

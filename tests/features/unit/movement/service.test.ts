@@ -7,7 +7,7 @@ import {
 } from '$lib/features/movement/service';
 
 describe('movement service', () => {
-  const getDb = useTestHealthDb('movement-service');
+  const getDb = useTestHealthDb();
 
   it('stores and searches cached exercise catalog items', async () => {
     const db = getDb();

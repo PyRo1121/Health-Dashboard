@@ -1,11 +1,9 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import {
   createLocalDayPageState,
   loadLocalDayPageState,
   reloadLocalDayPageState,
 } from '$lib/core/shared/local-day-page';
-import type { HealthSnapshot } from './service';
-import { buildHealthSnapshot } from './service';
+import { buildHealthSnapshot, type HealthSnapshot, type HealthStorage } from './service';
 import {
   createAnxietyForm,
   createSleepNoteForm,
@@ -38,8 +36,10 @@ export function createHealthPageState(): HealthPageState {
   });
 }
 
+export type HealthPageStorage = HealthStorage;
+
 export async function loadHealthPage(
-  db: HealthDatabase,
+  store: HealthPageStorage,
   localDay: string
 ): Promise<HealthPageState> {
   return await loadLocalDayPageState(
@@ -48,7 +48,7 @@ export async function loadHealthPage(
       localDay,
     },
     localDay,
-    (day) => buildHealthSnapshot(db, day),
+    (day) => buildHealthSnapshot(store, day),
     (state, nextLocalDay, snapshot) => ({
       ...state,
       loading: false,
@@ -59,13 +59,13 @@ export async function loadHealthPage(
 }
 
 export async function reloadHealthPageState(
-  db: HealthDatabase,
+  store: HealthPageStorage,
   state: HealthPageState,
   overrides: Partial<HealthPageState> = {}
 ): Promise<HealthPageState> {
   return await reloadLocalDayPageState(
     state,
-    (localDay) => buildHealthSnapshot(db, localDay),
+    (localDay) => buildHealthSnapshot(store, localDay),
     (current, snapshot) => ({
       ...current,
       loading: false,

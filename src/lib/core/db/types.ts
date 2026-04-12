@@ -24,6 +24,7 @@ import type {
 export interface HealthDbQuery<T> {
   first(): Promise<T | undefined>;
   toArray(): Promise<T[]>;
+  count(): Promise<number>;
   sortBy<Key extends keyof T & string>(field: Key): Promise<T[]>;
   and(predicate: (record: T) => boolean): HealthDbQuery<T>;
 }
@@ -31,9 +32,11 @@ export interface HealthDbQuery<T> {
 export interface HealthDbTable<T extends { id: string }> {
   put(record: T): Promise<string>;
   bulkAdd(records: readonly T[], ...args: unknown[]): Promise<unknown>;
+  bulkPut(records: readonly T[]): Promise<unknown>;
   get(id: string): Promise<T | undefined>;
   delete(id: string): Promise<void>;
   toArray(): Promise<T[]>;
+  count(): Promise<number>;
   where<Key extends keyof T & string>(
     field: Key
   ): {
@@ -41,30 +44,118 @@ export interface HealthDbTable<T extends { id: string }> {
   };
 }
 
-export interface HealthDatabase {
+export interface HealthDbDailyRecordsStore {
   dailyRecords: HealthDbTable<DailyRecord>;
+}
+
+export interface HealthDbJournalEntriesStore {
   journalEntries: HealthDbTable<JournalEntry>;
+}
+
+export interface HealthDbFoodEntriesStore {
   foodEntries: HealthDbTable<FoodEntry>;
+}
+
+export interface HealthDbFoodCatalogItemsStore {
   foodCatalogItems: HealthDbTable<FoodCatalogItem>;
+}
+
+export interface HealthDbRecipeCatalogItemsStore {
   recipeCatalogItems: HealthDbTable<RecipeCatalogItem>;
+}
+
+export interface HealthDbWeeklyPlansStore {
   weeklyPlans: HealthDbTable<WeeklyPlan>;
+}
+
+export interface HealthDbPlanSlotsStore {
   planSlots: HealthDbTable<PlanSlot>;
+}
+
+export interface HealthDbDerivedGroceryItemsStore {
   derivedGroceryItems: HealthDbTable<DerivedGroceryItem>;
+}
+
+export interface HealthDbManualGroceryItemsStore {
   manualGroceryItems: HealthDbTable<ManualGroceryItem>;
+}
+
+export interface HealthDbWorkoutTemplatesStore {
   workoutTemplates: HealthDbTable<WorkoutTemplate>;
+}
+
+export interface HealthDbExerciseCatalogItemsStore {
   exerciseCatalogItems: HealthDbTable<ExerciseCatalogItem>;
+}
+
+export interface HealthDbFavoriteMealsStore {
   favoriteMeals: HealthDbTable<FavoriteMeal>;
+}
+
+export interface HealthDbHealthEventsStore {
   healthEvents: HealthDbTable<HealthEvent>;
+}
+
+export interface HealthDbHealthTemplatesStore {
   healthTemplates: HealthDbTable<HealthTemplate>;
+}
+
+export interface HealthDbSobrietyEventsStore {
   sobrietyEvents: HealthDbTable<SobrietyEvent>;
+}
+
+export interface HealthDbAssessmentResultsStore {
   assessmentResults: HealthDbTable<AssessmentResult>;
+}
+
+export interface HealthDbImportBatchesStore {
   importBatches: HealthDbTable<ImportBatch>;
+}
+
+export interface HealthDbImportArtifactsStore {
   importArtifacts: HealthDbTable<ImportArtifact>;
+}
+
+export interface HealthDbReviewSnapshotsStore {
   reviewSnapshots: HealthDbTable<ReviewSnapshot>;
+}
+
+export interface HealthDbAdherenceMatchesStore {
   adherenceMatches: HealthDbTable<AdherenceMatch>;
+}
+
+export interface HealthDbStores
+  extends HealthDbDailyRecordsStore,
+    HealthDbJournalEntriesStore,
+    HealthDbFoodEntriesStore,
+    HealthDbFoodCatalogItemsStore,
+    HealthDbRecipeCatalogItemsStore,
+    HealthDbWeeklyPlansStore,
+    HealthDbPlanSlotsStore,
+    HealthDbDerivedGroceryItemsStore,
+    HealthDbManualGroceryItemsStore,
+    HealthDbWorkoutTemplatesStore,
+    HealthDbExerciseCatalogItemsStore,
+    HealthDbFavoriteMealsStore,
+    HealthDbHealthEventsStore,
+    HealthDbHealthTemplatesStore,
+    HealthDbSobrietyEventsStore,
+    HealthDbAssessmentResultsStore,
+    HealthDbImportBatchesStore,
+    HealthDbImportArtifactsStore,
+    HealthDbReviewSnapshotsStore,
+    HealthDbAdherenceMatchesStore {}
+
+export type HealthDbStoreName = keyof HealthDbStores;
+
+export type HealthDbRecord<Name extends HealthDbStoreName> =
+  HealthDbStores[Name] extends HealthDbTable<infer T> ? T : never;
+
+export interface HealthDbLifecycle {
   close(): void;
   delete(): Promise<void>;
 }
+
 
 export interface HealthDbSnapshot {
   dailyRecords: DailyRecord[];

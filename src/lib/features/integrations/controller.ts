@@ -1,6 +1,10 @@
-import type { HealthDatabase } from '$lib/core/db/types';
 import type { NativeCompanionSummary } from '$lib/core/domain/types';
-import { summarizeNativeCompanionEvents } from '$lib/features/integrations/service';
+import {
+  summarizeNativeCompanionEvents,
+  type NativeCompanionEventsStore,
+} from '$lib/features/integrations/service';
+
+export type IntegrationsPageStorage = NativeCompanionEventsStore;
 
 export interface IntegrationsPageState {
   loading: boolean;
@@ -19,9 +23,11 @@ export function createIntegrationsPageState(): IntegrationsPageState {
   };
 }
 
-export async function loadIntegrationsPage(db: HealthDatabase): Promise<IntegrationsPageState> {
+export async function loadIntegrationsPage(
+  store: IntegrationsPageStorage
+): Promise<IntegrationsPageState> {
   return {
     loading: false,
-    summary: await summarizeNativeCompanionEvents(db),
+    summary: await summarizeNativeCompanionEvents(store),
   };
 }

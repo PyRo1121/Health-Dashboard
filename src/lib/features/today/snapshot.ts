@@ -1,4 +1,4 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import type { HealthDbJournalEntriesStore } from '$lib/core/db/types';
 import type {
   DailyRecord,
   FoodCatalogItem,
@@ -7,24 +7,46 @@ import type {
   JournalEntry,
   PlanSlot,
   PlannedMeal,
+  RecipeCatalogItem,
 } from '$lib/core/domain/types';
 import {
-  buildNutritionRecommendations,
-  type NutritionRecommendation,
-} from '$lib/features/nutrition/recommend';
-import {
   buildDailyNutritionSummary,
+  type NutritionRecommendationContextStore,
+} from '$lib/features/nutrition/summary';
+import {
   listFoodCatalogItems,
   listRecipeCatalogItems,
-} from '$lib/features/nutrition/service';
+  type RecipeCatalogItemsStore,
+} from '$lib/features/nutrition/store';
 import {
   getNutritionPlannedMealResolution,
   resolveNutritionPlannedMeal,
   type NutritionPlannedMealResolution,
+  type NutritionPlannedMealStore,
 } from '$lib/features/nutrition/planned-meal-resolution';
-import { listExerciseCatalogItems, listWorkoutTemplates } from '$lib/features/movement/service';
+import {
+  listExerciseCatalogItems,
+  listWorkoutTemplates,
+  type MovementStorage,
+} from '$lib/features/movement/service';
 import { createSlotSummary } from '$lib/features/planning/model';
 import { listPlanSlotsForDay } from '$lib/features/planning/service';
+import {
+  buildTodayIntelligence,
+  buildTodayRecoveryAdaptation,
+  type TodayIntelligenceResult,
+  type TodayPlannedWorkoutInput as TodayPlannedWorkoutModel,
+  type TodayRecoveryAdaptationInput as TodayRecoveryAdaptationModel,
+} from '$lib/features/today/intelligence';
+
+export type JournalEntriesStore = HealthDbJournalEntriesStore;
+
+export interface TodaySnapshotStore
+  extends NutritionRecommendationContextStore,
+    NutritionPlannedMealStore,
+    RecipeCatalogItemsStore,
+    MovementStorage,
+    JournalEntriesStore {}
 
 export interface TodayPlanItem {
   id: string;
@@ -33,38 +55,9 @@ export interface TodayPlanItem {
   status: PlanSlot['status'];
 }
 
-export interface TodayPlannedWorkout {
-  id: string;
-  title: string;
-  subtitle: string;
-  status: PlanSlot['status'];
-}
+export type TodayPlannedWorkout = TodayPlannedWorkoutModel;
 
-export interface TodayRecoveryAdaptation {
-  level: 'lighter-day' | 'recovery';
-  headline: string;
-  reasons: string[];
-  mealFallback: string[];
-  workoutFallback: string[];
-  mealRecommendation: {
-    title: string;
-    subtitle: string;
-    reasons: string[];
-    actionId: 'apply-recovery-meal';
-    actionLabel: string;
-  } | null;
-  workoutRecommendation: {
-    title: string;
-    subtitle: string;
-    reasons: string[];
-    actionId: 'apply-recovery-workout';
-    actionLabel: string;
-  } | null;
-  actions: Array<{
-    id: 'skip-workout' | 'clear-planned-meal' | 'apply-recovery-meal' | 'apply-recovery-workout';
-    label: string;
-  }>;
-}
+export type TodayRecoveryAdaptation = TodayRecoveryAdaptationModel;
 
 export interface TodaySnapshot {
   date: string;
@@ -82,21 +75,25 @@ export interface TodaySnapshot {
   plannedWorkout: TodayPlannedWorkout | null;
   plannedWorkoutIssue: string | null;
   recoveryAdaptation: TodayRecoveryAdaptation | null;
+  intelligence: TodayIntelligenceResult;
   planItems: TodayPlanItem[];
   events: HealthEvent[];
   latestJournalEntry: JournalEntry | null;
 }
 
-export async function listEventsForDay(db: HealthDatabase, date: string): Promise<HealthEvent[]> {
-  return db.healthEvents.where('localDay').equals(date).sortBy('eventType');
+export async function listEventsForDay(
+  store: NutritionRecommendationContextStore,
+  date: string
+): Promise<HealthEvent[]> {
+  return store.healthEvents.where('localDay').equals(date).sortBy('eventType');
 }
 
 async function getLatestJournalEntryForDay(
-  db: HealthDatabase,
+  store: JournalEntriesStore,
   date: string
 ): Promise<JournalEntry | null> {
   return (
-    (await db.journalEntries.where('localDay').equals(date).sortBy('updatedAt')).at(-1) ?? null
+    (await store.journalEntries.where('localDay').equals(date).sortBy('updatedAt')).at(-1) ?? null
   );
 }
 
@@ -159,262 +156,34 @@ function deriveTodayPlannedWorkoutIssue(
   return null;
 }
 
-function summarizeRecoveryReasons(
-  dailyRecord: DailyRecord | null,
-  events: HealthEvent[]
-): { level: TodayRecoveryAdaptation['level']; reasons: string[] } | null {
-  const recoveryReasons = new Set<string>();
-  const lighterReasons = new Set<string>();
-
-  const sleepHours = dailyRecord?.sleepHours;
-  if (typeof sleepHours === 'number') {
-    if (sleepHours < 6) {
-      recoveryReasons.add('Sleep landed under 6 hours.');
-    } else if (sleepHours < 7) {
-      lighterReasons.add('Sleep landed under 7 hours.');
-    }
-  }
-
-  const sleepQuality = dailyRecord?.sleepQuality;
-  if (typeof sleepQuality === 'number') {
-    if (sleepQuality <= 2) {
-      recoveryReasons.add('Sleep quality is dragging today.');
-    } else if (sleepQuality <= 3) {
-      lighterReasons.add('Sleep quality is softer than usual today.');
-    }
-  }
-
-  for (const event of events) {
-    if (event.eventType === 'symptom') {
-      const severity =
-        typeof event.payload?.severity === 'number'
-          ? event.payload.severity
-          : typeof event.value === 'number'
-            ? event.value
-            : null;
-      if (severity !== null) {
-        if (severity >= 4) {
-          recoveryReasons.add('Symptom load is elevated today.');
-        } else if (severity >= 3) {
-          lighterReasons.add('Symptoms are present enough to simplify the day.');
-        }
-      }
-    }
-
-    if (event.eventType === 'anxiety-episode') {
-      const intensity =
-        typeof event.payload?.intensity === 'number'
-          ? event.payload.intensity
-          : typeof event.value === 'number'
-            ? event.value
-            : null;
-      if (intensity !== null) {
-        if (intensity >= 7) {
-          recoveryReasons.add('Anxiety intensity spiked today.');
-        } else if (intensity >= 5) {
-          lighterReasons.add('Anxiety is elevated enough to lower friction.');
-        }
-      }
-    }
-  }
-
-  if (recoveryReasons.size) {
-    return {
-      level: 'recovery',
-      reasons: [...recoveryReasons],
-    };
-  }
-
-  if (lighterReasons.size) {
-    return {
-      level: 'lighter-day',
-      reasons: [...lighterReasons],
-    };
-  }
-
-  return null;
-}
-
-function buildRecoveryMealFallback(
-  plannedMeal: TodaySnapshot['plannedMeal'],
-  level: TodayRecoveryAdaptation['level']
-): string[] {
-  if (plannedMeal) {
-    return [
-      level === 'recovery'
-        ? 'Meal fallback: keep the next meal familiar, easy, and protein-forward.'
-        : `Meal fallback: keep ${plannedMeal.name} simple and skip any extra decision-making.`,
-    ];
-  }
-
-  return [
-    level === 'recovery'
-      ? 'Meal fallback: repeat one easy meal you already trust instead of improvising.'
-      : 'Meal fallback: pick one familiar meal and keep the rest of the day light.',
-  ];
-}
-
-function buildRecoveryWorkoutFallback(
-  plannedWorkout: TodayPlannedWorkout | null,
-  level: TodayRecoveryAdaptation['level']
-): string[] {
-  if (plannedWorkout) {
-    return [
-      level === 'recovery'
-        ? `Workout fallback: downgrade ${plannedWorkout.title} to a short walk, mobility reset, or full rest.`
-        : `Workout fallback: trim ${plannedWorkout.title} to the first block or swap to easy movement.`,
-    ];
-  }
-
-  return [
-    level === 'recovery'
-      ? 'Workout fallback: skip intensity today and protect recovery.'
-      : 'Workout fallback: keep movement gentle with a walk, mobility, or a short reset.',
-  ];
-}
-
-function toTodayMealRecommendation(
-  recommendation: NutritionRecommendation | undefined
-): TodayRecoveryAdaptation['mealRecommendation'] {
-  if (!recommendation || recommendation.kind !== 'food') {
-    return null;
-  }
-
-  return {
-    title: recommendation.title,
-    subtitle: recommendation.subtitle,
-    reasons: recommendation.reasons,
-    actionId: 'apply-recovery-meal',
-    actionLabel: 'Swap to recovery meal',
-  };
-}
-
-function deriveRecoveryMealRecommendation(
-  dailyRecord: DailyRecord | null,
-  events: HealthEvent[],
-  plannedMeal: TodaySnapshot['plannedMeal'],
-  foodCatalogItems: FoodCatalogItem[]
-): TodayRecoveryAdaptation['mealRecommendation'] {
-  if (!plannedMeal) {
-    return null;
-  }
-
-  return toTodayMealRecommendation(
-    buildNutritionRecommendations({
-      context: {
-        mealType: plannedMeal.mealType || 'meal',
-        sleepHours: dailyRecord?.sleepHours,
-        sleepQuality: dailyRecord?.sleepQuality,
-        anxietyCount: events.filter((event) => event.eventType === 'anxiety-episode').length,
-        symptomCount: events.filter((event) => event.eventType === 'symptom').length,
-      },
-      foods: foodCatalogItems.filter((item) => item.name !== plannedMeal.name),
-      recipes: [],
-      limit: 1,
-    })[0]
-  );
-}
-
-function deriveRecoveryWorkoutRecommendation(
-  plannedWorkout: TodayPlannedWorkout | null
-): TodayRecoveryAdaptation['workoutRecommendation'] {
-  if (!plannedWorkout) {
-    return null;
-  }
-
-  return {
-    title: 'Recovery walk',
-    subtitle: '10-20 minutes · easy pace · optional mobility',
-    reasons: ['Keeps movement without asking for intensity.'],
-    actionId: 'apply-recovery-workout',
-    actionLabel: 'Swap to recovery walk',
-  };
-}
-
-function buildRecoveryActions(
-  plannedMeal: TodaySnapshot['plannedMeal'],
-  plannedWorkout: TodayPlannedWorkout | null,
-  mealRecommendation: TodayRecoveryAdaptation['mealRecommendation'],
-  workoutRecommendation: TodayRecoveryAdaptation['workoutRecommendation']
-): TodayRecoveryAdaptation['actions'] {
-  const actions: TodayRecoveryAdaptation['actions'] = [];
-
-  if (mealRecommendation) {
-    actions.push({
-      id: mealRecommendation.actionId,
-      label: mealRecommendation.actionLabel,
-    });
-  } else if (plannedMeal) {
-    actions.push({
-      id: 'clear-planned-meal',
-      label: 'Clear meal plan',
-    });
-  }
-
-  if (workoutRecommendation) {
-    actions.push({
-      id: workoutRecommendation.actionId,
-      label: workoutRecommendation.actionLabel,
-    });
-  } else if (plannedWorkout && plannedWorkout.status === 'planned') {
-    actions.push({
-      id: 'skip-workout',
-      label: 'Skip workout for today',
-    });
-  }
-
-  return actions;
-}
-
-function deriveTodayRecoveryAdaptation(
-  dailyRecord: DailyRecord | null,
-  events: HealthEvent[],
-  plannedMeal: TodaySnapshot['plannedMeal'],
-  plannedWorkout: TodayPlannedWorkout | null,
-  foodCatalogItems: FoodCatalogItem[]
-): TodayRecoveryAdaptation | null {
-  const recoverySummary = summarizeRecoveryReasons(dailyRecord, events);
-  if (!recoverySummary) {
-    return null;
-  }
-
-  const mealRecommendation = deriveRecoveryMealRecommendation(
-    dailyRecord,
-    events,
-    plannedMeal,
-    foodCatalogItems
-  );
-  const workoutRecommendation = deriveRecoveryWorkoutRecommendation(plannedWorkout);
-
-  return {
-    level: recoverySummary.level,
-    headline:
-      recoverySummary.level === 'recovery'
-        ? 'Recovery mode: simplify the day.'
-        : 'Lighter day: reduce friction, not momentum.',
-    reasons: recoverySummary.reasons,
-    mealFallback: buildRecoveryMealFallback(plannedMeal, recoverySummary.level),
-    workoutFallback: buildRecoveryWorkoutFallback(plannedWorkout, recoverySummary.level),
-    mealRecommendation,
-    workoutRecommendation,
-    actions: buildRecoveryActions(
-      plannedMeal,
-      plannedWorkout,
-      mealRecommendation,
-      workoutRecommendation
-    ),
-  };
-}
-
 export async function getTodayPlannedMealResolution(
-  db: HealthDatabase,
+  store: NutritionPlannedMealStore,
   date: string
 ): Promise<NutritionPlannedMealResolution> {
-  return await getNutritionPlannedMealResolution(db, date);
+  return await getNutritionPlannedMealResolution(store, date);
 }
 
-async function buildTodaySnapshotData(db: HealthDatabase, date: string): Promise<TodaySnapshot> {
-  const [
+export function buildTodaySnapshotFromData(input: {
+  date: string;
+  dailyRecord: DailyRecord | null;
+  nutritionSummary: {
+    calories: number;
+    protein: number;
+    fiber: number;
+    carbs: number;
+    fat: number;
+    entries: FoodEntry[];
+  };
+  planSlots: PlanSlot[];
+  foodCatalogItems: FoodCatalogItem[];
+  recipeCatalogItems: RecipeCatalogItem[];
+  workoutTemplates: import('$lib/core/domain/types').WorkoutTemplate[];
+  exerciseCatalogItems: import('$lib/core/domain/types').ExerciseCatalogItem[];
+  events: HealthEvent[];
+  latestJournalEntry: JournalEntry | null;
+}): TodaySnapshot {
+  const {
+    date,
     dailyRecord,
     nutritionSummary,
     planSlots,
@@ -424,17 +193,7 @@ async function buildTodaySnapshotData(db: HealthDatabase, date: string): Promise
     exerciseCatalogItems,
     events,
     latestJournalEntry,
-  ] = await Promise.all([
-    db.dailyRecords.where('date').equals(date).first(),
-    buildDailyNutritionSummary(db, date),
-    listPlanSlotsForDay(db, date),
-    listFoodCatalogItems(db),
-    listRecipeCatalogItems(db),
-    listWorkoutTemplates(db),
-    listExerciseCatalogItems(db),
-    listEventsForDay(db, date),
-    getLatestJournalEntryForDay(db, date),
-  ]);
+  } = input;
 
   const planItems: TodayPlanItem[] = planSlots.map((slot) => ({
     id: slot.id,
@@ -460,17 +219,36 @@ async function buildTodaySnapshotData(db: HealthDatabase, date: string): Promise
   const plannedWorkoutIssue = plannedWorkout
     ? null
     : deriveTodayPlannedWorkoutIssue(planSlots, workoutTemplates);
-  const recoveryAdaptation = deriveTodayRecoveryAdaptation(
-    dailyRecord ?? null,
+  const recoveryAdaptation = buildTodayRecoveryAdaptation({
+    dailyRecord,
     events,
-    plannedMealResolution.candidate?.meal ?? null,
+    plannedMeal: plannedMealResolution.candidate?.meal ?? null,
     plannedWorkout,
-    foodCatalogItems
-  );
+    foodCatalogItems,
+  });
+  const intelligence = buildTodayIntelligence({
+    date,
+    dailyRecord,
+    nutritionSummary: {
+      calories: nutritionSummary.calories,
+      protein: nutritionSummary.protein,
+      fiber: nutritionSummary.fiber,
+      carbs: nutritionSummary.carbs,
+      fat: nutritionSummary.fat,
+    },
+    plannedMeal: plannedMealResolution.candidate?.meal ?? null,
+    plannedMealIssue: plannedMealResolution.issue,
+    plannedWorkout,
+    plannedWorkoutIssue,
+    recoveryAdaptation,
+    latestJournalEntry,
+    events,
+    planItemsCount: planItems.length,
+  });
 
   return {
     date,
-    dailyRecord: dailyRecord ?? null,
+    dailyRecord,
     foodEntries: nutritionSummary.entries,
     nutritionSummary: {
       calories: nutritionSummary.calories,
@@ -484,22 +262,60 @@ async function buildTodaySnapshotData(db: HealthDatabase, date: string): Promise
     plannedWorkout,
     plannedWorkoutIssue,
     recoveryAdaptation,
+    intelligence,
     planItems,
     events,
     latestJournalEntry,
   };
 }
 
-export async function getTodaySnapshot(db: HealthDatabase, date: string): Promise<TodaySnapshot> {
-  return await buildTodaySnapshotData(db, date);
+async function buildTodaySnapshotData(store: TodaySnapshotStore, date: string): Promise<TodaySnapshot> {
+  const [
+    dailyRecord,
+    nutritionSummary,
+    planSlots,
+    foodCatalogItems,
+    recipeCatalogItems,
+    workoutTemplates,
+    exerciseCatalogItems,
+    events,
+    latestJournalEntry,
+  ] = await Promise.all([
+    store.dailyRecords.where('date').equals(date).first(),
+    buildDailyNutritionSummary(store, date),
+    listPlanSlotsForDay(store, date),
+    listFoodCatalogItems(store),
+    listRecipeCatalogItems(store),
+    listWorkoutTemplates(store),
+    listExerciseCatalogItems(store),
+    listEventsForDay(store, date),
+    getLatestJournalEntryForDay(store, date),
+  ]);
+
+  return buildTodaySnapshotFromData({
+    date,
+    dailyRecord: dailyRecord ?? null,
+    nutritionSummary,
+    planSlots,
+    foodCatalogItems,
+    recipeCatalogItems,
+    workoutTemplates,
+    exerciseCatalogItems,
+    events,
+    latestJournalEntry,
+  });
+}
+
+export async function getTodaySnapshot(store: TodaySnapshotStore, date: string): Promise<TodaySnapshot> {
+  return await buildTodaySnapshotData(store, date);
 }
 
 export async function loadTodaySnapshotWithNotice(
-  db: HealthDatabase,
+  store: TodaySnapshotStore,
   date: string
 ): Promise<{ snapshot: TodaySnapshot; notice: string | null }> {
   return {
-    snapshot: await buildTodaySnapshotData(db, date),
+    snapshot: await buildTodaySnapshotData(store, date),
     notice: null,
   };
 }

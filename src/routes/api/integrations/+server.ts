@@ -1,11 +1,5 @@
-import { createDbActionPostHandler } from '$lib/server/http/action-route';
-import {
-  loadIntegrationsPage,
-  type IntegrationsPageState,
-} from '$lib/features/integrations/controller';
+import { loadIntegrationsPageServer } from '$lib/server/integrations/service';
 
-type IntegrationsRequest = { action: 'load' };
-
-export const POST = createDbActionPostHandler<IntegrationsRequest, IntegrationsPageState>({
-  load: (db) => loadIntegrationsPage(db),
-});
+export async function POST(): Promise<Response> {
+  return Response.json(await loadIntegrationsPageServer());
+}

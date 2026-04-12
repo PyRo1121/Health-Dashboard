@@ -1,4 +1,4 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import type { HealthDbAssessmentResultsStore } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
 import type { AssessmentResult } from '$lib/core/domain/types';
 import { updateRecordMeta } from '$lib/core/shared/records';
@@ -10,6 +10,8 @@ import {
   scoreAssessment,
 } from './definitions';
 
+export type AssessmentResultsStore = HealthDbAssessmentResultsStore;
+
 export type { AssessmentDefinition, AssessmentQuestion } from './definitions';
 export {
   ASSESSMENTS,
@@ -20,18 +22,18 @@ export {
 } from './definitions';
 
 async function getStoredAssessment(
-  db: HealthDatabase,
+  store: AssessmentResultsStore,
   localDay: string,
   instrument: AssessmentResult['instrument']
 ): Promise<AssessmentResult | undefined> {
-  return db.assessmentResults
+  return store.assessmentResults
     .where('localDay')
     .equals(localDay)
     .and((entry) => entry.instrument === instrument)
     .first();
 }
 
-function buildAssessmentRecord(input: {
+export function buildAssessmentRecord(input: {
   definition: AssessmentDefinition;
   existing?: AssessmentResult;
   localDay: string;
@@ -62,14 +64,14 @@ function buildAssessmentRecord(input: {
 }
 
 export async function saveAssessmentProgress(
-  db: HealthDatabase,
+  store: AssessmentResultsStore,
   input: {
     localDay: string;
     instrument: AssessmentResult['instrument'];
     itemResponses: number[];
   }
 ): Promise<AssessmentResult> {
-  const existing = await getStoredAssessment(db, input.localDay, input.instrument);
+  const existing = await getStoredAssessment(store, input.localDay, input.instrument);
   const definition = getAssessmentDefinition(input.instrument);
   const highRisk = handleHighRiskAssessmentState(input.instrument, input.itemResponses).highRisk;
 
@@ -83,12 +85,12 @@ export async function saveAssessmentProgress(
     highRisk,
   });
 
-  await db.assessmentResults.put(record);
+  await store.assessmentResults.put(record);
   return record;
 }
 
 export async function submitAssessment(
-  db: HealthDatabase,
+  store: AssessmentResultsStore,
   input: {
     localDay: string;
     instrument: AssessmentResult['instrument'];
@@ -100,7 +102,7 @@ export async function submitAssessment(
     throw new Error('Incomplete assessment');
   }
 
-  const existing = await getStoredAssessment(db, input.localDay, input.instrument);
+  const existing = await getStoredAssessment(store, input.localDay, input.instrument);
   const totalScore = scoreAssessment(input.instrument, input.itemResponses);
   const highRiskState = handleHighRiskAssessmentState(input.instrument, input.itemResponses);
 
@@ -116,14 +118,14 @@ export async function submitAssessment(
     band: classifyAssessmentBand(input.instrument, totalScore),
   });
 
-  await db.assessmentResults.put(record);
+  await store.assessmentResults.put(record);
   return record;
 }
 
 export async function getLatestAssessment(
-  db: HealthDatabase,
+  store: AssessmentResultsStore,
   localDay: string,
   instrument: AssessmentResult['instrument']
 ): Promise<AssessmentResult | undefined> {
-  return getStoredAssessment(db, localDay, instrument);
+  return getStoredAssessment(store, localDay, instrument);
 }

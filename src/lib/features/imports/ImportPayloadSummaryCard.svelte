@@ -2,7 +2,7 @@
   import { resolve } from '$app/paths';
   import type { DeviceSourceManifest } from '$lib/features/integrations/manifests/device-sources';
   import type { ImportSourceType } from '$lib/core/domain/types';
-  import type { ImportPayloadSummary } from './service';
+  import type { ImportPayloadSummary } from './core';
 
   interface Props {
     summary: ImportPayloadSummary;

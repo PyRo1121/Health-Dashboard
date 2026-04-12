@@ -1,4 +1,4 @@
-import type { HealthDatabase } from '$lib/core/db/types';
+import type { HealthDbPlanSlotsStore, HealthDbWeeklyPlansStore } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
 import type {
   ExerciseCatalogItem,
@@ -11,29 +11,45 @@ import type {
 } from '$lib/core/domain/types';
 import { startOfWeek } from '$lib/core/shared/dates';
 import { createRecordId } from '$lib/core/shared/ids';
+import { sortPlanSlots } from '$lib/core/shared/plan-slots';
 import { createRecordMeta, updateRecordMeta } from '$lib/core/shared/records';
-import { deriveWeeklyGroceriesWithWarnings } from '$lib/features/groceries/service';
-import { listExerciseCatalogItems, listWorkoutTemplates } from '$lib/features/movement/service';
-import { listFoodCatalogItems, listRecipeCatalogItems } from '$lib/features/nutrition/service';
+import {
+  deriveWeeklyGroceriesWithWarnings,
+  type GroceryServiceStore,
+} from '$lib/features/groceries/service';
+import {
+  listExerciseCatalogItems,
+  listWorkoutTemplates,
+  type MovementStorage,
+} from '$lib/features/movement/service';
+import {
+  listFoodCatalogItems,
+  listRecipeCatalogItems,
+  type FoodCatalogItemsStore,
+  type RecipeCatalogItemsStore,
+} from '$lib/features/nutrition/store';
 
-const DEFAULT_WEEKLY_PLAN_TITLE = 'This Week';
+export const DEFAULT_WEEKLY_PLAN_TITLE = 'This Week';
 
-function weekDaysFromStart(weekStart: string): string[] {
+export type WeeklyPlansStore = HealthDbWeeklyPlansStore;
+
+export type PlanSlotsStore = HealthDbPlanSlotsStore;
+
+export interface PlanningStorage
+  extends WeeklyPlansStore,
+    PlanSlotsStore,
+    FoodCatalogItemsStore,
+    RecipeCatalogItemsStore,
+    MovementStorage,
+    GroceryServiceStore {}
+
+export function weekDaysFromStart(weekStart: string): string[] {
   const first = new Date(`${weekStart}T00:00:00.000Z`);
   return Array.from({ length: 7 }, (_, index) => {
     const next = new Date(first);
     next.setUTCDate(first.getUTCDate() + index);
     return next.toISOString().slice(0, 10);
   });
-}
-
-function sortPlanSlots(slots: PlanSlot[]): PlanSlot[] {
-  return [...slots].sort(
-    (left, right) =>
-      left.localDay.localeCompare(right.localDay) ||
-      left.order - right.order ||
-      left.createdAt.localeCompare(right.createdAt)
-  );
 }
 
 function nextPlanSlotOrder(slots: PlanSlot[]): number {
@@ -44,9 +60,9 @@ function nextPlanSlotOrder(slots: PlanSlot[]): number {
   return Math.max(...slots.map((slot) => slot.order)) + 1;
 }
 
-async function persistOrderedSlots(db: HealthDatabase, slots: PlanSlot[]): Promise<void> {
+async function persistOrderedSlots(store: PlanSlotsStore, slots: PlanSlot[]): Promise<void> {
   for (const [index, slot] of slots.entries()) {
-    await db.planSlots.put({
+    await store.planSlots.put({
       ...slot,
       ...updateRecordMeta(slot, slot.id),
       order: index,
@@ -54,9 +70,44 @@ async function persistOrderedSlots(db: HealthDatabase, slots: PlanSlot[]): Promi
   }
 }
 
-export async function ensureWeeklyPlan(db: HealthDatabase, anchorDay: string): Promise<WeeklyPlan> {
+async function requirePlanSlot(store: PlanSlotsStore, slotId: string): Promise<PlanSlot> {
+  const existing = await store.planSlots.get(slotId);
+  if (!existing) {
+    throw new Error('Plan slot not found');
+  }
+
+  return existing;
+}
+
+async function listSiblingPlanSlots(
+  store: PlanSlotsStore,
+  slot: Pick<PlanSlot, 'weeklyPlanId' | 'localDay'>
+) {
+  return await store.planSlots
+    .where('weeklyPlanId')
+    .equals(slot.weeklyPlanId)
+    .and((candidate) => candidate.localDay === slot.localDay)
+    .toArray();
+}
+
+async function persistPlanSlot(
+  store: PlanSlotsStore,
+  existing: PlanSlot,
+  updates: Partial<PlanSlot>
+): Promise<PlanSlot> {
+  const slot: PlanSlot = {
+    ...existing,
+    ...updateRecordMeta(existing, existing.id),
+    ...updates,
+  };
+
+  await store.planSlots.put(slot);
+  return slot;
+}
+
+export async function ensureWeeklyPlan(store: WeeklyPlansStore, anchorDay: string): Promise<WeeklyPlan> {
   const weekStart = startOfWeek(anchorDay);
-  const existing = await db.weeklyPlans.where('weekStart').equals(weekStart).first();
+  const existing = await store.weeklyPlans.where('weekStart').equals(weekStart).first();
   if (existing) {
     return existing;
   }
@@ -68,26 +119,26 @@ export async function ensureWeeklyPlan(db: HealthDatabase, anchorDay: string): P
     title: DEFAULT_WEEKLY_PLAN_TITLE,
   };
 
-  await db.weeklyPlans.put(plan);
+  await store.weeklyPlans.put(plan);
   return plan;
 }
 
 export async function listWeeklyPlanSlots(
-  db: HealthDatabase,
+  store: PlanSlotsStore,
   weeklyPlanId: string
 ): Promise<PlanSlot[]> {
-  return sortPlanSlots(await db.planSlots.where('weeklyPlanId').equals(weeklyPlanId).toArray());
+  return sortPlanSlots(await store.planSlots.where('weeklyPlanId').equals(weeklyPlanId).toArray());
 }
 
 export async function listPlanSlotsForDay(
-  db: HealthDatabase,
+  store: PlanSlotsStore,
   localDay: string
 ): Promise<PlanSlot[]> {
-  return sortPlanSlots(await db.planSlots.where('localDay').equals(localDay).toArray());
+  return sortPlanSlots(await store.planSlots.where('localDay').equals(localDay).toArray());
 }
 
 export async function savePlanSlot(
-  db: HealthDatabase,
+  store: PlanSlotsStore,
   input: {
     weeklyPlanId: string;
     localDay: string;
@@ -104,7 +155,7 @@ export async function savePlanSlot(
     throw new Error('Plan slot title is required');
   }
 
-  const existingSlots = await db.planSlots
+  const existingSlots = await store.planSlots
     .where('weeklyPlanId')
     .equals(input.weeklyPlanId)
     .and((slot) => slot.localDay === input.localDay)
@@ -124,32 +175,21 @@ export async function savePlanSlot(
     order: nextPlanSlotOrder(existingSlots),
   };
 
-  await db.planSlots.put(slot);
+  await store.planSlots.put(slot);
   return slot;
 }
 
 export async function updatePlanSlotStatus(
-  db: HealthDatabase,
+  store: PlanSlotsStore,
   slotId: string,
   status: PlanSlot['status']
 ): Promise<PlanSlot> {
-  const existing = await db.planSlots.get(slotId);
-  if (!existing) {
-    throw new Error('Plan slot not found');
-  }
-
-  const slot: PlanSlot = {
-    ...existing,
-    ...updateRecordMeta(existing, existing.id),
-    status,
-  };
-
-  await db.planSlots.put(slot);
-  return slot;
+  const existing = await requirePlanSlot(store, slotId);
+  return await persistPlanSlot(store, existing, { status });
 }
 
 export async function updatePlanSlot(
-  db: HealthDatabase,
+  store: PlanSlotsStore,
   slotId: string,
   updates: {
     itemType?: PlanSlot['itemType'];
@@ -160,63 +200,41 @@ export async function updatePlanSlot(
     status?: PlanSlot['status'];
   }
 ): Promise<PlanSlot> {
-  const existing = await db.planSlots.get(slotId);
-  if (!existing) {
-    throw new Error('Plan slot not found');
-  }
+  const existing = await requirePlanSlot(store, slotId);
 
   const nextTitle = updates.title !== undefined ? updates.title.trim() : existing.title;
   if (!nextTitle) {
     throw new Error('Plan slot title is required');
   }
-
-  const slot: PlanSlot = {
-    ...existing,
-    ...updateRecordMeta(existing, existing.id),
+  return await persistPlanSlot(store, existing, {
     itemType: updates.itemType ?? existing.itemType,
     itemId: updates.itemId,
     mealType: existing.slotType === 'meal' ? (updates.mealType ?? existing.mealType) : undefined,
     title: nextTitle,
     notes: updates.notes !== undefined ? updates.notes.trim() || undefined : existing.notes,
     status: updates.status ?? existing.status,
-  };
-
-  await db.planSlots.put(slot);
-  return slot;
+  });
 }
 
-export async function deletePlanSlot(db: HealthDatabase, slotId: string): Promise<void> {
-  const existing = await db.planSlots.get(slotId);
-  await db.planSlots.delete(slotId);
+export async function deletePlanSlot(store: PlanSlotsStore, slotId: string): Promise<void> {
+  const existing = await store.planSlots.get(slotId);
+  await store.planSlots.delete(slotId);
   if (!existing) {
     return;
   }
 
-  const siblings = await db.planSlots
-    .where('weeklyPlanId')
-    .equals(existing.weeklyPlanId)
-    .and((slot) => slot.localDay === existing.localDay)
-    .toArray();
-  await persistOrderedSlots(db, sortPlanSlots(siblings));
+  const siblings = await listSiblingPlanSlots(store, existing);
+  await persistOrderedSlots(store, sortPlanSlots(siblings));
 }
 
 export async function movePlanSlot(
-  db: HealthDatabase,
+  store: PlanSlotsStore,
   slotId: string,
   direction: 'up' | 'down'
 ): Promise<PlanSlot[]> {
-  const existing = await db.planSlots.get(slotId);
-  if (!existing) {
-    throw new Error('Plan slot not found');
-  }
+  const existing = await requirePlanSlot(store, slotId);
 
-  const siblings = sortPlanSlots(
-    await db.planSlots
-      .where('weeklyPlanId')
-      .equals(existing.weeklyPlanId)
-      .and((slot) => slot.localDay === existing.localDay)
-      .toArray()
-  );
+  const siblings = sortPlanSlots(await listSiblingPlanSlots(store, existing));
   const currentIndex = siblings.findIndex((slot) => slot.id === slotId);
   if (currentIndex < 0) {
     throw new Error('Plan slot not found');
@@ -230,12 +248,45 @@ export async function movePlanSlot(
   const reordered = [...siblings];
   const [moved] = reordered.splice(currentIndex, 1);
   reordered.splice(targetIndex, 0, moved!);
-  await persistOrderedSlots(db, reordered);
-  return await listWeeklyPlanSlots(db, existing.weeklyPlanId);
+  await persistOrderedSlots(store, reordered);
+  return await listWeeklyPlanSlots(store, existing.weeklyPlanId);
+}
+
+export function buildWeeklyPlanSnapshotFromData(input: {
+  weeklyPlan: WeeklyPlan;
+  slots: PlanSlot[];
+  groceryItems: GroceryItem[];
+  groceryWarnings: string[];
+  foodCatalogItems: FoodCatalogItem[];
+  recipeCatalogItems: RecipeCatalogItem[];
+  workoutTemplates: WorkoutTemplate[];
+  exerciseCatalogItems: ExerciseCatalogItem[];
+}): {
+  weeklyPlan: WeeklyPlan;
+  weekDays: string[];
+  slots: PlanSlot[];
+  groceryItems: GroceryItem[];
+  groceryWarnings: string[];
+  foodCatalogItems: FoodCatalogItem[];
+  recipeCatalogItems: RecipeCatalogItem[];
+  workoutTemplates: WorkoutTemplate[];
+  exerciseCatalogItems: ExerciseCatalogItem[];
+} {
+  return {
+    weeklyPlan: input.weeklyPlan,
+    weekDays: weekDaysFromStart(input.weeklyPlan.weekStart),
+    slots: input.slots,
+    groceryItems: input.groceryItems,
+    groceryWarnings: input.groceryWarnings,
+    foodCatalogItems: input.foodCatalogItems,
+    recipeCatalogItems: input.recipeCatalogItems,
+    workoutTemplates: input.workoutTemplates,
+    exerciseCatalogItems: input.exerciseCatalogItems,
+  };
 }
 
 export async function getWeeklyPlanSnapshot(
-  db: HealthDatabase,
+  store: PlanningStorage,
   anchorDay: string
 ): Promise<{
   weeklyPlan: WeeklyPlan;
@@ -248,24 +299,23 @@ export async function getWeeklyPlanSnapshot(
   workoutTemplates: WorkoutTemplate[];
   exerciseCatalogItems: ExerciseCatalogItem[];
 }> {
-  const weeklyPlan = await ensureWeeklyPlan(db, anchorDay);
+  const weeklyPlan = await ensureWeeklyPlan(store, anchorDay);
   const [slots, foodCatalogItems, recipeCatalogItems, workoutTemplates, exerciseCatalogItems] =
     await Promise.all([
-      listWeeklyPlanSlots(db, weeklyPlan.id),
-      listFoodCatalogItems(db),
-      listRecipeCatalogItems(db),
-      listWorkoutTemplates(db),
-      listExerciseCatalogItems(db),
+      listWeeklyPlanSlots(store, weeklyPlan.id),
+      listFoodCatalogItems(store),
+      listRecipeCatalogItems(store),
+      listWorkoutTemplates(store),
+      listExerciseCatalogItems(store),
     ]);
   const groceryResult = await deriveWeeklyGroceriesWithWarnings(
-    db,
+    store,
     weeklyPlan.id,
     recipeCatalogItems
   );
 
-  return {
+  return buildWeeklyPlanSnapshotFromData({
     weeklyPlan,
-    weekDays: weekDaysFromStart(weeklyPlan.weekStart),
     slots,
     groceryItems: groceryResult.items,
     groceryWarnings: groceryResult.warnings,
@@ -273,5 +323,5 @@ export async function getWeeklyPlanSnapshot(
     recipeCatalogItems,
     workoutTemplates,
     exerciseCatalogItems,
-  };
+  });
 }

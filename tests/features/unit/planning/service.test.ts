@@ -8,7 +8,7 @@ import {
 } from '$lib/features/planning/service';
 
 describe('planning service', () => {
-  const getDb = useTestHealthDb('planning-service');
+  const getDb = useTestHealthDb();
 
   it('creates one weekly plan per week and reuses it on reload', async () => {
     const db = getDb();

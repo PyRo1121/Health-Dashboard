@@ -1,11 +1,13 @@
 import { describe, expect, it } from 'vitest';
-import type { TodaySnapshot } from '$lib/features/today/service';
+import type { TodaySnapshot } from '$lib/features/today/snapshot';
 import {
   createDailyCheckinPayload,
   createTodayNutritionGuidance,
   createTodayNutritionPulseMetrics,
   createPlannedMealProjectionRows,
   createPlannedWorkoutRows,
+  createTodayConfidenceLabel,
+  createTodayRecommendationRows,
   createTodayForm,
   createTodayFormFromSnapshot,
   createTodayNutritionRows,
@@ -47,6 +49,14 @@ describe('today model', () => {
       },
       plannedWorkoutIssue: null,
       recoveryAdaptation: null,
+      intelligence: {
+        primaryRecommendation: null,
+        fallbackState: {
+          title: 'No strong recommendation yet.',
+          message: 'Stay with the planned day and keep logging signals.',
+          action: { kind: 'href', label: 'Open Plan', href: '/plan' },
+        },
+      },
       planItems: [],
       events: [],
       latestJournalEntry: null,
@@ -69,6 +79,8 @@ describe('today model', () => {
       'Recovery · 1 exercise · Quadriceps · Dumbbell',
       'Status: planned',
     ]);
+    expect(createTodayConfidenceLabel('low')).toBe('Low confidence');
+    expect(createTodayRecommendationRows(snapshot)).toEqual([]);
     expect(
       createDailyCheckinPayload(snapshot.date, createTodayFormFromSnapshot(snapshot))
     ).toMatchObject({

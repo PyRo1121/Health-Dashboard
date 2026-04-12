@@ -6,7 +6,7 @@
     nutritionMealTypeOptions,
     type NutritionFormState,
   } from '$lib/features/nutrition/model';
-  import type { FoodLookupResult } from '$lib/features/nutrition/service';
+  import type { FoodLookupResult } from '$lib/features/nutrition/types';
 
   let {
     searchQuery,

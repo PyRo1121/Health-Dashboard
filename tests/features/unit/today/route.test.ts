@@ -1,47 +1,23 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
-import type { HealthDatabase } from '$lib/core/db/types';
 
 describe('today route', () => {
   afterEach(() => {
-    vi.doUnmock('$lib/features/today/controller');
-    vi.doUnmock('$lib/server/http/action-route');
+    vi.doUnmock('$lib/server/today/service');
     vi.restoreAllMocks();
     vi.resetModules();
   });
 
   async function importRoute(overrides: {
-    db?: HealthDatabase;
-    loadTodayPage?: ReturnType<typeof vi.fn>;
-    saveTodayPage?: ReturnType<typeof vi.fn>;
-    logTodayPlannedMealPage?: ReturnType<typeof vi.fn>;
-    clearTodayPlannedMealPage?: ReturnType<typeof vi.fn>;
-    markTodayPlanSlotStatusPage?: ReturnType<typeof vi.fn>;
-    applyTodayRecoveryActionPage?: ReturnType<typeof vi.fn>;
+    loadTodayPageServer?: ReturnType<typeof vi.fn>;
+    saveTodayPageServer?: ReturnType<typeof vi.fn>;
+    logTodayPlannedMealPageServer?: ReturnType<typeof vi.fn>;
+    clearTodayPlannedMealPageServer?: ReturnType<typeof vi.fn>;
+    markTodayPlanSlotStatusPageServer?: ReturnType<typeof vi.fn>;
+    applyTodayRecoveryActionPageServer?: ReturnType<typeof vi.fn>;
   }) {
-    const db = overrides.db ?? ({} as HealthDatabase);
-    const actual = await vi.importActual<typeof import('$lib/server/http/action-route')>(
-      '$lib/server/http/action-route'
-    );
-
-    vi.doMock('$lib/server/http/action-route', () => ({
-      ...actual,
-      createDbActionPostHandler: (
-        handlers: Parameters<typeof actual.createDbActionPostHandler>[0],
-        _deps: Parameters<typeof actual.createDbActionPostHandler>[1],
-        options: Parameters<typeof actual.createDbActionPostHandler>[2]
-      ) =>
-        actual.createDbActionPostHandler(
-          handlers,
-          {
-            withDb: async (run) => await run(db),
-            toResponse: (body) => Response.json(body),
-          },
-          options
-        ),
-    }));
-    vi.doMock('$lib/features/today/controller', () => ({
-      loadTodayPage:
-        overrides.loadTodayPage ??
+    vi.doMock('$lib/server/today/service', () => ({
+      loadTodayPageServer:
+        overrides.loadTodayPageServer ??
         vi.fn(async () => ({
           loading: false,
           saving: false,
@@ -58,33 +34,33 @@ describe('today route', () => {
             freeformNote: '',
           },
         })),
-      saveTodayPage:
-        overrides.saveTodayPage ??
-        vi.fn(async (database: HealthDatabase, state: unknown) => ({
+      saveTodayPageServer:
+        overrides.saveTodayPageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
           saveNotice: 'Saved for today.',
         })),
-      logTodayPlannedMealPage:
-        overrides.logTodayPlannedMealPage ??
-        vi.fn(async (database: HealthDatabase, state: unknown) => ({
+      logTodayPlannedMealPageServer:
+        overrides.logTodayPlannedMealPageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
           saveNotice: 'Planned meal logged.',
         })),
-      clearTodayPlannedMealPage:
-        overrides.clearTodayPlannedMealPage ??
-        vi.fn(async (database: HealthDatabase, state: unknown) => ({
+      clearTodayPlannedMealPageServer:
+        overrides.clearTodayPlannedMealPageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
           saveNotice: 'Planned meal cleared.',
         })),
-      markTodayPlanSlotStatusPage:
-        overrides.markTodayPlanSlotStatusPage ??
-        vi.fn(async (database: HealthDatabase, state: unknown) => ({
+      markTodayPlanSlotStatusPageServer:
+        overrides.markTodayPlanSlotStatusPageServer ??
+        vi.fn(async (state: unknown) => ({
           ...(state as object),
           saveNotice: 'Plan item marked done.',
         })),
-      applyTodayRecoveryActionPage:
-        overrides.applyTodayRecoveryActionPage ??
-        vi.fn(async (database: HealthDatabase, state: unknown, actionId: string) => ({
+      applyTodayRecoveryActionPageServer:
+        overrides.applyTodayRecoveryActionPageServer ??
+        vi.fn(async (state: unknown, actionId: string) => ({
           ...(state as object),
           saveNotice: `Recovery action applied: ${actionId}`,
         })),
@@ -93,9 +69,8 @@ describe('today route', () => {
     return await import('../../../../src/routes/api/today/+server.ts');
   }
 
-  it('loads today page state through the action route', async () => {
-    const db = {} as HealthDatabase;
-    const loadTodayPage = vi.fn(async () => ({
+  it('loads today page state through the server route', async () => {
+    const loadTodayPageServer = vi.fn(async () => ({
       loading: false,
       saving: false,
       saveNotice: '',
@@ -111,7 +86,7 @@ describe('today route', () => {
         freeformNote: '',
       },
     }));
-    const { POST } = await importRoute({ db, loadTodayPage });
+    const { POST } = await importRoute({ loadTodayPageServer });
 
     const response = await POST({
       request: new Request('http://health.test/api/today', {
@@ -127,11 +102,10 @@ describe('today route', () => {
         loading: false,
       })
     );
-    expect(loadTodayPage).toHaveBeenCalledWith(db, '2026-04-04');
+    expect(loadTodayPageServer).toHaveBeenCalledWith('2026-04-04');
   });
 
-  it('dispatches save, planned meal, and plan slot actions through the action route', async () => {
-    const db = {} as HealthDatabase;
+  it('dispatches save, planned meal, and plan slot actions through the server route', async () => {
     const state = {
       loading: false,
       saving: false,
@@ -148,30 +122,29 @@ describe('today route', () => {
         freeformNote: 'Steady start.',
       },
     };
-    const saveTodayPage = vi.fn(async () => ({ ...state, saveNotice: 'Saved for today.' }));
-    const logTodayPlannedMealPage = vi.fn(async () => ({
+    const saveTodayPageServer = vi.fn(async () => ({ ...state, saveNotice: 'Saved for today.' }));
+    const logTodayPlannedMealPageServer = vi.fn(async () => ({
       ...state,
       saveNotice: 'Planned meal logged.',
     }));
-    const clearTodayPlannedMealPage = vi.fn(async () => ({
+    const clearTodayPlannedMealPageServer = vi.fn(async () => ({
       ...state,
       saveNotice: 'Planned meal cleared.',
     }));
-    const markTodayPlanSlotStatusPage = vi.fn(async () => ({
+    const markTodayPlanSlotStatusPageServer = vi.fn(async () => ({
       ...state,
       saveNotice: 'Plan item marked done.',
     }));
-    const applyTodayRecoveryActionPage = vi.fn(async (_db, _state, actionId: string) => ({
+    const applyTodayRecoveryActionPageServer = vi.fn(async (_state, actionId: string) => ({
       ...state,
       saveNotice: `Recovery action applied: ${actionId}`,
     }));
     const { POST } = await importRoute({
-      db,
-      saveTodayPage,
-      logTodayPlannedMealPage,
-      clearTodayPlannedMealPage,
-      markTodayPlanSlotStatusPage,
-      applyTodayRecoveryActionPage,
+      saveTodayPageServer,
+      logTodayPlannedMealPageServer,
+      clearTodayPlannedMealPageServer,
+      markTodayPlanSlotStatusPageServer,
+      applyTodayRecoveryActionPageServer,
     });
 
     const saveResponse = await POST({
@@ -180,10 +153,8 @@ describe('today route', () => {
         body: JSON.stringify({ action: 'save', state }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await saveResponse.json()).toEqual(
-      expect.objectContaining({ saveNotice: 'Saved for today.' })
-    );
-    expect(saveTodayPage).toHaveBeenCalledWith(db, state);
+    expect(await saveResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Saved for today.' }));
+    expect(saveTodayPageServer).toHaveBeenCalledWith(state);
 
     const logResponse = await POST({
       request: new Request('http://health.test/api/today', {
@@ -191,10 +162,8 @@ describe('today route', () => {
         body: JSON.stringify({ action: 'logPlannedMeal', state }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await logResponse.json()).toEqual(
-      expect.objectContaining({ saveNotice: 'Planned meal logged.' })
-    );
-    expect(logTodayPlannedMealPage).toHaveBeenCalledWith(db, state);
+    expect(await logResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Planned meal logged.' }));
+    expect(logTodayPlannedMealPageServer).toHaveBeenCalledWith(state);
 
     const clearResponse = await POST({
       request: new Request('http://health.test/api/today', {
@@ -202,10 +171,8 @@ describe('today route', () => {
         body: JSON.stringify({ action: 'clearPlannedMeal', state }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await clearResponse.json()).toEqual(
-      expect.objectContaining({ saveNotice: 'Planned meal cleared.' })
-    );
-    expect(clearTodayPlannedMealPage).toHaveBeenCalledWith(db, state);
+    expect(await clearResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Planned meal cleared.' }));
+    expect(clearTodayPlannedMealPageServer).toHaveBeenCalledWith(state);
 
     const markResponse = await POST({
       request: new Request('http://health.test/api/today', {
@@ -218,10 +185,8 @@ describe('today route', () => {
         }),
       }),
     } as Parameters<typeof POST>[0]);
-    expect(await markResponse.json()).toEqual(
-      expect.objectContaining({ saveNotice: 'Plan item marked done.' })
-    );
-    expect(markTodayPlanSlotStatusPage).toHaveBeenCalledWith(db, state, 'slot-1', 'done');
+    expect(await markResponse.json()).toEqual(expect.objectContaining({ saveNotice: 'Plan item marked done.' }));
+    expect(markTodayPlanSlotStatusPageServer).toHaveBeenCalledWith(state, 'slot-1', 'done');
 
     const recoveryResponse = await POST({
       request: new Request('http://health.test/api/today', {
@@ -236,12 +201,12 @@ describe('today route', () => {
     expect(await recoveryResponse.json()).toEqual(
       expect.objectContaining({ saveNotice: 'Recovery action applied: apply-recovery-meal' })
     );
-    expect(applyTodayRecoveryActionPage).toHaveBeenCalledWith(db, state, 'apply-recovery-meal');
+    expect(applyTodayRecoveryActionPageServer).toHaveBeenCalledWith(state, 'apply-recovery-meal');
   });
 
   it('returns 400 for invalid today action payloads', async () => {
-    const loadTodayPage = vi.fn();
-    const { POST } = await importRoute({ loadTodayPage });
+    const loadTodayPageServer = vi.fn();
+    const { POST } = await importRoute({ loadTodayPageServer });
 
     const response = await POST({
       request: new Request('http://health.test/api/today', {
@@ -255,6 +220,6 @@ describe('today route', () => {
 
     expect(response.status).toBe(400);
     expect(await response.text()).toBe('Invalid today request payload.');
-    expect(loadTodayPage).not.toHaveBeenCalled();
+    expect(loadTodayPageServer).not.toHaveBeenCalled();
   });
 });

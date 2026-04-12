@@ -1,24 +1,9 @@
-import type { HealthEvent, ManualHealthEventType, SourceType } from '$lib/core/domain/types';
 import {
-  formatHealthEventLabel,
-  formatHealthEventValue,
-} from '$lib/features/integrations/connectors/healthkit';
-
-const MANUAL_HEALTH_EVENT_LABELS: Readonly<Record<ManualHealthEventType, string>> = {
-  symptom: 'Symptom',
-  'anxiety-episode': 'Anxiety episode',
-  'sleep-note': 'Sleep note',
-  'medication-dose': 'Medication dose',
-  'supplement-dose': 'Supplement dose',
-};
-
-function isManualHealthEventType(eventType: string): eventType is ManualHealthEventType {
-  return eventType in MANUAL_HEALTH_EVENT_LABELS;
-}
-
-function formatManualHealthEventLabel(eventType: string): string | null {
-  return isManualHealthEventType(eventType) ? MANUAL_HEALTH_EVENT_LABELS[eventType] : null;
-}
+  formatHealthMetricLabel,
+  formatHealthMetricValue,
+  getHealthMetricDefinition,
+} from '$lib/core/domain/health-metrics';
+import type { HealthEvent, SourceType } from '$lib/core/domain/types';
 
 function formatManualHealthEventValue(event: Pick<HealthEvent, 'value' | 'unit'>): string | null {
   if (event.value === undefined || event.value === null) return null;
@@ -33,6 +18,25 @@ export function sortHealthEventTimestamp(event: HealthEvent): string {
   return event.sourceTimestamp ?? event.updatedAt ?? event.createdAt;
 }
 
+export function compareHealthEventsNewestFirst(left: HealthEvent, right: HealthEvent): number {
+  const timestampCompare = sortHealthEventTimestamp(right).localeCompare(sortHealthEventTimestamp(left));
+  if (timestampCompare != 0) {
+    return timestampCompare;
+  }
+
+  const localDayCompare = right.localDay.localeCompare(left.localDay);
+  if (localDayCompare != 0) {
+    return localDayCompare;
+  }
+
+  const eventTypeCompare = left.eventType.localeCompare(right.eventType);
+  if (eventTypeCompare != 0) {
+    return eventTypeCompare;
+  }
+
+  return left.id.localeCompare(right.id);
+}
+
 export function humanizeSourceType(sourceType: SourceType): string {
   return sourceType.replace(/-/g, ' ').replace(/^./, (char) => char.toUpperCase());
 }
@@ -42,12 +46,15 @@ export function buildHealthEventDisplay(event: HealthEvent): {
   valueLabel: string;
   sourceLabel: string;
 } {
-  const manualLabel = formatManualHealthEventLabel(event.eventType);
-  const manualValueLabel = manualLabel ? formatManualHealthEventValue(event) : null;
+  const definition = getHealthMetricDefinition(event.eventType);
+  const valueLabel =
+    definition?.category === 'manual'
+      ? formatManualHealthEventValue(event)
+      : formatHealthMetricValue(event.value, event.unit);
 
   return {
-    label: manualLabel ?? formatHealthEventLabel(event.eventType),
-    valueLabel: manualValueLabel ?? formatHealthEventValue(event),
+    label: formatHealthMetricLabel(event.eventType),
+    valueLabel: valueLabel ?? '',
     sourceLabel: humanizeSourceType(event.sourceType),
   };
 }

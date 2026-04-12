@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import { saveAssessmentProgress, submitAssessment } from '$lib/features/assessments/service';
 import { deriveWeeklyGroceries, setGroceryItemState } from '$lib/features/groceries/service';
-import { commitImportBatch, previewImport } from '$lib/features/imports/service';
+import { commitImportBatch, previewImport } from '$lib/features/imports/store';
 import { saveJournalEntry } from '$lib/features/journal/service';
-import { saveFoodCatalogItem, upsertRecipeCatalogItem } from '$lib/features/nutrition/service';
+import { createFoodEntry, saveFoodCatalogItem, upsertRecipeCatalogItem } from '$lib/features/nutrition/store';
 import {
   ensureWeeklyPlan,
   savePlanSlot,
@@ -17,13 +17,12 @@ import {
   saveNextWeekExperiment,
 } from '$lib/features/review/service';
 import { setSobrietyStatusForDay } from '$lib/features/sobriety/service';
-import { createFoodEntry } from '$lib/features/nutrition/service';
-import { saveDailyCheckin } from '$lib/features/today/service';
+import { saveDailyCheckin } from '$lib/features/today/actions';
 import { HEALTHKIT_BUNDLE_JSON } from '../../../support/fixtures/healthkit-bundle';
 import { useTestHealthDb } from '../../../support/unit/testDb';
 
 describe('review service', () => {
-  const getDb = useTestHealthDb('review-service');
+  const getDb = useTestHealthDb();
 
   async function seedWeek() {
     const db = getDb();

@@ -11,7 +11,7 @@ import {
 } from '$lib/features/journal/controller';
 
 describe('journal controller', () => {
-  const getDb = useTestHealthDb('journal-page-controller');
+  const getDb = useTestHealthDb();
 
   it('loads, saves, and deletes journal state', async () => {
     const db = getDb();

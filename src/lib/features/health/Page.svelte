@@ -25,24 +25,43 @@
     page = await loadHealthPage();
   }
 
+  function mergeMutationResult(
+    next: typeof page,
+    preserve: Array<'symptomForm' | 'anxietyForm' | 'sleepNoteForm' | 'templateForm'>
+  ) {
+    const current = page;
+    page = {
+      ...next,
+      symptomForm: preserve.includes('symptomForm') ? current.symptomForm : next.symptomForm,
+      anxietyForm: preserve.includes('anxietyForm') ? current.anxietyForm : next.anxietyForm,
+      sleepNoteForm: preserve.includes('sleepNoteForm') ? current.sleepNoteForm : next.sleepNoteForm,
+      templateForm: preserve.includes('templateForm') ? current.templateForm : next.templateForm,
+    };
+  }
+
   async function saveSymptom() {
-    page = await saveSymptomPage(page);
+    mergeMutationResult(await saveSymptomPage(page), ['anxietyForm', 'sleepNoteForm', 'templateForm']);
   }
 
   async function saveAnxiety() {
-    page = await saveAnxietyPage(page);
+    mergeMutationResult(await saveAnxietyPage(page), ['symptomForm', 'sleepNoteForm', 'templateForm']);
   }
 
   async function saveSleepNote() {
-    page = await saveSleepNotePage(page);
+    mergeMutationResult(await saveSleepNotePage(page), ['symptomForm', 'anxietyForm', 'templateForm']);
   }
 
   async function saveTemplate() {
-    page = await saveTemplatePage(page);
+    mergeMutationResult(await saveTemplatePage(page), ['symptomForm', 'anxietyForm', 'sleepNoteForm']);
   }
 
   async function quickLogTemplate(templateId: string) {
-    page = await quickLogTemplatePage(page, templateId);
+    mergeMutationResult(await quickLogTemplatePage(page, templateId), [
+      'symptomForm',
+      'anxietyForm',
+      'sleepNoteForm',
+      'templateForm',
+    ]);
   }
 
   function updateSymptomField(field: keyof typeof page.symptomForm, value: string) {
