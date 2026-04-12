@@ -1,0 +1,833 @@
+tests/support/unit/testDb.ts
+  3a3c56a6dbec304e 2-3,5-8,11,19
+src/lib/features/review/analytics-health.ts
+  3a3c56a6dbec304e 1,47,54,117,124
+docs/data-model.md
+  3a3c56a6dbec304e 1-459
+docs/designs/2026-04-12-world-class-forward-plan.md
+  3a3c56a6dbec304e 1-281
+tests/features/component/review/ReviewPage.spec.ts
+  e32f9530a5463689 5,71,116,150,172
+  3a3c56a6dbec304e 7
+src/lib/features/groceries/client.ts
+  3a3c56a6dbec304e 16
+src/routes/api/movement/search-exercises/+server.ts
+  3a3c56a6dbec304e 1,3-4,6-17,19-26
+src/lib/features/nutrition/actions.ts
+  a428502b55d5a6fa 6-7,12-19,55-56,58,62,68,92-102,106,110-118,122,126,132,138,149,158,164,175,183-184,186-188,198-205,209,213,216-223,227,231-239
+src/lib/features/today/model.ts
+  3a3c56a6dbec304e 1-3,254-283,286-321
+docs/designs/2026-04-10-bleeding-edge-migration-plan.md
+  3a3c56a6dbec304e 1-589
+src/lib/features/health/Page.svelte
+  a428502b55d5a6fa 28-41,43,47,51,55,59-64
+docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t9-t10.md
+  3a3c56a6dbec304e 2,4,6
+tests/features/unit/nutrition/page-state-actions.test.ts
+  3a3c56a6dbec304e 7-12,17,19
+  e32f9530a5463689 20
+ARCHITECTURE.md
+  3a3c56a6dbec304e 1-425
+src/lib/features/imports/page-state.ts
+  3a3c56a6dbec304e 2
+tests/features/e2e/imports.e2e.ts
+  3a3c56a6dbec304e 6,57
+src/lib/features/adherence/matching.ts
+  3a3c56a6dbec304e 1-208
+tests/support/component/routeHarness.ts
+  e32f9530a5463689 2,7
+tests/features/unit/status/route.test.ts
+  3a3c56a6dbec304e 1-15
+src/lib/core/db/types.ts
+  3a3c56a6dbec304e 27,35,39,47,49-51,53-55,57-59,61-63,65-67,69-71,73-75,77-79,81-83,85-87,89-91,93-95,97-99,101-103,105-107,109-111,113-115,117-119,121-123,127-153
+  7ba45e174f03a38c 125-126,154
+tests/features/unit/integrations/route.test.ts
+  3a3c56a6dbec304e 5,10-11,20-21,23,35
+tests/features/unit/nutrition/action-route.test.ts
+  3a3c56a6dbec304e 11-15,19,21,27-33,36-48,50,53-58,61-68,72-73
+README.md
+  3a3c56a6dbec304e 7,9,12,35,65
+src/lib/features/timeline/client.ts
+  3a3c56a6dbec304e 11
+src/lib/features/planning/client.ts
+  3a3c56a6dbec304e 16-23,27,32-33
+tests/features/unit/imports/intake-state.test.ts
+  3a3c56a6dbec304e 3
+src/lib/features/today/components/TodayPlanSurface.svelte
+  3a3c56a6dbec304e 5
+tests/features/unit/timeline/controller.test.ts
+  e32f9530a5463689 8,12
+src/lib/features/today/components/TodaySignalsSection.svelte
+  3a3c56a6dbec304e 4-10,18-19,26-27,29-31,34-48,52-58,63-71,73-76,78-124,128-154,207-215,218,220-222,225-230,233-235,238-240,243,246-261,264-290,293-305,312,314,320-348
+docs/external-data-sources.md
+  3a3c56a6dbec304e 1-181
+src/routes/api/imports/+server.ts
+  3a3c56a6dbec304e 1-7,9-10,12-15,18-20,23-36
+src/lib/server/assessments/service.ts
+  3a3c56a6dbec304e 1-105
+src/lib/features/integrations/service.ts
+  d0829cbd90bd3fef 6,37,39
+  3a3c56a6dbec304e 1-2,5,30
+tests/features/unit/sobriety/route.test.ts
+  3a3c56a6dbec304e 5,11-14,16-18,29-30,41-42,53-54,69-75,78-82
+tests/core/unit/db/schema.test.ts
+  c41febce480ecab0 3,12
+  3a3c56a6dbec304e 2,13-20
+  e32f9530a5463689 7
+drizzle.config.ts
+  eed283d252a40d45 1-15
+tests/features/unit/planning/route.test.ts
+  3a3c56a6dbec304e 1-195
+src/routes/api/assessments/+server.ts
+  3a3c56a6dbec304e 1-2,4-7,9-10,12-31
+src/lib/core/http/feature-client.ts
+  a428502b55d5a6fa 9,11,19,56-57,68,71,86,92,104,119,134
+  3a3c56a6dbec304e 3,5,10,12-18,20-52,59,62,72,77-78,83,97,99-100,109,111-112
+tests/features/unit/nutrition/route.test.ts
+  3a3c56a6dbec304e 7,12-13,17-22,38,42-50,63,66-73,76,85-86,90-96,98,110-113,115-120,136,140-146,160-170,182-186,190-196
+src/lib/features/journal/controller.ts
+  3a3c56a6dbec304e 1,7,19,23-24,45,47-48,53-58,62,69,85,98,104,114,119,122-123,132,136-137,141,161
+src/lib/features/health/service.ts
+  a428502b55d5a6fa 28,30-32,156,159,163-164,168,172-173,205,222,227,245,250,267,272,275,284,289,292,318
+  3a3c56a6dbec304e 1,3,27,29,83,90,92,115-118,121-122,124,127-128,138-155,157-158,160-162,176-187,190-200,215,238,260,279,282,309
+src/lib/features/assessments/client.ts
+  3a3c56a6dbec304e 14
+src/routes/api/nutrition/barcode/[code]/+server.ts
+  3a3c56a6dbec304e 1-3,5-7
+src/lib/core/shared/health-events.ts
+  3a3c56a6dbec304e 2-6,49-53,56-57
+  a950d8abe3e010b3 21-39
+docs/designs/2026-04-12-bleeding-edge-health-os-plan.md
+  3a3c56a6dbec304e 1-542
+src/lib/features/nutrition/Page.svelte
+  a428502b55d5a6fa 40-41,201-204
+docs/testing-and-verification.md
+  3a3c56a6dbec304e 1-177
+src/lib/features/today/components/TodayCheckInSection.svelte
+  3a3c56a6dbec304e 20-21,56-57
+src/routes/api/plan/+server.ts
+  3a3c56a6dbec304e 1-2,4-13,15-22,24-73
+tests/features/unit/today/snapshot.test.ts
+  3a3c56a6dbec304e 3-4,7,11,167-171,342-371
+  e32f9530a5463689 12
+src/lib/features/today/journal-intents.ts
+  3a3c56a6dbec304e 1-50
+src/lib/server/imports/service.ts
+  3a3c56a6dbec304e 1-249
+src/lib/features/adherence/service.ts
+  3a3c56a6dbec304e 1,3,5,8,14-21,23-24,27-28,32-33,37
+tests/features/unit/groceries/service.test.ts
+  e32f9530a5463689 4,14,19,79,114,126,138,223,235
+src/lib/features/nutrition/model.ts
+  3a3c56a6dbec304e 2
+tests/features/component/imports/ImportsPage.base.spec.ts
+  e32f9530a5463689 3,18
+src/lib/features/nutrition/client.ts
+  7ba45e174f03a38c 13,53
+  3a3c56a6dbec304e 7-12,14,22,27,29-35,40-42,54-56,59
+docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t0-t1.md
+  3a3c56a6dbec304e 2,4,6
+tests/features/unit/planning/service.test.ts
+  e32f9530a5463689 11
+tests/features/unit/golden/migration-parity.test.ts
+  3a3c56a6dbec304e 1-165,167-237
+  e32f9530a5463689 166
+tests/features/unit/imports/store.test.ts
+  e32f9530a5463689 38
+  3a3c56a6dbec304e 6-9,37,43
+tests/support/setup.ts
+  3a3c56a6dbec304e 2-8,11
+.gitignore
+  3a3c56a6dbec304e 54
+tests/features/unit/timeline/service.test.ts
+  a950d8abe3e010b3 95-125
+  e32f9530a5463689 38
+src/lib/features/nutrition/contracts.ts
+  3a3c56a6dbec304e 2,8
+src/lib/features/imports/intake-state.ts
+  3a3c56a6dbec304e 2
+tests/features/component/planning/PlanPage.spec.ts
+  e32f9530a5463689 3,57,79,116,126,167,237,248,283
+src/lib/server/db/drizzle/schema.ts
+  3a3c56a6dbec304e 1-283
+docs/operations-runbook.md
+  3a3c56a6dbec304e 1-200
+tests/features/unit/health/service.test.ts
+  e32f9530a5463689 13
+tests/core/unit/shared/daily-records.test.ts
+  3a3c56a6dbec304e 7,9-11
+  e32f9530a5463689 6
+tests/features/unit/journal/service.test.ts
+  e32f9530a5463689 10
+src/lib/features/assessments/controller.ts
+  3a3c56a6dbec304e 9,11,13,79,83,95-101,105,108,113,119,123,128
+src/lib/features/review/client.ts
+  3a3c56a6dbec304e 13
+src/lib/features/integrations/normalization/health-normalize.ts
+  3a3c56a6dbec304e 2-4,26
+src/lib/features/planning/contracts.ts
+  3a3c56a6dbec304e 2
+src/lib/features/integrations/client.ts
+  3a3c56a6dbec304e 10
+src/lib/features/health/contracts.ts
+  3a3c56a6dbec304e 1-51
+tests/features/unit/movement/controller.test.ts
+  e32f9530a5463689 11
+config.yaml
+  3a3c56a6dbec304e 1-48
+tests/features/component/nutrition/NutritionPage.spec.ts
+  e32f9530a5463689 3,8,67,105,135,173,201
+src/routes/api/review/+server.ts
+  3a3c56a6dbec304e 1,3-6,8-19,21-26,28
+src/lib/features/today/client.ts
+  3a3c56a6dbec304e 17
+src/lib/features/integrations/bridge/schema.ts
+  3a3c56a6dbec304e 1-2,6
+src/lib/core/shared/plan-slots.ts
+  3a3c56a6dbec304e 1-10
+src/lib/features/imports/ImportPayloadSummaryCard.svelte
+  3a3c56a6dbec304e 5
+src/routes/api/integrations/+server.ts
+  3a3c56a6dbec304e 1,3-5
+tests/features/component/journal/JournalPage.spec.ts
+  e32f9530a5463689 3,67
+  3a3c56a6dbec304e 6,40-49
+src/lib/core/domain/health-metrics.ts
+  3a3c56a6dbec304e 1-283
+src/lib/features/timeline/service.ts
+  3a3c56a6dbec304e 1,18
+  a950d8abe3e010b3 3-6,35
+  d0829cbd90bd3fef 19,28,31
+tests/features/unit/health/page-state-actions.test.ts
+  e32f9530a5463689 13
+  3a3c56a6dbec304e 2,9,12
+docs/health-cockpit-whitepaper.md
+  3a3c56a6dbec304e 1-458
+src/lib/features/today/snapshot.ts
+  3a3c56a6dbec304e 1,10,14-16,19-20,25,27-31,34-40,42-49,58,60,78,84-88,92,96,160,163,166-186,196,222-223,225,227-247,251,265,272-306,309-310,314,318
+tests/features/unit/imports/page-state-actions.test.ts
+  3a3c56a6dbec304e 3-9,18,37,131-154
+src/lib/features/today/Page.svelte
+  3a3c56a6dbec304e 2-3,17-18,25,27,30-34,51,97-145,194-195
+docs/README.md
+  bf288136944ad707 13-24,48-67,69-87,110-118
+  3a3c56a6dbec304e 4,25-37,43-47,91-96,122-133,137,139,141,143,145,147,149,151,153,174-176
+src/routes/api/timeline/+server.ts
+  3a3c56a6dbec304e 1,3,5-8,12-31
+  7ba45e174f03a38c 2,11,32
+svelte.config.js
+  3a3c56a6dbec304e 1,17
+src/lib/features/assessments/service.ts
+  3a3c56a6dbec304e 1,13-14,25,29,36,67,74,88,93,105,121,126,130
+src/routes/api/nutrition/+server.ts
+  3a3c56a6dbec304e 1-2,4-11,13-45,47
+tests/features/unit/movement/route.test.ts
+  3a3c56a6dbec304e 5,10-11,20,22-24,29-32,34-40,44-47,50,58,64-71,73,76-85,87,91-97
+src/lib/features/imports/contracts.ts
+  3a3c56a6dbec304e 1-28
+src/lib/features/today/controller.ts
+  3a3c56a6dbec304e 10,12-17,19-22,63,67,71-83,98,101-102,106,109-114,118,121-122,126,131-132,136,140-144,148-149
+src/lib/features/sobriety/contracts.ts
+  3a3c56a6dbec304e 1-48
+src/lib/features/nutrition/state.ts
+  a428502b55d5a6fa 9,12-16,20-23,41-46,128,133-138,169,173
+src/routes/api/status/+server.ts
+  3a3c56a6dbec304e 1-12
+src/lib/server/planning/store.ts
+  3a3c56a6dbec304e 1-251
+tests/features/unit/integrations/controller.test.ts
+  e32f9530a5463689 4,8
+src/lib/server/plan/service.ts
+  3a3c56a6dbec304e 1-257
+tests/features/unit/health/route.test.ts
+  3a3c56a6dbec304e 5,10-35,37-42,44-46,63-65,67-68,71-73,75-76,79-81,83-84,87-89,91-92,95-97,99-100,108-109,125,141,144-147,150-151,154-155,157-161,167,170-171,176,179-180,185,188-189,194,197-198,203,206-223
+src/lib/server/movement/service.ts
+  3a3c56a6dbec304e 1-60
+tests/features/component/imports/ImportsPage.smart.spec.ts
+  e32f9530a5463689 3,17
+tests/features/unit/review/service.test.ts
+  e32f9530a5463689 4,6,20,25
+tests/features/unit/timeline/route.test.ts
+  3a3c56a6dbec304e 5,11,13-16,26-28,42,58-71
+CONTRIBUTING.md
+  3a3c56a6dbec304e 1-147
+drizzle/0000_blue_elektra.sql
+  3a3c56a6dbec304e 1-236
+tests/features/unit/assessments/controller.test.ts
+  e32f9530a5463689 12
+tests/features/unit/sobriety/controller.test.ts
+  e32f9530a5463689 12
+src/lib/server/integrations/service.ts
+  3a3c56a6dbec304e 1-65
+docs/designs/2026-04-02-personal-health-cockpit-visual-spec.md
+  3a3c56a6dbec304e 2,4,6
+tests/features/component/today/TodayPage.spec.ts
+  e32f9530a5463689 3,49,91,133,160,214,253,304,397
+  3a3c56a6dbec304e 7,22-23,293-294,296,298-299,376-380,389-390
+docs/feature-reference.md
+  3a3c56a6dbec304e 1-106
+tests/features/unit/assessments/route.test.ts
+  3a3c56a6dbec304e 5,11-13,15-17,28-33,38-43,46-50
+src/lib/core/db/test-client.ts
+  e32f9530a5463689 15,22,38-39,45-46,50-52
+  3a3c56a6dbec304e 1-3,5-11,13,16-21,23-37,40-44
+tests/features/unit/db/migrate.route.test.ts
+  3a3c56a6dbec304e 2,6-7,12-17,20-21,26-58,60,65,71-72
+tests/features/unit/groceries/route.test.ts
+  3a3c56a6dbec304e 5,11-14,16-18,28-29,39-40,50-51,65-66,69,75-78,81-92,95-97
+src/lib/features/timeline/controller.ts
+  d0829cbd90bd3fef 4,8-9,35,38
+tests/features/unit/journal/navigation.test.ts
+  3a3c56a6dbec304e 3,8-10,19-21
+docs/api-reference.md
+  3a3c56a6dbec304e 1-339
+src/lib/features/review/model.ts
+  3a3c56a6dbec304e 2,59
+src/lib/features/integrations/connectors/healthkit.ts
+  3a3c56a6dbec304e 1-4,25,29
+src/lib/features/sobriety/controller.ts
+  3a3c56a6dbec304e 12,14,16,40,47,58,64,74-80,84,89-90,96,99,104,111,114,119
+tests/features/unit/today/route.test.ts
+  3a3c56a6dbec304e 5,11-16,18-20,37-39,43-45,49-51,55-57,61-63,72-73,89,105,108,125-126,130,134,138,143-147,156-157,165-166,174-175,188-189,204,208-209,223
+src/routes/api/today/+server.ts
+  3a3c56a6dbec304e 1,3-10,12-23,25-46,48
+src/lib/features/movement/service.ts
+  d0829cbd90bd3fef 8,14,20,30,35,37-38,44,80
+  3a3c56a6dbec304e 1,7,10,25,36,43,49,54-56,62,68-78
+src/lib/features/review/service.ts
+  3a3c56a6dbec304e 1-16,18-34,37-38,65-96,98-107,110-114,116,127-189,192-216,226-228,230,232-241,243-264,271,277,318-454,458,462,471,475,478-479,490,494,503,519
+tests/features/unit/today/model.test.ts
+  3a3c56a6dbec304e 2,9-10,52-59,82-83
+src/lib/features/health/state.ts
+  a428502b55d5a6fa 6,39-40,42,51,62,68
+docs/feature-flows.md
+  3a3c56a6dbec304e 1-345
+src/lib/server/nutrition/service.ts
+  3a3c56a6dbec304e 1-503
+tests/core/unit/http/feature-client.test.ts
+  e32f9530a5463689 35,46,51,88,93
+  a428502b55d5a6fa 25,34,56,82
+  3a3c56a6dbec304e 1,3,7,12-16,52-55,57-69,73-78
+src/lib/features/sobriety/client.ts
+  3a3c56a6dbec304e 14
+src/lib/features/planning/actions.ts
+  3a3c56a6dbec304e 9-16,20-34,37,74,85,100,113,122,129,133,139,146,151-152,158,162-163,169,174-175,181,186-187,193,208,211,217,221-222
+src/lib/features/nutrition/summary.ts
+  3a3c56a6dbec304e 1-3,5,7-8,17-46,48,52-53,56,60,70-71
+src/lib/server/groceries/service.ts
+  3a3c56a6dbec304e 1-99
+src/lib/features/groceries/controller.ts
+  3a3c56a6dbec304e 3-7,13,16-20,62,65-66,68,84-85,87,89-90,93,97-104,108,123,126,130,134-135
+tests/features/unit/review/controller.test.ts
+  e32f9530a5463689 8-9,14,49-65
+docs/privacy-and-local-first.md
+  3a3c56a6dbec304e 1-176
+tests/features/unit/sobriety/service.test.ts
+  e32f9530a5463689 12
+tests/features/component/integrations/IntegrationsPage.spec.ts
+  e32f9530a5463689 3,10,39
+  3a3c56a6dbec304e 4
+src/lib/features/today/intelligence.ts
+  3a3c56a6dbec304e 1-745
+src/lib/server/groceries/store.ts
+  3a3c56a6dbec304e 1-160
+src/lib/server/db/drizzle/mirror.ts
+  3a3c56a6dbec304e 1-135
+tests/features/component/movement/MovementPage.spec.ts
+  e32f9530a5463689 3,13
+src/lib/features/review/controller.ts
+  3a3c56a6dbec304e 2-7,30,33-34,37,56,63
+src/lib/features/review/analytics-nutrition.ts
+  3a3c56a6dbec304e 1,31,141-142
+tests/support/component/routeSeeds.ts
+  e32f9530a5463689 1,17,26,137
+  3a3c56a6dbec304e 4,9,12
+src/lib/features/health/actions.ts
+  a428502b55d5a6fa 7,15-16,26-38,40,50,56,63,66,73,80,90,96,103,113,120,127,131,135
+src/lib/features/movement/client.ts
+  3a3c56a6dbec304e 29-30
+docs/designs/2026-04-12-today-intelligence-implementation-packet.md
+  3a3c56a6dbec304e 1-326
+tests/features/unit/journal/controller.test.ts
+  e32f9530a5463689 14
+src/routes/api/nutrition/enrich/[fdcId]/+server.ts
+  293c3837dbe329ad 1,3-4,6-11,13-17,19
+src/lib/features/integrations/controller.ts
+  d0829cbd90bd3fef 2-5,7,26-28,31
+src/routes/api/nutrition/search-recipes/+server.ts
+  3a3c56a6dbec304e 1,3-4,6-7,9-12,15-18,20-22,24-26
+package.json
+  3a3c56a6dbec304e 26,31-35,48,51,55-56
+tests/features/unit/integrations/service.test.ts
+  3a3c56a6dbec304e 93
+  e32f9530a5463689 32
+src/lib/server/timeline/service.ts
+  3a3c56a6dbec304e 1,6-34,36-45
+  a950d8abe3e010b3 2-5,35
+src/lib/server/journal/service.ts
+  3a3c56a6dbec304e 1-123
+src/lib/features/imports/client.ts
+  3a3c56a6dbec304e 3,5
+src/routes/api/nutrition/search-packaged/+server.ts
+  3a3c56a6dbec304e 1-4,6-7,9-13,15-18,20-22,24-26
+src/lib/features/nutrition/planned-meal-resolution.ts
+  3a3c56a6dbec304e 2-3,5-6,89-104,106,110-111,118,122-123,126
+src/bun-sqlite.d.ts
+  3a3c56a6dbec304e 1-4
+tests/features/unit/nutrition/store-lookup-summary.test.ts
+  e32f9530a5463689 20
+  3a3c56a6dbec304e 9-12,15-16,19
+tests/features/unit/assessments/service.test.ts
+  e32f9530a5463689 14
+tests/features/component/groceries/GroceriesPage.spec.ts
+  e32f9530a5463689 3,15,80,118
+tests/features/unit/groceries/controller.test.ts
+  e32f9530a5463689 4,14
+src/lib/server/sobriety/service.ts
+  3a3c56a6dbec304e 1-112
+src/lib/features/journal/service.ts
+  3a3c56a6dbec304e 1,7-8,19-23,26,35,37-42,44,48-53,57,60
+src/lib/features/journal/contracts.ts
+  3a3c56a6dbec304e 1-70
+src/lib/server/db/drizzle/import-snapshot.ts
+  3a3c56a6dbec304e 1-44
+tests/features/component/imports/ImportsPage.healthkit.spec.ts
+  e32f9530a5463689 3,24
+tests/features/unit/planning/page-state-actions.test.ts
+  3a3c56a6dbec304e 3-4,14,16
+  e32f9530a5463689 17
+tests/features/unit/today/controller.test.ts
+  3a3c56a6dbec304e 43-46,212-215
+  e32f9530a5463689 4,16
+src/routes/api/db/migrate/+server.ts
+  3a3c56a6dbec304e 4-5,15,18,21
+  7ba45e174f03a38c 2,13,23
+src/lib/server/health/service.ts
+  3a3c56a6dbec304e 1-254
+src/routes/api/health/+server.ts
+  3a3c56a6dbec304e 1-2,4-10,12-13,15-40
+src/lib/features/sobriety/service.ts
+  3a3c56a6dbec304e 1,3,7-9,34,45-46,51,63-64,69,82-83,88,91,95-98,100,118-134,138,141-143,146
+src/routes/api/sobriety/+server.ts
+  293c3837dbe329ad 1-2,4-8,10-11,13-36
+src/lib/features/nutrition/store.ts
+  3a3c56a6dbec304e 7,14-29,61,65,69-83,85,94,96,100-105,109-110,112,115-116,118,123,135,157-158,163-168,172-173,175,178-179,181,185-186,191-192,196,199,204,221,224
+src/lib/features/imports/parsers.ts
+  3a3c56a6dbec304e 1,26
+docs/maintenance-guide.md
+  3a3c56a6dbec304e 1-168
+src/lib/features/imports/store.ts
+  3a3c56a6dbec304e 1,20,25-36,38,46-47,49,60,65,110,119,124,131,147,155,160,180,184,186,197,201-202,205,211,215,225-226,230-233
+src/lib/features/journal/navigation.ts
+  3a3c56a6dbec304e 12,14-46,49-61,66-67,71,79
+src/lib/features/imports/Page.svelte
+  3a3c56a6dbec304e 15-19,29,37
+docs/designs/2026-04-10-bleeding-edge-health-fitness-eng-review.md
+  3a3c56a6dbec304e 1-665
+docs/developer-guide.md
+  3a3c56a6dbec304e 1-185
+src/lib/features/movement/controller.ts
+  d0829cbd90bd3fef 47-48,111,117-118,121
+  3a3c56a6dbec304e 12,45,108
+src/lib/features/planning/service.ts
+  3a3c56a6dbec304e 1,14,16-30,32,34-46,63,65,73-76,78-90,93-108,110,122,127,130,134,137,141,158,178,183,187-188,192,203,209,216,219-221,226-227,231,235,237,251-252,255-285,289,302,305-309,312,317,326
+src/lib/features/today/actions.ts
+  3a3c56a6dbec304e 2-3,6-10,18-19,21-31,44,58,79,81,83,95-97,100,106,109,115,129,131,136-137,139-140,145,149-150,155,159,171,178,183,190-191,202,206,213,219
+src/lib/features/nutrition/components/NutritionComposerSection.svelte
+  3a3c56a6dbec304e 9
+docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md
+  3a3c56a6dbec304e 2,4,7
+src/lib/features/planning/state.ts
+  3a3c56a6dbec304e 8,22-23,75,79,105,109
+tests/features/unit/review/route.test.ts
+  3a3c56a6dbec304e 5,11-12,14-16,25-27,36-37,45,61,64,73,77,90,94-95,106
+src/routes/api/journal/+server.ts
+  3a3c56a6dbec304e 1-2,4-8,10-11,13-36
+src/lib/server/review/service.ts
+  3a3c56a6dbec304e 1,18-37,39-40,44-47,53-62,68-71,76-140,142-194,198-219
+src/lib/features/imports/ImportComposerCard.svelte
+  3a3c56a6dbec304e 8
+src/lib/features/journal/client.ts
+  3a3c56a6dbec304e 17
+src/lib/features/imports/page-actions.ts
+  3a3c56a6dbec304e 43-49,60,103,129
+src/routes/api/nutrition/search-usda/+server.ts
+  3a3c56a6dbec304e 1-4,6-7,9-12,15-18,20-22,24-26
+src/lib/features/groceries/service.ts
+  3a3c56a6dbec304e 1,9,11-22,24,26,28,30,32,35,38,42,45,49,53-54,57,61,64,67,70,74-78,81-86,89-90,92-94,98,102,105,109,115-116,123,132,141,158,168-169,188-189,197,202-203,210,214-215
+src/lib/features/groceries/derivation.ts
+  3a3c56a6dbec304e 1-332
+tests/features/unit/movement/service.test.ts
+  e32f9530a5463689 10
+src/lib/core/shared/daily-records.ts
+  3a3c56a6dbec304e 1,6-7,9,13,23
+tests/features/unit/nutrition/client.test.ts
+  3a3c56a6dbec304e 2
+src/routes/api/test/reset-db/+server.ts
+  3a3c56a6dbec304e 1,3,5-6,9-10,13-14
+  7ba45e174f03a38c 2,7,15
+src/routes/api/groceries/+server.ts
+  3a3c56a6dbec304e 1-2,4-8,10-21,23-38,40
+docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md
+  3a3c56a6dbec304e 2,4,7,9
+tests/features/unit/journal/route.test.ts
+  3a3c56a6dbec304e 5,11-14,16-18,35-40,45-46,63-67,69-73
+tests/features/unit/today/intelligence.test.ts
+  3a3c56a6dbec304e 1-205
+scripts/check-operational.mjs
+  3a3c56a6dbec304e 1-29,32-34,36-38,40-42,44,46,49-52,55-70,73,75-79,81-86,88-89,92-96,98-107
+tests/features/unit/imports/route.test.ts
+  3a3c56a6dbec304e 1,3-7,10-41,43-47,49-50,52-53,55,57,59-63,66-82,84,86,88-90,93-104,106,108,110-112,115-119,121-122,124,126-128,130-131,133-140,142-144
+tests/features/e2e/daily-flows.e2e.ts
+  3a3c56a6dbec304e 12-14,380,643-644,646-650,659-660
+src/lib/server/db/drizzle/client.ts
+  3a3c56a6dbec304e 1-109
+src/lib/server/today/service.ts
+  3a3c56a6dbec304e 1-312
+src/lib/core/db/in-memory.ts
+  7ba45e174f03a38c 2,4-7,126,129-149,161
+  3a3c56a6dbec304e 9,18,22,25,29-33,37,41,45-61,64-66,68-72,75-76,80-85,87-88,92-93,97,101,104-106,108,111-114,120-123,127-128,153,155-159
+tests/core/unit/domain/health-metrics.test.ts
+  3a3c56a6dbec304e 1-48
+src/lib/features/health/client.ts
+  3a3c56a6dbec304e 3,11
+  7ba45e174f03a38c 10,15
+src/routes/api/movement/+server.ts
+  3a3c56a6dbec304e 1-2,4-6,8-19,21-26,28
+.github/workflows/ai-review-grok-super.yml
+  3a3c56a6dbec304e 31-38
+src/lib/features/assessments/contracts.ts
+  3a3c56a6dbec304e 1-38
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "c303ca5e7277dcca720bca8c86b0bbe436afd09b",
+  "prompts": {
+    "05248fd3ff885ce7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-3c76fcda-9c49-4ad1-8e0e-94f9e22deb71",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 86,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "06213b853436d98d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-1d7b82d5-f101-41c2-8d03-5cabd2a874b2",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 79,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "1735aca7e08b61cf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-7bd1c5cd-f897-4542-9027-fbebdbfc5e04",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 5,
+      "total_deletions": 4,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "293c3837dbe329ad": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7fa3-e863-7292-9daa-037feb500b22",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 55,
+      "total_deletions": 0,
+      "accepted_lines": 55,
+      "overriden_lines": 0
+    },
+    "2e8ed7f69013e83e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-cf622fd4-6c08-4932-982c-d34b96f89954",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 51,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "394f1edf9e1ead6b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-bbe5db11-c297-4edb-8a6b-d1f91d9abb35",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 13,
+      "total_deletions": 11,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "3a3c56a6dbec304e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7a4f-c83f-7fd3-9d3a-e52ffc06f97e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 20566,
+      "total_deletions": 10787,
+      "accepted_lines": 17594,
+      "overriden_lines": 0
+    },
+    "41aed32bb6af7df2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-14a403da-a374-4fea-8436-f384adae26ea",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 37,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "4b2b3d0ffebb34da": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-cc65446f-8af8-4e60-bf5b-24bcb852c090",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 102,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "7ba45e174f03a38c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7f99-8fc4-79b0-9720-ee6cd01eb062",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 78,
+      "total_deletions": 64,
+      "accepted_lines": 46,
+      "overriden_lines": 0
+    },
+    "92fd1b1db2054595": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-efb22ffc-a628-4a52-a8d3-b0e13831e352",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 16,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "a428502b55d5a6fa": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7f7f-20d0-7073-bb3e-2bdae248e82e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 235,
+      "total_deletions": 158,
+      "accepted_lines": 212,
+      "overriden_lines": 0
+    },
+    "a6bc5ed96bc516f1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d56b6-9ef9-79d2-bec6-04c0a0dfa55b",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 2195,
+      "total_deletions": 686,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "a950d8abe3e010b3": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7fa0-3f48-71d1-8f7c-2c43637727e7",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 60,
+      "total_deletions": 8,
+      "accepted_lines": 60,
+      "overriden_lines": 0
+    },
+    "b4a71c229e5311ef": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-13d9d563-b635-43e2-84dd-a8f30f60907e",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 95,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "bf288136944ad707": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7979-61c6-7701-89cf-d52381b04679",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 177,
+      "total_deletions": 131,
+      "accepted_lines": 63,
+      "overriden_lines": 0
+    },
+    "c41febce480ecab0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7f2b-36c9-7de1-ba99-aba5123eac18",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 54,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "d0829cbd90bd3fef": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7f67-8c03-70b0-9590-cbd977786dcc",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 60,
+      "total_deletions": 46,
+      "accepted_lines": 36,
+      "overriden_lines": 0
+    },
+    "d2a2d321851e61a0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-84258053-e193-4cbe-acc6-4df3945d9bbe",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 118,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "de1b6b97350703ed": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-b72656e5-01a3-4897-abf3-c011937de2b1",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 93,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "e32f9530a5463689": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7f45-6dcd-7810-b362-d89c40778896",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 143,
+      "total_deletions": 127,
+      "accepted_lines": 130,
+      "overriden_lines": 0
+    },
+    "e790bb44713336e7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-9d69c15b-1077-480c-b39b-255785920cd3",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 230,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "eed283d252a40d45": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7f54-dfdd-7b31-813e-03c9495158fc",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 15,
+      "total_deletions": 0,
+      "accepted_lines": 15,
+      "overriden_lines": 0
+    },
+    "f78fa76e7aa06e40": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-4f4f967f-4eed-4bf6-83ee-9218514fcb8c",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "fe4117ac79f3c2af": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-d050cf07-b1b9-4c74-b17e-2ec5118fb9cd",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 118,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
