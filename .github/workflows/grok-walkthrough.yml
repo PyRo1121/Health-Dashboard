@@ -59,7 +59,7 @@ jobs:
         run: node .github/scripts/grok-walkthrough.mjs
 
       - name: Post walkthrough comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           WALKTHROUGH_MARKDOWN_PATH: ${{ runner.temp }}/grok-walkthrough.md
           PR_NUMBER: ${{ github.event.inputs.pr_number }}

@@ -30,7 +30,7 @@ jobs:
         run: node .github/scripts/branch-protection-audit.mjs
 
       - name: Upsert branch protection audit issue
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           BRANCH_AUDIT_MARKDOWN_PATH: ${{ runner.temp }}/branch-protection-audit.md
         with:

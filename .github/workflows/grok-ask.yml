@@ -84,7 +84,7 @@ jobs:
         run: node .github/scripts/grok-ask.mjs
 
       - name: Post answer as PR comment
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           GROK_ASK_MARKDOWN_PATH: ${{ runner.temp }}/grok-ask.md
           GROK_ASK_JSON_PATH: ${{ runner.temp }}/grok-ask.json

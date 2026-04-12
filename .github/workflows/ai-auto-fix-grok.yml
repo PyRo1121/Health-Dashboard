@@ -104,7 +104,7 @@ jobs:
 
       - name: Upsert auto-fix comment
         if: steps.guard.outputs.skip_reason == '' && steps.path_guard.outputs.skip_reason == ''
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           FIX_MARKDOWN_PATH: ${{ runner.temp }}/grok-fix.md
         with:
@@ -167,7 +167,7 @@ jobs:
 
       - name: Sync auto-fix labels
         if: always()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const fixApplied = '${{ steps.apply.outputs.fix_applied }}' === 'true';
@@ -203,7 +203,7 @@ jobs:
 
       - name: Refresh PR manager after auto-fix
         if: always()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.actions.createWorkflowDispatch({

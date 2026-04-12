@@ -42,7 +42,7 @@ jobs:
         run: node .github/scripts/grok-threat-monitor.mjs
 
       - name: Upsert threat monitor issue
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           THREAT_JSON_PATH: ${{ runner.temp }}/grok-threat-monitor.json
           THREAT_MARKDOWN_PATH: ${{ runner.temp }}/grok-threat-monitor.md
