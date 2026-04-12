@@ -1,0 +1,279 @@
+src/lib/features/nutrition/store.ts
+  3a3c56a6dbec304e 7-12,29,31-34,74-83,165-167,195-197,204-206
+docs/designs/2026-04-02-personal-health-cockpit-tranche-plan.md
+  3a3c56a6dbec304e 2
+drizzle.config.ts
+  3a3c56a6dbec304e 4-5
+src/lib/server/nutrition/service.ts
+  3a3c56a6dbec304e 36-40,82-84,89-93,101-105,111-113,120-122,133-140,145-150,240-242,289-293,312-322,325-327,332-339,367-369,396-399,415-419,422-424,441-445,465-469,563-567
+src/lib/server/db/drizzle/import-snapshot.ts
+  3a3c56a6dbec304e 31-34,41-43,48-51
+docs/external-data-sources.md
+  3a3c56a6dbec304e 23,54,60,66,72,78,83,93,101,108,112,118,127,134,138,145,151,157,161,167
+ARCHITECTURE.md
+  3a3c56a6dbec304e 8,133,140,151,157,168,173,184,190,199,205,215,219,228,237,251,257,266,272,281,285,294,301,312,318,330,336,346,352
+docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t0-t1.md
+  3a3c56a6dbec304e 2
+src/lib/features/movement/service.ts
+  3a3c56a6dbec304e 1-4,10-11
+src/lib/features/planning/actions.ts
+  3a3c56a6dbec304e 9-12
+src/routes/api/db/migrate/+server.ts
+  3a3c56a6dbec304e 5-8
+src/lib/features/integrations/client.ts
+  3a3c56a6dbec304e 10-13
+src/lib/features/today/components/TodaySignalsSection.svelte
+  3a3c56a6dbec304e 69-70,83-86,97-98,103-106,111-114,133-137,139-143,155-156,161-164
+tests/features/unit/health/route.test.ts
+  3a3c56a6dbec304e 145-148,157-163,179-181,190-192,201-203,212-214,220-224,227-229
+tests/support/setup.ts
+  3a3c56a6dbec304e 3-6
+src/lib/features/integrations/normalization/health-normalize.ts
+  3a3c56a6dbec304e 2
+src/routes/api/assessments/+server.ts
+  3a3c56a6dbec304e 25-27
+src/routes/api/review/+server.ts
+  3a3c56a6dbec304e 2
+src/lib/server/groceries/store.ts
+  3a3c56a6dbec304e 28-30,63-65,79-88,140-149,171-180,186-188
+src/lib/features/imports/store.ts
+  3a3c56a6dbec304e 1-7,26-29,38-39,42,208-211
+tests/features/unit/imports/store.test.ts
+  3a3c56a6dbec304e 2
+src/lib/features/review/client.ts
+  3a3c56a6dbec304e 13-14
+docs/designs/2026-04-02-personal-health-cockpit-implementation-packet-t9-t10.md
+  3a3c56a6dbec304e 2
+docs/operations-runbook.md
+  3a3c56a6dbec304e 9,54,67,72,99,105,110,128,136,151,166,178,184,199,203,212
+docs/health-cockpit-whitepaper.md
+  3a3c56a6dbec304e 143,163,185,204,225,316,323,330,337,343,350,356,363,370,377,454
+tests/features/unit/movement/route.test.ts
+  3a3c56a6dbec304e 35-45,47-66,77-82,102-109,122-129,140-147
+tests/features/unit/nutrition/route.test.ts
+  3a3c56a6dbec304e 67-69,78-79,101-102
+src/lib/features/today/snapshot.ts
+  3a3c56a6dbec304e 45-46,273-276,313-316
+src/lib/server/assessments/service.ts
+  3a3c56a6dbec304e 2-7,22-27,64-67
+src/lib/features/journal/controller.ts
+  3a3c56a6dbec304e 48-52,117-121
+src/lib/server/groceries/service.ts
+  3a3c56a6dbec304e 1-9
+tests/features/component/today/TodayPage.spec.ts
+  3a3c56a6dbec304e 293-295
+CONTRIBUTING.md
+  3a3c56a6dbec304e 39,46,75,83,99,115,122,130,138,151
+src/lib/features/imports/client.ts
+  3a3c56a6dbec304e 5-6
+src/routes/api/timeline/+server.ts
+  3a3c56a6dbec304e 3-7
+tests/features/unit/journal/route.test.ts
+  3a3c56a6dbec304e 36-37,39-40,42-43,66-116,121-126
+src/lib/features/review/service.ts
+  3a3c56a6dbec304e 67-68,112-117,382-385,399-403
+src/lib/features/today/client.ts
+  3a3c56a6dbec304e 17-18
+src/lib/features/health/actions.ts
+  3a3c56a6dbec304e 15-18,35-38
+docs/designs/2026-04-10-bleeding-edge-migration-plan.md
+  3a3c56a6dbec304e 2,10,195,202,210,217,226,231,238,252,261,269,273,281,288,296,300,307,315,330,334,346,350,362,375,388,401,414,428,467,473,483,490,512-521,524,542-548,551,559,568,577
+docs/testing-and-verification.md
+  3a3c56a6dbec304e 48,55,60,66,72,80,87,95,102,110,116
+src/lib/server/imports/service.ts
+  3a3c56a6dbec304e 30-34,85-89,130-133,179-181
+tests/features/unit/today/intelligence.test.ts
+  3a3c56a6dbec304e 2-5,75-77
+docs/designs/2026-04-12-today-intelligence-implementation-packet.md
+  3a3c56a6dbec304e 6,18,35,44,57,97,108,119,149,161,186,199,207-213,218,222,226,230,234,240,249,260,267,271,292,296,303,307,314,318,325,329,336,346
+src/lib/server/health/service.ts
+  3a3c56a6dbec304e 56-63,156-158
+src/routes/api/nutrition/+server.ts
+  3a3c56a6dbec304e 45-47
+src/lib/server/journal/service.ts
+  3a3c56a6dbec304e 13-17,22-27,34-39
+docs/designs/2026-04-12-world-class-forward-plan.md
+  3a3c56a6dbec304e 6,8,91,100,108,123,132,140,155,163,171,185,194,202,216,222,228,235
+src/lib/features/sobriety/controller.ts
+  3a3c56a6dbec304e 14-17,80-82
+docs/designs/2026-04-10-bleeding-edge-health-fitness-eng-review.md
+  3a3c56a6dbec304e 2,10,198-214,254-258,283-287,311-315,544-553,608-615
+src/lib/server/review/service.ts
+  3a3c56a6dbec304e 162-164,169-171,201-203
+tests/features/unit/timeline/route.test.ts
+  3a3c56a6dbec304e 10
+src/lib/features/sobriety/client.ts
+  3a3c56a6dbec304e 14-15
+src/lib/server/db/drizzle/mirror.ts
+  3a3c56a6dbec304e 56-62,116-118
+tests/features/unit/today/route.test.ts
+  3a3c56a6dbec304e 156-158,167-169,178-180,194-196
+tests/features/e2e/daily-flows.e2e.ts
+  3a3c56a6dbec304e 815-816,825-830
+docs/developer-guide.md
+  3a3c56a6dbec304e 15,49,81,108,114,121,127,135,139,148,174,182,191
+tests/features/unit/sobriety/route.test.ts
+  3a3c56a6dbec304e 71-125,130-135
+src/lib/features/review/model.ts
+  3a3c56a6dbec304e 2-5
+tests/features/unit/planning/route.test.ts
+  3a3c56a6dbec304e 83-87,98-100,134-165,177-185,188-196,199-207,210-218,221-229,232-250,252-268,270-278
+docs/designs/2026-04-02-personal-health-cockpit-engineering-plan.md
+  3a3c56a6dbec304e 2
+docs/data-model.md
+  3a3c56a6dbec304e 9,31,41,45,49,54,61,65,69,74,81,85,89,94,102,106,110,117,125,129,133,138,147,151,155,159,167,171,175,180,190,194,198,202,210,214,218,222,229,233,237,241,249,253,257,261,268,272,276,280,286,290,294,298,308,312,316,320,326,330,334,338,345,349,353,357,364,368,372,376,383,387,391,395,401,405,409,413,419,423,427,431,463,484,538
+tests/features/unit/today/snapshot.test.ts
+  3a3c56a6dbec304e 348-353
+src/lib/features/nutrition/client.ts
+  3a3c56a6dbec304e 36,50-58
+src/lib/features/integrations/connectors/healthkit.ts
+  3a3c56a6dbec304e 1
+src/lib/features/timeline/client.ts
+  3a3c56a6dbec304e 11-12
+docs/api-reference.md
+  3a3c56a6dbec304e 9,38,42,54,58,62,69,73,77,86,90,94,98,109,113,117,122,136,141,146,153,157,161,165,174,178,182,186,195,199,203,209,220,229,238,247,259,263,267,271,280,284,288,292,300,304,308,312,318,322,326,331,338,342,346,351,359,363,367,371,385,389,396
+src/lib/features/nutrition/state.ts
+  3a3c56a6dbec304e 10-13,16-19,46-47
+src/lib/features/today/actions.ts
+  3a3c56a6dbec304e 21-29,32-33,144-147
+src/lib/features/today/intelligence.ts
+  3a3c56a6dbec304e 647,707
+tests/core/unit/http/feature-client.test.ts
+  3a3c56a6dbec304e 60-63,72-77
+docs/maintenance-guide.md
+  3a3c56a6dbec304e 9,45,54,60,68,74,80,128,140,146,153
+src/lib/features/groceries/service.ts
+  3a3c56a6dbec304e 2-5,15-18
+src/lib/features/journal/service.ts
+  3a3c56a6dbec304e 60-62
+tests/features/e2e/imports.e2e.ts
+  3a3c56a6dbec304e 57-59
+src/lib/features/planning/client.ts
+  3a3c56a6dbec304e 32-33
+src/lib/features/groceries/client.ts
+  3a3c56a6dbec304e 16-17
+src/lib/features/planning/service.ts
+  3a3c56a6dbec304e 39-40,109-112
+src/lib/server/movement/service.ts
+  3a3c56a6dbec304e 44
+src/lib/core/db/types.ts
+  3a3c56a6dbec304e 128-129
+src/lib/server/db/drizzle/schema.ts
+  3a3c56a6dbec304e 6-18,20-34,36-50,52-68,70-86,88-100,102-120,122-140,142-160,162-174,176-190,192-204,206-224,226-240,242-256,258-272,274-288,290-304,306-318,320-340
+src/lib/features/journal/client.ts
+  3a3c56a6dbec304e 17-18
+src/lib/server/today/service.ts
+  3a3c56a6dbec304e 16,93-98,103-105,136-143,191-193,220-222,232-234,238-240
+src/lib/features/adherence/service.ts
+  3a3c56a6dbec304e 14-17
+docs/feature-reference.md
+  3a3c56a6dbec304e 12-28,32-39,43-44,46,104
+src/lib/core/domain/health-metrics.ts
+  3a3c56a6dbec304e 248-251,278-280
+src/lib/features/assessments/controller.ts
+  3a3c56a6dbec304e 11-14
+docs/designs/2026-04-12-bleeding-edge-health-os-plan.md
+  3a3c56a6dbec304e 6,10,21,44,52,64,70,75,80,85,126,155,172,181,199,215,247,251,255,262,271,275,283,291,295,302,310,314,322,330,334,341,349,353,360,368,372,380,388,392,400,457,466,475,484,526,539,553,561,571,581,587,591
+src/lib/features/nutrition/summary.ts
+  3a3c56a6dbec304e 7-8
+src/lib/features/assessments/client.ts
+  3a3c56a6dbec304e 14-17
+src/lib/features/today/components/TodayCheckInSection.svelte
+  3a3c56a6dbec304e 22-37,39-47,49-51,53-55
+docs/feature-flows.md
+  3a3c56a6dbec304e 9,28,39,55,62,71,85,90,98,112,118,136,144,152,169,175,192,198,213,222,238,254,271,281,298,306,324,332,346,353,359,366
+src/lib/core/shared/health-events.ts
+  3a3c56a6dbec304e 22-24
+tests/features/unit/review/service.test.ts
+  3a3c56a6dbec304e 7-11
+src/lib/features/movement/client.ts
+  3a3c56a6dbec304e 29-30
+src/lib/server/db/drizzle/client.ts
+  3a3c56a6dbec304e 71-73
+src/lib/server/plan/service.ts
+  3a3c56a6dbec304e 84-89,94-99,109-113,116-118,151-154,162-166,175-177,179-183,206-208,259-261,281-283,291-293
+src/routes/api/nutrition/barcode/[code]/+server.ts
+  3a3c56a6dbec304e 6-8
+src/lib/features/health/client.ts
+  3a3c56a6dbec304e 3-7
+src/lib/features/nutrition/actions.ts
+  3a3c56a6dbec304e 18-26,62-63
+tests/features/unit/assessments/route.test.ts
+  3a3c56a6dbec304e 40-79,84-89
+docs/privacy-and-local-first.md
+  3a3c56a6dbec304e 17,41,52,61,70,82,88,100,105,111,115,121,125,132,138,158,166,187
+tests/features/unit/golden/migration-parity.test.ts
+  3a3c56a6dbec304e 10-19,45-60,231-233,241-243
+tests/features/unit/groceries/route.test.ts
+  3a3c56a6dbec304e 76-84,89-162,168-173
+src/lib/features/health/service.ts
+  3a3c56a6dbec304e 3-6,127-129
+src/lib/features/review/analytics-health.ts
+  3a3c56a6dbec304e 47-49,56-59,129-130
+src/lib/server/sobriety/service.ts
+  3a3c56a6dbec304e 3-6,13-16,18-25,38-49,68-70,105-107,124-126
+src/lib/features/groceries/derivation.ts
+  3a3c56a6dbec304e 314-318
+src/lib/features/groceries/controller.ts
+  3a3c56a6dbec304e 8-10,20
+tests/features/unit/nutrition/action-route.test.ts
+  3a3c56a6dbec304e 12-35,59-76,88-100,105-223,227-235
+src/lib/server/planning/store.ts
+  3a3c56a6dbec304e 37-39,44-46,51-53,66-71,94-96,110-115,143-148
+src/routes/api/nutrition/enrich/[fdcId]/+server.ts
+  3a3c56a6dbec304e 17-19
+src/lib/features/health/Page.svelte
+  3a3c56a6dbec304e 37-39,45-49,53-57,61-65,69-73
+docs/designs/2026-04-02-personal-health-cockpit-visual-spec.md
+  3a3c56a6dbec304e 2
+src/routes/api/health/+server.ts
+  3a3c56a6dbec304e 38-40
+src/routes/api/plan/+server.ts
+  3a3c56a6dbec304e 31,53-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "70e929d24f69caa5d90803d45c049751d695ad74",
+  "prompts": {
+    "3a3c56a6dbec304e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7a4f-c83f-7fd3-9d3a-e52ffc06f97e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 2444,
+      "total_deletions": 802,
+      "accepted_lines": 3826,
+      "overriden_lines": 0
+    },
+    "e32f9530a5463689": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7f45-6dcd-7810-b362-d89c40778896",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 6,
+      "overriden_lines": 0
+    },
+    "f78fa76e7aa06e40": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-4f4f967f-4eed-4bf6-83ee-9218514fcb8c",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
