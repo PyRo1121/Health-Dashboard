@@ -36,6 +36,7 @@ describe('Review route', () => {
 
     render(ReviewPage);
 
+    await waitForText(/This week’s recommendation/i);
     await waitForText(/Mindful reset/i);
     await waitForText(/Higher sleep tracked with better mood/i);
     await waitForText(/Low sleep lined up with higher anxiety on 2026-03-31/i);
@@ -51,6 +52,8 @@ describe('Review route', () => {
     await waitForText(/This Week: 1\/2 plan items completed\./i);
     await waitForText(/Groceries: 1\/2 checked, 1 on hand, 1 excluded\./i);
     await waitForText(/Sleep duration: 8 hours on 2026-04-02/i);
+    await waitForText(/Continue with Greek yogurt bowl|Adjust with|Stop planning/i);
+    await waitForText(/What changed enough to matter/i);
     expect(screen.getByRole('link', { name: 'Load food' }).getAttribute('href')).toMatch(
       /^\/nutrition\?loadKind=food&loadId=/
     );

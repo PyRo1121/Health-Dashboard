@@ -3,7 +3,11 @@ export {
   filterByDays,
   type ReviewAdherenceScore,
   type ReviewCorrelation,
+  type ReviewDecision,
+  type ReviewDecisionCard,
   type ReviewNutritionStrategyItem,
+  type ReviewRecommendationTarget,
+  type ReviewWeeklyRecommendation,
   type WeeklyReviewData,
   weekRangeFromAnchorDay,
 } from './analytics-shared';

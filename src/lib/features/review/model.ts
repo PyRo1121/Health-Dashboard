@@ -26,6 +26,93 @@ export type ReviewNutritionStrategyCard = {
   actionLabel: string;
 };
 
+export type ReviewDecisionCardView = {
+  badge: 'Continue' | 'Adjust' | 'Stop';
+  title: string;
+  detail: string;
+  href: string;
+  actionLabel: string;
+};
+
+export type ReviewWeeklyRecommendationView = {
+  badge: 'Continue' | 'Adjust' | 'Stop';
+  title: string;
+  summary: string;
+  confidenceLabel: 'High confidence' | 'Medium confidence' | 'Low confidence';
+  expectedImpact: string;
+  provenance: string[];
+  href: string;
+  actionLabel: string;
+} | null;
+
+function toDecisionBadge(decision: 'continue' | 'adjust' | 'stop'): 'Continue' | 'Adjust' | 'Stop' {
+  if (decision === 'continue') return 'Continue';
+  if (decision === 'adjust') return 'Adjust';
+  return 'Stop';
+}
+
+function toConfidenceLabel(
+  confidence: 'high' | 'medium' | 'low'
+): 'High confidence' | 'Medium confidence' | 'Low confidence' {
+  if (confidence === 'high') return 'High confidence';
+  if (confidence === 'medium') return 'Medium confidence';
+  return 'Low confidence';
+}
+
+function createReviewTargetHref(target: { kind: 'food' | 'recipe' | 'plan'; id?: string }): string {
+  if (target.kind === 'food' && target.id) {
+    return buildNutritionIntentHref({ kind: 'food', id: target.id });
+  }
+
+  if (target.kind === 'recipe' && target.id) {
+    return buildNutritionIntentHref({ kind: 'recipe', id: target.id });
+  }
+
+  return '/plan';
+}
+
+export function createWeeklyRecommendationView(
+  weekly: WeeklyReviewData | null
+): ReviewWeeklyRecommendationView {
+  if (!weekly?.weeklyRecommendation) {
+    return null;
+  }
+
+  return {
+    badge: toDecisionBadge(weekly.weeklyRecommendation.decision),
+    title: weekly.weeklyRecommendation.title,
+    summary: weekly.weeklyRecommendation.summary,
+    confidenceLabel: toConfidenceLabel(weekly.weeklyRecommendation.confidence),
+    expectedImpact: weekly.weeklyRecommendation.expectedImpact,
+    provenance: weekly.weeklyRecommendation.provenance,
+    href: createReviewTargetHref(weekly.weeklyRecommendation.target),
+    actionLabel: weekly.weeklyRecommendation.actionLabel,
+  };
+}
+
+export function createReviewDecisionCards(
+  weekly: WeeklyReviewData | null
+): ReviewDecisionCardView[] {
+  return weekly
+    ? weekly.weeklyDecisionCards.map((card) => ({
+        badge: toDecisionBadge(card.decision),
+        title: card.title,
+        detail: normalizeStrategyDetail(card.detail),
+        href: createReviewTargetHref(card.target),
+        actionLabel:
+          card.target.kind === 'food'
+            ? card.decision === 'stop'
+              ? 'Review food'
+              : 'Load food'
+            : card.target.kind === 'recipe'
+              ? card.decision === 'stop'
+                ? 'Review recipe'
+                : 'Load recipe'
+              : 'Open Plan',
+      }))
+    : [];
+}
+
 export type ReviewAdherenceCard = {
   label: string;
   value: string;
@@ -156,6 +243,11 @@ export function createReviewAdherenceAuditItems(
 export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSection[] {
   return weekly
     ? [
+        {
+          title: 'What changed enough to matter',
+          items: weekly.whatChangedHighlights,
+          emptyMessage: 'The week does not yet have enough movement to call out a clear shift.',
+        },
         {
           title: 'Drift flags',
           items: weekly.snapshot.flags,

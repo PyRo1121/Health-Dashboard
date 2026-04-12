@@ -12,9 +12,10 @@
     setReviewExperiment,
   } from '$lib/features/review/client';
   import {
+    createReviewDecisionCards,
     createReviewAdherenceAuditItems,
     createReviewAdherenceCards,
-    createNutritionStrategyCards,
+    createWeeklyRecommendationView,
     createReviewSections,
     createReviewTrendRows,
   } from '$lib/features/review/model';
@@ -23,8 +24,9 @@
 
   let page = $state(createReviewPageState());
   let trendRows = $derived(createReviewTrendRows(page.weekly));
+  let weeklyRecommendation = $derived(createWeeklyRecommendationView(page.weekly));
+  let reviewDecisionCards = $derived(createReviewDecisionCards(page.weekly));
   let reviewSections = $derived(createReviewSections(page.weekly));
-  let nutritionStrategyCards = $derived(createNutritionStrategyCards(page.weekly));
   let adherenceCards = $derived(createReviewAdherenceCards(page.weekly));
   let adherenceAuditItems = $derived(createReviewAdherenceAuditItems(page.weekly));
 
@@ -51,6 +53,7 @@
     <ReviewHeadlineSection
       headline={page.weekly.snapshot.headline}
       daysTracked={page.weekly.snapshot.daysTracked}
+      recommendation={weeklyRecommendation}
     />
 
     <ReviewListSection
@@ -67,7 +70,7 @@
     {#each reviewSections as section (section.title)}
       {#if section.title === 'Repeat / rotate / skip next week'}
         <ReviewStrategySection
-          cards={nutritionStrategyCards}
+          cards={reviewDecisionCards}
           emptyMessage={section.emptyMessage ?? ''}
         />
       {:else}

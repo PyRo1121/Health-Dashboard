@@ -58,10 +58,129 @@ import {
   REVIEW_EXPERIMENT_OPTIONS,
   weekRangeFromAnchorDay,
   type WeeklyReviewData,
+  type ReviewDecisionCard,
+  type ReviewDecision,
+  type ReviewRecommendationTarget,
+  type ReviewWeeklyRecommendation,
 } from './analytics';
 
 export type { ReviewCorrelation, WeeklyReviewData } from './analytics';
 export { computeCorrelations, generateReviewFlags } from './analytics';
+
+function buildReviewRecommendationTarget(input: {
+  kind: 'food' | 'recipe' | 'plan';
+  id?: string;
+}): ReviewRecommendationTarget {
+  return input;
+}
+
+function toDecision(kind: 'repeat' | 'rotate' | 'skip'): ReviewDecision {
+  if (kind === 'repeat') return 'continue';
+  if (kind === 'rotate') return 'adjust';
+  return 'stop';
+}
+
+function toTargetFromStrategy(
+  item: WeeklyReviewData['nutritionStrategy'][number]
+): ReviewRecommendationTarget {
+  return buildReviewRecommendationTarget({
+    kind: item.recommendationKind,
+    id: item.recommendationId,
+  });
+}
+
+function buildWhatChangedEnoughToMatter(input: {
+  correlations: WeeklyReviewData['snapshot']['correlations'];
+  healthHighlights: string[];
+  contextSignals: string[];
+  grocerySignals: string[];
+  deviceHighlights: string[];
+  patternHighlights: string[];
+}): string[] {
+  const items = [
+    ...input.healthHighlights,
+    ...input.contextSignals,
+    ...input.patternHighlights,
+    ...input.grocerySignals,
+    ...input.deviceHighlights,
+    ...input.correlations.map((item) => item.label),
+  ].filter(Boolean);
+
+  return [...new Set(items)].slice(0, 4);
+}
+
+function buildWeeklyDecisionCards(input: {
+  nutritionStrategy: WeeklyReviewData['nutritionStrategy'];
+}): ReviewDecisionCard[] {
+  return input.nutritionStrategy.slice(0, 3).map((item) => ({
+    decision: toDecision(item.kind),
+    title: item.title,
+    detail: item.detail,
+    target: toTargetFromStrategy(item),
+  }));
+}
+
+function buildWeeklyRecommendation(input: {
+  nutritionStrategy: WeeklyReviewData['nutritionStrategy'];
+  adherenceScores: WeeklyReviewData['adherenceScores'];
+  grocerySignals: string[];
+  whatChangedHighlights: string[];
+}): ReviewWeeklyRecommendation | null {
+  const strategyLead = input.nutritionStrategy[0];
+  const overall = input.adherenceScores.find((score) => score.label === 'Overall');
+
+  if (strategyLead) {
+    const decision = toDecision(strategyLead.kind);
+    return {
+      decision,
+      title:
+        decision === 'continue'
+          ? `Continue with ${strategyLead.title}`
+          : decision === 'adjust'
+            ? `Adjust with ${strategyLead.title}`
+            : `Stop planning ${strategyLead.title}`,
+      summary:
+        decision === 'continue'
+          ? 'This is the clearest candidate to keep because the week supported it.'
+          : decision === 'adjust'
+            ? 'This is the clearest adjustment because the week suggests a better next version.'
+            : 'This is the clearest thing to stop because the week did not support it.',
+      confidence:
+        overall && overall.score >= 80 ? 'high' : overall && overall.score >= 50 ? 'medium' : 'low',
+      expectedImpact:
+        decision === 'continue'
+          ? 'Keep the next week simpler and more repeatable.'
+          : decision === 'adjust'
+            ? 'Reduce friction while keeping momentum.'
+            : 'Prevent another avoidable miss next week.',
+      provenance: [...input.whatChangedHighlights.slice(0, 2), strategyLead.detail].filter(Boolean),
+      actionLabel:
+        strategyLead.recommendationKind === 'food'
+          ? decision === 'stop'
+            ? 'Review food'
+            : 'Load food'
+          : decision === 'stop'
+            ? 'Review recipe'
+            : 'Load recipe',
+      target: toTargetFromStrategy(strategyLead),
+    };
+  }
+
+  if (input.grocerySignals.length) {
+    return {
+      decision: 'adjust',
+      title: 'Adjust the weekly plan before the next grocery cycle',
+      summary: 'The week surfaced enough grocery friction that the plan needs a tighter next pass.',
+      confidence: 'medium',
+      expectedImpact: 'Reduce waste and keep next-week execution cleaner.',
+      provenance: input.grocerySignals.slice(0, 2),
+      actionLabel: 'Open Plan',
+      target: buildReviewRecommendationTarget({ kind: 'plan' }),
+    };
+  }
+
+  return null;
+}
 
 export interface ReviewStorage
   extends
@@ -283,6 +402,38 @@ export function buildWeeklySnapshotFromWeekData(input: {
     experiment: existingSnapshot?.experiment,
   };
 
+  const nutritionStrategy = buildNutritionStrategy(
+    weekRecords,
+    weekFood,
+    weekHealthEvents,
+    foodCatalogItems,
+    recipeCatalogItems,
+    weekPlanSlots,
+    weekGroceries
+  );
+  const adherenceScores = buildAdherenceScores(adherenceMatches);
+  const healthHighlights = buildHealthHighlights(weekRecords, weekHealthEvents);
+  const contextSignals = buildContextSignals(weekRecords, weekHealthEvents, weekJournalEntries);
+  const patternHighlights = buildPatternHighlights(weekJournalEntries, weekHealthEvents);
+  const grocerySignals = buildGrocerySignals(weekPlanSlots, weekGroceries, anchorDay);
+  const whatChangedHighlights = buildWhatChangedEnoughToMatter({
+    correlations,
+    healthHighlights,
+    contextSignals,
+    grocerySignals,
+    deviceHighlights: buildDeviceHighlights(weekHealthEvents),
+    patternHighlights,
+  });
+  const weeklyDecisionCards = buildWeeklyDecisionCards({
+    nutritionStrategy,
+  });
+  const weeklyRecommendation = buildWeeklyRecommendation({
+    nutritionStrategy,
+    adherenceScores,
+    grocerySignals,
+    whatChangedHighlights,
+  });
+
   return {
     anchorDay,
     snapshot,
@@ -291,24 +442,16 @@ export function buildWeeklySnapshotFromWeekData(input: {
     averageProtein: trends.averageProtein,
     sobrietyStreak: computeSobrietyStreak(weekRecords),
     nutritionHighlights: buildNutritionHighlights(weekRecords, weekFood),
-    nutritionStrategy: buildNutritionStrategy(
-      weekRecords,
-      weekFood,
-      weekHealthEvents,
-      foodCatalogItems,
-      recipeCatalogItems,
-      weekPlanSlots,
-      weekGroceries
-    ),
+    nutritionStrategy,
     planningHighlights: buildPlanningHighlights(weeklyPlan, weekPlanSlots, weekGroceries),
-    adherenceScores: buildAdherenceScores(adherenceMatches),
+    adherenceScores,
     adherenceSignals: buildAdherenceSignals(adherenceMatches),
     adherenceMatches,
-    grocerySignals: buildGrocerySignals(weekPlanSlots, weekGroceries, anchorDay),
+    grocerySignals,
     deviceHighlights: buildDeviceHighlights(weekHealthEvents),
     assessmentSummary: buildAssessmentSummary(weekAssessments),
-    healthHighlights: buildHealthHighlights(weekRecords, weekHealthEvents),
-    contextSignals: buildContextSignals(weekRecords, weekHealthEvents, weekJournalEntries),
+    healthHighlights,
+    contextSignals,
     contextCaptureLinkedEventIds: weekHealthEvents
       .filter((event) => journalDays.has(event.localDay))
       .map((event) => event.id)
@@ -317,7 +460,10 @@ export function buildWeeklySnapshotFromWeekData(input: {
     journalReflectionLinkedEventIds: weekJournalEntries
       .flatMap((entry) => entry.linkedEventIds)
       .slice(0, 5),
-    patternHighlights: buildPatternHighlights(weekJournalEntries, weekHealthEvents),
+    patternHighlights,
+    whatChangedHighlights,
+    weeklyRecommendation,
+    weeklyDecisionCards,
     experimentOptions: [...REVIEW_EXPERIMENT_OPTIONS],
   };
 }

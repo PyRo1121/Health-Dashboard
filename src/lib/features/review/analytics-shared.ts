@@ -31,6 +31,31 @@ export interface ReviewAdherenceScore {
   detail: string;
 }
 
+export type ReviewDecision = 'continue' | 'adjust' | 'stop';
+
+export interface ReviewRecommendationTarget {
+  kind: 'food' | 'recipe' | 'plan';
+  id?: string;
+}
+
+export interface ReviewWeeklyRecommendation {
+  decision: ReviewDecision;
+  title: string;
+  summary: string;
+  confidence: 'high' | 'medium' | 'low';
+  expectedImpact: string;
+  provenance: string[];
+  actionLabel: string;
+  target: ReviewRecommendationTarget;
+}
+
+export interface ReviewDecisionCard {
+  decision: ReviewDecision;
+  title: string;
+  detail: string;
+  target: ReviewRecommendationTarget;
+}
+
 export interface WeeklyReviewData {
   anchorDay: string;
   snapshot: ReviewSnapshot;
@@ -53,6 +78,9 @@ export interface WeeklyReviewData {
   journalHighlights: string[];
   journalReflectionLinkedEventIds: string[];
   patternHighlights: string[];
+  whatChangedHighlights: string[];
+  weeklyRecommendation: ReviewWeeklyRecommendation | null;
+  weeklyDecisionCards: ReviewDecisionCard[];
   experimentOptions: string[];
 }
 

@@ -127,6 +127,11 @@ describe('review service', () => {
     expect(weekly.experimentOptions).toHaveLength(3);
     expect(weekly.assessmentSummary[0]).toContain('WHO-5');
     expect(weekly.deviceHighlights.some((line) => line.includes('Sleep'))).toBe(true);
+    expect(weekly.weeklyRecommendation).toMatchObject({
+      decision: 'continue',
+      title: expect.stringMatching(/Continue|Adjust|Stop/),
+    });
+    expect(weekly.whatChangedHighlights.length).toBeGreaterThan(0);
   });
 
   it('threads journal excerpts and context signals into the weekly snapshot', async () => {

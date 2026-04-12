@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { WeeklyReviewData } from '$lib/features/review/service';
 import {
+  createReviewDecisionCards,
   createReviewAdherenceAuditItems,
   createReviewAdherenceCards,
-  createNutritionStrategyCards,
   createReviewSections,
   createReviewTrendRows,
+  createWeeklyRecommendationView,
 } from '$lib/features/review/model';
 
 describe('review model', () => {
@@ -102,11 +103,34 @@ describe('review model', () => {
       ],
       journalReflectionLinkedEventIds: ['anxiety-1'],
       patternHighlights: ['Headache kept showing up in your notes on 2 days this week.'],
+      whatChangedHighlights: ['Low sleep and a written reflection both landed on 2026-04-02.'],
+      weeklyRecommendation: {
+        decision: 'continue',
+        title: 'Continue with Greek yogurt bowl',
+        summary: 'This is the clearest candidate to keep because the week supported it.',
+        confidence: 'medium',
+        expectedImpact: 'Keep the next week simpler and more repeatable.',
+        provenance: [
+          'Low sleep and a written reflection both landed on 2026-04-02.',
+          'protein target looks strong',
+        ],
+        actionLabel: 'Load food',
+        target: { kind: 'food', id: 'food-catalog-1' },
+      },
+      weeklyDecisionCards: [
+        {
+          decision: 'continue',
+          title: 'Greek yogurt bowl',
+          detail: 'protein target looks strong',
+          target: { kind: 'food', id: 'food-catalog-1' },
+        },
+      ],
       experimentOptions: ['Increase hydration tracking'],
     };
 
     expect(createReviewTrendRows(weekly)).toContain('Average mood: 4.2');
     expect(createReviewSections(weekly).map((section) => section.title)).toEqual([
+      'What changed enough to matter',
       'Drift flags',
       'Assessment changes',
       'Health highlights',
@@ -142,22 +166,28 @@ describe('review model', () => {
         tone: 'steady',
       },
     ]);
-    expect(createNutritionStrategyCards(weekly)).toEqual([
+    expect(createReviewDecisionCards(weekly)).toEqual([
       {
-        badge: 'Repeat',
+        badge: 'Continue',
         title: 'Greek yogurt bowl',
         detail: 'protein target looks strong.',
         href: '/nutrition?loadKind=food&loadId=food-catalog-1',
         actionLabel: 'Load food',
       },
-      {
-        badge: 'Skip',
-        title: 'Teriyaki Chicken Casserole',
-        detail: 'skipped in the weekly plan.',
-        href: '/nutrition?loadKind=recipe&loadId=themealdb%3A52772',
-        actionLabel: 'Review recipe',
-      },
     ]);
+    expect(createWeeklyRecommendationView(weekly)).toEqual({
+      badge: 'Continue',
+      title: 'Continue with Greek yogurt bowl',
+      summary: 'This is the clearest candidate to keep because the week supported it.',
+      confidenceLabel: 'Medium confidence',
+      expectedImpact: 'Keep the next week simpler and more repeatable.',
+      provenance: [
+        'Low sleep and a written reflection both landed on 2026-04-02.',
+        'protein target looks strong',
+      ],
+      href: '/nutrition?loadKind=food&loadId=food-catalog-1',
+      actionLabel: 'Load food',
+    });
   });
 
   it('surfaces a dedicated health highlights section when weekly health signals are available', () => {
@@ -195,6 +225,9 @@ describe('review model', () => {
       ],
       journalReflectionLinkedEventIds: ['anxiety-1'],
       patternHighlights: ['Headache kept showing up in your notes on 2 days this week.'],
+      whatChangedHighlights: ['Low sleep lined up with higher anxiety on 2026-04-02.'],
+      weeklyRecommendation: null,
+      weeklyDecisionCards: [],
       experimentOptions: ['Increase hydration tracking'],
     };
 

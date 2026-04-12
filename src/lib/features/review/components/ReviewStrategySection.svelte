@@ -1,18 +1,21 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { SectionCard } from '$lib/core/ui/primitives';
-  import type { ReviewNutritionStrategyCard } from '$lib/features/review/model';
+  import type { ReviewDecisionCardView } from '$lib/features/review/model';
 
   let {
     cards,
     emptyMessage,
   }: {
-    cards: ReviewNutritionStrategyCard[];
+    cards: ReviewDecisionCardView[];
     emptyMessage: string;
   } = $props();
 </script>
 
-<SectionCard title="Repeat / rotate / skip next week" titleClass="card-title review-strategy-title">
+<SectionCard
+  title="Continue / adjust / stop next week"
+  titleClass="card-title review-strategy-title"
+>
   {#if cards.length}
     <div class="review-strategy-cards">
       {#each cards as card (card.href)}
@@ -22,7 +25,12 @@
             <strong>{card.title}</strong>
             <p>{card.detail}</p>
           </div>
-          <a class="review-strategy-link" href={resolve(card.href)}>{card.actionLabel}</a>
+          <a
+            class="review-strategy-link"
+            href={card.href.startsWith('/nutrition?')
+              ? `${resolve('/nutrition')}${card.href.slice('/nutrition'.length)}`
+              : resolve('/plan')}>{card.actionLabel}</a
+          >
         </article>
       {/each}
     </div>
