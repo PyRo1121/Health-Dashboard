@@ -1,0 +1,452 @@
+src/lib/core/ui/primitives/EmptyState.svelte
+  4fbbaa29b961c2fd 16-20,23-24,28-30
+src/lib/features/review/service.ts
+  42b6cccca0b9441f 266-274,276,280,288,292,299,303,726-733,737,747-754,771-778,823-830,845-852,893-903,917-927
+  ab55601d36de5825 626-629,634-644,1274,1308,1461-1462,1470
+  75b6bef81f0959b8 180-184,186-187,648-649
+  d61a2ba45a978adc 47-53,168-178,442-444,448-450,457-474,477-486,490,494-496,498-501,504-532,536-541,543-548,555-562,564-580,584-585,588-590,593-599,613-619,650,1216-1219
+  ddf63c2c6f7bc273 767-770,779-780,840-844,853,913-916,928-929
+  cbcc726f546f785a 109,112,118,122,164,1244,1247
+  cb1eac3e76425d18 145-146,149-160,166-167,188-197,200-208,230-265,275,277-279,281-287,289-291,293-298,300-302,304-307,655,658-661,688,692,706,708-719,723-725,741-742,758,761,763-766,781-782,787,789,793-795,797,806,811,817-818,834,836,838-839,854-855,860,881-882,887-888,907,909-912,930-931,935-937,941,946,953,959-963,965-992,996
+  59d8ed025c44e339 40-42,44-46,117,119-121,123-126,128-142,147-148,161-162,165,323-329,602,604-612,620-622,645-647,651-652,1254-1255,1272,1307,1309
+  57fa602c26e6365c 43,163,601,603,623,1271,1273,1306
+  302d964af3befd81 179,185,330-441,581,600
+  09c09bc91b155487 143-144,198-199,209-229,308-322,653-654,656-657,662-687,689-691,693-705,707,720-722,734-736,738-740,743-746,755-757,760,762,783-786,788,790-792,796,798-805,807-810,812-816,819-822,831-833,835,856-859,861-878,883-886,889-892,904-906,908,932,938-940,942-945,947-949,952,954-956,964,993-995,1233-1237,1249,1252-1253,1257-1258,1260,1262-1263,1265-1270,1283,1285,1287,1290-1291
+  4fbbaa29b961c2fd 445-447,451-456,475-476,487-489,502-503,533-535,549-554,586-587,591-592,630-633
+src/lib/features/integrations/Page.svelte
+  4fbbaa29b961c2fd 43-85,87-90,92-116,144,150,164,174,181-249,257
+src/lib/core/domain/types.ts
+  4fbbaa29b961c2fd 354
+tests/features/unit/review/controller.test.ts
+  ffa2e8d83dde0967 16,44-56,59,61-63,83-101
+src/lib/features/timeline/Page.svelte
+  4fbbaa29b961c2fd 63,96,112-131
+tests/features/e2e/daily-flows.e2e.ts
+  4fbbaa29b961c2fd 117-120,228-233,235,238-239,408-523
+src/lib/core/ui/shell/MobileNav.svelte
+  4fbbaa29b961c2fd 14-16
+src/lib/server/review/service.ts
+  4fbbaa29b961c2fd 162-180,214-218,231,233-242,244-250,254
+tests/features/unit/review/client.test.ts
+  4fbbaa29b961c2fd 27
+src/lib/features/review/components/ReviewExperimentSection.svelte
+  4fbbaa29b961c2fd 123-124,205-207
+  532229ec919a4f98 25-26,28-29,34,36-42,44,49-52,54-55,73-74,80,83-86,99-100,102-104,115,118-122,125-128,130-140,142-146,153-155,196-203,215-233,235-238,241-275,281-316,320-323,325-330
+  09c09bc91b155487 213-214,333-334
+  59d8ed025c44e339 3-6,12,20,43,129,156-195,210,317-318,324,331-332
+  04d347fe16e08d66 45-46,56-59,61-66,69-72,76-77,116,234,239-240,319
+  43af89431f8f36ca 9,17,30,32-33,53,67,87-97,105-107,141,147-152,276-280
+  ab55601d36de5825 27,31,35,68,75,78-79,81-82,98,101,108-114
+src/lib/core/ui/primitives/Field.svelte
+  09c09bc91b155487 26,34-37,50-55,93-94
+  59d8ed025c44e339 29-30,40-41,56-84
+src/lib/features/review/contracts.ts
+  4fbbaa29b961c2fd 7-23,31
+tests/features/unit/review/model.test.ts
+  4fbbaa29b961c2fd 7-8,127-129,133-154,201-203,221-241,299-443
+src/lib/server/imports/service.ts
+  4fbbaa29b961c2fd 22,86
+src/lib/features/review/analytics.ts
+  4fbbaa29b961c2fd 15-21
+src/lib/features/review/controller.ts
+  59d8ed025c44e339 96,102,105
+  ab55601d36de5825 39,86-95,97-101
+  09c09bc91b155487 59-64,68-70,79-83
+  4fbbaa29b961c2fd 40-43,65-67
+src/app.css
+  4fbbaa29b961c2fd 2-13,15,20-23,28-45,48-49,54,60,105-107,125-130,132-376
+docs/designs/stitch/sovereign-analyst-v2.html
+  09c09bc91b155487 2,22,24-25,74,80,86-87,89,109,405
+  4fbbaa29b961c2fd 1,3-21,23,26-73,75-79,81-85,88,90-108,110-404,406-582
+src/lib/core/ui/primitives/Button.svelte
+  09c09bc91b155487 30-33,35-40,44-45,49-51,56-62,73-74
+  59d8ed025c44e339 63-72,75-80
+src/lib/features/health/components/HealthTemplateSection.svelte
+  4fbbaa29b961c2fd 78-80,134,137,140-141,146
+src/lib/features/health/components/HealthManualLoggingSection.svelte
+  4fbbaa29b961c2fd 67-69,119-121,166-167
+src/lib/features/imports/ImportPayloadSummaryCard.svelte
+  4fbbaa29b961c2fd 16-25,45,59,67-68
+src/lib/features/today/Page.svelte
+  4fbbaa29b961c2fd 206
+src/lib/features/today/components/TodayCheckInSection.svelte
+  4fbbaa29b961c2fd 49-53,65-70
+docs/designs/stitch/performance-vault.html
+  09c09bc91b155487 2,73,88,101
+  4fbbaa29b961c2fd 1,3-72,74-87,89-100,102-607
+src/lib/features/imports/ImportBatchHistoryCard.svelte
+  4fbbaa29b961c2fd 37
+tests/features/unit/review/service.test.ts
+  4fbbaa29b961c2fd 32-40,130,133-140,145,150-154,157-261,432,435-452,456-457,459-460,462-487
+tests/features/e2e/imports.e2e.ts
+  4fbbaa29b961c2fd 83-88
+src/lib/features/journal/Page.svelte
+  4fbbaa29b961c2fd 149,159
+src/lib/core/ui/primitives/StatusBanner.svelte
+  4fbbaa29b961c2fd 18-20,24-25,29-30,34-35,38-39,44
+docs/designs/stitch/strategic-protocols.html
+  4fbbaa29b961c2fd 1,3-73,75-88,90-105,107-500,502-586
+  09c09bc91b155487 2,74,89,106,501
+src/lib/features/health/components/HealthEventStreamSection.svelte
+  4fbbaa29b961c2fd 43,55-58
+src/lib/features/nutrition/components/NutritionCollectionsSection.svelte
+  4fbbaa29b961c2fd 123
+tests/features/unit/review/server.service.test.ts
+  ab55601d36de5825 11,70,81-82,86-87
+  59d8ed025c44e339 1-10,17-48,50-69,71-74,77-80,83-85,88-89,139-197
+  d61a2ba45a978adc 12,49,75-76
+  a134de528636a5af 90-138
+  4fbbaa29b961c2fd 13-16
+src/lib/features/review/components/ReviewStrategySection.svelte
+  59d8ed025c44e339 26-34,38,69,74,79,81-82,86,90,95,107-109,113-115,120,124-125,133,137-139,143,147,157-161
+  ddf63c2c6f7bc273 45-54,121-123,126-132
+  09c09bc91b155487 4-7,16-19,22,25,36-37,39-42,56-57,85,87-89,96-102,105-106,110-112,140-142,144-146
+docs/designs/stitch/analyst-profile.html
+  09c09bc91b155487 2,74,89,102,258,274,290,305,411,446
+  4fbbaa29b961c2fd 1,3-73,75-88,90-101,103-257,259-273,275-289,291-304,306-410,412-445,447-516
+src/lib/core/ui/shell/SideNav.svelte
+  4fbbaa29b961c2fd 7-16,24-26,30-73,79-80
+tests/features/e2e/health-loop.e2e.ts
+  4fbbaa29b961c2fd 63-69
+src/lib/features/movement/components/WorkoutTemplateStudio.svelte
+  4fbbaa29b961c2fd 187,194-195
+src/lib/features/review/Page.svelte
+  4fbbaa29b961c2fd 18-19,31-32,75-81,87-99,112-113,115-118
+src/lib/core/ui/primitives/Card.svelte
+  4fbbaa29b961c2fd 15-34
+src/lib/features/groceries/components/GroceryChecklist.svelte
+  4fbbaa29b961c2fd 78
+src/lib/features/review/model.ts
+  09c09bc91b155487 13,23-24,40,51,73-82,98-101,113-126,142,348,354,361,367,373,395,416,423,429,435,442,448,456
+  4fbbaa29b961c2fd 165
+  ddf63c2c6f7bc273 37-39,199-201
+  59d8ed025c44e339 64-72,172-188
+  ab55601d36de5825 56,61,155,160,170
+  532229ec919a4f98 55,57-60,62-63,148-154,156-159,161-164,166-169,171
+  d61a2ba45a978adc 2
+src/lib/features/review/components/ReviewListSection.svelte
+  59d8ed025c44e339 47-49,57-71
+  09c09bc91b155487 39,53
+  4fbbaa29b961c2fd 30-32
+src/lib/features/nutrition/components/NutritionRecommendationsSection.svelte
+  4fbbaa29b961c2fd 33,76-78,95,106
+tests/features/component/review/ReviewPage.spec.ts
+  42b6cccca0b9441f 474
+  04d347fe16e08d66 378,391-395,420,429
+  59d8ed025c44e339 33-35,41,59-67,245-246,248-251,253-256,259-260,264-265,267,270-271,275-279,282-285,396,398,400,402,406-418,421,428
+  09c09bc91b155487 1,5,36-40,43-46,49-50,80-85,87,90-96,115,230-232,239-241,291,293-294,376,380-381,383-386,388-390,441-445,472,485,487-492,495-501
+  ab55601d36de5825 42,247,252,266,397,399,401
+  4fbbaa29b961c2fd 73-74,257-258,261-263,268-269,272-274,280-281,403-405
+  cb1eac3e76425d18 3-4,7-22,28,31-32,47-48,51-53,68-72,75-79,86,88-89,97-114,116-229,233-238,242-244,286-290,292,296-324,327-354,356-367,370-371,375,377,382,387,433,437-440,448-466,471,473,475,478-479,483-484,493-494
+src/lib/features/today/components/TodaySignalsSection.svelte
+  4fbbaa29b961c2fd 36,54,68,76,84,96,104,112,122,134,140,154,162,232,252,258,267-268,272-273,277-278,286,291,317,327,343-344,348-349,353-354,359,368
+src/lib/features/groceries/components/GroceryChecklistRow.svelte
+  4fbbaa29b961c2fd 74
+src/lib/features/nutrition/components/NutritionComposerSection.svelte
+  4fbbaa29b961c2fd 283
+src/lib/features/integrations/NoMacSetupChecklist.svelte
+  4fbbaa29b961c2fd 16,21,34,54,72,89,113,126-128,142,152-192
+src/lib/features/review/components/ReviewAdherenceSection.svelte
+  59d8ed025c44e339 30,53,55,65,69,73,95-113,121-125,135,138,142
+  4fbbaa29b961c2fd 33-36
+  09c09bc91b155487 48,56,61,77-78,80,84-86,130,139,143
+src/lib/features/review/components/ReviewCorrelationSection.svelte
+  09c09bc91b155487 33-49
+src/lib/features/planning/components/PlanningBoard.svelte
+  4fbbaa29b961c2fd 56-58,117-118,141-142,154,174,189
+src/lib/features/review/components/ReviewHeadlineSection.svelte
+  59d8ed025c44e339 39,43,60,71,93,134,157-158,171-180,183-201,207-212
+  09c09bc91b155487 4-8,19-28,37-38,40-42,44-47,49-56,58-59,61-69,72-73,82-85,89-91,94-109,113-117,120-121,126-133,135-146,149-156,159,167-170,181-182,202
+src/lib/features/review/experiment-registry.ts
+  4fbbaa29b961c2fd 1-37
+src/lib/features/sobriety/Page.svelte
+  4fbbaa29b961c2fd 83-85,109-111,126,142-145,147-149
+src/lib/features/groceries/components/GroceryWarningsList.svelte
+  4fbbaa29b961c2fd 10
+src/lib/core/ui/shell/ShellNavLinks.svelte
+  4fbbaa29b961c2fd 2,12-15,22-25,32,46,55-58,60-80,88-89,91-94,98-118
+src/lib/features/imports/ImportComposerCard.svelte
+  4fbbaa29b961c2fd 140,146,237-238,242-243,258-260,270-291
+src/lib/core/ui/shell/SectionHeader.svelte
+  4fbbaa29b961c2fd 12,21-26,31-34,39-61
+docs/designs/stitch/source-of-truth.md
+  4fbbaa29b961c2fd 1-48
+src/lib/core/ui/shell/AppShell.svelte
+  4fbbaa29b961c2fd 2,5,12-19,25-34,55-105,108,112-115,117
+tests/features/unit/review/route.test.ts
+  4fbbaa29b961c2fd 40-52,79-91,130-164
+src/lib/features/settings/Page.svelte
+  4fbbaa29b961c2fd 45-87,93-95,98-105,112-127,133
+src/lib/features/review/analytics-shared.ts
+  cbcc726f546f785a 119-121
+  d61a2ba45a978adc 8-12
+  ab55601d36de5825 61-63,67-84,110-111,147-174
+  59d8ed025c44e339 112
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "5b89c7b610999636586cd578b82f5a01e743a6b4",
+  "prompts": {
+    "04d347fe16e08d66": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d83f5-d07a-76a2-a5ce-5cfbbc51680a",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 39,
+      "total_deletions": 25,
+      "accepted_lines": 33,
+      "overriden_lines": 0
+    },
+    "09c09bc91b155487": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d8052-3139-7930-b7fd-c4b65f2e7181",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 2426,
+      "total_deletions": 328,
+      "accepted_lines": 614,
+      "overriden_lines": 0
+    },
+    "302d964af3befd81": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d8426-bb54-77c3-a283-2981f3337adc",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 126,
+      "total_deletions": 106,
+      "accepted_lines": 117,
+      "overriden_lines": 0
+    },
+    "3a3c56a6dbec304e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7a4f-c83f-7fd3-9d3a-e52ffc06f97e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 762,
+      "overriden_lines": 0
+    },
+    "42b6cccca0b9441f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d8072-43e1-76a0-ada0-612b6e3a7026",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 80,
+      "total_deletions": 19,
+      "accepted_lines": 79,
+      "overriden_lines": 0
+    },
+    "43af89431f8f36ca": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d83f8-ea04-7d53-b329-8b5559e11b37",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 22,
+      "accepted_lines": 33,
+      "overriden_lines": 0
+    },
+    "4fbbaa29b961c2fd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d8437-a948-7a81-a89c-d551aa0b9486",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 5357,
+      "total_deletions": 2129,
+      "accepted_lines": 5305,
+      "overriden_lines": 0
+    },
+    "532229ec919a4f98": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d83f5-d591-7e23-8706-17296fed7e5c",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 245,
+      "total_deletions": 18,
+      "accepted_lines": 201,
+      "overriden_lines": 0
+    },
+    "57fa602c26e6365c": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d83f5-cb01-79d1-8ee6-9b225f8d8385",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 44,
+      "total_deletions": 5,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    },
+    "59d8ed025c44e339": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d8394-e922-7d70-8f0d-5cde3e5024e4",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 926,
+      "total_deletions": 187,
+      "accepted_lines": 529,
+      "overriden_lines": 0
+    },
+    "75b6bef81f0959b8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d8423-f840-7f70-b1b7-b75a3bff63dd",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 28,
+      "total_deletions": 10,
+      "accepted_lines": 9,
+      "overriden_lines": 0
+    },
+    "a134de528636a5af": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d841b-a263-7030-806d-c8c282cbca05",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 49,
+      "total_deletions": 0,
+      "accepted_lines": 49,
+      "overriden_lines": 0
+    },
+    "ab55601d36de5825": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d8404-8816-7532-80af-3ec0d9cf77ab",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 318,
+      "total_deletions": 26,
+      "accepted_lines": 276,
+      "overriden_lines": 0
+    },
+    "cb1eac3e76425d18": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d805b-f202-73e0-84db-5eaa701c3815",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 570,
+      "total_deletions": 358,
+      "accepted_lines": 499,
+      "overriden_lines": 0
+    },
+    "cbcc726f546f785a": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d841f-d05d-7e92-a50c-419353fc14de",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 48,
+      "total_deletions": 15,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    },
+    "d61a2ba45a978adc": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d842f-c907-7190-be03-d5e485e7d736",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 193,
+      "total_deletions": 184,
+      "accepted_lines": 167,
+      "overriden_lines": 0
+    },
+    "ddf63c2c6f7bc273": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d8072-40d0-73d3-b688-5f440254e554",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 53,
+      "total_deletions": 0,
+      "accepted_lines": 44,
+      "overriden_lines": 0
+    },
+    "e32f9530a5463689": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7f45-6dcd-7810-b362-d89c40778896",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 4,
+      "overriden_lines": 0
+    },
+    "f78fa76e7aa06e40": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-4f4f967f-4eed-4bf6-83ee-9218514fcb8c",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "ffa2e8d83dde0967": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d8418-ae6e-76a0-bbdd-1b2805f3a27d",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 38,
+      "total_deletions": 2,
+      "accepted_lines": 38,
+      "overriden_lines": 0
+    }
+  }
+}
