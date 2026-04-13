@@ -129,6 +129,45 @@ describe('Today route', () => {
     });
   });
 
+  it('lets the user clear a planned meal handoff', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'breakfast',
+      title: food.name,
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
+      expect(screen.getByText(/Meal type: breakfast/i)).toBeTruthy();
+    });
+    expect(await db.planSlots.count()).toBe(1);
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Clear plan' }));
+    await waitFor(async () => {
+      expect(screen.getByText(/Planned meal cleared\./i)).toBeTruthy();
+      expect(screen.getByText(/No meal queued up\./i)).toBeTruthy();
+      expect(await db.planSlots.count()).toBe(0);
+    });
+  });
+
   it('shows today plan slots and lets the user mark them done', async () => {
     const db = getTestHealthDb();
     const localDay = currentLocalDay();
