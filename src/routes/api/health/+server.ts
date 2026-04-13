@@ -1,5 +1,6 @@
 import type { RequestHandler } from './$types';
 import { healthRequestSchema } from '$lib/features/health/contracts';
+import { createValidatedActionPostHandler } from '$lib/server/http/validated-action-route';
 import {
   loadHealthPageServer,
   quickLogTemplatePageServer,
@@ -9,34 +10,15 @@ import {
   saveTemplatePageServer,
 } from '$lib/server/health/service';
 
-export const POST: RequestHandler = async ({ request }) => {
-  let body: unknown;
-
-  try {
-    body = await request.json();
-  } catch {
-    return new Response('Invalid health request payload.', { status: 400 });
-  }
-
-  const parsed = healthRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return new Response('Invalid health request payload.', { status: 400 });
-  }
-
-  switch (parsed.data.action) {
-    case 'load':
-      return Response.json(await loadHealthPageServer(parsed.data.localDay));
-    case 'saveSymptom':
-      return Response.json(await saveSymptomPageServer(parsed.data.state));
-    case 'saveAnxiety':
-      return Response.json(await saveAnxietyPageServer(parsed.data.state));
-    case 'saveSleepNote':
-      return Response.json(await saveSleepNotePageServer(parsed.data.state));
-    case 'saveTemplate':
-      return Response.json(await saveTemplatePageServer(parsed.data.state));
-    case 'quickLogTemplate':
-      return Response.json(
-        await quickLogTemplatePageServer(parsed.data.state, parsed.data.templateId)
-      );
-  }
-};
+export const POST: RequestHandler = createValidatedActionPostHandler({
+  schema: healthRequestSchema,
+  invalidMessage: 'Invalid health request payload.',
+  handlers: {
+    load: async (data) => await loadHealthPageServer(data.localDay),
+    saveSymptom: async (data) => await saveSymptomPageServer(data.state),
+    saveAnxiety: async (data) => await saveAnxietyPageServer(data.state),
+    saveSleepNote: async (data) => await saveSleepNotePageServer(data.state),
+    saveTemplate: async (data) => await saveTemplatePageServer(data.state),
+    quickLogTemplate: async (data) => await quickLogTemplatePageServer(data.state, data.templateId),
+  },
+});

@@ -8,41 +8,19 @@ import {
   saveTodayPageServer,
 } from '$lib/server/today/service';
 import { todayRequestSchema } from '$lib/features/today/contracts';
+import { createValidatedActionPostHandler } from '$lib/server/http/validated-action-route';
 
-export const POST: RequestHandler = async ({ request }) => {
-  let body: unknown;
-
-  try {
-    body = await request.json();
-  } catch {
-    return new Response('Invalid today request payload.', { status: 400 });
-  }
-
-  const parsed = todayRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return new Response('Invalid today request payload.', { status: 400 });
-  }
-
-  switch (parsed.data.action) {
-    case 'load':
-      return Response.json(await loadTodayPageServer(parsed.data.localDay));
-    case 'save':
-      return Response.json(await saveTodayPageServer(parsed.data.state));
-    case 'logPlannedMeal':
-      return Response.json(await logTodayPlannedMealPageServer(parsed.data.state));
-    case 'clearPlannedMeal':
-      return Response.json(await clearTodayPlannedMealPageServer(parsed.data.state));
-    case 'applyRecoveryAction':
-      return Response.json(
-        await applyTodayRecoveryActionPageServer(parsed.data.state, parsed.data.actionId)
-      );
-    case 'markPlanSlotStatus':
-      return Response.json(
-        await markTodayPlanSlotStatusPageServer(
-          parsed.data.state,
-          parsed.data.slotId,
-          parsed.data.status
-        )
-      );
-  }
-};
+export const POST: RequestHandler = createValidatedActionPostHandler({
+  schema: todayRequestSchema,
+  invalidMessage: 'Invalid today request payload.',
+  handlers: {
+    load: async (data) => await loadTodayPageServer(data.localDay),
+    save: async (data) => await saveTodayPageServer(data.state),
+    logPlannedMeal: async (data) => await logTodayPlannedMealPageServer(data.state),
+    clearPlannedMeal: async (data) => await clearTodayPlannedMealPageServer(data.state),
+    applyRecoveryAction: async (data) =>
+      await applyTodayRecoveryActionPageServer(data.state, data.actionId),
+    markPlanSlotStatus: async (data) =>
+      await markTodayPlanSlotStatusPageServer(data.state, data.slotId, data.status),
+  },
+});

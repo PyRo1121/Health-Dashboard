@@ -1,5 +1,6 @@
 import type { RequestHandler } from './$types';
 import { planningRequestSchema } from '$lib/features/planning/contracts';
+import { createValidatedActionPostHandler } from '$lib/server/http/validated-action-route';
 import {
   addManualPlanningGroceryItemPageServer,
   deletePlanningSlotPageServer,
@@ -12,62 +13,23 @@ import {
   togglePlanningGroceryStatePageServer,
 } from '$lib/server/plan/service';
 
-export const POST: RequestHandler = async ({ request }) => {
-  let body: unknown;
-
-  try {
-    body = await request.json();
-  } catch {
-    return new Response('Invalid planning request payload.', { status: 400 });
-  }
-
-  const parsed = planningRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return new Response('Invalid planning request payload.', { status: 400 });
-  }
-
-  switch (parsed.data.action) {
-    case 'load':
-      return Response.json(await loadPlanningPageServer(parsed.data.localDay, parsed.data.state));
-    case 'saveSlot':
-      return Response.json(await savePlanningSlotPageServer(parsed.data.state));
-    case 'saveWorkoutTemplate':
-      return Response.json(await saveWorkoutTemplatePageServer(parsed.data.state));
-    case 'markSlotStatus':
-      return Response.json(
-        await markPlanningSlotStatusPageServer(
-          parsed.data.state,
-          parsed.data.slotId,
-          parsed.data.status
-        )
-      );
-    case 'moveSlot':
-      return Response.json(
-        await movePlanningSlotPageServer(
-          parsed.data.state,
-          parsed.data.slotId,
-          parsed.data.direction
-        )
-      );
-    case 'deleteSlot':
-      return Response.json(
-        await deletePlanningSlotPageServer(parsed.data.state, parsed.data.slotId)
-      );
-    case 'toggleGrocery':
-      return Response.json(
-        await togglePlanningGroceryStatePageServer(
-          parsed.data.state,
-          parsed.data.itemId,
-          parsed.data.patch
-        )
-      );
-    case 'addManualGrocery':
-      return Response.json(
-        await addManualPlanningGroceryItemPageServer(parsed.data.state, parsed.data.draft)
-      );
-    case 'removeManualGrocery':
-      return Response.json(
-        await removeManualPlanningGroceryItemPageServer(parsed.data.state, parsed.data.itemId)
-      );
-  }
-};
+export const POST: RequestHandler = createValidatedActionPostHandler({
+  schema: planningRequestSchema,
+  invalidMessage: 'Invalid planning request payload.',
+  handlers: {
+    load: async (data) => await loadPlanningPageServer(data.localDay, data.state),
+    saveSlot: async (data) => await savePlanningSlotPageServer(data.state),
+    saveWorkoutTemplate: async (data) => await saveWorkoutTemplatePageServer(data.state),
+    markSlotStatus: async (data) =>
+      await markPlanningSlotStatusPageServer(data.state, data.slotId, data.status),
+    moveSlot: async (data) =>
+      await movePlanningSlotPageServer(data.state, data.slotId, data.direction),
+    deleteSlot: async (data) => await deletePlanningSlotPageServer(data.state, data.slotId),
+    toggleGrocery: async (data) =>
+      await togglePlanningGroceryStatePageServer(data.state, data.itemId, data.patch),
+    addManualGrocery: async (data) =>
+      await addManualPlanningGroceryItemPageServer(data.state, data.draft),
+    removeManualGrocery: async (data) =>
+      await removeManualPlanningGroceryItemPageServer(data.state, data.itemId),
+  },
+});

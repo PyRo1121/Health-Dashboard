@@ -1,5 +1,6 @@
 import type { RequestHandler } from './$types';
 import { nutritionRequestSchema } from '$lib/features/nutrition/contracts';
+import { createValidatedActionPostHandler } from '$lib/server/http/validated-action-route';
 import {
   clearNutritionPlannedMealServer,
   loadNutritionPageServer,
@@ -10,40 +11,17 @@ import {
   saveNutritionRecurringMealServer,
 } from '$lib/server/nutrition/service';
 
-export const POST: RequestHandler = async ({ request }) => {
-  let body: unknown;
-
-  try {
-    body = await request.json();
-  } catch {
-    return new Response('Invalid nutrition request payload.', { status: 400 });
-  }
-
-  const parsed = nutritionRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return new Response('Invalid nutrition request payload.', { status: 400 });
-  }
-
-  switch (parsed.data.action) {
-    case 'load':
-      return Response.json(await loadNutritionPageServer(parsed.data.localDay, parsed.data.state));
-    case 'saveMeal':
-      return Response.json(await saveNutritionMealServer(parsed.data.state, parsed.data.draft));
-    case 'planMeal':
-      return Response.json(await planNutritionMealServer(parsed.data.state, parsed.data.draft));
-    case 'saveRecurringMeal':
-      return Response.json(
-        await saveNutritionRecurringMealServer(parsed.data.state, parsed.data.draft)
-      );
-    case 'saveCatalogItem':
-      return Response.json(
-        await saveNutritionCatalogItemServer(parsed.data.state, parsed.data.draft)
-      );
-    case 'clearPlannedMeal':
-      return Response.json(await clearNutritionPlannedMealServer(parsed.data.state));
-    case 'reuseMeal':
-      return Response.json(
-        await reuseNutritionMealServer(parsed.data.state, parsed.data.favoriteMealId)
-      );
-  }
-};
+export const POST: RequestHandler = createValidatedActionPostHandler({
+  schema: nutritionRequestSchema,
+  invalidMessage: 'Invalid nutrition request payload.',
+  handlers: {
+    load: async (data) => await loadNutritionPageServer(data.localDay, data.state),
+    saveMeal: async (data) => await saveNutritionMealServer(data.state, data.draft),
+    planMeal: async (data) => await planNutritionMealServer(data.state, data.draft),
+    saveRecurringMeal: async (data) =>
+      await saveNutritionRecurringMealServer(data.state, data.draft),
+    saveCatalogItem: async (data) => await saveNutritionCatalogItemServer(data.state, data.draft),
+    clearPlannedMeal: async (data) => await clearNutritionPlannedMealServer(data.state),
+    reuseMeal: async (data) => await reuseNutritionMealServer(data.state, data.favoriteMealId),
+  },
+});
