@@ -15,17 +15,20 @@ import type {
   HealthDbWeeklyPlansStore,
 } from '$lib/core/db/types';
 import { nowIso } from '$lib/core/domain/time';
-import type {
-  AdherenceMatch,
-  DerivedGroceryItem,
-  ManualGroceryItem,
-  ReviewSnapshot,
-} from '$lib/core/domain/types';
+import type { ReviewSnapshot } from '$lib/core/domain/types';
 import { startOfWeek } from '$lib/core/shared/dates';
 import { updateRecordMeta } from '$lib/core/shared/records';
 import { computeWeekAdherenceMatches } from '$lib/features/adherence/matching';
 import { deriveWeeklyGroceriesFromData } from '$lib/features/groceries/derivation';
 import { computeTrendComparisonsFromData, type WeeklyReviewData } from './analytics';
+import {
+  listAdherenceMatchesForWeek,
+  listDerivedGroceriesForPlan,
+  listManualGroceriesForPlan,
+  persistAdherenceMatches,
+  persistDerivedGroceries,
+  persistReviewSnapshot,
+} from './artifact-persistence';
 import {
   buildWeeklySnapshotFromWeekData,
   resolveReviewAnchorDayFromSourceData,
@@ -97,59 +100,6 @@ async function loadReviewSourceData(store: ReviewStorage): Promise<ReviewSourceD
     weeklyPlans,
     planSlots,
   };
-}
-
-async function listAdherenceMatchesForWeek(
-  store: ReviewStorage,
-  weekStart: string
-): Promise<AdherenceMatch[]> {
-  return await store.adherenceMatches.where('weekStart').equals(weekStart).toArray();
-}
-
-async function listDerivedGroceriesForPlan(
-  store: ReviewStorage,
-  weeklyPlanId: string
-): Promise<DerivedGroceryItem[]> {
-  return await store.derivedGroceryItems.where('weeklyPlanId').equals(weeklyPlanId).toArray();
-}
-
-async function listManualGroceriesForPlan(
-  store: ReviewStorage,
-  weeklyPlanId: string
-): Promise<ManualGroceryItem[]> {
-  return await store.manualGroceryItems.where('weeklyPlanId').equals(weeklyPlanId).toArray();
-}
-
-async function persistDerivedGroceries(
-  store: ReviewStorage,
-  nextItems: DerivedGroceryItem[],
-  existingItems: DerivedGroceryItem[]
-): Promise<void> {
-  for (const item of nextItems) {
-    await store.derivedGroceryItems.put(item);
-  }
-
-  for (const staleItem of existingItems) {
-    if (!nextItems.find((item) => item.id === staleItem.id)) {
-      await store.derivedGroceryItems.delete(staleItem.id);
-    }
-  }
-}
-
-async function persistAdherenceMatches(
-  store: ReviewStorage,
-  nextMatches: AdherenceMatch[],
-  existingMatches: AdherenceMatch[]
-): Promise<void> {
-  for (const match of nextMatches) {
-    await store.adherenceMatches.put(match);
-  }
-
-  for (const staleMatch of existingMatches) {
-    if (!nextMatches.find((match) => match.id === staleMatch.id)) {
-      await store.adherenceMatches.delete(staleMatch.id);
-    }
-  }
 }
 
 export async function resolveReviewAnchorDay(
@@ -228,20 +178,6 @@ export async function buildWeeklySnapshot(
     weekGroceries: groceryResult.items,
     adherenceMatches: adherenceComputation.matches,
   });
-}
-
-async function persistReviewSnapshot(
-  store: ReviewStorage,
-  weekly: WeeklyReviewData,
-  snapshot: ReviewSnapshot = weekly.snapshot
-): Promise<WeeklyReviewData> {
-  await store.reviewSnapshots.put(snapshot);
-  return snapshot === weekly.snapshot
-    ? weekly
-    : {
-        ...weekly,
-        snapshot,
-      };
 }
 
 export async function saveNextWeekExperiment(
