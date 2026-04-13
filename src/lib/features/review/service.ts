@@ -70,7 +70,6 @@ import {
   computeTrendComparisonsFromData,
   filterByDays,
   generateReviewFlags,
-  REVIEW_EXPERIMENT_OPTIONS,
   weekRangeFromAnchorDay,
   type WeeklyReviewData,
   type ReviewDecisionCard,
@@ -620,7 +619,11 @@ function buildReviewExperimentCandidates(
 
   return candidates
     .sort((left, right) => right.score - left.score || left.label.localeCompare(right.label))
-    .map(({ score: _score, ...candidate }) => candidate);
+    .map((candidate) => {
+      const result = { ...candidate };
+      delete (result as { score?: number }).score;
+      return result;
+    });
 }
 
 function resolveSelectedExperimentId(
@@ -1206,20 +1209,6 @@ export function buildWeeklySnapshotFromWeekData(input: {
   const flags = generateReviewFlags(weekRecords, weekSobriety, weekAssessments);
   const timestamp = nowIso();
 
-  const snapshot: ReviewSnapshot = {
-    ...updateRecordMeta(existingSnapshot, `review:${weekStart}`, timestamp),
-    weekStart,
-    headline: buildHeadline(weekRecords, flags),
-    daysTracked: weekRecords.length,
-    flags,
-    correlations,
-    experimentId:
-      existingSnapshot?.experimentId ??
-      reviewExperimentIdFromLabel(existingSnapshot?.experiment) ??
-      undefined,
-    experiment: existingSnapshot?.experiment,
-  };
-
   const nutritionStrategy = buildNutritionStrategy(
     weekRecords,
     weekFood,
@@ -1249,6 +1238,20 @@ export function buildWeeklySnapshotFromWeekData(input: {
     deviceHighlights,
     patternHighlights,
   });
+
+  const snapshot: ReviewSnapshot = {
+    ...updateRecordMeta(existingSnapshot, `review:${weekStart}`, timestamp),
+    weekStart,
+    headline: '',
+    daysTracked: weekRecords.length,
+    flags,
+    correlations,
+    experimentId:
+      existingSnapshot?.experimentId ??
+      reviewExperimentIdFromLabel(existingSnapshot?.experiment) ??
+      undefined,
+    experiment: existingSnapshot?.experiment,
+  };
   const recommendationInput: RecommendationEngineInput = {
     snapshot,
     averageSleep: trends.averageSleep,
@@ -1272,6 +1275,16 @@ export function buildWeeklySnapshotFromWeekData(input: {
   const savedExperimentVerdict = buildSavedExperimentVerdict(recommendationInput);
   const experimentOptions = experimentCandidates.map((candidate) => candidate.label);
   const selectedExperimentId = resolveSelectedExperimentId(experimentCandidates, snapshot);
+  snapshot.headline = buildHeadline({
+    records: weekRecords,
+    assessments: weekAssessments,
+    sobrietyEvents: weekSobriety,
+    healthEvents: weekHealthEvents,
+    journalEntries: weekJournalEntries,
+    averageProtein: trends.averageProtein,
+    adherenceScores,
+    recommendation: weeklyRecommendation,
+  });
 
   return {
     anchorDay,

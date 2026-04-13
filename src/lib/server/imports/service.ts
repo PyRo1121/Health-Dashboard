@@ -20,7 +20,6 @@ import { getServerDrizzleClient } from '$lib/server/db/drizzle/client';
 import { drizzleSchema } from '$lib/server/db/drizzle/schema';
 import {
   selectAllMirrorRecords,
-  selectAllMirrorRecordsDesc,
   selectMirrorRecordById,
   selectMirrorRecordsByField,
   selectMirrorRecordsByFieldValues,

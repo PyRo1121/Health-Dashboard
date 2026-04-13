@@ -9,7 +9,7 @@
   }
 
   let { children }: Props = $props();
-  let activeSection = $derived(getAppSectionMeta(page.route.id as never));
+  let activeSection = $derived(getAppSectionMeta((page.route.id ?? '/') as never));
   let todayStamp = $derived(
     new Intl.DateTimeFormat('en-US', {
       month: 'short',
@@ -25,7 +25,7 @@
     <header class="app-shell__topbar">
       <div class="app-shell__title-group">
         <p class="app-shell__eyebrow">Sovereign Analyst</p>
-        <h1>{activeSection.title}</h1>
+        <p class="app-shell__section-title">{activeSection.title}</p>
       </div>
       <div class="app-shell__status-cluster" aria-label="Current app context">
         <span>Local-first archive</span>
@@ -80,7 +80,7 @@
     text-transform: uppercase;
   }
 
-  .app-shell__title-group h1 {
+  .app-shell__section-title {
     margin: 0;
     color: var(--phc-text);
     font: 500 clamp(1.25rem, 2vw, 1.6rem) / 1 var(--phc-font-display);

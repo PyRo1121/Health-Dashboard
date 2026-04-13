@@ -19,7 +19,7 @@
   <ul class="shell-nav-links shell-nav-links--desktop">
     {#each routes as route (route.href)}
       <li>
-        <a class:active={isActive(route.href)} href={resolve(route.href)}>
+        <a aria-label={route.label} class:active={isActive(route.href)} href={resolve(route.href)}>
           <span>{route.label}</span>
           <small>{route.description}</small>
         </a>

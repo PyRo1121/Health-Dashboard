@@ -10,7 +10,7 @@ describe('SideNav', () => {
     const nav = screen.getByRole('navigation', { name: 'Primary' });
     const labels = within(nav)
       .getAllByRole('link')
-      .map((link) => link.textContent?.trim());
+      .map((link) => link.getAttribute('aria-label') ?? link.textContent?.trim());
 
     expect(labels).toEqual(DESKTOP_NAV_ROUTES.map((route) => route.label));
   });

@@ -138,32 +138,51 @@ test('weekly plan loop connects plan, today, and review', async ({ page }) => {
 
   await page.goto('/review');
   await expect(page.getByText(/Plan follow-through/i)).toBeVisible();
+  const adherenceSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Actual adherence' }),
+  });
   await expect(page.getByRole('heading', { name: 'Actual adherence' })).toBeVisible();
-  await expect(page.getByText('67%')).toBeVisible();
-  await expect(page.getByText('50%')).toBeVisible();
-  await expect(page.getByText('100%')).toBeVisible();
-  await expect(page.getByText(/This Week: 2\/3 plan items completed, 1 skipped\./i)).toBeVisible();
-  await expect(page.getByText(/Meals planned: 1\/2 completed\./i)).toBeVisible();
-  await expect(page.getByText(/Workouts planned: 1\/1 completed\./i)).toBeVisible();
+  await expect(adherenceSection.getByText('67%', { exact: true })).toBeVisible();
+  await expect(adherenceSection.getByText('50%', { exact: true })).toBeVisible();
+  await expect(adherenceSection.getByText('100%', { exact: true })).toBeVisible();
+  const planFollowThroughSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Plan follow-through' }),
+  });
+  await expect(
+    planFollowThroughSection.getByText(/This Week: 2\/3 plan items completed, 1 skipped\./i)
+  ).toBeVisible();
+  await expect(
+    planFollowThroughSection.getByText(/Meals planned: 1\/2 completed\./i)
+  ).toBeVisible();
+  await expect(
+    planFollowThroughSection.getByText(/Workouts planned: 1\/1 completed\./i)
+  ).toBeVisible();
   await expect(
     page.getByText(/Meal miss: Teriyaki Chicken Casserole was skipped\./i)
   ).toBeVisible();
   await expect(
     page.getByText(/Workout hit: Full body reset was completed as planned\./i)
   ).toBeVisible();
-  await expect(page.getByText(/Groceries: 1\/2 checked, 1 on hand, 1 excluded\./i)).toBeVisible();
   await expect(
-    page.getByText(
-      /Potential waste: Teriyaki Chicken Casserole was missed after 1 grocery item had already been sourced\./i
-    )
+    planFollowThroughSection.getByText(/Groceries: 1\/2 checked, 1 on hand, 1 excluded\./i)
+  ).toBeVisible();
+  await expect(
+    page
+      .getByText(
+        /Potential waste: Teriyaki Chicken Casserole was missed after 1 grocery item had already been sourced\./i
+      )
+      .first()
   ).toBeVisible();
   await expect(
     page.getByText(
       /Grocery miss: Teriyaki Chicken Casserole still had 1 unresolved grocery item when the meal was missed\./i
     )
   ).toBeVisible();
-  await expect(page.getByText('Skip', { exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Review recipe' })).toBeVisible();
+  const strategySection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Decision engine actions' }),
+  });
+  await expect(strategySection.getByText('Stop', { exact: true }).first()).toBeVisible();
+  await expect(strategySection.getByRole('link', { name: 'Review recipe' })).toBeVisible();
 });
 
 test('grocery checklist merges duplicate ingredients across recipes', async ({ page }) => {

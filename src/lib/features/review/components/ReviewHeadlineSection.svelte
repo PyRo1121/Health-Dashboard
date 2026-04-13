@@ -1,11 +1,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { SectionCard } from '$lib/core/ui/primitives';
-  import {
-    resolveReviewNavigationHref,
-    type ReviewNavigationHref,
-    type ReviewWeeklyRecommendationView,
-  } from '$lib/features/review/model';
+  import type { ReviewWeeklyRecommendationView } from '$lib/features/review/model';
 
   let {
     headline,
@@ -67,9 +63,7 @@
           </ul>
         </div>
       {/if}
-      <a
-        class="review-recommendation-link action-link"
-        href={resolveReviewNavigationHref(recommendation.href, resolve)}
+      <a class="review-recommendation-link action-link" href={resolve(recommendation.href)}
         >{recommendation.actionLabel}</a
       >
     </div>

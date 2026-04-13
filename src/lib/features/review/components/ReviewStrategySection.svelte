@@ -1,10 +1,7 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
   import { SectionCard } from '$lib/core/ui/primitives';
-  import {
-    resolveReviewNavigationHref,
-    type ReviewDecisionCardView,
-  } from '$lib/features/review/model';
+  import type { ReviewDecisionCardView } from '$lib/features/review/model';
 
   let {
     cards,
@@ -53,9 +50,7 @@
               </ul>
             {/if}
           </div>
-          <a class="review-strategy-link" href={resolveReviewNavigationHref(card.href, resolve)}
-            >{card.actionLabel}</a
-          >
+          <a class="review-strategy-link" href={resolve(card.href)}>{card.actionLabel}</a>
         </article>
       {/each}
     </div>

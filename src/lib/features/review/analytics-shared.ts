@@ -5,11 +5,7 @@ import type {
   ReviewSnapshot,
 } from '$lib/core/domain/types';
 import { startOfWeek } from '$lib/core/shared/dates';
-import {
-  REVIEW_EXPERIMENT_DEFINITIONS,
-  type ReviewExperimentId,
-  reviewExperimentDefinitionById,
-} from './experiment-registry';
+import { REVIEW_EXPERIMENT_DEFINITIONS } from './experiment-registry';
 
 export interface ReviewCorrelation {
   label: string;

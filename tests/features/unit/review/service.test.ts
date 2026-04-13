@@ -186,7 +186,7 @@ describe('review service', () => {
 
     const weekly = await buildWeeklySnapshot(db, '2026-04-02');
 
-    expect(weekly.snapshot.headline).toBe('Mindful reset');
+    expect(weekly.snapshot.headline).toBe('First signal logged, keep the streak going');
     expect(weekly.snapshot.daysTracked).toBe(1);
     expect(weekly.weeklyRecommendation).toBeNull();
     expect(weekly.weeklyDecisionCards).toEqual([]);

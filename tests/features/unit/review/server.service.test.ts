@@ -9,7 +9,10 @@ describe('review server service', () => {
   });
 
   it('recomputes and persists the server snapshot when saving a candidate id', async () => {
-    const persistSpy = vi.fn(async (..._args: unknown[]) => undefined);
+    const persistSpy = vi.fn(async (...args: unknown[]) => {
+      void args;
+      return undefined;
+    });
     let persistedSnapshot: {
       experiment?: string;
       experimentId?: string;
@@ -44,9 +47,9 @@ describe('review server service', () => {
       selectAllMirrorRecords,
       selectMirrorRecordById,
       selectMirrorRecordsByField,
-      upsertMirrorRecord: vi.fn(async (_db, _store, _table, record) => {
+      upsertMirrorRecord: vi.fn(async (dbArg, storeArg, tableArg, record) => {
         persistedSnapshot = record as typeof persistedSnapshot;
-        await persistSpy(_db, _store, _table, record);
+        await persistSpy(dbArg, storeArg, tableArg, record);
       }),
     }));
 
