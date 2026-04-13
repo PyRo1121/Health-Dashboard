@@ -80,7 +80,12 @@ test('iphone companion bundle import lands in timeline and review', async ({ pag
 
   await page.goto('/review');
   await expect(page.getByText(/Device highlights/i)).toBeVisible();
-  await expect(page.getByText(/Sleep duration: 8 hours on 2026-04-02/i)).toBeVisible();
+  const deviceHighlightsSection = page
+    .getByRole('heading', { name: 'Device highlights' })
+    .locator('xpath=ancestor::section[1]');
+  await expect(
+    deviceHighlightsSection.getByText(/^Sleep duration: 8 hours on 2026-04-02$/)
+  ).toBeVisible();
 });
 
 test('integrations page routes users into the import center', async ({ page }) => {

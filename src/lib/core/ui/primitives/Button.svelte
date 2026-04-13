@@ -27,28 +27,56 @@
   .button {
     min-height: 44px;
     padding: 0.75rem 1rem;
-    border-radius: 999px;
-    border: 1px solid transparent;
-    font:
-      600 0.95rem/1 Manrope,
-      system-ui,
-      sans-serif;
+    border: 0.5px solid transparent;
+    font: 600 0.78rem/1 var(--phc-font-ui);
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
     cursor: pointer;
+    transition:
+      transform 180ms ease,
+      opacity 180ms ease,
+      border-color 180ms ease,
+      background-color 180ms ease,
+      color 180ms ease;
   }
 
   .button--primary {
-    background: #1f5c4a;
-    color: #fbf8f3;
+    background: var(--phc-label);
+    color: #3c2f00;
   }
 
   .button--secondary {
-    background: #f1ebe2;
-    color: #1f1d1a;
-    border-color: rgba(31, 29, 26, 0.08);
+    background: transparent;
+    color: var(--phc-text);
+    border-color: var(--phc-border-soft);
   }
 
   .button--ghost {
     background: transparent;
-    color: #1f5c4a;
+    color: var(--phc-label);
+  }
+
+  .button:hover {
+    opacity: 0.94;
+  }
+
+  .button--secondary:hover,
+  .button--ghost:hover {
+    background: rgba(10, 60, 45, 0.22);
+  }
+
+  .button:focus-visible {
+    outline: 2px solid var(--phc-focus);
+    outline-offset: 2px;
+  }
+
+  .button:active {
+    transform: translateY(1px);
+  }
+
+  .button:disabled {
+    cursor: not-allowed;
+    opacity: 0.45;
+    transform: none;
   }
 </style>

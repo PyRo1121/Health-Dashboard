@@ -4,6 +4,8 @@ import {
   createReviewDecisionCards,
   createReviewAdherenceAuditItems,
   createReviewAdherenceCards,
+  createReviewExperimentCandidates,
+  createReviewSavedExperimentVerdict,
   createReviewSections,
   createReviewTrendRows,
   createWeeklyRecommendationView,
@@ -122,9 +124,34 @@ describe('review model', () => {
           decision: 'continue',
           title: 'Greek yogurt bowl',
           detail: 'protein target looks strong',
+          confidence: 'medium',
+          expectedImpact: 'Keep the next week simpler and more repeatable.',
+          provenance: ['protein target looks strong'],
           target: { kind: 'food', id: 'food-catalog-1' },
         },
       ],
+      experimentCandidates: [
+        {
+          id: 'protein-at-breakfast',
+          label: 'Increase protein at breakfast',
+          summary:
+            'Protein coverage is still inconsistent enough that breakfast is the cleanest place to improve it.',
+          confidence: 'high',
+          expectedImpact: 'Raise protein consistency early in the day.',
+          provenance: [
+            'Protein coverage is still inconsistent enough that breakfast is the cleanest place to improve it.',
+          ],
+        },
+      ] as never,
+      savedExperimentVerdict: {
+        decision: 'continue',
+        label: 'Increase protein at breakfast',
+        summary:
+          'Protein coverage is still inconsistent enough that this experiment should stay in motion next week.',
+        confidence: 'high',
+        expectedImpact: 'Protect morning protein consistency before chasing a new experiment.',
+        provenance: ['Average protein this week: 83g.'],
+      },
       experimentOptions: ['Increase hydration tracking'],
     };
 
@@ -171,6 +198,9 @@ describe('review model', () => {
         badge: 'Continue',
         title: 'Greek yogurt bowl',
         detail: 'protein target looks strong.',
+        confidenceLabel: 'Medium confidence',
+        expectedImpact: 'Keep the next week simpler and more repeatable.',
+        provenance: ['protein target looks strong'],
         href: '/nutrition?loadKind=food&loadId=food-catalog-1',
         actionLabel: 'Load food',
       },
@@ -187,6 +217,28 @@ describe('review model', () => {
       ],
       href: '/nutrition?loadKind=food&loadId=food-catalog-1',
       actionLabel: 'Load food',
+    });
+    expect(createReviewExperimentCandidates(weekly)).toEqual([
+      {
+        id: 'protein-at-breakfast',
+        label: 'Increase protein at breakfast',
+        summary:
+          'Protein coverage is still inconsistent enough that breakfast is the cleanest place to improve it.',
+        confidenceLabel: 'High confidence',
+        expectedImpact: 'Raise protein consistency early in the day.',
+        provenance: [
+          'Protein coverage is still inconsistent enough that breakfast is the cleanest place to improve it.',
+        ],
+      },
+    ]);
+    expect(createReviewSavedExperimentVerdict(weekly)).toEqual({
+      badge: 'Continue',
+      label: 'Increase protein at breakfast',
+      summary:
+        'Protein coverage is still inconsistent enough that this experiment should stay in motion next week.',
+      confidenceLabel: 'High confidence',
+      expectedImpact: 'Protect morning protein consistency before chasing a new experiment.',
+      provenance: ['Average protein this week: 83g.'],
     });
   });
 
@@ -243,5 +295,151 @@ describe('review model', () => {
     expect(createReviewSections(weekly).map((section) => section.title)).toContain(
       'Patterns to watch'
     );
+  });
+
+  it('maps plan fallback recommendations into a stable page view', () => {
+    const weekly: WeeklyReviewData = {
+      anchorDay: '2026-04-02',
+      snapshot: {
+        id: 'review:2026-03-31',
+        createdAt: '2026-04-02T08:00:00.000Z',
+        updatedAt: '2026-04-02T08:00:00.000Z',
+        weekStart: '2026-03-31',
+        headline: 'Mindful reset',
+        daysTracked: 1,
+        flags: [],
+        correlations: [],
+        experiment: undefined,
+      },
+      averageMood: 4,
+      averageSleep: 7,
+      averageProtein: 0,
+      sobrietyStreak: 0,
+      nutritionHighlights: [],
+      nutritionStrategy: [],
+      planningHighlights: ['This Week: 0/1 plan items completed, 1 skipped.'],
+      adherenceScores: [],
+      adherenceSignals: [],
+      adherenceMatches: [],
+      grocerySignals: [
+        'Potential waste: Teriyaki Chicken Casserole was missed after 2 grocery items had already been sourced.',
+      ],
+      deviceHighlights: [],
+      assessmentSummary: [],
+      healthHighlights: [],
+      contextSignals: [],
+      contextCaptureLinkedEventIds: [],
+      journalHighlights: [],
+      journalReflectionLinkedEventIds: [],
+      patternHighlights: [],
+      whatChangedHighlights: [
+        'Potential waste: Teriyaki Chicken Casserole was missed after 2 grocery items had already been sourced.',
+      ],
+      weeklyRecommendation: {
+        decision: 'adjust',
+        title: 'Adjust the weekly plan before the next grocery cycle',
+        summary:
+          'The week surfaced enough grocery friction that the plan needs a tighter next pass.',
+        confidence: 'medium',
+        expectedImpact: 'Reduce waste and keep next-week execution cleaner.',
+        provenance: [
+          'Potential waste: Teriyaki Chicken Casserole was missed after 2 grocery items had already been sourced.',
+        ],
+        actionLabel: 'Open Plan',
+        target: { kind: 'plan' },
+      },
+      weeklyDecisionCards: [],
+      experimentOptions: ['Increase hydration tracking'],
+    };
+
+    expect(createWeeklyRecommendationView(weekly)).toEqual({
+      badge: 'Adjust',
+      title: 'Adjust the weekly plan before the next grocery cycle',
+      summary: 'The week surfaced enough grocery friction that the plan needs a tighter next pass.',
+      confidenceLabel: 'Medium confidence',
+      expectedImpact: 'Reduce waste and keep next-week execution cleaner.',
+      provenance: [
+        'Potential waste: Teriyaki Chicken Casserole was missed after 2 grocery items had already been sourced.',
+      ],
+      href: '/plan',
+      actionLabel: 'Open Plan',
+    });
+    expect(createReviewDecisionCards(weekly)).toEqual([]);
+  });
+
+  it('dedupes recommendation rationale lines while preserving the first-seen wording', () => {
+    const weekly: WeeklyReviewData = {
+      anchorDay: '2026-04-02',
+      snapshot: {
+        id: 'review:2026-03-31',
+        createdAt: '2026-04-02T08:00:00.000Z',
+        updatedAt: '2026-04-02T08:00:00.000Z',
+        weekStart: '2026-03-31',
+        headline: 'Mindful reset',
+        daysTracked: 3,
+        flags: [],
+        correlations: [],
+        experiment: 'Increase hydration tracking',
+      },
+      averageMood: 4.2,
+      averageSleep: 6.2,
+      averageProtein: 71,
+      sobrietyStreak: 2,
+      nutritionHighlights: [],
+      nutritionStrategy: [],
+      planningHighlights: [],
+      adherenceScores: [],
+      adherenceSignals: [],
+      adherenceMatches: [],
+      grocerySignals: [],
+      deviceHighlights: [],
+      assessmentSummary: [],
+      healthHighlights: ['Low sleep lined up with higher anxiety on 2026-04-02.'],
+      contextSignals: ['Low sleep and a written reflection both landed on 2026-04-02.'],
+      contextCaptureLinkedEventIds: ['anxiety-1'],
+      journalHighlights: [],
+      journalReflectionLinkedEventIds: [],
+      patternHighlights: [],
+      whatChangedHighlights: ['Low sleep lined up with higher anxiety on 2026-04-02.'],
+      weeklyRecommendation: {
+        decision: 'adjust',
+        title: 'Adjust the weekly plan before next week',
+        summary: 'The week surfaced enough friction that the next pass needs a tighter experiment.',
+        confidence: 'medium',
+        expectedImpact: 'Reduce friction while keeping momentum.',
+        provenance: [
+          'Low sleep lined up with higher anxiety on 2026-04-02.',
+          'low sleep lined up with higher anxiety on 2026-04-02.',
+          'Low sleep and a written reflection both landed on 2026-04-02.',
+        ],
+        actionLabel: 'Open Plan',
+        target: { kind: 'plan' },
+      },
+      weeklyDecisionCards: [
+        {
+          decision: 'adjust',
+          title: 'Recovery walk',
+          detail: 'Context pressure showed up around this plan item',
+          confidence: 'medium',
+          expectedImpact: 'Reduce friction while keeping momentum.',
+          provenance: [
+            'Context pressure showed up around this plan item',
+            'context pressure showed up around this plan item',
+            'Low sleep lined up with higher anxiety on 2026-04-02.',
+          ],
+          target: { kind: 'plan' },
+        },
+      ],
+      experimentOptions: ['Increase hydration tracking'],
+    };
+
+    expect(createWeeklyRecommendationView(weekly)?.provenance).toEqual([
+      'Low sleep lined up with higher anxiety on 2026-04-02.',
+      'Low sleep and a written reflection both landed on 2026-04-02.',
+    ]);
+    expect(createReviewDecisionCards(weekly)[0]?.provenance).toEqual([
+      'Context pressure showed up around this plan item',
+      'Low sleep lined up with higher anxiety on 2026-04-02.',
+    ]);
   });
 });

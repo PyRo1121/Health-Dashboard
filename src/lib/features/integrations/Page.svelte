@@ -40,69 +40,80 @@
   <p class="status-copy">Loading connection status…</p>
 {:else}
   <div class="page-grid integrations-grid">
-    <Card>
-      <h2 class="card-title">{healthkitManifest.label}</h2>
-      <NoMacSetupChecklist manifest={healthkitManifest} />
-    </Card>
+    <div class="integrations-panel integrations-panel--setup">
+      <Card>
+        <h2 class="card-title">{healthkitManifest.label}</h2>
+        <NoMacSetupChecklist manifest={healthkitManifest} />
+      </Card>
+    </div>
 
-    <SectionCard title="Connection status">
-      {#if connectionStatus.isConnected}
-        <StatusBanner tone="neutral" title="Connected" message={connectionStatus.message} />
-      {:else}
-        <EmptyState title="Not connected yet." message={connectionStatus.message} />
-      {/if}
+    <div class="integrations-panel integrations-panel--status">
+      <SectionCard title="Connection status">
+        {#if connectionStatus.isConnected}
+          <StatusBanner tone="neutral" title="Connected" message={connectionStatus.message} />
+        {:else}
+          <EmptyState title="Not connected yet." message={connectionStatus.message} />
+        {/if}
 
-      {#if nativeSummaryRows.length}
-        <div class="summary-block">
-          {#each nativeSummaryRows as row (row)}
-            <p>{row}</p>
-          {/each}
-        </div>
-      {/if}
-    </SectionCard>
-
-    <SectionCard title="Operator notes" intro={integrationsOperatorNotes} />
-
-    <SectionCard title="Clinical interoperability" intro={integrationsClinicalInteroperabilityCopy}>
-      <StatusBanner
-        tone="warning"
-        title="Identity gate required"
-        message={integrationsIdentityGateMessage}
-      />
-
-      <div class="table-scroll">
-        <table aria-label="Clinical connector capability matrix" class="capability-table">
-          <thead>
-            <tr>
-              <th scope="col">Connector</th>
-              <th scope="col">Phase</th>
-              <th scope="col">Auth</th>
-              <th scope="col">Starter resources</th>
-            </tr>
-          </thead>
-          <tbody>
-            {#each clinicalConnectorRows as manifest (manifest.id)}
-              <tr>
-                <td>
-                  <strong>{manifest.label}</strong>
-                  <ul class="capability-notes">
-                    {#each manifest.capabilityNotes as note (note)}
-                      <li>{note}</li>
-                    {/each}
-                  </ul>
-                </td>
-                <td>{manifest.phase}</td>
-                <td>{manifest.auth}</td>
-                <td>
-                  <p class="resource-list">{manifest.starterResourceLabel}</p>
-                  <p class="identity-copy">{manifest.identityRule}</p>
-                </td>
-              </tr>
+        {#if nativeSummaryRows.length}
+          <div class="summary-block">
+            {#each nativeSummaryRows as row (row)}
+              <p>{row}</p>
             {/each}
-          </tbody>
-        </table>
-      </div>
-    </SectionCard>
+          </div>
+        {/if}
+      </SectionCard>
+    </div>
+
+    <div class="integrations-panel integrations-panel--notes">
+      <SectionCard title="Operator notes" intro={integrationsOperatorNotes} />
+    </div>
+
+    <div class="integrations-panel integrations-panel--clinical">
+      <SectionCard
+        title="Clinical interoperability"
+        intro={integrationsClinicalInteroperabilityCopy}
+      >
+        <StatusBanner
+          tone="warning"
+          title="Identity gate required"
+          message={integrationsIdentityGateMessage}
+        />
+
+        <div class="table-scroll">
+          <table aria-label="Clinical connector capability matrix" class="capability-table">
+            <thead>
+              <tr>
+                <th scope="col">Connector</th>
+                <th scope="col">Phase</th>
+                <th scope="col">Auth</th>
+                <th scope="col">Starter resources</th>
+              </tr>
+            </thead>
+            <tbody>
+              {#each clinicalConnectorRows as manifest (manifest.id)}
+                <tr>
+                  <td>
+                    <strong>{manifest.label}</strong>
+                    <ul class="capability-notes">
+                      {#each manifest.capabilityNotes as note (note)}
+                        <li>{note}</li>
+                      {/each}
+                    </ul>
+                  </td>
+                  <td data-label="Phase">{manifest.phase}</td>
+                  <td data-label="Auth">{manifest.auth}</td>
+                  <td data-label="Starter resources">
+                    <p class="resource-list">{manifest.starterResourceLabel}</p>
+                    <p class="identity-copy">{manifest.identityRule}</p>
+                  </td>
+                </tr>
+              {/each}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
+    </div>
   </div>
 {/if}
 
@@ -130,13 +141,13 @@
   .capability-table th,
   .capability-table td {
     padding: 0.8rem 0.75rem;
-    border-bottom: 1px solid rgba(31, 29, 26, 0.08);
+    border-bottom: 0.5px solid var(--phc-border-soft);
     text-align: left;
     vertical-align: top;
   }
 
   .capability-table th {
-    color: #655e54;
+    color: var(--phc-muted);
     font:
       700 0.75rem/1.2 Manrope,
       system-ui,
@@ -150,7 +161,7 @@
     padding-left: 1rem;
     display: grid;
     gap: 0.35rem;
-    color: #655e54;
+    color: var(--phc-muted);
   }
 
   .resource-list,
@@ -160,11 +171,82 @@
 
   .identity-copy {
     margin-top: 0.45rem;
-    color: #655e54;
+    color: var(--phc-muted);
   }
 
   .summary-block p {
     margin: 0;
+  }
+
+  @media (max-width: 639px) {
+    .integrations-grid {
+      gap: 0.9rem;
+    }
+
+    .integrations-panel--status {
+      order: 1;
+    }
+
+    .integrations-panel--setup {
+      order: 2;
+    }
+
+    .integrations-panel--notes {
+      order: 3;
+    }
+
+    .integrations-panel--clinical {
+      order: 4;
+    }
+
+    .table-scroll {
+      margin-top: 0.8rem;
+    }
+
+    .capability-table,
+    .capability-table tbody,
+    .capability-table tr,
+    .capability-table td {
+      display: block;
+    }
+
+    .capability-table thead {
+      display: none;
+    }
+
+    .capability-table {
+      font-size: 0.82rem;
+      line-height: 1.35;
+    }
+
+    .capability-table tr {
+      padding: 0.8rem 0;
+      border-bottom: 0.5px solid var(--phc-border-soft);
+    }
+
+    .capability-table tr:first-child {
+      padding-top: 0;
+    }
+
+    .capability-table tr:last-child {
+      border-bottom: 0;
+      padding-bottom: 0;
+    }
+
+    .capability-table td {
+      padding: 0.25rem 0;
+      border-bottom: 0;
+    }
+
+    .capability-table td[data-label]::before {
+      content: attr(data-label);
+      display: block;
+      margin-bottom: 0.15rem;
+      color: var(--phc-muted);
+      font: 700 0.68rem/1.2 var(--phc-font-ui);
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
   }
 
   @media (min-width: 960px) {
@@ -172,7 +254,7 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .integrations-grid :global(section:last-child) {
+    .integrations-panel--clinical {
       grid-column: 1 / -1;
     }
   }

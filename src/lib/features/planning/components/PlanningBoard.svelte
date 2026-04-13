@@ -53,7 +53,9 @@
               <li class={`slot-card slot-card--${slot.slotType} slot-card--${slot.status}`}>
                 <div class="slot-header">
                   <p class="slot-type">{SLOT_TYPE_LABELS[slot.slotType]}</p>
-                  <span class={`planning-status-chip planning-status-chip--${slot.status}`}>
+                  <span
+                    class={`planning-status-chip status-chip planning-status-chip--${slot.status}`}
+                  >
                     {STATUS_LABELS[slot.status]}
                   </span>
                 </div>
@@ -112,9 +114,8 @@
 
   .plan-day {
     padding: 0.85rem;
-    border-radius: 1rem;
-    background: rgba(241, 235, 226, 0.45);
-    border: 1px solid rgba(31, 29, 26, 0.06);
+    background: rgba(10, 60, 45, 0.18);
+    border: 0.5px solid var(--phc-border-soft);
   }
 
   .plan-day h3 {
@@ -137,9 +138,8 @@
     display: grid;
     gap: 0.8rem;
     padding: 0.9rem;
-    border-radius: 0.95rem;
-    background: rgba(251, 248, 243, 0.96);
-    border: 1px solid rgba(31, 29, 26, 0.08);
+    background: rgba(0, 23, 15, 0.38);
+    border: 0.5px solid var(--phc-border-soft);
   }
 
   .slot-card--meal {
@@ -151,7 +151,7 @@
   }
 
   .slot-card--note {
-    background: rgba(248, 243, 235, 0.88);
+    background: rgba(10, 60, 45, 0.24);
   }
 
   .slot-card--done {
@@ -171,7 +171,7 @@
 
   .slot-type {
     margin: 0;
-    color: #655e54;
+    color: var(--phc-muted);
     font:
       700 0.72rem/1 Manrope,
       system-ui,
@@ -181,38 +181,12 @@
   }
 
   .planning-status-chip {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    width: fit-content;
-    padding: 0.28rem 0.6rem;
     border-radius: 999px;
-    font:
-      700 0.72rem/1 Manrope,
-      system-ui,
-      sans-serif;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-  }
-
-  .planning-status-chip--planned {
-    background: rgba(166, 124, 46, 0.12);
-    color: #8a6521;
-  }
-
-  .planning-status-chip--done {
-    background: rgba(31, 92, 74, 0.12);
-    color: #1f5c4a;
-  }
-
-  .planning-status-chip--skipped {
-    background: rgba(181, 84, 60, 0.12);
-    color: #8e3c2e;
   }
 
   .slot-copy p {
     margin: 0.3rem 0 0;
-    color: #655e54;
+    color: var(--phc-muted);
   }
 
   .slot-actions {

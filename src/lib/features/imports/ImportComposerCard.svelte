@@ -137,13 +137,13 @@
   {/if}
 
   {#if currentHelperCopy}
-    <div class="helper-copy">
+    <div class="helper-copy soft-panel">
       <p><strong>{currentHelperCopy.title}</strong></p>
       <p class="status-copy helper-line">
         {currentHelperCopy.description}
       </p>
       {#if showHelperLinks}
-        <p class="helper-links">
+        <p class="helper-links link-row">
           {#each currentHelperCopy.links ?? [] as link (link.label)}
             <a
               href={resolve(link.route)}
@@ -210,9 +210,6 @@
 
   .helper-copy {
     margin: 0 0 1rem;
-    padding: 0.85rem 1rem;
-    border-radius: 1rem;
-    background: rgba(241, 235, 226, 0.85);
   }
 
   .helper-copy p,
@@ -230,29 +227,20 @@
   }
 
   .helper-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
     margin-top: 0.75rem;
-  }
-
-  .helper-links a {
-    color: #1f5c4a;
-    font-weight: 600;
   }
 
   .drop-zone {
     display: grid;
     gap: 0.45rem;
     padding: 1rem;
-    border-radius: 1rem;
-    border: 1.5px dashed rgba(31, 92, 74, 0.28);
-    background: rgba(241, 235, 226, 0.45);
+    border: 1px dashed rgba(233, 195, 73, 0.28);
+    background: rgba(10, 60, 45, 0.16);
   }
 
   .drop-zone--active {
-    border-color: #1f5c4a;
-    background: rgba(31, 92, 74, 0.08);
+    border-color: var(--phc-label);
+    background: rgba(233, 195, 73, 0.08);
   }
 
   .drop-zone strong {
@@ -267,9 +255,9 @@
     align-items: center;
     width: fit-content;
     padding: 0.35rem 0.7rem;
-    border-radius: 999px;
-    background: rgba(31, 92, 74, 0.1);
-    color: #1f5c4a;
+    border: 0.5px solid rgba(233, 195, 73, 0.18);
+    background: rgba(233, 195, 73, 0.12);
+    color: var(--phc-label);
     font:
       600 0.85rem/1.2 Manrope,
       system-ui,
@@ -278,5 +266,28 @@
 
   .preview-summary {
     margin-top: 1rem;
+  }
+
+  @media (max-width: 639px) {
+    .file-field-stack {
+      gap: 0.6rem;
+    }
+
+    .helper-copy {
+      margin-bottom: 0.8rem;
+    }
+
+    .helper-links {
+      gap: 0.75rem;
+      margin-top: 0.6rem;
+    }
+
+    .drop-zone {
+      padding: 0.85rem;
+    }
+
+    .preview-summary {
+      margin-top: 0.8rem;
+    }
   }
 </style>

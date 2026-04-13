@@ -1,4 +1,5 @@
 import type { WeeklyReviewData } from '$lib/features/review/service';
+import { REVIEW_EXPERIMENT_DEFINITIONS } from '$lib/features/review/experiment-registry';
 import {
   buildStoredJournalIntentHref,
   type JournalIntentHref,
@@ -9,6 +10,7 @@ import {
 } from '$lib/features/nutrition/navigation';
 
 export type ReviewSection = {
+  kind?: 'default' | 'decision-engine';
   title: string;
   items: string[];
   emptyTitle?: string;
@@ -17,6 +19,8 @@ export type ReviewSection = {
   actionHref?: JournalIntentHref;
   actionLabel?: string;
 };
+
+export type ReviewNavigationHref = NutritionIntentHref | '/plan';
 
 export type ReviewNutritionStrategyCard = {
   badge: string;
@@ -30,7 +34,10 @@ export type ReviewDecisionCardView = {
   badge: 'Continue' | 'Adjust' | 'Stop';
   title: string;
   detail: string;
-  href: string;
+  confidenceLabel: 'High confidence' | 'Medium confidence' | 'Low confidence';
+  expectedImpact: string;
+  provenance: string[];
+  href: ReviewNavigationHref;
   actionLabel: string;
 };
 
@@ -41,9 +48,38 @@ export type ReviewWeeklyRecommendationView = {
   confidenceLabel: 'High confidence' | 'Medium confidence' | 'Low confidence';
   expectedImpact: string;
   provenance: string[];
-  href: string;
+  href: ReviewNavigationHref;
   actionLabel: string;
 } | null;
+
+export type ReviewExperimentCandidateView = {
+  id: string;
+  label: string;
+  summary: string;
+  confidenceLabel: 'High confidence' | 'Medium confidence' | 'Low confidence';
+  expectedImpact: string;
+  provenance: string[];
+};
+
+export type ReviewSavedExperimentVerdictView = {
+  badge: 'Continue' | 'Adjust' | 'Stop';
+  label: string;
+  summary: string;
+  confidenceLabel: 'High confidence' | 'Medium confidence' | 'Low confidence';
+  expectedImpact: string;
+  provenance: string[];
+} | null;
+
+export function resolveReviewNavigationHref(
+  href: ReviewNavigationHref,
+  resolveHref: (path: '/nutrition' | '/plan') => string
+): string {
+  if (href.startsWith('/nutrition?')) {
+    return `${resolveHref('/nutrition')}${href.slice('/nutrition'.length)}`;
+  }
+
+  return resolveHref('/plan');
+}
 
 function toDecisionBadge(decision: 'continue' | 'adjust' | 'stop'): 'Continue' | 'Adjust' | 'Stop' {
   if (decision === 'continue') return 'Continue';
@@ -59,7 +95,10 @@ function toConfidenceLabel(
   return 'Low confidence';
 }
 
-function createReviewTargetHref(target: { kind: 'food' | 'recipe' | 'plan'; id?: string }): string {
+function createReviewTargetHref(target: {
+  kind: 'food' | 'recipe' | 'plan';
+  id?: string;
+}): ReviewNavigationHref {
   if (target.kind === 'food' && target.id) {
     return buildNutritionIntentHref({ kind: 'food', id: target.id });
   }
@@ -69,6 +108,22 @@ function createReviewTargetHref(target: { kind: 'food' | 'recipe' | 'plan'; id?:
   }
 
   return '/plan';
+}
+
+function dedupeReviewLines(lines: string[]): string[] {
+  const seen = new Set<string>();
+  const deduped: string[] = [];
+
+  for (const line of lines) {
+    const normalized = line.trim();
+    if (!normalized) continue;
+    const key = normalized.toLocaleLowerCase();
+    if (seen.has(key)) continue;
+    seen.add(key);
+    deduped.push(normalized);
+  }
+
+  return deduped;
 }
 
 export function createWeeklyRecommendationView(
@@ -84,9 +139,52 @@ export function createWeeklyRecommendationView(
     summary: weekly.weeklyRecommendation.summary,
     confidenceLabel: toConfidenceLabel(weekly.weeklyRecommendation.confidence),
     expectedImpact: weekly.weeklyRecommendation.expectedImpact,
-    provenance: weekly.weeklyRecommendation.provenance,
+    provenance: dedupeReviewLines(weekly.weeklyRecommendation.provenance),
     href: createReviewTargetHref(weekly.weeklyRecommendation.target),
     actionLabel: weekly.weeklyRecommendation.actionLabel,
+  };
+}
+
+export function createReviewExperimentCandidates(
+  weekly: WeeklyReviewData | null
+): ReviewExperimentCandidateView[] {
+  if (!weekly) return [];
+
+  if (weekly.experimentCandidates?.length) {
+    return weekly.experimentCandidates.map((candidate) => ({
+      id: candidate.id,
+      label: candidate.label,
+      summary: candidate.summary,
+      confidenceLabel: toConfidenceLabel(candidate.confidence),
+      expectedImpact: candidate.expectedImpact,
+      provenance: dedupeReviewLines(candidate.provenance),
+    }));
+  }
+
+  return weekly.experimentOptions.map((label) => ({
+    id: REVIEW_EXPERIMENT_DEFINITIONS.find((definition) => definition.label === label)?.id ?? label,
+    label,
+    summary: 'Keep this experiment deterministic and narrow enough to measure next week.',
+    confidenceLabel: 'Medium confidence',
+    expectedImpact: 'Generate a cleaner signal for the next weekly review.',
+    provenance: [],
+  }));
+}
+
+export function createReviewSavedExperimentVerdict(
+  weekly: WeeklyReviewData | null
+): ReviewSavedExperimentVerdictView {
+  if (!weekly?.savedExperimentVerdict) {
+    return null;
+  }
+
+  return {
+    badge: toDecisionBadge(weekly.savedExperimentVerdict.decision),
+    label: weekly.savedExperimentVerdict.label,
+    summary: weekly.savedExperimentVerdict.summary,
+    confidenceLabel: toConfidenceLabel(weekly.savedExperimentVerdict.confidence),
+    expectedImpact: weekly.savedExperimentVerdict.expectedImpact,
+    provenance: dedupeReviewLines(weekly.savedExperimentVerdict.provenance),
   };
 }
 
@@ -98,6 +196,9 @@ export function createReviewDecisionCards(
         badge: toDecisionBadge(card.decision),
         title: card.title,
         detail: normalizeStrategyDetail(card.detail),
+        confidenceLabel: toConfidenceLabel(card.confidence),
+        expectedImpact: card.expectedImpact,
+        provenance: dedupeReviewLines(card.provenance),
         href: createReviewTargetHref(card.target),
         actionLabel:
           card.target.kind === 'food'
@@ -244,27 +345,32 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
   return weekly
     ? [
         {
+          kind: 'default',
           title: 'What changed enough to matter',
           items: weekly.whatChangedHighlights,
           emptyMessage: 'The week does not yet have enough movement to call out a clear shift.',
         },
         {
+          kind: 'default',
           title: 'Drift flags',
           items: weekly.snapshot.flags,
           emptyTitle: 'No major drift flagged.',
           emptyMessage: 'Keep logging for a fuller weekly signal.',
         },
         {
+          kind: 'default',
           title: 'Assessment changes',
           items: weekly.assessmentSummary,
           emptyMessage: 'No completed assessment changes this week yet.',
         },
         {
+          kind: 'default',
           title: 'Health highlights',
           items: weekly.healthHighlights,
           emptyMessage: 'Keep logging health context to unlock more useful weekly patterns.',
         },
         {
+          kind: 'default',
           title: 'Context signals',
           items: weekly.contextSignals,
           emptyMessage:
@@ -286,6 +392,7 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
             : undefined,
         },
         {
+          kind: 'default',
           title: 'Journal excerpts',
           items: weekly.journalHighlights,
           emptyMessage: 'Write one useful reflection this week and Review will surface it here.',
@@ -306,33 +413,39 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
             : undefined,
         },
         {
+          kind: 'default',
           title: 'Patterns to watch',
           items: weekly.patternHighlights,
           emptyMessage:
             'Repeat a few linked context notes before Review can surface recurring patterns.',
         },
         {
+          kind: 'default',
           title: 'Food adherence highlights',
           items: weekly.nutritionHighlights,
           emptyMessage: 'Nutrition needs a few more logged meals before highlights mean much.',
         },
         {
+          kind: 'default',
           title: 'Plan follow-through',
           items: weekly.planningHighlights,
           emptyMessage: 'Build a weekly plan before Review can compare intent against execution.',
         },
         {
+          kind: 'default',
           title: 'Actual vs plan',
           items: weekly.adherenceSignals,
           emptyMessage:
             'Complete or miss a few plan items before Review can judge real follow-through.',
         },
         {
+          kind: 'default',
           title: 'Grocery misses / waste',
           items: weekly.grocerySignals,
           emptyMessage: 'No grocery misses or waste signals surfaced this week.',
         },
         {
+          kind: 'decision-engine',
           title: 'Repeat / rotate / skip next week',
           items: weekly.nutritionStrategy.map(createNutritionStrategyLine),
           emptyMessage:
@@ -340,6 +453,7 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
           emphasis: 'strategy',
         },
         {
+          kind: 'default',
           title: 'Device highlights',
           items: weekly.deviceHighlights,
           emptyMessage:

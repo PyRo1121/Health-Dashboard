@@ -146,7 +146,7 @@
 <style>
   .entry-list li {
     padding-bottom: 0.85rem;
-    border-bottom: 1px solid rgba(31, 29, 26, 0.08);
+    border-bottom: 0.5px solid var(--phc-border-soft);
   }
 
   .entry-list strong {
@@ -156,7 +156,7 @@
 
   .entry-list p {
     margin: 0;
-    color: #3a352e;
+    color: var(--phc-text);
   }
 
   .linked-context-list {

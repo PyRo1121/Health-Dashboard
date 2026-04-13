@@ -13,7 +13,7 @@ import { submitAssessment } from '$lib/features/assessments/service';
 describe('review controller', () => {
   const getDb = useTestHealthDb();
 
-  it('loads and saves review controller state', async () => {
+  it('loads and saves review controller state by experiment candidate id while keeping the saved label stable', async () => {
     const db = getDb();
     await saveDailyCheckin(db, {
       date: '2026-04-02',
@@ -41,10 +41,26 @@ describe('review controller', () => {
 
     let state = await loadReviewPage(db, '2026-04-02');
     expect(state.weekly?.snapshot.headline).toBeTruthy();
-    state = setReviewExperiment(state, 'Increase hydration tracking');
+    const selectedCandidate = state.weekly?.experimentCandidates?.find(
+      (candidate) => candidate.label === 'Increase hydration tracking'
+    );
+    if (!selectedCandidate) {
+      throw new Error('Expected deterministic experiment candidates for the weekly review.');
+    }
+
+    const selectedCandidateId = (selectedCandidate as { id?: string }).id;
+    if (!selectedCandidateId) {
+      throw new Error('Expected deterministic experiment candidates to expose stable ids.');
+    }
+
+    state = setReviewExperiment(state, selectedCandidateId);
     state = await saveReviewExperimentPage(db, state);
     expect(state.weekly?.snapshot.experiment).toBe('Increase hydration tracking');
+    expect(state.weekly?.snapshot.experimentId).toBe(selectedCandidateId);
     expect(state.saveNotice).toBe('Experiment saved.');
+
+    const reloaded = await loadReviewPage(db, '2026-04-02');
+    expect(reloaded.selectedExperiment).toBe(selectedCandidateId);
   });
 
   it('falls back to the latest review-relevant week when the current week is empty', async () => {
@@ -63,5 +79,25 @@ describe('review controller', () => {
 
     expect(state.localDay).toBe('2026-04-02');
     expect(state.weekly?.snapshot.daysTracked).toBe(1);
+  });
+
+  it('does not save a forged experiment id outside the approved weekly candidates', async () => {
+    const db = getDb();
+    await saveDailyCheckin(db, {
+      date: '2026-04-02',
+      mood: 5,
+      energy: 4,
+      stress: 2,
+      focus: 4,
+      sleepHours: 8,
+      sleepQuality: 4,
+    });
+
+    let state = await loadReviewPage(db, '2026-04-02');
+    state = setReviewExperiment(state, 'forged-experiment-id');
+    state = await saveReviewExperimentPage(db, state);
+
+    expect(state.weekly?.snapshot.experiment).toBeUndefined();
+    expect(state.saveNotice).toBe('Choose one of the suggested experiments before saving.');
   });
 });

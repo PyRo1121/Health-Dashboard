@@ -60,6 +60,11 @@ test('health loop signals feed the weekly review', async ({ page }) => {
   await expect(page.getByText(/Anxiety episode logged\./i)).toBeVisible();
 
   await page.goto('/review');
-  await expect(page.getByText('Health highlights')).toBeVisible();
-  await expect(page.getByText(/Low sleep lined up with higher anxiety/i)).toBeVisible();
+  const healthHighlightsSection = page
+    .getByRole('heading', { name: 'Health highlights' })
+    .locator('xpath=ancestor::section[1]');
+  await expect(healthHighlightsSection).toBeVisible();
+  await expect(
+    healthHighlightsSection.getByText(/^Low sleep lined up with higher anxiety on .*$/)
+  ).toBeVisible();
 });

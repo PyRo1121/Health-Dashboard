@@ -12,9 +12,25 @@
 
 <style>
   .card {
-    padding: 1rem;
-    border-radius: 1rem;
-    background: rgba(251, 248, 243, 0.92);
-    border: 1px solid rgba(31, 29, 26, 0.06);
+    display: grid;
+    gap: 0.2rem;
+    padding: 1.25rem;
+    background:
+      linear-gradient(180deg, rgba(10, 60, 45, 0.18) 0%, rgba(0, 23, 15, 0.92) 100%),
+      var(--phc-surface-low);
+    border: 0.5px solid var(--phc-border-soft);
+    box-shadow: var(--phc-shadow-ambient);
+  }
+
+  @media (max-width: 639px) {
+    .card {
+      padding: 1rem;
+    }
+  }
+
+  @media (min-width: 960px) {
+    .card {
+      padding: 1.35rem;
+    }
   }
 </style>

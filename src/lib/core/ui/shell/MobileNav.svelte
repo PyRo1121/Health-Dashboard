@@ -11,9 +11,9 @@
   .mobile-nav {
     position: sticky;
     bottom: 0;
-    padding: 0.6rem;
-    background: rgba(251, 248, 243, 0.96);
-    border-top: 1px solid rgba(31, 29, 26, 0.08);
+    padding: 0.55rem 0.65rem calc(0.6rem + env(safe-area-inset-bottom));
+    background: rgba(0, 23, 15, 0.94);
+    border-top: 0.5px solid var(--phc-border-soft);
     backdrop-filter: blur(16px);
   }
 

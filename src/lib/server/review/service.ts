@@ -159,6 +159,25 @@ async function persistWeeklyReviewSnapshotServer(
       };
 }
 
+async function saveNextWeekExperimentServer(
+  anchorDay: string,
+  experiment: string,
+  experimentId: string,
+  weekly?: WeeklyReviewData
+): Promise<ReviewSnapshot> {
+  const resolvedWeekly = weekly ?? (await buildWeeklySnapshotServer(anchorDay));
+  const timestamp = nowIso();
+
+  const snapshot: ReviewSnapshot = {
+    ...resolvedWeekly.snapshot,
+    ...updateRecordMeta(resolvedWeekly.snapshot, resolvedWeekly.snapshot.id, timestamp),
+    experimentId,
+    experiment,
+  };
+
+  return (await persistWeeklyReviewSnapshotServer(resolvedWeekly, snapshot)).snapshot;
+}
+
 export async function refreshWeeklyReviewArtifactsServer(
   anchorDay: string
 ): Promise<WeeklyReviewData> {
@@ -192,7 +211,11 @@ export async function loadReviewPageServer(localDay: string): Promise<ReviewPage
     loading: false,
     localDay: weekly.anchorDay,
     weekly,
-    selectedExperiment: weekly.experimentOptions[0] ?? '',
+    selectedExperiment:
+      weekly.selectedExperimentId ??
+      weekly.experimentCandidates?.[0]?.id ??
+      weekly.experimentOptions[0] ??
+      '',
     loadNotice: '',
     saveNotice: '',
   };
@@ -205,21 +228,30 @@ export async function saveReviewExperimentPageServer(
     return state;
   }
 
-  const timestamp = nowIso();
-  const snapshot: ReviewSnapshot = {
-    ...state.weekly.snapshot,
-    ...updateRecordMeta(state.weekly.snapshot, state.weekly.snapshot.id, timestamp),
-    experiment: state.selectedExperiment,
-  };
+  const weekly = await buildWeeklySnapshotServer(state.localDay);
 
-  await persistReviewSnapshotServer(snapshot);
+  const selectedCandidate = weekly.experimentCandidates?.find(
+    (candidate) => candidate.id === state.selectedExperiment
+  );
+
+  if (!selectedCandidate) {
+    return {
+      ...state,
+      saveNotice: 'Choose one of the suggested experiments before saving.',
+    };
+  }
+
+  await saveNextWeekExperimentServer(
+    state.localDay,
+    selectedCandidate.label,
+    selectedCandidate.id,
+    weekly
+  );
+  const refreshedWeekly = await buildWeeklySnapshotServer(state.localDay);
 
   return {
     ...state,
-    weekly: {
-      ...state.weekly,
-      snapshot,
-    },
+    weekly: refreshedWeekly,
     saveNotice: 'Experiment saved.',
   };
 }

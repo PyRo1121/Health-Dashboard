@@ -30,6 +30,22 @@
 <style>
   .summary-list p {
     margin: 0.25rem 0 0;
-    color: #3a352e;
+    color: var(--phc-muted);
+  }
+
+  .summary-list li {
+    padding-bottom: 1rem;
+    border-bottom: 0.5px solid var(--phc-border-soft);
+  }
+
+  .summary-list li:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
+  }
+
+  .summary-list strong {
+    color: var(--phc-text);
+    font: 500 1.1rem/1.15 var(--phc-font-display);
+    font-style: italic;
   }
 </style>

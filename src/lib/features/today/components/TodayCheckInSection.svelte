@@ -46,9 +46,11 @@
       ></textarea>
     </Field>
 
-    <Button onclick={onSave} disabled={saving}>
-      {saving ? 'Saving…' : 'Save check-in'}
-    </Button>
+    <div class="button-row">
+      <Button onclick={onSave} disabled={saving}>
+        {saving ? 'Saving…' : 'Save check-in'}
+      </Button>
+    </div>
 
     {#if saveNotice}
       <p class="status-copy">{saveNotice}</p>
@@ -59,5 +61,12 @@
 <style>
   .field-grid {
     grid-template-columns: repeat(auto-fit, minmax(8rem, 1fr));
+  }
+
+  @media (max-width: 639px) {
+    .field-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 0.7rem;
+    }
   }
 </style>

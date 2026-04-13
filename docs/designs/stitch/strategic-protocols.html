@@ -1,0 +1,586 @@
+<!doctype html>
+
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Strategic Protocols | Sovereign Analyst</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'on-tertiary-fixed': '#1b1c19',
+              'error-container': '#93000a',
+              'surface-container': '#00251a',
+              'on-tertiary-fixed-variant': '#474744',
+              'surface-container-high': '#003123',
+              primary: '#e9c349',
+              'on-primary-fixed': '#241a00',
+              'surface-dim': '#00170f',
+              'surface-container-low': '#002116',
+              'tertiary-container': '#353633',
+              'secondary-container': '#235141',
+              'on-secondary': '#043829',
+              tertiary: '#c8c6c2',
+              'surface-container-highest': '#0a3c2d',
+              'primary-fixed': '#ffe088',
+              error: '#ffb4ab',
+              outline: '#8a938d',
+              'surface-tint': '#e9c349',
+              'surface-bright': '#104132',
+              'on-primary-fixed-variant': '#574500',
+              'inverse-on-surface': '#043829',
+              'on-surface-variant': '#c0c8c3',
+              'primary-fixed-dim': '#e9c349',
+              'on-error': '#690005',
+              background: '#00170f',
+              'secondary-fixed': '#bcedd7',
+              'on-tertiary-container': '#9f9e9a',
+              'tertiary-fixed-dim': '#c8c6c2',
+              'on-error-container': '#ffdad6',
+              'on-tertiary': '#30312e',
+              'surface-variant': '#0a3c2d',
+              secondary: '#a0d1bc',
+              'inverse-surface': '#bcedd7',
+              surface: '#00170f',
+              'surface-container-lowest': '#00120b',
+              'primary-container': '#433400',
+              'secondary-fixed-dim': '#a0d1bc',
+              'on-secondary-fixed-variant': '#214f3f',
+              'on-primary': '#3c2f00',
+              'on-secondary-container': '#93c3ae',
+              'on-background': '#bcedd7',
+              'on-surface': '#bcedd7',
+              'on-secondary-fixed': '#002116',
+              'on-primary-container': '#be9a22',
+              'inverse-primary': '#735c00',
+              'outline-variant': '#414944',
+              'tertiary-fixed': '#e4e2dd',
+            },
+            borderRadius: {
+              DEFAULT: '0.25rem',
+              lg: '0.5rem',
+              xl: '0.75rem',
+              full: '9999px',
+            },
+            fontFamily: {
+              headline: ['Newsreader'],
+              body: ['Space Grotesk'],
+              label: ['Space Grotesk'],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 200,
+          'GRAD' 0,
+          'opsz' 24;
+        font-size: 20px;
+      }
+      .hairline-grid {
+        background-image:
+          linear-gradient(to right, #414944 0.5px, transparent 0.5px),
+          linear-gradient(to bottom, #414944 0.5px, transparent 0.5px);
+        background-size: 8.333333% 100px;
+        opacity: 0.1;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary min-h-screen flex"
+  >
+    <!-- SideNavBar Anchor -->
+    <aside
+      class="hidden md:flex flex-col h-screen py-6 bg-[#00120B] text-[#E9C349] font-['Space_Grotesk'] text-[11px] tracking-widest uppercase border-r-[0.5px] border-[#414944]/50 w-64 fixed left-0 top-0 z-50"
+    >
+      <div class="px-8 mb-12">
+        <h1 class="font-['Newsreader'] text-xl text-[#BCEDD7] normal-case tracking-normal">
+          Sovereign
+        </h1>
+        <p class="text-[9px] opacity-60 mt-1">Elite Performance</p>
+      </div>
+      <nav class="flex-1 space-y-1">
+        <a
+          class="flex items-center px-8 py-4 gap-4 text-[#A0D1BC] hover:bg-[#002116] hover:text-[#E9C349] transition-all duration-200 cursor-pointer active:opacity-80"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="analytics">analytics</span>
+          <span>Performance Vault</span>
+        </a>
+        <a
+          class="flex items-center px-8 py-4 gap-4 text-[#A0D1BC] hover:bg-[#002116] hover:text-[#E9C349] transition-all duration-200 cursor-pointer active:opacity-80"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="biometric_omni">fingerprint</span>
+          <span>Biometric Stream</span>
+        </a>
+        <a
+          class="flex items-center px-8 py-4 gap-4 text-[#E9C349] bg-[#0A3C2D] border-l-2 border-[#E9C349] cursor-pointer active:opacity-80"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="description">description</span>
+          <span>Strategic Protocols</span>
+        </a>
+        <a
+          class="flex items-center px-8 py-4 gap-4 text-[#A0D1BC] hover:bg-[#002116] hover:text-[#E9C349] transition-all duration-200 cursor-pointer active:opacity-80"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="account_circle">account_circle</span>
+          <span>Analyst Profile</span>
+        </a>
+      </nav>
+      <div class="px-6 mb-8">
+        <button
+          class="w-full py-3 bg-primary text-on-primary font-bold text-[12px] tracking-[0.2em] uppercase hover:opacity-90 transition-opacity"
+        >
+          New Protocol
+        </button>
+      </div>
+      <div class="border-t border-[#414944]/30 pt-4 space-y-1">
+        <a
+          class="flex items-center px-8 py-3 gap-4 text-[#A0D1BC] hover:text-[#E9C349] transition-all duration-200"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="terminal">terminal</span>
+          <span>System Logs</span>
+        </a>
+        <a
+          class="flex items-center px-8 py-3 gap-4 text-[#A0D1BC] hover:text-[#E9C349] transition-all duration-200"
+          href="#"
+        >
+          <span class="material-symbols-outlined" data-icon="help_outline">help_outline</span>
+          <span>Support</span>
+        </a>
+      </div>
+    </aside>
+    <!-- Main Content Canvas -->
+    <main class="flex-1 md:ml-64 relative min-h-screen flex flex-col">
+      <!-- TopNavBar Anchor -->
+      <header
+        class="flex justify-between items-center w-full px-8 h-16 bg-[#00170F] border-b-[0.5px] border-[#414944]/50 sticky top-0 z-40"
+      >
+        <div class="flex items-center gap-12">
+          <span class="font-['Newsreader'] italic font-medium text-[#E9C349] text-2xl"
+            >Sovereign Analyst</span
+          >
+          <nav class="hidden lg:flex gap-8">
+            <a
+              class="text-[#BCEDD7] font-['Space_Grotesk'] text-xs uppercase tracking-widest hover:text-[#E9C349] transition-colors duration-300"
+              href="#"
+              >Vault</a
+            >
+            <a
+              class="text-[#BCEDD7] font-['Space_Grotesk'] text-xs uppercase tracking-widest hover:text-[#E9C349] transition-colors duration-300"
+              href="#"
+              >Stream</a
+            >
+            <a
+              class="text-[#E9C349] border-b border-[#E9C349] pb-1 font-['Space_Grotesk'] text-xs uppercase tracking-widest"
+              href="#"
+              >Protocols</a
+            >
+            <a
+              class="text-[#BCEDD7] font-['Space_Grotesk'] text-xs uppercase tracking-widest hover:text-[#E9C349] transition-colors duration-300"
+              href="#"
+              >Profile</a
+            >
+          </nav>
+        </div>
+        <div class="flex items-center gap-6">
+          <div
+            class="relative flex items-center bg-surface-container-low border-b border-outline-variant/30 px-3 py-1"
+          >
+            <span class="material-symbols-outlined text-outline text-sm" data-icon="search"
+              >search</span
+            >
+            <input
+              class="bg-transparent border-none text-[10px] tracking-widest text-on-surface placeholder:text-outline/50 focus:ring-0 w-32"
+              placeholder="QUERY SYSTEM..."
+              type="text"
+            />
+          </div>
+          <button class="text-secondary hover:text-primary transition-colors">
+            <span class="material-symbols-outlined" data-icon="notifications">notifications</span>
+          </button>
+          <button class="text-secondary hover:text-primary transition-colors">
+            <span class="material-symbols-outlined" data-icon="settings">settings</span>
+          </button>
+        </div>
+      </header>
+      <section class="relative p-8 lg:p-12 flex-1 overflow-hidden">
+        <!-- Background Decoration -->
+        <div class="absolute inset-0 hairline-grid pointer-events-none"></div>
+        <div class="relative z-10 max-w-7xl mx-auto">
+          <!-- Hero Header -->
+          <div class="mb-16 flex flex-col md:flex-row md:items-end justify-between gap-8">
+            <div class="max-w-2xl">
+              <span
+                class="font-label text-primary text-[10px] tracking-[0.4em] uppercase mb-4 block"
+                >Deployment Phase 04</span
+              >
+              <h2 class="font-headline text-5xl lg:text-7xl text-on-surface leading-tight">
+                Strategic Protocols
+              </h2>
+              <p
+                class="font-body text-secondary mt-6 text-lg max-w-xl border-l border-primary/30 pl-6 italic"
+              >
+                Active orchestration of high-performance biological and cognitive regimens.
+                Precision management of Sovereign assets.
+              </p>
+            </div>
+            <div class="flex flex-col items-end gap-2">
+              <div class="text-[10px] font-label tracking-widest text-outline uppercase">
+                System Integrity
+              </div>
+              <div class="text-3xl font-label text-primary">98.4%</div>
+              <div class="w-32 h-[1px] bg-outline-variant/30 relative">
+                <div class="absolute inset-y-0 left-0 bg-primary w-[98.4%]"></div>
+              </div>
+            </div>
+          </div>
+          <!-- Protocol Grid -->
+          <div
+            class="grid grid-cols-1 gap-px bg-outline-variant/20 border border-outline-variant/20"
+          >
+            <!-- Row 1: Zone 2 Endurance -->
+            <div
+              class="grid grid-cols-1 lg:grid-cols-12 bg-surface hover:bg-surface-container-low transition-colors duration-500 group"
+            >
+              <div class="lg:col-span-4 p-8 border-r border-outline-variant/20">
+                <div class="flex items-start justify-between mb-8">
+                  <div>
+                    <div class="text-[10px] font-label text-outline tracking-widest uppercase mb-1">
+                      Biological / Cardiovascular
+                    </div>
+                    <h3 class="font-headline text-2xl text-on-surface">Zone 2 Endurance</h3>
+                  </div>
+                  <span class="material-symbols-outlined text-primary" data-icon="directions_run"
+                    >directions_run</span
+                  >
+                </div>
+                <div class="space-y-4">
+                  <div
+                    class="flex justify-between items-center text-[11px] font-label tracking-tighter"
+                  >
+                    <span class="text-outline uppercase">Optimization Target</span>
+                    <span class="text-on-surface">142 BPM</span>
+                  </div>
+                  <div
+                    class="flex justify-between items-center text-[11px] font-label tracking-tighter"
+                  >
+                    <span class="text-outline uppercase">Active Duration</span>
+                    <span class="text-on-surface">06:45:00 / WEEK</span>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="lg:col-span-5 p-8 border-r border-outline-variant/20 flex flex-col justify-center"
+              >
+                <div class="mb-4 flex justify-between items-end">
+                  <span class="text-[10px] font-label tracking-widest text-secondary uppercase"
+                    >Weekly Quota Completion</span
+                  >
+                  <span class="text-xl font-label text-primary">82%</span>
+                </div>
+                <div class="h-1 bg-surface-container-highest w-full relative">
+                  <div class="absolute inset-y-0 left-0 bg-primary w-[82%]"></div>
+                  <div
+                    class="absolute top-0 left-0 w-full h-full opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#000_4px,#000_5px)]"
+                  ></div>
+                </div>
+                <div class="mt-8 grid grid-cols-3 gap-4">
+                  <div class="text-center">
+                    <div class="text-[9px] text-outline uppercase mb-1">VO2 Max</div>
+                    <div class="text-sm font-label">
+                      58.2 <span class="text-[10px] text-primary">↑</span>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-[9px] text-outline uppercase mb-1">Resting HR</div>
+                    <div class="text-sm font-label">
+                      48 <span class="text-[10px] text-primary">↓</span>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-[9px] text-outline uppercase mb-1">Metabolic Efficiency</div>
+                    <div class="text-sm font-label">Optimal</div>
+                  </div>
+                </div>
+              </div>
+              <div class="lg:col-span-3 p-8 flex items-center justify-end gap-4">
+                <button
+                  class="px-6 py-2 border border-outline-variant/50 text-[10px] font-label tracking-[0.2em] uppercase hover:bg-primary hover:text-on-primary hover:border-primary transition-all duration-300"
+                >
+                  Parameters
+                </button>
+                <button
+                  class="w-10 h-10 flex items-center justify-center border border-outline-variant/50 hover:border-primary transition-colors"
+                >
+                  <span class="material-symbols-outlined text-sm" data-icon="more_vert"
+                    >more_vert</span
+                  >
+                </button>
+              </div>
+            </div>
+            <!-- Row 2: Neuro-Regeneration -->
+            <div
+              class="grid grid-cols-1 lg:grid-cols-12 bg-surface hover:bg-surface-container-low transition-colors duration-500 group"
+            >
+              <div class="lg:col-span-4 p-8 border-r border-outline-variant/20">
+                <div class="flex items-start justify-between mb-8">
+                  <div>
+                    <div class="text-[10px] font-label text-outline tracking-widest uppercase mb-1">
+                      Cognitive / Recovery
+                    </div>
+                    <h3 class="font-headline text-2xl text-on-surface">Neuro-Regeneration</h3>
+                  </div>
+                  <span class="material-symbols-outlined text-primary" data-icon="psychology"
+                    >psychology</span
+                  >
+                </div>
+                <div class="space-y-4">
+                  <div
+                    class="flex justify-between items-center text-[11px] font-label tracking-tighter"
+                  >
+                    <span class="text-outline uppercase">Deep Sleep Focus</span>
+                    <span class="text-on-surface">02:15:00 / AVG</span>
+                  </div>
+                  <div
+                    class="flex justify-between items-center text-[11px] font-label tracking-tighter"
+                  >
+                    <span class="text-outline uppercase">HRV Baseline</span>
+                    <span class="text-on-surface">112 MS</span>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="lg:col-span-5 p-8 border-r border-outline-variant/20 flex flex-col justify-center"
+              >
+                <div class="mb-4 flex justify-between items-end">
+                  <span class="text-[10px] font-label tracking-widest text-secondary uppercase"
+                    >Synaptic Clarity Index</span
+                  >
+                  <span class="text-xl font-label text-primary">94%</span>
+                </div>
+                <div class="h-1 bg-surface-container-highest w-full relative">
+                  <div class="absolute inset-y-0 left-0 bg-primary w-[94%]"></div>
+                  <div
+                    class="absolute top-0 left-0 w-full h-full opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#000_4px,#000_5px)]"
+                  ></div>
+                </div>
+                <div class="mt-8 grid grid-cols-3 gap-4">
+                  <div class="text-center">
+                    <div class="text-[9px] text-outline uppercase mb-1">REM Phase</div>
+                    <div class="text-sm font-label">
+                      High <span class="text-[10px] text-primary">↑</span>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-[9px] text-outline uppercase mb-1">Cortisol</div>
+                    <div class="text-sm font-label">
+                      Trace <span class="text-[10px] text-primary">↓</span>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-[9px] text-outline uppercase mb-1">Delta Wave</div>
+                    <div class="text-sm font-label">Stabilized</div>
+                  </div>
+                </div>
+              </div>
+              <div class="lg:col-span-3 p-8 flex items-center justify-end gap-4">
+                <button
+                  class="px-6 py-2 border border-outline-variant/50 text-[10px] font-label tracking-[0.2em] uppercase hover:bg-primary hover:text-on-primary hover:border-primary transition-all duration-300"
+                >
+                  Parameters
+                </button>
+                <button
+                  class="w-10 h-10 flex items-center justify-center border border-outline-variant/50 hover:border-primary transition-colors"
+                >
+                  <span class="material-symbols-outlined text-sm" data-icon="more_vert"
+                    >more_vert</span
+                  >
+                </button>
+              </div>
+            </div>
+            <!-- Row 3: Hyper-Hypertrophy -->
+            <div
+              class="grid grid-cols-1 lg:grid-cols-12 bg-surface hover:bg-surface-container-low transition-colors duration-500 group"
+            >
+              <div class="lg:col-span-4 p-8 border-r border-outline-variant/20">
+                <div class="flex items-start justify-between mb-8">
+                  <div>
+                    <div class="text-[10px] font-label text-outline tracking-widest uppercase mb-1">
+                      Structural / Hypertrophy
+                    </div>
+                    <h3 class="font-headline text-2xl text-on-surface">Strength Baseline IV</h3>
+                  </div>
+                  <span class="material-symbols-outlined text-primary" data-icon="fitness_center"
+                    >fitness_center</span
+                  >
+                </div>
+                <div class="space-y-4">
+                  <div
+                    class="flex justify-between items-center text-[11px] font-label tracking-tighter"
+                  >
+                    <span class="text-outline uppercase">Volume Load</span>
+                    <span class="text-on-surface">42,500 KG / WK</span>
+                  </div>
+                  <div
+                    class="flex justify-between items-center text-[11px] font-label tracking-tighter"
+                  >
+                    <span class="text-outline uppercase">Intensity RPE</span>
+                    <span class="text-on-surface">8.5 AVG</span>
+                  </div>
+                </div>
+              </div>
+              <div
+                class="lg:col-span-5 p-8 border-r border-outline-variant/20 flex flex-col justify-center"
+              >
+                <div class="mb-4 flex justify-between items-end">
+                  <span class="text-[10px] font-label tracking-widest text-secondary uppercase"
+                    >Phase Progression</span
+                  >
+                  <span class="text-xl font-label text-primary">45%</span>
+                </div>
+                <div class="h-1 bg-surface-container-highest w-full relative">
+                  <div class="absolute inset-y-0 left-0 bg-primary w-[45%]"></div>
+                  <div
+                    class="absolute top-0 left-0 w-full h-full opacity-20 bg-[repeating-linear-gradient(90deg,transparent,transparent_4px,#000_4px,#000_5px)]"
+                  ></div>
+                </div>
+                <div class="mt-8 grid grid-cols-3 gap-4">
+                  <div class="text-center">
+                    <div class="text-[9px] text-outline uppercase mb-1">Force Output</div>
+                    <div class="text-sm font-label">
+                      +4.2% <span class="text-[10px] text-primary">↑</span>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-[9px] text-outline uppercase mb-1">Fat Mass</div>
+                    <div class="text-sm font-label">
+                      9.1% <span class="text-[10px] text-primary">↓</span>
+                    </div>
+                  </div>
+                  <div class="text-center">
+                    <div class="text-[9px] text-outline uppercase mb-1">Recovery Rate</div>
+                    <div class="text-sm font-label">Linear</div>
+                  </div>
+                </div>
+              </div>
+              <div class="lg:col-span-3 p-8 flex items-center justify-end gap-4">
+                <button
+                  class="px-6 py-2 border border-outline-variant/50 text-[10px] font-label tracking-[0.2em] uppercase hover:bg-primary hover:text-on-primary hover:border-primary transition-all duration-300"
+                >
+                  Parameters
+                </button>
+                <button
+                  class="w-10 h-10 flex items-center justify-center border border-outline-variant/50 hover:border-primary transition-colors"
+                >
+                  <span class="material-symbols-outlined text-sm" data-icon="more_vert"
+                    >more_vert</span
+                  >
+                </button>
+              </div>
+            </div>
+          </div>
+          <!-- Footer Stats -->
+          <div class="mt-16 grid grid-cols-1 md:grid-cols-4 gap-8">
+            <div class="border-t border-outline-variant/20 pt-6">
+              <div class="text-[9px] font-label tracking-widest text-outline uppercase mb-2">
+                Protocol Adherence
+              </div>
+              <div class="font-headline text-3xl">92.1%</div>
+              <div class="mt-2 text-[10px] text-primary tracking-wide">EXCEEDING BASELINE</div>
+            </div>
+            <div class="border-t border-outline-variant/20 pt-6">
+              <div class="text-[9px] font-label tracking-widest text-outline uppercase mb-2">
+                Active Regimens
+              </div>
+              <div class="font-headline text-3xl">12 Units</div>
+              <div class="mt-2 text-[10px] text-outline tracking-wide">3 PENDING REVIEW</div>
+            </div>
+            <div class="border-t border-outline-variant/20 pt-6">
+              <div class="text-[9px] font-label tracking-widest text-outline uppercase mb-2">
+                Resource Burn
+              </div>
+              <div class="font-headline text-3xl">4,250 kcal</div>
+              <div class="mt-2 text-[10px] text-secondary tracking-wide">DAILY MEAN</div>
+            </div>
+            <div class="border-t border-outline-variant/20 pt-6">
+              <div class="text-[9px] font-label tracking-widest text-outline uppercase mb-2">
+                Global Health Index
+              </div>
+              <div class="font-headline text-3xl">S-Tier</div>
+              <div class="mt-2 text-[10px] text-primary tracking-wide">OPTIMAL PERFORMANCE</div>
+            </div>
+          </div>
+        </div>
+      </section>
+      <!-- Floating Intelligence HUD -->
+      <div
+        class="fixed bottom-8 right-8 w-80 bg-surface-bright/80 backdrop-blur-xl border border-outline-variant/30 p-6 z-50"
+      >
+        <div class="flex items-center justify-between mb-6">
+          <div class="text-[10px] font-label tracking-[0.3em] text-primary uppercase">
+            Real-Time Sync
+          </div>
+          <div class="w-2 h-2 rounded-full bg-primary animate-pulse"></div>
+        </div>
+        <div class="space-y-6">
+          <div class="flex justify-between items-center">
+            <div>
+              <div class="text-[9px] text-outline uppercase">Heart Rate Var.</div>
+              <div class="text-lg font-label">104 ms</div>
+            </div>
+            <div class="text-right">
+              <div class="text-[9px] text-outline uppercase">Oxygen Sat.</div>
+              <div class="text-lg font-label">99%</div>
+            </div>
+          </div>
+          <div class="h-px bg-outline-variant/20"></div>
+          <div>
+            <div class="text-[9px] text-outline uppercase mb-3">Neural Load Variance</div>
+            <div class="flex items-end gap-1 h-12">
+              <div class="w-1 bg-primary/20 h-4"></div>
+              <div class="w-1 bg-primary/40 h-8"></div>
+              <div class="w-1 bg-primary h-12"></div>
+              <div class="w-1 bg-primary/60 h-6"></div>
+              <div class="w-1 bg-primary/30 h-10"></div>
+              <div class="w-1 bg-primary/50 h-7"></div>
+              <div class="w-1 bg-primary/80 h-11"></div>
+              <div class="w-1 bg-primary/20 h-5"></div>
+            </div>
+          </div>
+          <button
+            class="w-full py-2 bg-primary/10 border border-primary/20 text-primary text-[10px] font-label tracking-widest uppercase hover:bg-primary hover:text-on-primary transition-all"
+          >
+            Initiate Full Scan
+          </button>
+        </div>
+      </div>
+    </main>
+    <!-- Decorative Border Grain overlay -->
+    <div
+      class="fixed inset-0 pointer-events-none opacity-[0.03] bg-[url('https://grainy-gradients.vercel.app/noise.svg')] z-[100]"
+    ></div>
+  </body>
+</html>

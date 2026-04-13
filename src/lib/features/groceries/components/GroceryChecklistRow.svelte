@@ -71,7 +71,7 @@
 <style>
   .grocery-copy p {
     margin: 0.25rem 0 0;
-    color: #655e54;
+    color: var(--phc-muted);
   }
 
   .grocery-actions {

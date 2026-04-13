@@ -33,7 +33,7 @@
 
 <SectionCard title="Today's recommendation">
   {#if recommendation}
-    <p class="recommendation-eyebrow">Best next move</p>
+    <p class="recommendation-eyebrow caps-label">Best next move</p>
     <div class="recommendation-header">
       <div>
         <h3 class="recommendation-title">{recommendation.title}</h3>
@@ -51,7 +51,7 @@
     </ul>
 
     {#if recommendation.provenance.length}
-      <div class="recommendation-provenance">
+      <div class="recommendation-provenance divider-block">
         <p class="provenance-label">Why this is showing up</p>
         <ul class="recommendation-list compact-list">
           {#each recommendation.provenance as row (row.label)}
@@ -65,7 +65,7 @@
       {#if isTodayRecommendationHrefAction(recommendation.primaryAction)}
         {#if recommendation.primaryAction.href.startsWith('#')}
           <button
-            class="recommendation-button recommendation-button--primary"
+            class="recommendation-button action-control action-control--primary"
             onclick={() =>
               document.getElementById('today-check-in')?.scrollIntoView({ behavior: 'smooth' })}
           >
@@ -73,7 +73,7 @@
           </button>
         {:else}
           <a
-            class="recommendation-link recommendation-link--primary"
+            class="recommendation-link action-control action-control--primary"
             href={resolve(recommendation.primaryAction.href as '/journal' | '/nutrition' | '/plan')}
           >
             {recommendation.primaryAction.label}
@@ -81,7 +81,7 @@
         {/if}
       {:else}
         <button
-          class="recommendation-button recommendation-button--primary"
+          class="recommendation-button action-control action-control--primary"
           onclick={() => onRecommendationAction(recommendation.primaryAction)}
         >
           {recommendation.primaryAction.label}
@@ -93,7 +93,7 @@
         {#if isTodayRecommendationHrefAction(secondaryAction)}
           {#if secondaryAction.href.startsWith('#')}
             <button
-              class="recommendation-button"
+              class="recommendation-button action-control"
               onclick={() =>
                 document.getElementById('today-check-in')?.scrollIntoView({ behavior: 'smooth' })}
             >
@@ -101,7 +101,7 @@
             </button>
           {:else}
             <a
-              class="recommendation-link"
+              class="recommendation-link action-control"
               href={resolve(secondaryAction.href as '/journal' | '/nutrition' | '/plan')}
             >
               {secondaryAction.label}
@@ -109,7 +109,7 @@
           {/if}
         {:else}
           <button
-            class="recommendation-button"
+            class="recommendation-button action-control"
             onclick={() => onRecommendationAction(secondaryAction)}
           >
             {secondaryAction.label}
@@ -119,7 +119,7 @@
     </div>
 
     {#if recommendationSupportRows.length}
-      <div class="supporting-context">
+      <div class="supporting-context divider-block">
         {#each recommendationSupportRows as row (row)}
           <p>{row}</p>
         {/each}
@@ -131,13 +131,13 @@
       <div class="supporting-link-row">
         {#if isTodayRecommendationHrefAction(supportingAction)}
           <a
-            class="recommendation-link recommendation-link--support"
+            class="recommendation-link action-control action-control--support"
             href={resolve(supportingAction.href as '/journal' | '/nutrition' | '/plan')}
             >{supportingAction.label}</a
           >
         {:else}
           <button
-            class="recommendation-button"
+            class="recommendation-button action-control"
             onclick={() => onRecommendationAction(supportingAction)}
             >{supportingAction.label}</button
           >
@@ -151,7 +151,7 @@
         {#if isTodayRecommendationHrefAction(fallbackState.action)}
           {#if fallbackState.action.href.startsWith('#')}
             <button
-              class="recommendation-button recommendation-button--primary"
+              class="recommendation-button action-control action-control--primary"
               onclick={() =>
                 document.getElementById('today-check-in')?.scrollIntoView({ behavior: 'smooth' })}
             >
@@ -159,7 +159,7 @@
             </button>
           {:else}
             <a
-              class="recommendation-link recommendation-link--primary"
+              class="recommendation-link action-control action-control--primary"
               href={resolve(fallbackState.action.href as '/journal' | '/nutrition' | '/plan')}
             >
               {fallbackState.action.label}
@@ -229,13 +229,7 @@
 <style>
   .recommendation-eyebrow {
     margin: 0 0 0.35rem;
-    color: #6b6258;
-    font:
-      700 0.78rem/1.2 Manrope,
-      system-ui,
-      sans-serif;
-    text-transform: uppercase;
-    letter-spacing: 0.08em;
+    color: var(--phc-muted);
   }
 
   .recommendation-header {
@@ -255,13 +249,13 @@
 
   .recommendation-summary {
     margin: 0.45rem 0 0;
-    color: #4a4338;
+    color: var(--phc-text);
   }
 
   .confidence-badge {
     display: inline-flex;
     padding: 0.45rem 0.7rem;
-    border-radius: 999px;
+    border: 0.5px solid var(--phc-border-soft);
     font:
       700 0.78rem/1 Manrope,
       system-ui,
@@ -270,18 +264,18 @@
   }
 
   .confidence-badge--high {
-    background: rgba(31, 92, 74, 0.12);
-    color: #1f5c4a;
+    background: rgba(10, 60, 45, 0.22);
+    color: var(--phc-text);
   }
 
   .confidence-badge--medium {
-    background: rgba(184, 126, 42, 0.12);
-    color: #8c5e18;
+    background: rgba(233, 195, 73, 0.12);
+    color: var(--phc-label);
   }
 
   .confidence-badge--low {
-    background: rgba(107, 98, 88, 0.12);
-    color: #5d5449;
+    background: rgba(147, 195, 174, 0.12);
+    color: var(--phc-muted);
   }
 
   .recommendation-list {
@@ -289,18 +283,12 @@
     padding-left: 1rem;
     display: grid;
     gap: 0.45rem;
-    color: #3a352e;
-  }
-
-  .recommendation-provenance {
-    margin-top: 0.9rem;
-    padding-top: 0.9rem;
-    border-top: 1px solid rgba(31, 29, 26, 0.08);
+    color: var(--phc-text);
   }
 
   .provenance-label {
     margin: 0;
-    color: #6b6258;
+    color: var(--phc-muted);
     font:
       700 0.8rem/1.2 Manrope,
       system-ui,
@@ -326,45 +314,17 @@
 
   .recommendation-button,
   .recommendation-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 0.55rem 0.9rem;
-    border-radius: 999px;
-    border: 1px solid rgba(31, 29, 26, 0.12);
-    background: rgba(241, 235, 226, 0.9);
-    color: #3f2a1f;
-    font:
-      700 0.9rem/1 Manrope,
-      system-ui,
-      sans-serif;
-    text-decoration: none;
-    cursor: pointer;
-  }
-
-  .recommendation-button--primary,
-  .recommendation-link--primary {
-    border-color: rgba(31, 92, 74, 0.16);
-    background: rgba(31, 92, 74, 0.1);
-    color: #1f5c4a;
-  }
-
-  .recommendation-link--support {
-    color: #6b3d2b;
+    width: fit-content;
   }
 
   .supporting-context {
-    margin-top: 1rem;
-    padding-top: 1rem;
-    border-top: 1px solid rgba(31, 29, 26, 0.08);
     display: grid;
     gap: 0.45rem;
   }
 
   .supporting-context p {
     margin: 0;
-    color: #5d5449;
+    color: var(--phc-muted);
   }
 
   .supporting-link-row {
@@ -380,29 +340,23 @@
 
   .nutrition-pulse-card {
     padding: 0.9rem;
-    border-radius: 1rem;
-    border: 1px solid rgba(31, 29, 26, 0.08);
-    background: rgba(241, 235, 226, 0.5);
+    border: 0.5px solid var(--phc-border-soft);
+    background: rgba(10, 60, 45, 0.18);
   }
 
   .nutrition-pulse-card--boost {
-    border-color: rgba(184, 126, 42, 0.2);
-    background: linear-gradient(180deg, rgba(184, 126, 42, 0.08), rgba(241, 235, 226, 0.6));
+    border-color: rgba(233, 195, 73, 0.18);
+    background: rgba(233, 195, 73, 0.08);
   }
 
   .nutrition-pulse-card--strong {
-    border-color: rgba(31, 92, 74, 0.18);
-    background: linear-gradient(180deg, rgba(31, 92, 74, 0.08), rgba(241, 235, 226, 0.6));
+    border-color: rgba(147, 195, 174, 0.18);
+    background: rgba(147, 195, 174, 0.08);
   }
 
   .nutrition-pulse-label {
     margin: 0 0 0.35rem;
-    color: #6b6258;
-    font:
-      700 0.78rem/1.2 Manrope,
-      system-ui,
-      sans-serif;
-    text-transform: uppercase;
+    color: var(--phc-muted);
     letter-spacing: 0.04em;
   }
 
@@ -411,6 +365,6 @@
     padding-left: 1rem;
     display: grid;
     gap: 0.45rem;
-    color: #3a352e;
+    color: var(--phc-text);
   }
 </style>

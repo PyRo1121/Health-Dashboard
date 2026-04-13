@@ -114,6 +114,10 @@ test('weekly review flow', async ({ page }) => {
   await page.getByLabel('Next-week experiment').selectOption('Increase hydration tracking');
   await page.getByRole('button', { name: 'Save experiment' }).click();
   await expect(page.getByText(/Experiment saved\./i)).toBeVisible();
+  await expect(page.getByText(/Current verdict on saved experiment/i)).toBeVisible();
+  await expect(
+    page.getByText('Saved experiment: Increase hydration tracking', { exact: true })
+  ).toBeVisible();
 });
 
 test('weekly review surfaces journal context signals', async ({ page }) => {
@@ -221,12 +225,18 @@ test('weekly review surfaces journal context signals', async ({ page }) => {
   await page.goto('/review');
   await expect(page.getByText('Context signals')).toBeVisible();
   await expect(page.getByText('Journal excerpts')).toBeVisible();
+  const contextSection = page
+    .getByRole('heading', { name: 'Context signals' })
+    .locator('xpath=ancestor::section[1]');
+  const journalSection = page
+    .getByRole('heading', { name: 'Journal excerpts' })
+    .locator('xpath=ancestor::section[1]');
   await expect(
-    page.getByText('Low sleep and a written reflection both landed on 2026-03-31.')
+    contextSection.getByText(/^Low sleep and a written reflection both landed on 2026-03-31\.$/)
   ).toBeVisible();
   await expect(
-    page.getByText(
-      'Evening review on 2026-03-31: Crowded store and headache drained the afternoon.'
+    journalSection.getByText(
+      /^Evening review on 2026-03-31: Crowded store and headache drained the afternoon\.$/
     )
   ).toBeVisible();
 });
@@ -393,6 +403,124 @@ test('weekly review surfaces repeated context patterns', async ({ page }) => {
   await expect(
     page.getByText('Anxiety-related context showed up in your notes on 2 days this week.')
   ).toBeVisible();
+});
+
+test('weekly review keeps ranked experiment candidate ids stable after saving a different choice', async ({
+  page,
+}) => {
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        dailyRecords: [
+          {
+            id: 'daily:2026-04-02',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            date: '2026-04-02',
+            mood: 3,
+            energy: 2,
+            stress: 4,
+            focus: 2,
+            sleepHours: 5.5,
+            sleepQuality: 2,
+          },
+        ],
+        journalEntries: [
+          {
+            id: 'journal-1',
+            createdAt: '2026-04-02T21:00:00.000Z',
+            updatedAt: '2026-04-02T21:00:00.000Z',
+            localDay: '2026-04-02',
+            entryType: 'evening_review',
+            title: 'Rough afternoon',
+            body: 'Crowded store and headache drained the afternoon.',
+            tags: [],
+            linkedEventIds: [],
+          },
+        ],
+        foodEntries: [],
+        foodCatalogItems: [],
+        recipeCatalogItems: [],
+        weeklyPlans: [],
+        planSlots: [],
+        derivedGroceryItems: [],
+        manualGroceryItems: [],
+        workoutTemplates: [],
+        exerciseCatalogItems: [],
+        favoriteMeals: [],
+        healthEvents: [
+          {
+            id: 'anxiety-1',
+            createdAt: '2026-04-02T14:00:00.000Z',
+            updatedAt: '2026-04-02T14:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'anxiety:1',
+            sourceTimestamp: '2026-04-02T14:00:00.000Z',
+            localDay: '2026-04-02',
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'anxiety-episode',
+            value: 4,
+            payload: {
+              kind: 'anxiety',
+              intensity: 4,
+              trigger: 'Crowded store',
+              note: 'Walked it off',
+            },
+          },
+        ],
+        healthTemplates: [],
+        sobrietyEvents: [],
+        assessmentResults: [],
+        importBatches: [],
+        importArtifacts: [],
+        reviewSnapshots: [],
+        adherenceMatches: [],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/review');
+  const experimentSelect = page.getByLabel('Next-week experiment');
+  await expect(experimentSelect).toBeVisible();
+  await expect(experimentSelect).toHaveValue('mindfulness-10min-morning');
+  await expect(experimentSelect.locator('option')).toHaveText([
+    'Try 10 min morning mindfulness',
+    'Increase protein at breakfast',
+    'Increase hydration tracking',
+  ]);
+  await expect(
+    experimentSelect
+      .locator('option')
+      .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value))
+  ).resolves.toEqual(['mindfulness-10min-morning', 'protein-breakfast', 'hydration-tracking']);
+
+  await experimentSelect.selectOption('hydration-tracking');
+  await page.getByRole('button', { name: 'Save experiment' }).click();
+  await expect(page.getByText('Experiment saved.')).toBeVisible();
+  await expect(
+    page.getByText('Saved experiment: Increase hydration tracking', { exact: true })
+  ).toBeVisible();
+
+  await page.reload();
+  await expect(experimentSelect).toBeVisible();
+  await expect(experimentSelect).toHaveValue('hydration-tracking');
+  await expect(
+    page.getByText('Saved experiment: Increase hydration tracking', { exact: true })
+  ).toBeVisible();
+  await expect(page.getByText(/Current verdict on saved experiment/i)).toBeVisible();
+  await expect(experimentSelect.locator('option')).toHaveText([
+    'Try 10 min morning mindfulness',
+    'Increase protein at breakfast',
+    'Increase hydration tracking',
+  ]);
+  await expect(
+    experimentSelect
+      .locator('option')
+      .evaluateAll((options) => options.map((option) => (option as HTMLOptionElement).value))
+  ).resolves.toEqual(['mindfulness-10min-morning', 'protein-breakfast', 'hydration-tracking']);
 });
 
 test('today recovery links into a prefilled journal note', async ({ page }) => {

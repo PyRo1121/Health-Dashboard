@@ -151,19 +151,7 @@
 
 <style>
   .event-list {
-    padding: 0;
-    margin: 0;
-    list-style: none;
-    display: grid;
     gap: 0.7rem;
-  }
-
-  .event-list li {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding-bottom: 0.7rem;
-    border-bottom: 1px solid rgba(31, 29, 26, 0.08);
   }
 
   .compact-actions {

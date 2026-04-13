@@ -351,6 +351,7 @@ export interface ReviewSnapshot extends BaseRecord {
     detail: string;
     sourceDays: string[];
   }>;
+  experimentId?: string;
   experiment?: string;
 }
 
