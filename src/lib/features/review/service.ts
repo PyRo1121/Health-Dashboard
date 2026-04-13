@@ -33,8 +33,8 @@ import {
   buildWeeklySnapshotFromWeekData,
   resolveReviewAnchorDayFromSourceData,
   selectReviewWeekData,
-  type ReviewSourceData,
 } from './snapshot-builder';
+import { loadReviewSourceData } from './source-data';
 
 export type { ReviewCorrelation, WeeklyReviewData } from './analytics';
 export {
@@ -62,45 +62,6 @@ export interface ReviewStorage
     HealthDbManualGroceryItemsStore,
     HealthDbReviewSnapshotsStore,
     HealthDbAdherenceMatchesStore {}
-
-async function loadReviewSourceData(store: ReviewStorage): Promise<ReviewSourceData> {
-  const [
-    dailyRecords,
-    foodEntries,
-    sobrietyEvents,
-    assessments,
-    healthEvents,
-    journalEntries,
-    foodCatalogItems,
-    recipeCatalogItems,
-    weeklyPlans,
-    planSlots,
-  ] = await Promise.all([
-    store.dailyRecords.toArray(),
-    store.foodEntries.toArray(),
-    store.sobrietyEvents.toArray(),
-    store.assessmentResults.toArray(),
-    store.healthEvents.toArray(),
-    store.journalEntries.toArray(),
-    store.foodCatalogItems.toArray(),
-    store.recipeCatalogItems.toArray(),
-    store.weeklyPlans.toArray(),
-    store.planSlots.toArray(),
-  ]);
-
-  return {
-    dailyRecords,
-    foodEntries,
-    sobrietyEvents,
-    assessments,
-    healthEvents,
-    journalEntries,
-    foodCatalogItems,
-    recipeCatalogItems,
-    weeklyPlans,
-    planSlots,
-  };
-}
 
 export async function resolveReviewAnchorDay(
   store: ReviewStorage,
