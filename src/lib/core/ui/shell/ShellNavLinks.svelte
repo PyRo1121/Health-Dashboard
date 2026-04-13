@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { page } from '$app/state';
   import { resolve } from '$app/paths';
   import type { AppRouteMeta } from './navigation';
 
@@ -8,20 +9,27 @@
   }
 
   let { routes, variant }: Props = $props();
+
+  function isActive(href: AppRouteMeta['href']): boolean {
+    return page.route.id === href;
+  }
 </script>
 
 {#if variant === 'desktop'}
   <ul class="shell-nav-links shell-nav-links--desktop">
     {#each routes as route (route.href)}
       <li>
-        <a href={resolve(route.href)}>{route.label}</a>
+        <a aria-label={route.label} class:active={isActive(route.href)} href={resolve(route.href)}>
+          <span>{route.label}</span>
+          <small>{route.description}</small>
+        </a>
       </li>
     {/each}
   </ul>
 {:else}
   <div class="shell-nav-links shell-nav-links--mobile">
     {#each routes as route (route.href)}
-      <a href={resolve(route.href)}>{route.label}</a>
+      <a class:active={isActive(route.href)} href={resolve(route.href)}>{route.label}</a>
     {/each}
   </div>
 {/if}
@@ -35,7 +43,7 @@
     list-style: none;
     padding: 0;
     margin: 0;
-    gap: 0.4rem;
+    gap: 0.3rem;
   }
 
   .shell-nav-links--mobile {
@@ -44,15 +52,32 @@
   }
 
   .shell-nav-links--desktop a {
-    display: block;
-    padding: 0.65rem 0.8rem;
-    border-radius: 0.8rem;
-    color: #3a352e;
+    display: grid;
+    gap: 0.2rem;
+    padding: 0.85rem 0.85rem 0.9rem;
+    color: var(--phc-muted);
     text-decoration: none;
-    font:
-      500 0.95rem/1.2 Manrope,
-      system-ui,
-      sans-serif;
+    font: 500 0.92rem/1.2 var(--phc-font-ui);
+    border-left: 2px solid transparent;
+    border: 0.5px solid transparent;
+    transition:
+      border-color 180ms ease,
+      background-color 180ms ease,
+      color 180ms ease,
+      transform 180ms ease;
+  }
+
+  .shell-nav-links--desktop a span {
+    color: inherit;
+    font: 500 0.94rem/1.2 var(--phc-font-ui);
+    letter-spacing: 0.02em;
+  }
+
+  .shell-nav-links--desktop a small {
+    color: rgba(188, 237, 215, 0.7);
+    font: 400 0.68rem/1.35 var(--phc-font-ui);
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
   }
 
   .shell-nav-links--mobile a {
@@ -60,18 +85,36 @@
     align-items: center;
     justify-content: center;
     min-height: 44px;
-    padding: 0.5rem 0.75rem;
-    border-radius: 999px;
-    color: #3a352e;
+    padding: 0.55rem 0.75rem;
+    color: var(--phc-muted);
     text-decoration: none;
-    font:
-      600 0.88rem/1 Manrope,
-      system-ui,
-      sans-serif;
+    font: 600 0.78rem/1 var(--phc-font-ui);
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    border-bottom: 0.5px solid transparent;
   }
 
   .shell-nav-links a:hover {
-    background: rgba(31, 92, 74, 0.08);
-    color: #1f5c4a;
+    background: rgba(10, 60, 45, 0.32);
+    color: var(--phc-text);
+  }
+
+  .shell-nav-links a:focus-visible {
+    outline: 2px solid var(--phc-label);
+    outline-offset: 2px;
+  }
+
+  .shell-nav-links a.active {
+    background: rgba(10, 60, 45, 0.48);
+    color: var(--phc-label);
+    border-color: rgba(233, 195, 73, 0.24);
+    border-left-color: var(--phc-label);
+    transform: translateX(2px);
+  }
+
+  .shell-nav-links--mobile a.active {
+    transform: none;
+    border-bottom-color: var(--phc-label);
+    border-left-color: transparent;
   }
 </style>

@@ -203,7 +203,7 @@
       grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 
-    .today-grid :global(section:first-child) {
+    .today-grid :global(#today-check-in) {
       grid-column: 1 / -1;
     }
   }

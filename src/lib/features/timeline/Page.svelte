@@ -60,7 +60,7 @@
             <li>
               <div class="event-header">
                 <strong>{item.label}</strong>
-                <span>{item.valueLabel}</span>
+                <span class="value-chip">{item.valueLabel}</span>
               </div>
               <p>{item.event.sourceApp}</p>
               <p>{item.sourceLabel} · {item.event.localDay}</p>
@@ -93,7 +93,7 @@
 
   .timeline-list li {
     padding-bottom: 0.9rem;
-    border-bottom: 1px solid rgba(31, 29, 26, 0.08);
+    border-bottom: 0.5px solid var(--phc-border-soft);
   }
 
   .toolbar-title {
@@ -109,7 +109,26 @@
 
   .timeline-list p {
     margin: 0.3rem 0 0;
-    color: #655e54;
+    color: var(--phc-muted);
+  }
+
+  @media (max-width: 639px) {
+    .toolbar {
+      gap: 0.8rem;
+    }
+
+    .timeline-list {
+      gap: 0.7rem;
+      margin-top: 0.85rem;
+    }
+
+    .timeline-list li {
+      padding-bottom: 0.7rem;
+    }
+
+    .event-header {
+      gap: 0.5rem;
+    }
   }
 
   @media (min-width: 960px) {

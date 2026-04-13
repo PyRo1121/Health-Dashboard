@@ -27,14 +27,16 @@
   {/if}
   {#if section.actionHref && section.actionLabel}
     <div class="section-action">
-      <a class="section-link" href={resolve(section.actionHref)}>{section.actionLabel}</a>
+      <a class="section-link action-link" href={resolve(section.actionHref)}
+        >{section.actionLabel}</a
+      >
     </div>
   {/if}
 </SectionCard>
 
 <style>
   :global(.review-strategy-title) {
-    color: #1f5c4a;
+    color: var(--phc-label);
   }
 
   .review-strategy-list {
@@ -42,29 +44,30 @@
   }
 
   .review-strategy-list li {
-    padding: 0.85rem 0.95rem;
-    border: 1px solid rgba(31, 92, 74, 0.12);
-    border-radius: 1rem;
-    background: linear-gradient(180deg, rgba(31, 92, 74, 0.06) 0%, rgba(241, 235, 226, 0.6) 100%);
+    padding: 0.9rem 1rem;
+    border: 0.5px solid rgba(233, 195, 73, 0.12);
+    background: rgba(10, 60, 45, 0.22);
   }
 
   .section-action {
-    margin-top: 0.85rem;
+    margin-top: 1rem;
   }
 
   .section-link {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-height: 44px;
-    padding: 0.75rem 1rem;
-    border-radius: 999px;
-    background: #1f5c4a;
-    color: #fbf8f3;
-    font:
-      600 0.95rem/1 Manrope,
-      system-ui,
-      sans-serif;
-    text-decoration: none;
+    width: fit-content;
+  }
+
+  @media (max-width: 639px) {
+    .review-strategy-list {
+      gap: 0.7rem;
+    }
+
+    .review-strategy-list li {
+      padding: 0.75rem 0.85rem;
+    }
+
+    .section-link {
+      width: 100%;
+    }
   }
 </style>

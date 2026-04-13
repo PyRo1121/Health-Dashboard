@@ -10,6 +10,7 @@ import type {
 import {
   buildAdherenceScores,
   buildAdherenceSignals,
+  buildHeadline,
   buildGrocerySignals,
   buildPlanningHighlights,
   buildNutritionStrategy,
@@ -85,6 +86,86 @@ describe('review analytics', () => {
       'Higher sleep tracked with better mood',
       'Higher protein tracked with steadier energy',
     ]);
+  });
+
+  it('builds deterministic review headlines from the strongest available signals', () => {
+    const records: DailyRecord[] = [
+      {
+        id: 'daily-1',
+        createdAt: '2026-03-30T08:00:00.000Z',
+        updatedAt: '2026-03-30T08:00:00.000Z',
+        date: '2026-03-30',
+        mood: 3,
+        stress: 4,
+        sleepHours: 5.5,
+      },
+      {
+        id: 'daily-2',
+        createdAt: '2026-04-01T08:00:00.000Z',
+        updatedAt: '2026-04-01T08:00:00.000Z',
+        date: '2026-04-01',
+        mood: 4,
+        stress: 2,
+        sleepHours: 7.5,
+      },
+    ];
+
+    expect(
+      buildHeadline({
+        records,
+        assessments: [],
+        sobrietyEvents: [],
+        healthEvents: [
+          {
+            id: 'anxiety-1',
+            createdAt: '2026-03-30T12:00:00.000Z',
+            updatedAt: '2026-03-30T12:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'test',
+            localDay: '2026-03-30',
+            confidence: 1,
+            eventType: 'anxiety-episode',
+            value: 4,
+          },
+        ],
+        journalEntries: [],
+        averageProtein: 0,
+        adherenceScores: [],
+        recommendation: {
+          decision: 'adjust',
+          target: { kind: 'plan' },
+        },
+      })
+    ).toBe('Recovery needs a lighter next week');
+
+    expect(
+      buildHeadline({
+        records,
+        assessments: [],
+        sobrietyEvents: [],
+        healthEvents: [],
+        journalEntries: [],
+        averageProtein: 95,
+        adherenceScores: [],
+        recommendation: {
+          decision: 'continue',
+          target: { kind: 'food', id: 'food-1' },
+        },
+      })
+    ).toBe('Keep the nutrition win in rotation');
+
+    expect(
+      buildHeadline({
+        records: [records[0]!],
+        assessments: [],
+        sobrietyEvents: [],
+        healthEvents: [],
+        journalEntries: [],
+        averageProtein: 0,
+        adherenceScores: [],
+        recommendation: null,
+      })
+    ).toBe('First signal logged, keep the streak going');
   });
 
   it('builds structured nutrition strategy items for review actions', () => {

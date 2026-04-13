@@ -27,10 +27,13 @@
   {/if}
 
   {#if auditItems.length}
-    <div class="review-adherence-audit">
+    <div class="review-adherence-audit divider-block">
       {#each auditItems as item (`${item.badge}-${item.title}-${item.detail}`)}
         <article class={`review-adherence-audit-item review-adherence-audit-item--${item.tone}`}>
-          <span class="review-adherence-audit-badge">{item.badge}</span>
+          <span
+            class={`review-adherence-audit-badge badge-chip review-adherence-audit-badge--${item.tone}`}
+            >{item.badge}</span
+          >
           <strong>{item.title}</strong>
           <p>{item.detail}</p>
         </article>
@@ -42,58 +45,45 @@
 <style>
   .review-adherence-cards {
     display: grid;
-    gap: 0.9rem;
+    gap: 1rem;
   }
 
   .review-adherence-card {
     display: grid;
-    gap: 0.3rem;
+    gap: 0.45rem;
     padding: 1rem;
-    border-radius: 1rem;
-    border: 1px solid rgba(58, 53, 46, 0.12);
-    background: linear-gradient(
-      180deg,
-      rgba(251, 248, 243, 0.96) 0%,
-      rgba(241, 235, 226, 0.72) 100%
-    );
+    border: 0.5px solid transparent;
+    background: rgba(10, 60, 45, 0.16);
   }
 
   .review-adherence-card p {
     margin: 0;
-    color: #3a352e;
+    color: var(--phc-muted);
   }
 
   .review-adherence-card--steady {
-    border-color: rgba(31, 92, 74, 0.22);
-    background: linear-gradient(180deg, rgba(31, 92, 74, 0.08) 0%, rgba(241, 235, 226, 0.72) 100%);
+    border-color: rgba(233, 195, 73, 0.18);
   }
 
   .review-adherence-card--mixed {
-    border-color: rgba(151, 94, 32, 0.22);
-    background: linear-gradient(180deg, rgba(151, 94, 32, 0.08) 0%, rgba(241, 235, 226, 0.72) 100%);
+    border-color: rgba(188, 237, 215, 0.18);
   }
 
   .review-adherence-card--attention {
-    border-color: rgba(148, 59, 47, 0.22);
-    background: linear-gradient(180deg, rgba(148, 59, 47, 0.08) 0%, rgba(241, 235, 226, 0.72) 100%);
+    border-color: rgba(255, 180, 171, 0.2);
   }
 
   .review-adherence-label {
-    font:
-      700 0.78rem/1 Manrope,
-      system-ui,
-      sans-serif;
-    letter-spacing: 0.04em;
+    font: 600 0.68rem/1 var(--phc-font-ui);
+    letter-spacing: 0.2em;
     text-transform: uppercase;
-    color: #5a544c;
+    color: var(--phc-label);
   }
 
   .review-adherence-value {
-    font:
-      600 1.9rem/1 Newsreader,
-      Georgia,
-      serif;
-    color: #241f1a;
+    font: 500 2.15rem/0.95 var(--phc-font-display);
+    color: var(--phc-text);
+    font-style: italic;
   }
 
   @media (min-width: 960px) {
@@ -102,45 +92,54 @@
     }
   }
 
+  @media (max-width: 639px) {
+    .review-adherence-cards {
+      gap: 0.8rem;
+    }
+
+    .review-adherence-card {
+      gap: 0.35rem;
+      padding: 0.85rem;
+    }
+
+    .review-adherence-value {
+      font-size: 1.85rem;
+    }
+
+    .review-adherence-audit {
+      gap: 0.6rem;
+    }
+  }
+
   .review-adherence-audit {
     display: grid;
     gap: 0.75rem;
-    margin-top: 1rem;
   }
 
   .review-adherence-audit-item {
     display: grid;
-    gap: 0.25rem;
-    padding-top: 0.85rem;
-    border-top: 1px solid rgba(58, 53, 46, 0.08);
+    gap: 0.35rem;
+  }
+
+  .review-adherence-audit-item strong {
+    color: var(--phc-text);
   }
 
   .review-adherence-audit-item p {
     margin: 0;
-    color: #3a352e;
+    color: var(--phc-muted);
   }
 
   .review-adherence-audit-badge {
-    width: fit-content;
     padding: 0.2rem 0.5rem;
-    border-radius: 999px;
-    font:
-      700 0.72rem/1 Manrope,
-      system-ui,
-      sans-serif;
-    letter-spacing: 0.04em;
-    text-transform: uppercase;
-    background: rgba(31, 92, 74, 0.08);
-    color: #1f5c4a;
+    font-size: 0.68rem;
   }
 
-  .review-adherence-audit-item--attention .review-adherence-audit-badge {
-    background: rgba(148, 59, 47, 0.08);
-    color: #943b2f;
+  .review-adherence-audit-badge--attention {
+    background: rgba(255, 180, 171, 0.12);
   }
 
-  .review-adherence-audit-item--mixed .review-adherence-audit-badge {
-    background: rgba(151, 94, 32, 0.08);
-    color: #975e20;
+  .review-adherence-audit-badge--mixed {
+    background: rgba(160, 209, 188, 0.12);
   }
 </style>

@@ -36,7 +36,11 @@ export async function loadReviewPage(
     loading: false,
     localDay: resolvedLocalDay,
     weekly,
-    selectedExperiment: weekly.experimentOptions[0] ?? '',
+    selectedExperiment:
+      weekly.selectedExperimentId ??
+      weekly.experimentCandidates?.[0]?.id ??
+      weekly.experimentOptions[0] ??
+      '',
     loadNotice: '',
     saveNotice: '',
   };
@@ -52,6 +56,18 @@ export function setReviewExperiment(
   };
 }
 
+function isAllowedReviewExperiment(
+  state: Pick<ReviewPageState, 'weekly' | 'selectedExperiment'>
+): boolean {
+  return Boolean(
+    state.weekly &&
+    state.selectedExperiment &&
+    state.weekly.experimentCandidates?.some(
+      (candidate) => candidate.id === state.selectedExperiment
+    )
+  );
+}
+
 export async function saveReviewExperimentPage(
   store: ReviewStorage,
   state: ReviewPageState
@@ -60,13 +76,33 @@ export async function saveReviewExperimentPage(
     return state;
   }
 
-  const snapshot = await saveNextWeekExperiment(store, state.localDay, state.selectedExperiment);
+  if (!isAllowedReviewExperiment(state)) {
+    return {
+      ...state,
+      saveNotice: 'Choose one of the suggested experiments before saving.',
+    };
+  }
+
+  const selectedCandidate = state.weekly.experimentCandidates?.find(
+    (candidate) => candidate.id === state.selectedExperiment
+  );
+  if (!selectedCandidate) {
+    return {
+      ...state,
+      saveNotice: 'Choose one of the suggested experiments before saving.',
+    };
+  }
+
+  await saveNextWeekExperiment(
+    store,
+    state.localDay,
+    selectedCandidate.label,
+    selectedCandidate.id
+  );
+  const weekly = await buildWeeklySnapshot(store, state.localDay);
   return {
     ...state,
-    weekly: {
-      ...state.weekly,
-      snapshot,
-    },
+    weekly,
     saveNotice: 'Experiment saved.',
   };
 }

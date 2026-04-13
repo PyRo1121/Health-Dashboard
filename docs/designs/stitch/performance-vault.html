@@ -1,0 +1,607 @@
+<!doctype html>
+
+<html class="dark" lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Newsreader:ital,wght@0,400;0,500;0,700;1,400;1,500&amp;family=Space+Grotesk:wght@300;400;500;600;700&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script id="tailwind-config">
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              'on-tertiary-fixed': '#1b1c19',
+              'error-container': '#93000a',
+              'surface-container': '#00251a',
+              'on-tertiary-fixed-variant': '#474744',
+              'surface-container-high': '#003123',
+              primary: '#e9c349',
+              'on-primary-fixed': '#241a00',
+              'surface-dim': '#00170f',
+              'surface-container-low': '#002116',
+              'tertiary-container': '#353633',
+              'secondary-container': '#235141',
+              'on-secondary': '#043829',
+              tertiary: '#c8c6c2',
+              'surface-container-highest': '#0a3c2d',
+              'primary-fixed': '#ffe088',
+              error: '#ffb4ab',
+              outline: '#8a938d',
+              'surface-tint': '#e9c349',
+              'surface-bright': '#104132',
+              'on-primary-fixed-variant': '#574500',
+              'inverse-on-surface': '#043829',
+              'on-surface-variant': '#c0c8c3',
+              'primary-fixed-dim': '#e9c349',
+              'on-error': '#690005',
+              background: '#00170f',
+              'secondary-fixed': '#bcedd7',
+              'on-tertiary-container': '#9f9e9a',
+              'tertiary-fixed-dim': '#c8c6c2',
+              'on-error-container': '#ffdad6',
+              'on-tertiary': '#30312e',
+              'surface-variant': '#0a3c2d',
+              secondary: '#a0d1bc',
+              'inverse-surface': '#bcedd7',
+              surface: '#00170f',
+              'surface-container-lowest': '#00120b',
+              'primary-container': '#433400',
+              'secondary-fixed-dim': '#a0d1bc',
+              'on-secondary-fixed-variant': '#214f3f',
+              'on-primary': '#3c2f00',
+              'on-secondary-container': '#93c3ae',
+              'on-background': '#bcedd7',
+              'on-surface': '#bcedd7',
+              'on-secondary-fixed': '#002116',
+              'on-primary-container': '#be9a22',
+              'inverse-primary': '#735c00',
+              'outline-variant': '#414944',
+              'tertiary-fixed': '#e4e2dd',
+            },
+            borderRadius: {
+              DEFAULT: '0px',
+              lg: '0px',
+              xl: '0px',
+              full: '9999px',
+            },
+            fontFamily: {
+              headline: ['Newsreader', 'serif'],
+              body: ['Space Grotesk', 'sans-serif'],
+              label: ['Space Grotesk', 'sans-serif'],
+            },
+          },
+        },
+      };
+    </script>
+    <style>
+      .material-symbols-outlined {
+        font-variation-settings:
+          'FILL' 0,
+          'wght' 300,
+          'GRAD' 0,
+          'opsz' 24;
+        font-size: 20px;
+      }
+      .thin-hairline {
+        border-width: 0.5px;
+      }
+    </style>
+  </head>
+  <body class="bg-surface text-on-surface font-body selection:bg-primary selection:text-on-primary">
+    <nav
+      class="bg-[#00170F] text-[#E9C349] font-['Newsreader'] text-lg tracking-tight docked full-width top-0 border-b-[0.5px] border-[#414944]/50 flat no shadows flex justify-between items-center w-full px-8 h-16 fixed z-50"
+    >
+      <div class="flex items-center gap-8">
+        <span class="font-['Newsreader'] italic font-medium text-[#E9C349] text-2xl"
+          >Sovereign Analyst</span
+        >
+        <div class="hidden md:flex gap-6 items-center">
+          <a
+            class="text-[#E9C349] border-b border-[#E9C349] pb-1 hover:text-[#E9C349] transition-colors duration-300"
+            href="#"
+            >Vault</a
+          >
+          <a
+            class="text-[#BCEDD7] font-['Space_Grotesk'] text-xs uppercase tracking-widest hover:text-[#E9C349] transition-colors duration-300"
+            href="#"
+            >Stream</a
+          >
+          <a
+            class="text-[#BCEDD7] font-['Space_Grotesk'] text-xs uppercase tracking-widest hover:text-[#E9C349] transition-colors duration-300"
+            href="#"
+            >Protocols</a
+          >
+          <a
+            class="text-[#BCEDD7] font-['Space_Grotesk'] text-xs uppercase tracking-widest hover:text-[#E9C349] transition-colors duration-300"
+            href="#"
+            >Profile</a
+          >
+        </div>
+      </div>
+      <div class="flex items-center gap-4">
+        <span
+          class="material-symbols-outlined hover:text-[#E9C349] cursor-pointer transition-transform duration-150 active:scale-95"
+          >settings</span
+        >
+        <span
+          class="material-symbols-outlined hover:text-[#E9C349] cursor-pointer transition-transform duration-150 active:scale-95"
+          >notifications</span
+        >
+        <div
+          class="w-8 h-8 bg-surface-container-highest border-[0.5px] border-outline-variant flex items-center justify-center"
+        >
+          <img
+            alt="Analyst Profile"
+            class="w-6 h-6 grayscale opacity-80"
+            data-alt="Minimalist monochromatic portrait of a professional analyst in low key dramatic lighting"
+            src="https://lh3.googleusercontent.com/aida-public/AB6AXuCTnJgmKyR-1wBQfhteW7TFIB47syTs0bQhroQZI-_ZHD-RYcbBG_foXAnyP4JzoLaCiZ7QwoqSpIEoEj50tstrL8FinRDYI7j_WEsH8MZvjDyrk-lIuEhxvHnF9Tkw2S9rJAZ2n6de4Wxu8XtnRhpxKqj94-zPrWmL7rZdVGftr7zHJtKK4g5gJyn6JvFIMz9cDtXBN0t_0gQC-z1WjBH6yBow7bu4owlwdBUJPONrkGqozVnd62XYBDRUzUYKiw41yt8wqqWX89tC"
+          />
+        </div>
+      </div>
+    </nav>
+    <div class="flex pt-16">
+      <aside
+        class="bg-[#00120B] text-[#E9C349] font-['Space_Grotesk'] text-[11px] tracking-widest uppercase docked left-0 h-screen w-64 border-r-[0.5px] border-[#414944]/50 flat no shadows flex flex-col py-6 sticky top-16 hidden lg:flex"
+      >
+        <div class="px-6 mb-10">
+          <h2 class="font-['Newsreader'] text-xl text-[#BCEDD7] normal-case tracking-normal">
+            Sovereign
+          </h2>
+          <p class="opacity-50 lowercase tracking-tighter">Elite Performance</p>
+        </div>
+        <nav class="flex-grow space-y-1">
+          <div
+            class="text-[#E9C349] bg-[#0A3C2D] border-l-2 border-[#E9C349] px-6 py-3 flex items-center gap-3 cursor-pointer"
+          >
+            <span class="material-symbols-outlined">analytics</span>
+            <span>Performance Vault</span>
+          </div>
+          <div
+            class="text-[#A0D1BC] hover:bg-[#002116] px-6 py-3 flex items-center gap-3 cursor-pointer transition-all duration-200 hover:text-[#E9C349]"
+          >
+            <span class="material-symbols-outlined">fingerprint</span>
+            <span>Biometric Stream</span>
+          </div>
+          <div
+            class="text-[#A0D1BC] hover:bg-[#002116] px-6 py-3 flex items-center gap-3 cursor-pointer transition-all duration-200 hover:text-[#E9C349]"
+          >
+            <span class="material-symbols-outlined">description</span>
+            <span>Strategic Protocols</span>
+          </div>
+          <div
+            class="text-[#A0D1BC] hover:bg-[#002116] px-6 py-3 flex items-center gap-3 cursor-pointer transition-all duration-200 hover:text-[#E9C349]"
+          >
+            <span class="material-symbols-outlined">account_circle</span>
+            <span>Analyst Profile</span>
+          </div>
+        </nav>
+        <div class="px-6 mb-6">
+          <button
+            class="w-full bg-primary text-on-primary font-bold py-3 text-sm tracking-widest active:opacity-80 transition-opacity"
+          >
+            NEW PROTOCOL
+          </button>
+        </div>
+        <div class="mt-auto border-t-[0.5px] border-[#414944]/50 pt-6">
+          <div
+            class="text-[#A0D1BC] hover:bg-[#002116] px-6 py-2 flex items-center gap-3 cursor-pointer transition-all duration-200 hover:text-[#E9C349]"
+          >
+            <span class="material-symbols-outlined">terminal</span>
+            <span>System Logs</span>
+          </div>
+          <div
+            class="text-[#A0D1BC] hover:bg-[#002116] px-6 py-2 flex items-center gap-3 cursor-pointer transition-all duration-200 hover:text-[#E9C349]"
+          >
+            <span class="material-symbols-outlined">help_outline</span>
+            <span>Support</span>
+          </div>
+        </div>
+      </aside>
+      <main class="flex-grow p-8 lg:p-12 max-w-7xl">
+        <header class="mb-16">
+          <div class="flex items-center gap-2 mb-4">
+            <span class="h-[1px] w-12 bg-primary"></span>
+            <span class="text-xs font-label uppercase tracking-[0.3em] text-primary"
+              >Archival Access Authorized</span
+            >
+          </div>
+          <h1
+            class="font-headline text-6xl md:text-8xl text-on-surface leading-tight tracking-tighter mb-4 italic"
+          >
+            Performance Vault
+          </h1>
+          <p class="text-secondary font-label text-sm max-w-2xl leading-relaxed">
+            A comprehensive immutable ledger of physiological performance and cognitive readiness
+            metrics. Analyzing the intersection of somatic resilience and strategic output across
+            extended temporal windows.
+          </p>
+        </header>
+        <section
+          class="grid grid-cols-1 md:grid-cols-12 gap-0 border-y-[0.5px] border-outline-variant/50 mb-20"
+        >
+          <div class="md:col-span-8 p-8 border-r-[0.5px] border-outline-variant/50">
+            <div class="flex justify-between items-end mb-8">
+              <div>
+                <h3 class="text-xs font-label uppercase tracking-widest text-primary mb-1">
+                  Long-term HRV Variance
+                </h3>
+                <p class="font-headline text-3xl italic">The Elasticity Index</p>
+              </div>
+              <div class="text-right">
+                <span class="block text-[10px] uppercase tracking-widest opacity-50"
+                  >90-Day Mean</span
+                >
+                <span class="font-headline text-2xl text-on-surface"
+                  >74 <span class="text-xs font-body normal-case opacity-50 italic">ms</span></span
+                >
+              </div>
+            </div>
+            <div class="h-64 flex items-end gap-1 relative overflow-hidden">
+              <div class="absolute inset-0 flex flex-col justify-between py-2 pointer-events-none">
+                <div class="border-t-[0.5px] border-outline-variant/20 w-full"></div>
+                <div class="border-t-[0.5px] border-outline-variant/20 w-full"></div>
+                <div class="border-t-[0.5px] border-outline-variant/20 w-full"></div>
+              </div>
+              <div
+                class="flex-1 bg-surface-container-highest h-[40%] group relative cursor-crosshair"
+              >
+                <div
+                  class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-primary text-on-primary text-[10px] px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  42ms
+                </div>
+              </div>
+              <div class="flex-1 bg-surface-container-highest h-[45%]"></div>
+              <div class="flex-1 bg-surface-container-highest h-[60%]"></div>
+              <div class="flex-1 bg-surface-container-highest h-[55%]"></div>
+              <div class="flex-1 bg-primary h-[85%] group relative cursor-crosshair">
+                <div
+                  class="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-primary text-on-primary text-[10px] px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                >
+                  88ms
+                </div>
+              </div>
+              <div class="flex-1 bg-surface-container-highest h-[70%]"></div>
+              <div class="flex-1 bg-surface-container-highest h-[65%]"></div>
+              <div class="flex-1 bg-surface-container-highest h-[50%]"></div>
+              <div class="flex-1 bg-surface-container-highest h-[55%]"></div>
+              <div class="flex-1 bg-surface-container-highest h-[60%]"></div>
+              <div class="flex-1 bg-surface-container-highest h-[75%]"></div>
+              <div class="flex-1 bg-surface-container-highest h-[80%]"></div>
+              <div class="flex-1 bg-surface-container-highest h-[60%]"></div>
+              <div class="flex-1 bg-surface-container-highest h-[55%]"></div>
+            </div>
+            <div
+              class="flex justify-between mt-4 text-[10px] font-label uppercase tracking-widest opacity-40"
+            >
+              <span>Q1 Archival</span>
+              <span>Mid-Quarter Pulse</span>
+              <span>Current Horizon</span>
+            </div>
+          </div>
+          <div class="md:col-span-4 flex flex-col divide-y-[0.5px] divide-outline-variant/50">
+            <div class="p-8 flex-1">
+              <h3 class="text-xs font-label uppercase tracking-widest text-primary mb-6">
+                Aggregate Recovery
+              </h3>
+              <div class="flex items-center gap-6">
+                <div class="relative w-24 h-24 flex items-center justify-center">
+                  <svg class="w-full h-full -rotate-90">
+                    <circle
+                      class="text-surface-container-highest"
+                      cx="48"
+                      cy="48"
+                      fill="transparent"
+                      r="44"
+                      stroke="currentColor"
+                      stroke-width="2"
+                    ></circle>
+                    <circle
+                      class="text-primary"
+                      cx="48"
+                      cy="48"
+                      fill="transparent"
+                      r="44"
+                      stroke="currentColor"
+                      stroke-dasharray="276"
+                      stroke-dashoffset="55"
+                      stroke-width="2"
+                    ></circle>
+                  </svg>
+                  <span class="absolute font-headline text-2xl italic">82%</span>
+                </div>
+                <div>
+                  <p class="text-[10px] uppercase tracking-widest opacity-50 mb-1">
+                    State: Optimal
+                  </p>
+                  <p class="text-sm leading-tight text-secondary">
+                    Neural pathways exhibit high plasticity. Readiness for intense strategic
+                    simulation is confirmed.
+                  </p>
+                </div>
+              </div>
+            </div>
+            <div class="p-8 flex-1">
+              <h3 class="text-xs font-label uppercase tracking-widest text-primary mb-6">
+                Sleep Architecture
+              </h3>
+              <div class="space-y-4">
+                <div>
+                  <div class="flex justify-between text-[10px] uppercase tracking-widest mb-1">
+                    <span>Deep REM Sleep</span>
+                    <span class="text-primary">02H 45M</span>
+                  </div>
+                  <div class="h-[2px] bg-surface-container-highest">
+                    <div class="h-full bg-primary w-[70%]"></div>
+                  </div>
+                </div>
+                <div>
+                  <div class="flex justify-between text-[10px] uppercase tracking-widest mb-1">
+                    <span>Latency Threshold</span>
+                    <span>08M</span>
+                  </div>
+                  <div class="h-[2px] bg-surface-container-highest">
+                    <div class="h-full bg-secondary w-[30%]"></div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+        <section>
+          <div class="flex flex-col md:flex-row justify-between items-baseline mb-8 gap-4">
+            <h2 class="font-headline text-4xl italic">Intelligence Dossiers</h2>
+            <div class="relative w-full md:w-96">
+              <input
+                class="w-full bg-transparent border-b-[0.5px] border-outline-variant py-2 text-[10px] font-label uppercase tracking-widest focus:outline-none focus:border-primary transition-colors placeholder:text-outline/50"
+                placeholder="SEARCH ARCHIVES (DATE, PROTOCOL, METRIC)..."
+                type="text"
+              />
+              <span class="material-symbols-outlined absolute right-0 top-2 text-outline/50"
+                >search</span
+              >
+            </div>
+          </div>
+          <div class="overflow-x-auto">
+            <table class="w-full text-left border-collapse">
+              <thead>
+                <tr class="border-b-[0.5px] border-outline-variant">
+                  <th
+                    class="py-4 text-[10px] font-label uppercase tracking-widest text-primary font-medium"
+                  >
+                    Archival ID
+                  </th>
+                  <th
+                    class="py-4 text-[10px] font-label uppercase tracking-widest text-primary font-medium"
+                  >
+                    Temporal Marker
+                  </th>
+                  <th
+                    class="py-4 text-[10px] font-label uppercase tracking-widest text-primary font-medium"
+                  >
+                    Primary State
+                  </th>
+                  <th
+                    class="py-4 text-[10px] font-label uppercase tracking-widest text-primary font-medium"
+                  >
+                    HRV / RHR
+                  </th>
+                  <th
+                    class="py-4 text-[10px] font-label uppercase tracking-widest text-primary font-medium"
+                  >
+                    Output Index
+                  </th>
+                  <th
+                    class="py-4 text-right text-[10px] font-label uppercase tracking-widest text-primary font-medium"
+                  >
+                    Protocol
+                  </th>
+                </tr>
+              </thead>
+              <tbody class="divide-y-[0.5px] divide-outline-variant/30">
+                <tr class="group hover:bg-surface-container-low transition-colors cursor-pointer">
+                  <td class="py-6 font-label text-xs tracking-tighter opacity-50">#SV-09412</td>
+                  <td class="py-6 font-headline italic text-lg">October 24, 2023</td>
+                  <td class="py-6">
+                    <div class="flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 bg-primary"></span>
+                      <span class="text-xs uppercase tracking-widest">Sovereign Peak</span>
+                    </div>
+                  </td>
+                  <td class="py-6 font-label text-xs">88ms / 52bpm</td>
+                  <td class="py-6">
+                    <span class="text-xs bg-surface-container-highest px-2 py-1 text-primary"
+                      >9.8</span
+                    >
+                  </td>
+                  <td
+                    class="py-6 text-right font-label text-[10px] uppercase tracking-widest opacity-50"
+                  >
+                    Deep Protocol II
+                  </td>
+                </tr>
+                <tr class="group hover:bg-surface-container-low transition-colors cursor-pointer">
+                  <td class="py-6 font-label text-xs tracking-tighter opacity-50">#SV-09411</td>
+                  <td class="py-6 font-headline italic text-lg text-secondary">October 23, 2023</td>
+                  <td class="py-6">
+                    <div class="flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 border border-outline opacity-50"></span>
+                      <span class="text-xs uppercase tracking-widest opacity-70"
+                        >Moderate Static</span
+                      >
+                    </div>
+                  </td>
+                  <td class="py-6 font-label text-xs">64ms / 58bpm</td>
+                  <td class="py-6">
+                    <span class="text-xs bg-surface-container-highest px-2 py-1">7.4</span>
+                  </td>
+                  <td
+                    class="py-6 text-right font-label text-[10px] uppercase tracking-widest opacity-50"
+                  >
+                    Standard Calibration
+                  </td>
+                </tr>
+                <tr class="group hover:bg-surface-container-low transition-colors cursor-pointer">
+                  <td class="py-6 font-label text-xs tracking-tighter opacity-50">#SV-09410</td>
+                  <td class="py-6 font-headline italic text-lg">October 22, 2023</td>
+                  <td class="py-6">
+                    <div class="flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 bg-primary"></span>
+                      <span class="text-xs uppercase tracking-widest">Strategic High</span>
+                    </div>
+                  </td>
+                  <td class="py-6 font-label text-xs">92ms / 49bpm</td>
+                  <td class="py-6">
+                    <span class="text-xs bg-surface-container-highest px-2 py-1 text-primary"
+                      >9.4</span
+                    >
+                  </td>
+                  <td
+                    class="py-6 text-right font-label text-[10px] uppercase tracking-widest opacity-50"
+                  >
+                    Flow Induction
+                  </td>
+                </tr>
+                <tr class="group hover:bg-surface-container-low transition-colors cursor-pointer">
+                  <td class="py-6 font-label text-xs tracking-tighter opacity-50">#SV-09409</td>
+                  <td class="py-6 font-headline italic text-lg text-secondary">October 21, 2023</td>
+                  <td class="py-6">
+                    <div class="flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 border border-error bg-error/20"></span>
+                      <span class="text-xs uppercase tracking-widest text-error opacity-70"
+                        >Stress Boundary</span
+                      >
+                    </div>
+                  </td>
+                  <td class="py-6 font-label text-xs">38ms / 65bpm</td>
+                  <td class="py-6">
+                    <span class="text-xs bg-surface-container-highest px-2 py-1">4.2</span>
+                  </td>
+                  <td
+                    class="py-6 text-right font-label text-[10px] uppercase tracking-widest opacity-50"
+                  >
+                    Restorative Arc
+                  </td>
+                </tr>
+                <tr class="group hover:bg-surface-container-low transition-colors cursor-pointer">
+                  <td class="py-6 font-label text-xs tracking-tighter opacity-50">#SV-09408</td>
+                  <td class="py-6 font-headline italic text-lg">October 20, 2023</td>
+                  <td class="py-6">
+                    <div class="flex items-center gap-2">
+                      <span class="w-1.5 h-1.5 bg-primary"></span>
+                      <span class="text-xs uppercase tracking-widest">Optimal Baseline</span>
+                    </div>
+                  </td>
+                  <td class="py-6 font-label text-xs">76ms / 54bpm</td>
+                  <td class="py-6">
+                    <span class="text-xs bg-surface-container-highest px-2 py-1 text-primary"
+                      >8.1</span
+                    >
+                  </td>
+                  <td
+                    class="py-6 text-right font-label text-[10px] uppercase tracking-widest opacity-50"
+                  >
+                    Alpha-Base V.3
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-12 flex justify-center">
+            <button
+              class="px-8 py-3 border-[0.5px] border-primary text-primary text-xs uppercase tracking-[0.3em] font-medium hover:bg-primary/5 transition-colors"
+            >
+              Load Historical Clusters
+            </button>
+          </div>
+        </section>
+      </main>
+      <aside
+        class="hidden xl:block w-80 p-8 border-l-[0.5px] border-outline-variant/50 sticky top-16 h-screen"
+      >
+        <h3
+          class="text-[10px] font-label uppercase tracking-widest text-primary mb-8 border-b-[0.5px] border-outline-variant/50 pb-4"
+        >
+          Real-time Biosignals
+        </h3>
+        <div class="space-y-10">
+          <div class="group">
+            <div class="flex justify-between items-baseline mb-2">
+              <span class="text-[10px] opacity-50 uppercase tracking-widest">Neural Load</span>
+              <span class="font-headline text-lg italic text-primary">0.142</span>
+            </div>
+            <div class="h-1 bg-surface-container-highest overflow-hidden">
+              <div class="h-full bg-primary w-[14%]"></div>
+            </div>
+          </div>
+          <div class="group">
+            <div class="flex justify-between items-baseline mb-2">
+              <span class="text-[10px] opacity-50 uppercase tracking-widest">Cognitive Drift</span>
+              <span class="font-headline text-lg italic">Minimal</span>
+            </div>
+            <div class="h-1 bg-surface-container-highest overflow-hidden">
+              <div class="h-full bg-secondary w-[8%]"></div>
+            </div>
+          </div>
+          <div class="pt-8">
+            <div class="bg-surface-container-low p-6 border-l-2 border-primary">
+              <span class="material-symbols-outlined text-primary mb-4" data-weight="fill"
+                >verified_user</span
+              >
+              <h4 class="font-headline text-xl italic mb-2">Analyst Advisory</h4>
+              <p class="text-xs text-secondary leading-relaxed font-light">
+                Historical data suggests a peak performance window opening in 14 hours. Recommended
+                protocol: <strong>Vellum-9</strong>. Maximize cognitive load during this window for
+                exponential output.
+              </p>
+            </div>
+          </div>
+          <div class="mt-20">
+            <img
+              alt="Abstract visualization of neural networks"
+              class="w-full grayscale brightness-50 opacity-50 border-[0.5px] border-outline-variant/50"
+              data-alt="Intricate abstract data visualization representing neural networking and biological synchronization in shades of dark green and gold"
+              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCJHrK9E7EykNZOIQJDyPTly2Y43N0IxMKJagUjcVOwyon7KPd4M00fiokvaG8OguNGQxkfd5wBmks44kJh4FP17yLjGiUZ2ryjdQKhJ1Do5NAHqcY-rk5dr1a8Cd-Ig8eIYSqy4ZFSFTQjoKM8whkywms4kGxecB2Z85mRmx8svs-Kpw_ig0xEO8Bd0CnEMPA34bhtxKJsb-ZY9VdTjVbEviW6gH0hUH67oY0Hfofx1MD5NHAr2HAmtbYMa4Hi_wGd3L41iCfo-gdA"
+            />
+            <p class="text-[9px] uppercase tracking-widest mt-4 opacity-30 text-center">
+              Encrypted Data Stream — SV-0199
+            </p>
+          </div>
+        </div>
+      </aside>
+    </div>
+    <div
+      class="md:hidden fixed bottom-0 left-0 right-0 h-16 bg-surface-container-lowest border-t-[0.5px] border-outline-variant/50 flex items-center justify-around z-50"
+    >
+      <div class="flex flex-col items-center gap-1 text-primary">
+        <span class="material-symbols-outlined" data-weight="fill">analytics</span>
+        <span class="text-[8px] uppercase tracking-widest">Vault</span>
+      </div>
+      <div class="flex flex-col items-center gap-1 text-secondary opacity-50">
+        <span class="material-symbols-outlined">fingerprint</span>
+        <span class="text-[8px] uppercase tracking-widest">Stream</span>
+      </div>
+      <div class="flex flex-col items-center gap-1 text-secondary opacity-50">
+        <span class="material-symbols-outlined">description</span>
+        <span class="text-[8px] uppercase tracking-widest">Protocols</span>
+      </div>
+      <div class="flex flex-col items-center gap-1 text-secondary opacity-50">
+        <span class="material-symbols-outlined">account_circle</span>
+        <span class="text-[8px] uppercase tracking-widest">Profile</span>
+      </div>
+    </div>
+  </body>
+</html>

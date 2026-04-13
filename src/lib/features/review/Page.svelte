@@ -12,9 +12,12 @@
     setReviewExperiment,
   } from '$lib/features/review/client';
   import {
+    createReviewDecisionCards,
     createReviewAdherenceAuditItems,
     createReviewAdherenceCards,
-    createNutritionStrategyCards,
+    createReviewExperimentCandidates,
+    createReviewSavedExperimentVerdict,
+    createWeeklyRecommendationView,
     createReviewSections,
     createReviewTrendRows,
   } from '$lib/features/review/model';
@@ -23,8 +26,11 @@
 
   let page = $state(createReviewPageState());
   let trendRows = $derived(createReviewTrendRows(page.weekly));
+  let weeklyRecommendation = $derived(createWeeklyRecommendationView(page.weekly));
+  let reviewDecisionCards = $derived(createReviewDecisionCards(page.weekly));
+  let reviewExperimentCandidates = $derived(createReviewExperimentCandidates(page.weekly));
+  let reviewSavedExperimentVerdict = $derived(createReviewSavedExperimentVerdict(page.weekly));
   let reviewSections = $derived(createReviewSections(page.weekly));
-  let nutritionStrategyCards = $derived(createNutritionStrategyCards(page.weekly));
   let adherenceCards = $derived(createReviewAdherenceCards(page.weekly));
   let adherenceAuditItems = $derived(createReviewAdherenceAuditItems(page.weekly));
 
@@ -51,6 +57,7 @@
     <ReviewHeadlineSection
       headline={page.weekly.snapshot.headline}
       daysTracked={page.weekly.snapshot.daysTracked}
+      recommendation={weeklyRecommendation}
     />
 
     <ReviewListSection
@@ -65,26 +72,31 @@
     <ReviewCorrelationSection correlations={page.weekly.snapshot.correlations} />
 
     {#each reviewSections as section (section.title)}
-      {#if section.title === 'Repeat / rotate / skip next week'}
-        <ReviewStrategySection
-          cards={nutritionStrategyCards}
-          emptyMessage={section.emptyMessage ?? ''}
-        />
+      {#if section.kind === 'decision-engine'}
+        <div class="review-grid__closing review-grid__closing--strategy">
+          <ReviewStrategySection
+            cards={reviewDecisionCards}
+            emptyMessage={section.emptyMessage ?? ''}
+          />
+        </div>
       {:else}
         <ReviewListSection {section} />
       {/if}
     {/each}
 
-    <ReviewExperimentSection
-      options={page.weekly.experimentOptions}
-      selectedExperiment={page.selectedExperiment}
-      savedExperiment={page.weekly.snapshot.experiment}
-      saveNotice={page.saveNotice}
-      onSelectExperiment={(value) => {
-        page = setReviewExperiment(page, value);
-      }}
-      onSaveExperiment={saveExperiment}
-    />
+    <div class="review-grid__closing review-grid__closing--experiment">
+      <ReviewExperimentSection
+        candidates={reviewExperimentCandidates}
+        selectedExperiment={page.selectedExperiment}
+        savedExperiment={page.weekly.snapshot.experiment}
+        savedVerdict={reviewSavedExperimentVerdict}
+        saveNotice={page.saveNotice}
+        onSelectExperiment={(value) => {
+          page = setReviewExperiment(page, value);
+        }}
+        onSaveExperiment={saveExperiment}
+      />
+    </div>
   </div>
 {/if}
 
@@ -96,6 +108,14 @@
 
     .review-grid :global(section:first-child) {
       grid-column: 1 / -1;
+    }
+
+    .review-grid__closing--strategy {
+      grid-column: 1 / -1;
+    }
+
+    .review-grid__closing--experiment {
+      grid-column: 2;
     }
   }
 </style>

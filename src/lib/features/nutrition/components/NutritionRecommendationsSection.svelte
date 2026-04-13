@@ -30,7 +30,7 @@
           <div>
             <strong>{recommendation.title}</strong>
             <p class="recommendation-meta">
-              <span class="recommendation-score">{recommendation.score}</span>
+              <span class="recommendation-score score-chip">{recommendation.score}</span>
               <span>{createRecommendationSummary(recommendation)}</span>
             </p>
             {#each recommendation.reasons as reason (reason)}
@@ -73,10 +73,9 @@
 
   .recommendation-context li {
     padding: 0.6rem 0.75rem;
-    border: 1px solid rgba(31, 29, 26, 0.08);
-    border-radius: 0.85rem;
-    background: rgba(241, 235, 226, 0.55);
-    color: #3a352e;
+    border: 0.5px solid var(--phc-border-soft);
+    background: rgba(10, 60, 45, 0.18);
+    color: var(--phc-text);
     font: 500 0.88rem/1.35 var(--phc-font-ui);
   }
 
@@ -93,7 +92,7 @@
     justify-content: space-between;
     gap: 1rem;
     padding: 0.9rem 0 1rem;
-    border-bottom: 1px solid rgba(31, 29, 26, 0.08);
+    border-bottom: 0.5px solid var(--phc-border-soft);
   }
 
   .recommendation-meta {
@@ -104,16 +103,7 @@
   }
 
   .recommendation-score {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    min-width: 2.25rem;
-    min-height: 2.25rem;
-    padding: 0 0.5rem;
-    border-radius: 999px;
-    background: #1f5c4a;
-    color: #fbf8f3;
-    font: 700 0.9rem/1 var(--phc-font-ui);
+    flex-shrink: 0;
   }
 
   .recommendation-actions {

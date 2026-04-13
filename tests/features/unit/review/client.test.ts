@@ -24,7 +24,7 @@ describe('review client', () => {
       ...client.createReviewPageState(),
       localDay: '2026-04-04',
       weekly: null,
-      selectedExperiment: 'Increase hydration tracking',
+      selectedExperiment: 'hydration-tracking',
     };
 
     await client.loadReviewPage('2026-04-04');

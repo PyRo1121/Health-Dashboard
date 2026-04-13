@@ -64,7 +64,9 @@
       ></textarea>
     </Field>
   </div>
-  <Button onclick={onSaveSymptom}>Log symptom</Button>
+  <div class="button-row">
+    <Button onclick={onSaveSymptom}>Log symptom</Button>
+  </div>
 </SectionCard>
 
 <SectionCard title="Log anxiety episode">
@@ -114,7 +116,9 @@
       ></textarea>
     </Field>
   </div>
-  <Button onclick={onSaveAnxiety}>Log anxiety</Button>
+  <div class="button-row">
+    <Button onclick={onSaveAnxiety}>Log anxiety</Button>
+  </div>
 </SectionCard>
 
 <SectionCard title="Log sleep context">
@@ -159,7 +163,9 @@
       />
     </Field>
   </div>
-  <Button onclick={onSaveSleepNote}>Log sleep note</Button>
+  <div class="button-row">
+    <Button onclick={onSaveSleepNote}>Log sleep note</Button>
+  </div>
 </SectionCard>
 
 <style>

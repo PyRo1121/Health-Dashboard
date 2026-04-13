@@ -80,7 +80,9 @@
           placeholder="What triggered this? Keep it honest and brief."
         ></textarea>
       </Field>
-      <Button onclick={saveCraving}>Log craving</Button>
+      <div class="button-row">
+        <Button onclick={saveCraving}>Log craving</Button>
+      </div>
     </SectionCard>
 
     <SectionCard title="Lapse context">
@@ -104,7 +106,9 @@
           placeholder="Text sponsor"
         />
       </Field>
-      <Button variant="secondary" onclick={saveLapse}>Log lapse context</Button>
+      <div class="button-row">
+        <Button variant="secondary" onclick={saveLapse}>Log lapse context</Button>
+      </div>
     </SectionCard>
 
     <SectionCard title="Today’s events">
@@ -119,7 +123,7 @@
                 {/each}
               </div>
               {#if event.badge}
-                <span>{event.badge}</span>
+                <span class="value-chip">{event.badge}</span>
               {/if}
             </li>
           {/each}
@@ -135,25 +139,14 @@
 {/if}
 
 <style>
-  .event-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
-    gap: 0.75rem;
-  }
+  @media (max-width: 639px) {
+    .event-list {
+      gap: 0.6rem;
+    }
 
-  .event-list li {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
-    padding-bottom: 0.75rem;
-    border-bottom: 1px solid rgba(31, 29, 26, 0.08);
-  }
-
-  .event-list p {
-    margin: 0.25rem 0 0;
-    color: #3a352e;
+    .event-list :global(li) {
+      padding-bottom: 0.65rem;
+    }
   }
 
   @media (min-width: 960px) {

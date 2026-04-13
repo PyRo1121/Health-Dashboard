@@ -7,7 +7,7 @@
 </script>
 
 {#if warnings.length}
-  <ul class="warning-list">
+  <ul class="warning-list warning-copy">
     {#each warnings as warning (warning)}
       <li>{warning}</li>
     {/each}
@@ -20,6 +20,5 @@
     padding-left: 1.1rem;
     display: grid;
     gap: 0.5rem;
-    color: #8e3c2e;
   }
 </style>

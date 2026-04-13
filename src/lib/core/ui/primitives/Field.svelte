@@ -23,15 +23,22 @@
 <style>
   .field {
     display: grid;
-    gap: 0.4rem;
+    gap: 0.5rem;
+  }
+
+  .field:focus-within .field__label {
+    color: var(--phc-text);
   }
 
   .field__label {
-    font:
-      500 0.9rem/1.3 Manrope,
-      system-ui,
-      sans-serif;
-    color: #3a352e;
+    font: 600 0.68rem/1.2 var(--phc-font-ui);
+    color: var(--phc-label);
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .field__control {
+    display: grid;
   }
 
   .field__control :global(input),
@@ -40,15 +47,41 @@
     width: 100%;
     box-sizing: border-box;
     min-height: 44px;
-    padding: 0.75rem 0.9rem;
-    border: 1px solid rgba(31, 29, 26, 0.12);
-    border-radius: 0.9rem;
-    background: #fbf8f3;
-    color: #1f1d1a;
-    font:
-      400 0.95rem/1.45 Manrope,
-      system-ui,
-      sans-serif;
+    padding: 0.85rem 0;
+    border: 0;
+    border-bottom: 0.5px solid var(--phc-border-soft);
+    background: transparent;
+    color: var(--phc-text);
+    font: 400 0.95rem/1.45 var(--phc-font-ui);
+    transition:
+      border-color 180ms ease,
+      background-color 180ms ease,
+      color 180ms ease,
+      box-shadow 180ms ease;
+  }
+
+  .field__control :global(input::placeholder),
+  .field__control :global(textarea::placeholder) {
+    color: var(--phc-muted);
+    opacity: 0.7;
+  }
+
+  .field__control :global(input:focus),
+  .field__control :global(select:focus),
+  .field__control :global(textarea:focus) {
+    outline: none;
+    border-bottom-color: var(--phc-label);
+    background: rgba(10, 60, 45, 0.14);
+    box-shadow: inset 0 -1px 0 var(--phc-label);
+  }
+
+  .field__control :global(select) {
+    cursor: pointer;
+  }
+
+  .field__control :global(select option) {
+    background: var(--phc-surface);
+    color: var(--phc-text);
   }
 
   .field__control :global(textarea) {
@@ -57,10 +90,7 @@
   }
 
   .field__hint {
-    color: #655e54;
-    font:
-      400 0.85rem/1.45 Manrope,
-      system-ui,
-      sans-serif;
+    color: var(--phc-muted);
+    font: 400 0.85rem/1.45 var(--phc-font-ui);
   }
 </style>

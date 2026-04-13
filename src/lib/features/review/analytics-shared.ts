@@ -5,6 +5,7 @@ import type {
   ReviewSnapshot,
 } from '$lib/core/domain/types';
 import { startOfWeek } from '$lib/core/shared/dates';
+import { REVIEW_EXPERIMENT_DEFINITIONS } from './experiment-registry';
 
 export interface ReviewCorrelation {
   label: string;
@@ -31,6 +32,52 @@ export interface ReviewAdherenceScore {
   detail: string;
 }
 
+export type ReviewDecision = 'continue' | 'adjust' | 'stop';
+
+export interface ReviewRecommendationTarget {
+  kind: 'food' | 'recipe' | 'plan';
+  id?: string;
+}
+
+export interface ReviewWeeklyRecommendation {
+  decision: ReviewDecision;
+  title: string;
+  summary: string;
+  confidence: 'high' | 'medium' | 'low';
+  expectedImpact: string;
+  provenance: string[];
+  actionLabel: string;
+  target: ReviewRecommendationTarget;
+}
+
+export interface ReviewDecisionCard {
+  decision: ReviewDecision;
+  title: string;
+  detail: string;
+  confidence: 'high' | 'medium' | 'low';
+  expectedImpact: string;
+  provenance: string[];
+  target: ReviewRecommendationTarget;
+}
+
+export interface ReviewExperimentCandidate {
+  id: string;
+  label: string;
+  summary: string;
+  confidence: 'high' | 'medium' | 'low';
+  expectedImpact: string;
+  provenance: string[];
+}
+
+export interface ReviewSavedExperimentVerdict {
+  decision: ReviewDecision;
+  label: string;
+  summary: string;
+  confidence: 'high' | 'medium' | 'low';
+  expectedImpact: string;
+  provenance: string[];
+}
+
 export interface WeeklyReviewData {
   anchorDay: string;
   snapshot: ReviewSnapshot;
@@ -53,17 +100,21 @@ export interface WeeklyReviewData {
   journalHighlights: string[];
   journalReflectionLinkedEventIds: string[];
   patternHighlights: string[];
+  whatChangedHighlights: string[];
+  weeklyRecommendation: ReviewWeeklyRecommendation | null;
+  weeklyDecisionCards: ReviewDecisionCard[];
+  experimentCandidates?: ReviewExperimentCandidate[];
+  savedExperimentVerdict?: ReviewSavedExperimentVerdict | null;
+  selectedExperimentId?: string;
   experimentOptions: string[];
 }
 
 export const MIN_SLEEP_HOURS = 7;
 export const HIGH_PROTEIN_GRAMS = 80;
 export const SIGNAL_DELTA_THRESHOLD = 0.5;
-export const REVIEW_EXPERIMENT_OPTIONS = [
-  'Try 10 min morning mindfulness',
-  'Increase hydration tracking',
-  'Increase protein at breakfast',
-] as const;
+export const REVIEW_EXPERIMENT_OPTIONS = REVIEW_EXPERIMENT_DEFINITIONS.map(
+  (definition) => definition.label
+) as unknown as readonly string[];
 
 export function createStrategyItem(
   kind: ReviewNutritionStrategyItem['kind'],
@@ -87,6 +138,34 @@ export function round(value: number): number {
 
 export function pluralize(count: number, singular: string, plural = `${singular}s`): string {
   return count === 1 ? singular : plural;
+}
+
+export function clampNumber(value: number, minimum: number, maximum: number): number {
+  return Math.min(maximum, Math.max(minimum, value));
+}
+
+export function takeUniqueStrings(
+  items: Array<string | null | undefined>,
+  limit = items.length
+): string[] {
+  const seen = new Set<string>();
+  const result: string[] = [];
+
+  for (const item of items) {
+    const normalized = item?.trim();
+    if (!normalized || seen.has(normalized)) {
+      continue;
+    }
+
+    seen.add(normalized);
+    result.push(normalized);
+
+    if (result.length >= limit) {
+      break;
+    }
+  }
+
+  return result;
 }
 
 export function average(values: number[]): number {

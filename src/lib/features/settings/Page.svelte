@@ -42,63 +42,95 @@
 <RoutePageHeader href="/settings" />
 
 <div class="page-grid settings-grid">
-  <Card>
-    <h2 class="card-title">iPhone setup</h2>
-    <NoMacSetupChecklist manifest={healthkitManifest} showNavigationLinks={false} />
-  </Card>
+  <div class="settings-panel settings-panel--setup">
+    <Card>
+      <h2 class="card-title">iPhone setup</h2>
+      <NoMacSetupChecklist manifest={healthkitManifest} showNavigationLinks={false} />
+    </Card>
+  </div>
 
-  <SectionCard title="Clinical owner profile" intro={settingsOwnerProfileDescription}>
-    <Field className="field-block" label="Owner full name">
-      <input bind:value={page.fullName} aria-label="Owner full name" placeholder="Pyro Example" />
-    </Field>
+  <div class="settings-panel settings-panel--profile">
+    <SectionCard title="Clinical owner profile" intro={settingsOwnerProfileDescription}>
+      <Field className="field-block" label="Owner full name">
+        <input bind:value={page.fullName} aria-label="Owner full name" placeholder="Pyro Example" />
+      </Field>
 
-    <Field className="field-block" label="Owner birth date">
-      <input bind:value={page.birthDate} aria-label="Owner birth date" type="date" />
-    </Field>
+      <Field className="field-block" label="Owner birth date">
+        <input bind:value={page.birthDate} aria-label="Owner birth date" type="date" />
+      </Field>
 
-    <div class="button-row">
-      <Button onclick={handleSaveOwnerProfile} disabled={!canSaveOwnerProfile}>
-        Save owner profile
-      </Button>
-      <Button variant="ghost" onclick={handleClearOwnerProfile}>Clear owner profile</Button>
-    </div>
+      <div class="button-row">
+        <Button onclick={handleSaveOwnerProfile} disabled={!canSaveOwnerProfile}>
+          Save owner profile
+        </Button>
+        <Button variant="ghost" onclick={handleClearOwnerProfile}>Clear owner profile</Button>
+      </div>
 
-    {#if page.statusMessage}
-      <StatusBanner tone="neutral" title="Owner profile" message={page.statusMessage} />
-    {/if}
-  </SectionCard>
+      {#if page.statusMessage}
+        <StatusBanner tone="neutral" title="Owner profile" message={page.statusMessage} />
+      {/if}
+    </SectionCard>
+  </div>
 
-  <SectionCard title="Local-first posture">
-    <p class="status-copy">
-      Every external feed is staged before commit. No device or portal source writes directly into
-      feature-specific tables.
-    </p>
-    <ul class="summary-list">
-      {#each settingsLocalFirstPostureItems as item (item)}
-        <li>{item}</li>
-      {/each}
-    </ul>
-  </SectionCard>
+  <div class="settings-panel settings-panel--posture">
+    <SectionCard title="Local-first posture">
+      <p class="status-copy">
+        Every external feed is staged before commit. No device or portal source writes directly into
+        feature-specific tables.
+      </p>
+      <ul class="summary-list">
+        {#each settingsLocalFirstPostureItems as item (item)}
+          <li>{item}</li>
+        {/each}
+      </ul>
+    </SectionCard>
+  </div>
 </div>
 
 <style>
   .summary-list {
     display: grid;
-    gap: 0.5rem;
-    color: #655e54;
-    font:
-      400 0.95rem/1.5 Manrope,
-      system-ui,
-      sans-serif;
+    gap: 0.65rem;
+    color: var(--phc-muted);
+    font: 400 0.95rem/1.5 var(--phc-font-ui);
+  }
+
+  .summary-list li {
+    padding-bottom: 0.65rem;
+    border-bottom: 0.5px solid var(--phc-border-soft);
+  }
+
+  .summary-list li:last-child {
+    padding-bottom: 0;
+    border-bottom: 0;
   }
 
   .button-row {
     margin-top: 1rem;
   }
 
+  @media (max-width: 639px) {
+    .settings-grid {
+      gap: 0.9rem;
+    }
+
+    .settings-panel--setup {
+      order: 2;
+    }
+
+    .settings-panel--profile {
+      order: 1;
+    }
+
+    .settings-panel--posture {
+      order: 3;
+    }
+  }
+
   @media (min-width: 960px) {
     .settings-grid {
       grid-template-columns: repeat(3, minmax(0, 1fr));
+      align-items: start;
     }
   }
 </style>

@@ -29,6 +29,15 @@ import { useTestHealthDb } from '../../../support/unit/testDb';
 describe('review service', () => {
   const getDb = useTestHealthDb();
 
+  function readCandidateId(candidate: unknown): string | undefined {
+    if (!candidate || typeof candidate !== 'object') {
+      return undefined;
+    }
+
+    const { id } = candidate as { id?: unknown };
+    return typeof id === 'string' ? id : undefined;
+  }
+
   async function seedWeek() {
     const db = getDb();
     await saveDailyCheckin(db, {
@@ -118,15 +127,138 @@ describe('review service', () => {
     expect(correlations.some((item) => item.label.includes('Higher protein'))).toBe(true);
   });
 
-  it('builds a weekly snapshot with flags and experiment options', async () => {
+  it('builds a weekly snapshot with ranked experiment candidates and stable ids', async () => {
     const db = getDb();
     await seedWeek();
+    await saveFoodCatalogItem(db, {
+      name: 'Higher protein breakfast',
+      calories: 420,
+      protein: 32,
+      fiber: 8,
+      carbs: 34,
+      fat: 12,
+    });
     const weekly = await buildWeeklySnapshot(db, '2026-04-02');
     expect(weekly.snapshot.headline).toBeTruthy();
     expect(weekly.snapshot.daysTracked).toBe(3);
     expect(weekly.experimentOptions).toHaveLength(3);
+    expect(weekly.experimentCandidates).toHaveLength(3);
     expect(weekly.assessmentSummary[0]).toContain('WHO-5');
     expect(weekly.deviceHighlights.some((line) => line.includes('Sleep'))).toBe(true);
+    expect(weekly.weeklyRecommendation).toMatchObject({
+      decision: 'continue',
+      title: 'Continue with Higher protein breakfast',
+      actionLabel: 'Load food',
+      target: {
+        kind: 'food',
+      },
+    });
+    expect(weekly.whatChangedHighlights.length).toBeGreaterThan(0);
+    expect(weekly.experimentCandidates?.map((candidate) => candidate.label)).toEqual([
+      'Increase protein at breakfast',
+      'Increase hydration tracking',
+      'Try 10 min morning mindfulness',
+    ]);
+    expect(weekly.experimentCandidates?.map((candidate) => readCandidateId(candidate))).toEqual([
+      expect.stringMatching(/^[a-z0-9-]+$/),
+      expect.stringMatching(/^[a-z0-9-]+$/),
+      expect.stringMatching(/^[a-z0-9-]+$/),
+    ]);
+    expect(
+      new Set(weekly.experimentCandidates?.map((candidate) => readCandidateId(candidate))).size
+    ).toBe(3);
+    expect(weekly.experimentOptions).toEqual(
+      weekly.experimentCandidates?.map((candidate) => candidate.label)
+    );
+  });
+
+  it('keeps sparse weeks in a no-recommendation fallback until deterministic inputs exist', async () => {
+    const db = getDb();
+    await saveDailyCheckin(db, {
+      date: '2026-04-02',
+      mood: 4,
+      energy: 3,
+      stress: 2,
+      focus: 3,
+      sleepHours: 7,
+      sleepQuality: 3,
+    });
+
+    const weekly = await buildWeeklySnapshot(db, '2026-04-02');
+
+    expect(weekly.snapshot.headline).toBe('First signal logged, keep the streak going');
+    expect(weekly.snapshot.daysTracked).toBe(1);
+    expect(weekly.weeklyRecommendation).toBeNull();
+    expect(weekly.weeklyDecisionCards).toEqual([]);
+    expect(weekly.whatChangedHighlights).toEqual([]);
+  });
+
+  it('prioritizes the strongest weekly changes instead of preserving raw source order', async () => {
+    const db = getDb();
+    await seedWeek();
+    await logAnxietyEvent(db, {
+      localDay: '2026-04-02',
+      intensity: 4,
+      trigger: 'Busy inbox',
+      note: 'Walked it off',
+    });
+    await saveJournalEntry(db, {
+      localDay: '2026-04-02',
+      entryType: 'evening_review',
+      title: 'Rough afternoon',
+      body: 'Crowded store and headache drained the afternoon.',
+      tags: [],
+      linkedEventIds: [],
+    });
+
+    const weekly = await buildWeeklySnapshot(db, '2026-04-02');
+
+    expect(weekly.whatChangedHighlights[0]).toBe('WHO-5: Moderate wellbeing (17)');
+    expect(weekly.whatChangedHighlights).toEqual(
+      expect.arrayContaining([
+        'Anxiety and written context both surfaced on 2026-04-02.',
+        'Step count: 8432 count on 2026-04-02',
+        'Sleep duration: 8 hours on 2026-04-02',
+      ])
+    );
+  });
+
+  it('ranks mindfulness first with a deterministic candidate id when the week is dominated by sleep and anxiety signals', async () => {
+    const db = getDb();
+    await saveDailyCheckin(db, {
+      date: '2026-04-02',
+      mood: 3,
+      energy: 2,
+      stress: 4,
+      focus: 2,
+      sleepHours: 5.5,
+      sleepQuality: 2,
+    });
+    await logAnxietyEvent(db, {
+      localDay: '2026-04-02',
+      intensity: 4,
+      trigger: 'Crowded store',
+      note: 'Walked it off',
+    });
+    await saveJournalEntry(db, {
+      localDay: '2026-04-02',
+      entryType: 'evening_review',
+      title: 'Rough afternoon',
+      body: 'Crowded store and headache drained the afternoon.',
+      tags: [],
+      linkedEventIds: [],
+    });
+
+    const weekly = await buildWeeklySnapshot(db, '2026-04-02');
+
+    expect(weekly.experimentCandidates?.map((candidate) => candidate.label)).toEqual([
+      'Try 10 min morning mindfulness',
+      'Increase protein at breakfast',
+      'Increase hydration tracking',
+    ]);
+    expect(readCandidateId(weekly.experimentCandidates?.[0])).toEqual(
+      expect.stringMatching(/^[a-z0-9-]+$/)
+    );
   });
 
   it('threads journal excerpts and context signals into the weekly snapshot', async () => {
@@ -297,16 +429,62 @@ describe('review service', () => {
     );
   });
 
-  it('saves the next-week experiment into the snapshot', async () => {
+  it('saves a selected experiment by candidate id without disturbing ranked suggestions', async () => {
     const db = getDb();
     await seedWeek();
+    const beforeSave = await buildWeeklySnapshot(db, '2026-04-02');
+
+    expect(beforeSave.experimentCandidates?.map((candidate) => candidate.label)).toEqual([
+      'Increase protein at breakfast',
+      'Increase hydration tracking',
+      'Try 10 min morning mindfulness',
+    ]);
+
+    const selectedExperiment = beforeSave.experimentCandidates?.[1];
+    if (!selectedExperiment) {
+      throw new Error('Expected a deterministic ranked experiment candidate list before saving.');
+    }
+
+    const selectedExperimentId = readCandidateId(selectedExperiment);
+    if (!selectedExperimentId) {
+      throw new Error('Expected the selected experiment candidate to expose a stable id.');
+    }
+
     const snapshot = await saveNextWeekExperiment(
       db,
       '2026-04-02',
-      'Try 10 min morning mindfulness'
+      selectedExperiment.label,
+      selectedExperimentId
     );
-    expect(snapshot.experiment).toBe('Try 10 min morning mindfulness');
+    expect(snapshot.experiment).toBe(selectedExperiment.label);
+    expect(snapshot.experimentId).toBe(selectedExperimentId);
     expect(await db.reviewSnapshots.count()).toBe(1);
+
+    const rebuilt = await buildWeeklySnapshot(db, '2026-04-02');
+    expect(rebuilt.snapshot.experiment).toBe(selectedExperiment.label);
+    expect(rebuilt.snapshot.experimentId).toBe(selectedExperimentId);
+    expect(rebuilt.experimentCandidates?.map((candidate) => candidate.label)).toEqual(
+      beforeSave.experimentCandidates?.map((candidate) => candidate.label)
+    );
+    expect(rebuilt.experimentCandidates?.map((candidate) => readCandidateId(candidate))).toEqual(
+      beforeSave.experimentCandidates?.map((candidate) => readCandidateId(candidate))
+    );
+    expect(rebuilt.experimentOptions).toEqual(beforeSave.experimentOptions);
+  });
+
+  it('builds a verdict for the saved experiment from the same weekly signals', async () => {
+    const db = getDb();
+    await seedWeek();
+    await saveNextWeekExperiment(db, '2026-04-02', 'Increase protein at breakfast');
+
+    const weekly = await buildWeeklySnapshot(db, '2026-04-02');
+
+    expect(weekly.savedExperimentVerdict).toMatchObject({
+      decision: 'continue',
+      label: 'Increase protein at breakfast',
+      confidence: 'medium',
+    });
+    expect(weekly.savedExperimentVerdict?.expectedImpact).toMatch(/protein consistency/i);
   });
 
   it('persists inferred adherence matches and rebuilds them when the week fingerprint changes', async () => {

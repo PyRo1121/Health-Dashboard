@@ -75,7 +75,7 @@
       700 0.9rem/1.2 Manrope,
       system-ui,
       sans-serif;
-    color: #655e54;
+    color: var(--phc-muted);
     text-transform: uppercase;
     letter-spacing: 0.04em;
   }

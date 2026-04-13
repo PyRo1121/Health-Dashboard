@@ -75,7 +75,9 @@
       ></textarea>
     </Field>
   </div>
-  <Button onclick={onSaveTemplate}>Save template</Button>
+  <div class="button-row">
+    <Button onclick={onSaveTemplate}>Save template</Button>
+  </div>
 
   {#if templates.length}
     <ul class="template-list spaced-list">
@@ -129,13 +131,18 @@
   .template-list li {
     display: flex;
     justify-content: space-between;
+    align-items: flex-start;
     gap: 1rem;
     padding-bottom: 0.85rem;
-    border-bottom: 1px solid rgba(31, 29, 26, 0.08);
+    border-bottom: 0.5px solid var(--phc-border-soft);
+  }
+
+  .template-list strong {
+    color: var(--phc-text);
   }
 
   .template-list p {
     margin: 0.25rem 0 0;
-    color: #3a352e;
+    color: var(--phc-muted);
   }
 </style>

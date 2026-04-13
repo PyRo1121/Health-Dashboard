@@ -19,7 +19,7 @@ import { createRecordMeta, updateRecordMeta } from '$lib/core/shared/records';
 import { getServerDrizzleClient } from '$lib/server/db/drizzle/client';
 import { drizzleSchema } from '$lib/server/db/drizzle/schema';
 import {
-  selectAllMirrorRecordsDesc,
+  selectAllMirrorRecords,
   selectMirrorRecordById,
   selectMirrorRecordsByField,
   selectMirrorRecordsByFieldValues,
@@ -82,9 +82,7 @@ async function stageArtifacts(input: {
 
 export async function listImportBatchesServer(): Promise<ImportBatch[]> {
   const { db } = getServerDrizzleClient();
-  return (
-    await selectAllMirrorRecordsDesc<ImportBatch>(db, drizzleSchema.importBatches, 'updatedAt')
-  ).sort(
+  return (await selectAllMirrorRecords<ImportBatch>(db, drizzleSchema.importBatches)).sort(
     (a, b) => b.updatedAt.localeCompare(a.updatedAt) || b.createdAt.localeCompare(a.createdAt)
   );
 }

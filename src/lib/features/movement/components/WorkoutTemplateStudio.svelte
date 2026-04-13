@@ -184,16 +184,15 @@
       700 0.9rem/1.2 Manrope,
       system-ui,
       sans-serif;
-    color: #3a352e;
+    color: var(--phc-text);
   }
 
   .exercise-row {
     display: grid;
     gap: 0.75rem;
     padding: 0.85rem;
-    border-radius: 0.85rem;
-    border: 1px solid rgba(31, 29, 26, 0.08);
-    background: rgba(241, 235, 226, 0.35);
+    border: 0.5px solid var(--phc-border-soft);
+    background: rgba(0, 23, 15, 0.32);
   }
 
   .compact-row-actions {

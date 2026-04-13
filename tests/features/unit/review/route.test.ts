@@ -37,8 +37,19 @@ describe('review route', () => {
     const loadReviewPageServer = vi.fn(async () => ({
       loading: false,
       localDay: '2026-04-04',
-      weekly: { experimentOptions: ['More protein'] },
-      selectedExperiment: 'More protein',
+      weekly: {
+        experimentCandidates: [
+          {
+            id: 'more-protein',
+            label: 'More protein',
+            summary: 'Push protein sooner.',
+            confidence: 'medium',
+            expectedImpact: 'Raise protein consistency.',
+          },
+        ],
+        experimentOptions: ['More protein'],
+      },
+      selectedExperiment: 'more-protein',
       loadNotice: '',
       saveNotice: '',
     }));
@@ -65,8 +76,19 @@ describe('review route', () => {
     const state = {
       loading: false,
       localDay: '2026-04-04',
-      weekly: { experimentOptions: ['More protein'] },
-      selectedExperiment: 'More protein',
+      weekly: {
+        experimentCandidates: [
+          {
+            id: 'more-protein',
+            label: 'More protein',
+            summary: 'Push protein sooner.',
+            confidence: 'medium',
+            expectedImpact: 'Raise protein consistency.',
+          },
+        ],
+        experimentOptions: ['More protein'],
+      },
+      selectedExperiment: 'more-protein',
       loadNotice: '',
       saveNotice: '',
     };
@@ -104,5 +126,41 @@ describe('review route', () => {
     expect(response.status).toBe(400);
     expect(await response.text()).toBe('Invalid review request payload.');
     expect(loadReviewPageServer).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 when saveExperiment weekly payload omits experiment candidate ids', async () => {
+    const saveReviewExperimentPageServer = vi.fn();
+    const { POST } = await importRoute({ saveReviewExperimentPageServer });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/review', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'saveExperiment',
+          state: {
+            loading: false,
+            localDay: '2026-04-04',
+            weekly: {
+              experimentCandidates: [
+                {
+                  label: 'More protein',
+                  summary: 'Push protein sooner.',
+                  confidence: 'medium',
+                  expectedImpact: 'Raise protein consistency.',
+                },
+              ],
+              experimentOptions: ['More protein'],
+            },
+            selectedExperiment: 'more-protein',
+            loadNotice: '',
+            saveNotice: '',
+          },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid review request payload.');
+    expect(saveReviewExperimentPageServer).not.toHaveBeenCalled();
   });
 });

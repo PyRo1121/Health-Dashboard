@@ -37,24 +37,11 @@
 
 <style>
   .event-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: grid;
     gap: 0.85rem;
   }
 
-  .event-list li {
-    display: flex;
-    justify-content: space-between;
-    gap: 1rem;
+  .event-list :global(li) {
     padding-bottom: 0.85rem;
-    border-bottom: 1px solid rgba(31, 29, 26, 0.08);
-  }
-
-  .event-list p {
-    margin: 0.25rem 0 0;
-    color: #3a352e;
   }
 
   .event-meta {
@@ -65,11 +52,9 @@
     white-space: nowrap;
     align-self: start;
     padding: 0.3rem 0.6rem;
-    border-radius: 999px;
-    background: #f1ebe2;
-    font:
-      600 0.8rem/1 Manrope,
-      system-ui,
-      sans-serif;
+    border: 0.5px solid var(--phc-border-soft);
+    background: rgba(233, 195, 73, 0.12);
+    color: var(--phc-label);
+    font: 600 0.8rem/1 var(--phc-font-ui);
   }
 </style>

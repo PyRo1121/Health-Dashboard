@@ -257,7 +257,7 @@ exports[`migration golden parity > matches current page-state outputs for seeded
     "loading": false,
     "localDay": "2026-04-02",
     "saveNotice": "",
-    "selectedExperiment": "Try 10 min morning mindfulness",
+    "selectedExperiment": "protein-breakfast",
     "weekly": {
       "adherenceMatches": [
         {
@@ -330,10 +330,44 @@ exports[`migration golden parity > matches current page-state outputs for seeded
         "Sleep duration: 8 hours on 2026-04-02",
         "Resting heart rate: 57 bpm on 2026-04-02",
       ],
+      "experimentCandidates": [
+        {
+          "confidence": "medium",
+          "expectedImpact": "Raise protein consistency early in the day and reduce downstream misses.",
+          "label": "Increase protein at breakfast",
+          "provenance": [
+            "Average protein this week: 57.5g.",
+            "Meals follow-through this week: 100% (1 hit, 0 misses)",
+            "Nutrition signal: 2026-03-31: 25g protein logged",
+          ],
+          "summary": "Protein coverage is still inconsistent enough that breakfast is the cleanest place to improve it without adding planning complexity elsewhere.",
+        },
+        {
+          "confidence": "medium",
+          "expectedImpact": "Reduce early-day recovery drag and make the week easier to repeat.",
+          "label": "Try 10 min morning mindfulness",
+          "provenance": [
+            "Average sleep this week: 7 hours.",
+            "Health signal: Low sleep lined up with higher anxiety on 2026-03-31.",
+            "Context signal: Low sleep and a written reflection both landed on 2026-03-31.",
+          ],
+          "summary": "Low sleep, stress, or anxiety signals stacked up this week. Use a short morning reset to lower carry-over friction before the day starts.",
+        },
+        {
+          "confidence": "medium",
+          "expectedImpact": "Improve recovery signal quality before the next weekly review.",
+          "label": "Increase hydration tracking",
+          "provenance": [
+            "Device signal: Step count: 8432 count on 2026-04-02",
+            "What changed: Low sleep lined up with higher anxiety on 2026-03-31.",
+          ],
+          "summary": "The week has recovery or device-context noise that hydration tracking can clarify. Use it to separate low-energy noise from true workload or sleep problems.",
+        },
+      ],
       "experimentOptions": [
+        "Increase protein at breakfast",
         "Try 10 min morning mindfulness",
         "Increase hydration tracking",
-        "Increase protein at breakfast",
       ],
       "grocerySignals": [],
       "healthHighlights": [
@@ -367,6 +401,8 @@ exports[`migration golden parity > matches current page-state outputs for seeded
         "Workouts planned: 0/1 completed.",
         "Groceries: 0/2 checked, 2 still open.",
       ],
+      "savedExperimentVerdict": null,
+      "selectedExperimentId": "protein-breakfast",
       "snapshot": {
         "correlations": [
           {
@@ -388,11 +424,97 @@ exports[`migration golden parity > matches current page-state outputs for seeded
         ],
         "daysTracked": 2,
         "experiment": undefined,
+        "experimentId": undefined,
         "flags": [],
-        "headline": "Mindful reset",
+        "headline": "Protect the recovery basics that helped",
         "weekStart": "2026-03-30",
       },
       "sobrietyStreak": 1,
+      "weeklyDecisionCards": [
+        {
+          "confidence": "high",
+          "decision": "continue",
+          "detail": "protein target looks strong",
+          "expectedImpact": "Keep the meal pattern that already supported protein coverage.",
+          "provenance": [
+            "protein target looks strong",
+            "Meals follow-through this week: 100% (1 hit, 0 misses)",
+            "Overall follow-through this week: 100% (1 hit, 0 misses, 1 upcoming)",
+          ],
+          "target": {
+            "kind": "food",
+          },
+          "title": "Greek yogurt bowl",
+        },
+        {
+          "confidence": "medium",
+          "decision": "adjust",
+          "detail": "protein-forward ingredients",
+          "expectedImpact": "Reduce recovery friction before it spills into next week.",
+          "provenance": [
+            "protein-forward ingredients",
+            "Meals follow-through this week: 100% (1 hit, 0 misses)",
+            "Overall follow-through this week: 100% (1 hit, 0 misses, 1 upcoming)",
+          ],
+          "target": {
+            "kind": "recipe",
+          },
+          "title": "Teriyaki Chicken Casserole",
+        },
+        {
+          "confidence": "medium",
+          "decision": "adjust",
+          "detail": "Shift this week: Low sleep lined up with higher anxiety on 2026-03-31.",
+          "expectedImpact": "Reduce recovery friction before it spills into next week.",
+          "provenance": [
+            "Shift this week: Low sleep lined up with higher anxiety on 2026-03-31.",
+            "Shift this week: Low sleep and a written reflection both landed on 2026-03-31.",
+            "Shift this week: Anxiety and written context both surfaced on 2026-03-31.",
+          ],
+          "target": {
+            "kind": "plan",
+          },
+          "title": "Current weekly plan",
+        },
+      ],
+      "weeklyRecommendation": {
+        "actionLabel": "Load food",
+        "card": {
+          "confidence": "high",
+          "decision": "continue",
+          "detail": "protein target looks strong",
+          "expectedImpact": "Keep the meal pattern that already supported protein coverage.",
+          "provenance": [
+            "protein target looks strong",
+            "Meals follow-through this week: 100% (1 hit, 0 misses)",
+            "Overall follow-through this week: 100% (1 hit, 0 misses, 1 upcoming)",
+          ],
+          "target": {
+            "kind": "food",
+          },
+          "title": "Greek yogurt bowl",
+        },
+        "confidence": "high",
+        "decision": "continue",
+        "expectedImpact": "Keep the meal pattern that already supported protein coverage.",
+        "provenance": [
+          "protein target looks strong",
+          "Meals follow-through this week: 100% (1 hit, 0 misses)",
+          "Overall follow-through this week: 100% (1 hit, 0 misses, 1 upcoming)",
+        ],
+        "score": 96,
+        "summary": "Greek yogurt bowl had the strongest keep signal this week. protein target looks strong.",
+        "target": {
+          "kind": "food",
+        },
+        "title": "Continue with Greek yogurt bowl",
+      },
+      "whatChangedHighlights": [
+        "Low sleep lined up with higher anxiety on 2026-03-31.",
+        "Low sleep and a written reflection both landed on 2026-03-31.",
+        "Anxiety and written context both surfaced on 2026-03-31.",
+        "This Week: 1/2 plan items completed.",
+      ],
     },
   },
   "timeline": [

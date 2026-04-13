@@ -13,12 +13,12 @@
 </script>
 
 <div class="setup-stack">
-  <div class="resource-card">
+  <div class="resource-card soft-panel">
     <p class="eyebrow">No-Mac Path</p>
     <p class="resource-copy">
       {setupModel.resourceDescription}
     </p>
-    <p class="resource-links">
+    <p class="resource-links link-row">
       {#each setupModel.primaryLinks as link (link.label)}
         <a
           href={resolve(link.route)}
@@ -31,7 +31,7 @@
       {/each}
     </p>
     {#if setupModel.navigationLinks.length}
-      <p class="resource-links">
+      <p class="resource-links link-row">
         {#each setupModel.navigationLinks as link (link.label)}
           <a href={resolve(link.route)}>{link.label}</a>
         {/each}
@@ -51,7 +51,7 @@
     {/each}
   </ol>
 
-  <div class="ships-card">
+  <div class="ships-card soft-panel">
     <p class="eyebrow">What Ships In T9</p>
     <ul>
       {#each setupModel.ships as item (item)}
@@ -69,7 +69,7 @@
 
   .eyebrow {
     margin: 0 0 0.5rem;
-    color: #655e54;
+    color: var(--phc-muted);
     font:
       700 0.75rem/1.2 Manrope,
       system-ui,
@@ -81,15 +81,12 @@
   .resource-card,
   .ships-card {
     padding: 1rem;
-    border-radius: 1rem;
-    background: rgba(241, 235, 226, 0.62);
-    border: 1px solid rgba(31, 29, 26, 0.06);
   }
 
   .resource-copy,
   .step-list p {
     margin: 0;
-    color: #655e54;
+    color: var(--phc-muted);
     font:
       400 0.95rem/1.55 Manrope,
       system-ui,
@@ -97,15 +94,7 @@
   }
 
   .resource-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 1rem;
     margin: 0.9rem 0 0;
-  }
-
-  .resource-links a {
-    color: #1f5c4a;
-    font-weight: 600;
   }
 
   .step-list {
@@ -121,7 +110,7 @@
     grid-template-columns: auto 1fr;
     gap: 0.85rem;
     padding: 0.9rem 0;
-    border-bottom: 1px solid rgba(31, 29, 26, 0.08);
+    border-bottom: 0.5px solid var(--phc-border-soft);
   }
 
   .step-list li:last-child {
@@ -134,9 +123,9 @@
     place-items: center;
     width: 2rem;
     height: 2rem;
-    border-radius: 999px;
-    background: #1f5c4a;
-    color: #fbf8f3;
+    background: rgba(233, 195, 73, 0.12);
+    border: 0.5px solid rgba(233, 195, 73, 0.18);
+    color: var(--phc-label);
     font:
       700 0.9rem/1 Manrope,
       system-ui,
@@ -150,7 +139,7 @@
       600 1rem/1.3 Manrope,
       system-ui,
       sans-serif;
-    color: #1f1d1a;
+    color: var(--phc-text);
   }
 
   .ships-card ul {
@@ -159,5 +148,47 @@
     margin: 0;
     display: grid;
     gap: 0.55rem;
+  }
+
+  @media (max-width: 639px) {
+    .setup-stack {
+      gap: 0.85rem;
+    }
+
+    .resource-card,
+    .ships-card {
+      padding: 0.85rem;
+    }
+
+    .resource-links {
+      gap: 0.75rem;
+      margin-top: 0.75rem;
+    }
+
+    .step-list {
+      gap: 0.7rem;
+    }
+
+    .step-list li {
+      gap: 0.7rem;
+      padding: 0.75rem 0;
+    }
+
+    .step-index {
+      width: 1.8rem;
+      height: 1.8rem;
+      font-size: 0.82rem;
+    }
+
+    .step-list strong {
+      margin-bottom: 0.15rem;
+      font-size: 0.92rem;
+    }
+
+    .resource-copy,
+    .step-list p {
+      font-size: 0.88rem;
+      line-height: 1.45;
+    }
   }
 </style>

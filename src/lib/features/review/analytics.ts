@@ -3,10 +3,22 @@ export {
   filterByDays,
   type ReviewAdherenceScore,
   type ReviewCorrelation,
+  type ReviewDecision,
+  type ReviewDecisionCard,
   type ReviewNutritionStrategyItem,
+  type ReviewRecommendationTarget,
+  type ReviewWeeklyRecommendation,
   type WeeklyReviewData,
   weekRangeFromAnchorDay,
 } from './analytics-shared';
+export {
+  REVIEW_EXPERIMENT_DEFINITIONS,
+  reviewExperimentDefinitionById,
+  reviewExperimentDefinitionByLabel,
+  type ReviewExperimentDefinition,
+  type ReviewExperimentId,
+  type ReviewExperimentLabel,
+} from './experiment-registry';
 export {
   buildHeadline,
   buildNutritionHighlights,
