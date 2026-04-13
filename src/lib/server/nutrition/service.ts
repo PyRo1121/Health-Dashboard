@@ -1,10 +1,5 @@
 import type { FoodLookupResult } from '$lib/features/nutrition/types';
-import type {
-  FavoriteMeal,
-  FoodCatalogItem,
-  FoodEntry,
-  RecipeCatalogItem,
-} from '$lib/core/domain/types';
+import type { FavoriteMeal, FoodCatalogItem, RecipeCatalogItem } from '$lib/core/domain/types';
 import {
   findFoodCatalogItemByBarcode,
   foodLookupResultFromCatalogItem,
@@ -15,11 +10,12 @@ import {
 import { resolveNutritionPlannedMeal } from '$lib/features/nutrition/planned-meal-resolution';
 import { type NutritionPageState } from '$lib/features/nutrition/state';
 import {
-  buildFavoriteMealRecord,
-  buildFoodCatalogItemRecord,
-  buildFoodEntryRecord,
-  buildRecipeCatalogItemRecord,
-} from '$lib/features/nutrition/store';
+  createFoodEntryServer,
+  resolveNutritionPlannedFoodIdServer,
+  saveFavoriteMealServer,
+  upsertFoodCatalogItemServer,
+  upsertRecipeCatalogItemServer,
+} from '$lib/server/nutrition/catalog-store';
 import {
   fetchOpenFoodFactsProductByBarcode,
   normalizeOpenFoodFactsBarcode,
@@ -43,7 +39,7 @@ import {
 import { refreshNutritionPageAfterMutationServer } from '$lib/server/nutrition/page-loader';
 import { getServerDrizzleClient } from '$lib/server/db/drizzle/client';
 import { drizzleSchema } from '$lib/server/db/drizzle/schema';
-import { selectMirrorRecordById, upsertMirrorRecord } from '$lib/server/db/drizzle/mirror';
+import { selectMirrorRecordById } from '$lib/server/db/drizzle/mirror';
 
 export { loadNutritionPageServer } from '$lib/server/nutrition/page-loader';
 
@@ -66,91 +62,6 @@ function dedupeRecipesById(items: RecipeCatalogItem[]): RecipeCatalogItem[] {
     deduped.set(item.id, item);
   }
   return [...deduped.values()];
-}
-
-async function upsertFoodCatalogItemServer(input: FoodCatalogItem): Promise<FoodCatalogItem> {
-  const { db } = getServerDrizzleClient();
-  const existing = await selectMirrorRecordById<FoodCatalogItem>(
-    db,
-    drizzleSchema.foodCatalogItems,
-    input.id
-  );
-  const item = buildFoodCatalogItemRecord(input, existing);
-  await upsertMirrorRecord(db, 'foodCatalogItems', drizzleSchema.foodCatalogItems, item);
-  return item;
-}
-
-async function upsertRecipeCatalogItemServer(input: RecipeCatalogItem): Promise<RecipeCatalogItem> {
-  const { db } = getServerDrizzleClient();
-  const existing = await selectMirrorRecordById<RecipeCatalogItem>(
-    db,
-    drizzleSchema.recipeCatalogItems,
-    input.id
-  );
-  const item = buildRecipeCatalogItemRecord(input, existing);
-  await upsertMirrorRecord(db, 'recipeCatalogItems', drizzleSchema.recipeCatalogItems, item);
-  return item;
-}
-
-async function createFoodEntryServer(
-  draft: Parameters<typeof buildFoodEntryRecord>[0]
-): Promise<FoodEntry> {
-  const { db } = getServerDrizzleClient();
-  const entry = buildFoodEntryRecord(draft);
-  await upsertMirrorRecord(db, 'foodEntries', drizzleSchema.foodEntries, entry);
-  return entry;
-}
-
-async function saveFavoriteMealServer(
-  input: Parameters<typeof buildFavoriteMealRecord>[0]
-): Promise<FavoriteMeal> {
-  const { db } = getServerDrizzleClient();
-  const meal = buildFavoriteMealRecord(input);
-  await upsertMirrorRecord(db, 'favoriteMeals', drizzleSchema.favoriteMeals, meal);
-  return meal;
-}
-
-async function resolveNutritionPlannedFoodIdServer(draft: {
-  name: string;
-  calories: number;
-  protein: number;
-  fiber: number;
-  carbs: number;
-  fat: number;
-  foodCatalogItemId?: string;
-}): Promise<string> {
-  if (draft.foodCatalogItemId) {
-    const existing = (await listFoodCatalogItemsServer()).find(
-      (item) => item.id === draft.foodCatalogItemId
-    );
-    if (existing) {
-      return existing.id;
-    }
-  }
-
-  const timestamp = new Date().toISOString();
-  const item = await upsertFoodCatalogItemServer({
-    id: `food-catalog-${crypto.randomUUID()}`,
-    name: draft.name.trim(),
-    sourceType: 'custom',
-    sourceName: 'Local catalog',
-    externalId: undefined,
-    brandName: undefined,
-    calories: draft.calories,
-    protein: draft.protein,
-    fiber: draft.fiber,
-    carbs: draft.carbs,
-    fat: draft.fat,
-    imageUrl: undefined,
-    ingredientsText: undefined,
-    servingAmount: undefined,
-    servingUnit: undefined,
-    lastVerifiedAt: undefined,
-    createdAt: timestamp,
-    updatedAt: timestamp,
-  });
-
-  return item.id;
 }
 
 export async function saveNutritionMealServer(
