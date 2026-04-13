@@ -12,6 +12,7 @@ import {
   createTodayFormFromSnapshot,
   createTodayNutritionRows,
   createTodayRecordRows,
+  createTodayRecommendationSupportRows,
 } from '$lib/features/today/model';
 
 describe('today model', () => {
@@ -81,6 +82,7 @@ describe('today model', () => {
     ]);
     expect(createTodayConfidenceLabel('low')).toBe('Low confidence');
     expect(createTodayRecommendationRows(snapshot)).toEqual([]);
+    expect(createTodayRecommendationSupportRows(snapshot)).toEqual([]);
     expect(
       createDailyCheckinPayload(snapshot.date, createTodayFormFromSnapshot(snapshot))
     ).toMatchObject({
@@ -88,5 +90,90 @@ describe('today model', () => {
       mood: 4,
       focus: 5,
     });
+  });
+
+  it('builds recommendation support rows from plan, nutrition, and recovery context', () => {
+    const snapshot: TodaySnapshot = {
+      date: '2026-04-02',
+      dailyRecord: null,
+      foodEntries: [],
+      nutritionSummary: {
+        calories: 320,
+        protein: 24,
+        fiber: 6,
+        carbs: 34,
+        fat: 8,
+      },
+      plannedMeal: null,
+      plannedMealIssue: null,
+      plannedWorkout: {
+        id: 'slot-1',
+        title: 'Full body reset',
+        subtitle: 'Recovery · 1 exercise · Quadriceps · Dumbbell',
+        status: 'planned',
+      },
+      plannedWorkoutIssue: null,
+      recoveryAdaptation: {
+        level: 'recovery',
+        headline: 'Keep today lighter',
+        reasons: ['Sleep landed under 6 hours.'],
+        mealFallback: ['Meal fallback: keep the next meal familiar, easy, and protein-forward.'],
+        workoutFallback: [
+          'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.',
+        ],
+        mealRecommendation: {
+          title: 'Greek yogurt bowl',
+          subtitle: 'Saved food · Local catalog · 24g protein',
+          reasons: ['Protein-forward and easy to repeat.'],
+          actionId: 'apply-recovery-meal',
+          actionLabel: 'Swap to recovery meal',
+        },
+        workoutRecommendation: {
+          title: 'Recovery walk',
+          subtitle: '10-20 minutes easy walk or mobility reset',
+          reasons: ['Lower friction movement fits recovery better.'],
+          actionId: 'apply-recovery-workout',
+          actionLabel: 'Swap to recovery walk',
+        },
+        actions: [],
+      },
+      intelligence: {
+        primaryRecommendation: {
+          id: 'recommendation-1',
+          kind: 'recovery',
+          title: 'Keep today lighter',
+          summary: 'Recovery signals are elevated.',
+          confidence: 'high',
+          score: 0.92,
+          reasons: ['Sleep and symptoms point toward a lighter day.'],
+          provenance: [
+            {
+              label: 'Sleep landed under 6 hours.',
+              sourceKind: 'daily_record',
+            },
+          ],
+          primaryAction: { kind: 'href', label: 'Open Plan', href: '/plan' },
+          secondaryAction: null,
+          supportingAction: null,
+        },
+        fallbackState: {
+          title: 'No strong recommendation yet.',
+          message: 'Stay with the planned day and keep logging signals.',
+          action: { kind: 'href', label: 'Open Plan', href: '/plan' },
+        },
+      },
+      planItems: [],
+      events: [],
+      latestJournalEntry: null,
+    };
+
+    expect(createTodayRecommendationSupportRows(snapshot)).toEqual([
+      'Plan: Full body reset is still queued.',
+      'Nutrition: protein 24g, fiber 6g so far.',
+      'Meal fallback: keep the next meal familiar, easy, and protein-forward.',
+      'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.',
+      'Recovery meal: Greek yogurt bowl.',
+      'Recovery workout: Recovery walk.',
+    ]);
   });
 });
