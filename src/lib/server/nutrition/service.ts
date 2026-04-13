@@ -1,10 +1,8 @@
 import type { FoodLookupResult } from '$lib/features/nutrition/types';
 import type {
-  DailyRecord,
   FavoriteMeal,
   FoodCatalogItem,
   FoodEntry,
-  HealthEvent,
   RecipeCatalogItem,
 } from '$lib/core/domain/types';
 import {
@@ -14,19 +12,14 @@ import {
   searchLocalFoodCatalog,
   searchPackagedFoodCatalog,
 } from '$lib/features/nutrition/lookup';
-import { createNutritionPageState, type NutritionPageState } from '$lib/features/nutrition/state';
+import { resolveNutritionPlannedMeal } from '$lib/features/nutrition/planned-meal-resolution';
+import { type NutritionPageState } from '$lib/features/nutrition/state';
 import {
   buildFavoriteMealRecord,
   buildFoodCatalogItemRecord,
   buildFoodEntryRecord,
   buildRecipeCatalogItemRecord,
 } from '$lib/features/nutrition/store';
-import {
-  buildNutritionRecommendationContextFromData,
-  buildDailyNutritionSummaryFromEntries,
-} from '$lib/features/nutrition/summary';
-import { resolveNutritionPlannedMeal } from '$lib/features/nutrition/planned-meal-resolution';
-import { refreshWeeklyReviewArtifactsServer } from '$lib/server/review/service';
 import {
   fetchOpenFoodFactsProductByBarcode,
   normalizeOpenFoodFactsBarcode,
@@ -47,14 +40,12 @@ import {
   listRecipeCatalogItemsServer,
   savePlanSlotServer,
 } from '$lib/server/planning/store';
+import { refreshNutritionPageAfterMutationServer } from '$lib/server/nutrition/page-loader';
 import { getServerDrizzleClient } from '$lib/server/db/drizzle/client';
 import { drizzleSchema } from '$lib/server/db/drizzle/schema';
-import {
-  selectAllMirrorRecords,
-  selectMirrorRecordById,
-  selectMirrorRecordsByField,
-  upsertMirrorRecord,
-} from '$lib/server/db/drizzle/mirror';
+import { selectMirrorRecordById, upsertMirrorRecord } from '$lib/server/db/drizzle/mirror';
+
+export { loadNutritionPageServer } from '$lib/server/nutrition/page-loader';
 
 export type SearchUsdaResponse = {
   matches: FoodLookupResult[];
@@ -75,13 +66,6 @@ function dedupeRecipesById(items: RecipeCatalogItem[]): RecipeCatalogItem[] {
     deduped.set(item.id, item);
   }
   return [...deduped.values()];
-}
-
-async function listFavoriteMealsServer(): Promise<FavoriteMeal[]> {
-  const { db } = getServerDrizzleClient();
-  return (await selectAllMirrorRecords<FavoriteMeal>(db, drizzleSchema.favoriteMeals)).sort(
-    (left, right) => right.updatedAt.localeCompare(left.updatedAt)
-  );
 }
 
 async function upsertFoodCatalogItemServer(input: FoodCatalogItem): Promise<FoodCatalogItem> {
@@ -124,107 +108,6 @@ async function saveFavoriteMealServer(
   const meal = buildFavoriteMealRecord(input);
   await upsertMirrorRecord(db, 'favoriteMeals', drizzleSchema.favoriteMeals, meal);
   return meal;
-}
-
-function createLoadedNutritionPageState(
-  state: NutritionPageState,
-  localDay: string,
-  data: {
-    summary: {
-      calories: number;
-      protein: number;
-      fiber: number;
-      carbs: number;
-      fat: number;
-      entries: FoodEntry[];
-    };
-    favoriteMeals: FavoriteMeal[];
-    catalogItems: FoodCatalogItem[];
-    recipeCatalogItems: RecipeCatalogItem[];
-    plannedMeal: ReturnType<typeof resolveNutritionPlannedMeal>;
-    recommendationContext: {
-      sleepHours?: number;
-      sleepQuality?: number;
-      anxietyCount: number;
-      symptomCount: number;
-    };
-  }
-): NutritionPageState {
-  return {
-    ...state,
-    loading: false,
-    localDay,
-    saveNotice: state.saveNotice,
-    summary: data.summary,
-    favoriteMeals: data.favoriteMeals,
-    catalogItems: data.catalogItems,
-    recipeCatalogItems: data.recipeCatalogItems,
-    plannedMeal: data.plannedMeal.candidate?.meal ?? null,
-    plannedMealIssue: data.plannedMeal.issue ?? '',
-    plannedMealSlotId:
-      data.plannedMeal.candidate?.kind === 'plan-slot-food'
-        ? (data.plannedMeal.candidate.slotId ?? null)
-        : null,
-    recommendationContext: data.recommendationContext,
-  };
-}
-
-export async function loadNutritionPageServer(
-  localDay: string,
-  state: NutritionPageState = createNutritionPageState()
-): Promise<NutritionPageState> {
-  const { db } = getServerDrizzleClient();
-  const [
-    dailyRecords,
-    healthEvents,
-    foodEntries,
-    favoriteMeals,
-    catalogItems,
-    recipeCatalogItems,
-    planSlots,
-  ] = await Promise.all([
-    selectMirrorRecordsByField<DailyRecord>(db, drizzleSchema.dailyRecords, 'date', localDay),
-    selectMirrorRecordsByField<HealthEvent>(db, drizzleSchema.healthEvents, 'localDay', localDay),
-    selectMirrorRecordsByField<FoodEntry>(db, drizzleSchema.foodEntries, 'localDay', localDay),
-    listFavoriteMealsServer(),
-    listFoodCatalogItemsServer(),
-    listRecipeCatalogItemsServer(),
-    listPlanSlotsForDayServer(localDay),
-  ]);
-
-  return createLoadedNutritionPageState(state, localDay, {
-    summary: buildDailyNutritionSummaryFromEntries(foodEntries),
-    favoriteMeals,
-    catalogItems,
-    recipeCatalogItems,
-    plannedMeal: resolveNutritionPlannedMeal(planSlots, catalogItems),
-    recommendationContext: buildNutritionRecommendationContextFromData(
-      dailyRecords[0] ?? null,
-      healthEvents
-    ),
-  });
-}
-
-async function reloadNutritionPageStateServer(
-  state: NutritionPageState,
-  overrides: Partial<NutritionPageState> = {}
-): Promise<NutritionPageState> {
-  return {
-    ...(await loadNutritionPageServer(state.localDay, state)),
-    ...overrides,
-  };
-}
-
-async function refreshNutritionPageAfterMutationServer(
-  state: NutritionPageState,
-  overrides: Partial<NutritionPageState> = {},
-  reviewLocalDay?: string
-): Promise<NutritionPageState> {
-  if (reviewLocalDay) {
-    await refreshWeeklyReviewArtifactsServer(reviewLocalDay);
-  }
-
-  return await reloadNutritionPageStateServer(state, overrides);
 }
 
 async function resolveNutritionPlannedFoodIdServer(draft: {
