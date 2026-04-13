@@ -135,6 +135,56 @@ describe('today snapshot', () => {
     });
   });
 
+  it('builds plan item summaries from planner domain data', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+    const workout = await saveWorkoutTemplate(db, {
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    });
+
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      title: food.name,
+      mealType: 'breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: workout.id,
+      title: workout.title,
+    });
+
+    const snapshot = await getTodaySnapshot(db, '2026-04-02');
+
+    expect(snapshot.planItems).toHaveLength(2);
+    expect(snapshot.planItems[0]).toMatchObject({
+      title: 'Greek yogurt bowl',
+      status: 'planned',
+    });
+    expect(snapshot.planItems[0]?.subtitle).toMatch(/Saved food/i);
+    expect(snapshot.planItems[1]).toMatchObject({
+      title: 'Full body reset',
+      status: 'planned',
+    });
+    expect(snapshot.planItems[1]?.subtitle).toMatch(/Recovery/i);
+  });
+
   it('surfaces the canonical planned meal when a planned food slot exists', async () => {
     const db = getDb();
     const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
