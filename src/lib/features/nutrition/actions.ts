@@ -7,7 +7,7 @@ import {
 } from './store';
 import {
   getNutritionPlannedMealResolution,
-  listStalePlannedFoodSlotIds,
+  listStalePlannedMealSlotIds,
 } from './planned-meal-resolution';
 import {
   deletePlanSlot,
@@ -48,6 +48,7 @@ export interface NutritionRecurringMealDraft extends NutritionMacroDraft {
 export interface NutritionPlannedMealDraft extends NutritionRecurringMealDraft {
   notes: string;
   foodCatalogItemId?: string;
+  recipeCatalogItemId?: string;
 }
 
 export interface NutritionCatalogItemDraft {
@@ -61,6 +62,18 @@ export interface NutritionCatalogItemDraft {
 
 export interface NutritionActionsStorage
   extends NutritionPageStorage, WeeklyPlansStore, ReviewStorage {}
+
+async function resolveNutritionPlannedRecipeId(
+  store: NutritionPageStorage,
+  draft: NutritionPlannedMealDraft
+): Promise<string | null> {
+  if (!draft.recipeCatalogItemId) {
+    return null;
+  }
+
+  const recipe = await store.recipeCatalogItems.get(draft.recipeCatalogItemId);
+  return recipe?.id ?? null;
+}
 
 async function resolveNutritionPlannedFoodId(
   store: FoodCatalogItemsStore,
@@ -108,6 +121,17 @@ async function refreshNutritionPageAfterMutation(
   }
 
   return await reloadNutritionPageState(store, state, overrides);
+}
+
+async function deleteStalePlannedFoodSlots(
+  store: NutritionActionsStorage,
+  slotIds: string[]
+): Promise<void> {
+  // deletePlanSlot reindexes siblings after each removal, so concurrent deletes can
+  // race and resurrect a stale sibling via a later reorder write.
+  for (const slotId of slotIds) {
+    await deletePlanSlot(store, slotId);
+  }
 }
 
 export async function saveNutritionMeal(
@@ -181,17 +205,48 @@ export async function planNutritionMeal(
   }
 
   const resolution = await getNutritionPlannedMealResolution(store, state.localDay);
-  if (resolution.candidate?.kind === 'plan-slot-food') {
+  if (resolution.candidate) {
     return {
       ...state,
       saveNotice: 'Today already has a planned meal from Plan. Update it there instead.',
     };
   }
 
-  const staleSlotIds = await listStalePlannedFoodSlotIds(store, state.localDay);
-  await Promise.all(staleSlotIds.map((slotId) => deletePlanSlot(store, slotId)));
+  const staleSlotIds = await listStalePlannedMealSlotIds(store, state.localDay);
+  await deleteStalePlannedFoodSlots(store, staleSlotIds);
 
   const weeklyPlan = await ensureWeeklyPlan(store, state.localDay);
+  const recipeCatalogItemId = await resolveNutritionPlannedRecipeId(store, draft);
+  if (recipeCatalogItemId) {
+    const recipe = await store.recipeCatalogItems.get(recipeCatalogItemId);
+    if (!recipe) {
+      return {
+        ...state,
+        saveNotice: 'That recipe no longer exists. Choose another before planning it.',
+      };
+    }
+
+    await savePlanSlot(store, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: state.localDay,
+      slotType: 'meal',
+      itemType: 'recipe',
+      itemId: recipe.id,
+      mealType: draft.mealType,
+      title: recipe.title,
+      notes: draft.notes.trim() || undefined,
+    });
+
+    return await refreshNutritionPageAfterMutation(
+      store,
+      state,
+      {
+        saveNotice: 'Planned next meal saved.',
+      },
+      state.localDay
+    );
+  }
+
   const foodCatalogItemId = await resolveNutritionPlannedFoodId(store, draft);
   await savePlanSlot(store, {
     weeklyPlanId: weeklyPlan.id,
@@ -217,9 +272,13 @@ export async function clearNutritionPlannedMeal(
   store: NutritionActionsStorage,
   state: NutritionPageState
 ): Promise<NutritionPageState> {
+  const staleSlotIds = await listStalePlannedMealSlotIds(store, state.localDay);
+
   if (state.plannedMealSlotId) {
     await deletePlanSlot(store, state.plannedMealSlotId);
   }
+
+  await deleteStalePlannedFoodSlots(store, staleSlotIds);
 
   return await refreshNutritionPageAfterMutation(
     store,
@@ -227,7 +286,7 @@ export async function clearNutritionPlannedMeal(
     {
       saveNotice: 'Planned meal cleared.',
     },
-    state.plannedMealSlotId ? state.localDay : undefined
+    state.plannedMealSlotId || staleSlotIds.length ? state.localDay : undefined
   );
 }
 

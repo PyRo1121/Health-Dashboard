@@ -5,7 +5,12 @@ import type {
   PlannedMeal,
   RecipeCatalogItem,
 } from '$lib/core/domain/types';
-import { createNutritionForm, mergeNutritionFormWithDraft, type NutritionFormState } from './model';
+import {
+  createNutritionForm,
+  mergeNutritionFormWithDraft,
+  type NutritionDraftSource,
+  type NutritionFormState,
+} from './model';
 import {
   getNutritionPlannedMealResolution,
   type NutritionPlannedMealStore,
@@ -64,6 +69,7 @@ export interface NutritionPageState {
   plannedMeal: PlannedMeal | null;
   plannedMealIssue: string;
   plannedMealSlotId: string | null;
+  plannedMealSource: NutritionDraftSource | null;
   searchQuery: string;
   matches: FoodLookupResult[];
   packagedQuery: string;
@@ -72,6 +78,7 @@ export interface NutritionPageState {
   recipeQuery: string;
   recipeMatches: RecipeCatalogItem[];
   selectedMatch: FoodLookupResult | null;
+  selectedDraftSource: NutritionDraftSource | null;
   form: NutritionFormState;
   recommendationContext: NutritionRecommendationContext;
 }
@@ -116,6 +123,7 @@ export function createNutritionPageState(): NutritionPageState {
     plannedMeal: null,
     plannedMealIssue: '',
     plannedMealSlotId: null,
+    plannedMealSource: null,
     searchQuery: '',
     matches: [],
     packagedQuery: '',
@@ -124,6 +132,7 @@ export function createNutritionPageState(): NutritionPageState {
     recipeQuery: '',
     recipeMatches: [],
     selectedMatch: null,
+    selectedDraftSource: null,
     form: createNutritionForm(),
     recommendationContext: createEmptyRecommendationContext(),
   };
@@ -162,10 +171,8 @@ export async function loadNutritionPage(
     recipeCatalogItems,
     plannedMeal: plannedMeal.candidate?.meal ?? null,
     plannedMealIssue: plannedMeal.issue ?? '',
-    plannedMealSlotId:
-      plannedMeal.candidate?.kind === 'plan-slot-food'
-        ? (plannedMeal.candidate.slotId ?? null)
-        : null,
+    plannedMealSlotId: plannedMeal.candidate?.slotId ?? null,
+    plannedMealSource: plannedMeal.candidate?.source ?? null,
     recommendationContext,
   };
 }
@@ -301,9 +308,19 @@ export function selectNutritionMatch(
   return {
     ...state,
     selectedMatch: match,
+    selectedDraftSource: {
+      kind: 'food',
+      id: match.id,
+      sourceName: match.sourceName,
+    },
     searchNotice: '',
+    packagedNotice: '',
+    recipeNotice: '',
     form: mergeNutritionFormWithDraft(
-      state.form,
+      {
+        ...state.form,
+        notes: '',
+      },
       attachNutrientsToFoodEntry(
         {
           localDay: state.localDay,
@@ -322,10 +339,24 @@ export function useNutritionRecipe(
 ): NutritionPageState {
   return {
     ...state,
+    selectedMatch: null,
+    selectedDraftSource: {
+      kind: 'recipe',
+      id: recipe.id,
+      sourceName: recipe.sourceName,
+    },
+    searchNotice: '',
+    packagedNotice: '',
     recipeNotice: `Loaded ${recipe.title} into the meal form.`,
     form: {
       ...state.form,
+      mealType: recipe.mealType ?? state.form.mealType,
       name: recipe.title,
+      calories: '0',
+      protein: '0',
+      fiber: '0',
+      carbs: '0',
+      fat: '0',
       notes: recipe.ingredients.slice(0, 4).join(', '),
     },
   };

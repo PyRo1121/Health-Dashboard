@@ -5,32 +5,18 @@ import {
   previewImportServer,
 } from '$lib/server/imports/service';
 import { importsRequestSchema } from '$lib/features/imports/contracts';
+import { createValidatedActionPostHandler } from '$lib/server/http/validated-action-route';
 
-export const POST: RequestHandler = async ({ request }) => {
-  let body: unknown;
-
-  try {
-    body = await request.json();
-  } catch {
-    return new Response('Invalid import request payload.', { status: 400 });
-  }
-
-  const parsed = importsRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return new Response('Invalid import request payload.', { status: 400 });
-  }
-
-  try {
-    switch (parsed.data.action) {
-      case 'list':
-        return Response.json(await listImportBatchesServer());
-      case 'preview':
-        return Response.json(await previewImportServer(parsed.data.input));
-      case 'commit':
-        return Response.json(await commitImportBatchServer(parsed.data.batchId));
-    }
-  } catch (error) {
+export const POST: RequestHandler = createValidatedActionPostHandler({
+  schema: importsRequestSchema,
+  invalidMessage: 'Invalid import request payload.',
+  handlers: {
+    list: async () => await listImportBatchesServer(),
+    preview: async (data) => await previewImportServer(data.input),
+    commit: async (data) => await commitImportBatchServer(data.batchId),
+  },
+  onError: (error) => {
     const message = error instanceof Error ? error.message : 'Import request failed.';
     return new Response(message, { status: 400 });
-  }
-};
+  },
+});

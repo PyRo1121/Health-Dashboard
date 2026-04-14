@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getTestHealthDb } from '$lib/core/db/test-client';
 import { currentLocalDay } from '$lib/core/domain/time';
@@ -84,6 +84,14 @@ describe('Today route', () => {
       expect(screen.getByText('7')).toBeTruthy();
       expect(screen.getByText('Sleep duration')).toBeTruthy();
       expect(screen.getByText('6.5 hours')).toBeTruthy();
+
+      const eventSection = screen
+        .getByRole('heading', { name: 'Same-day event stream' })
+        .closest('section') as HTMLElement;
+      const labels = within(eventSection)
+        .getAllByRole('listitem')
+        .map((item) => item.querySelector('strong')?.textContent);
+      expect(labels).toEqual(['Sleep duration', 'Anxiety episode']);
     });
   });
 
@@ -126,6 +134,251 @@ describe('Today route', () => {
       expect(screen.getByText(/Calories: 310/i)).toBeTruthy();
       expect(screen.getByText(/Protein: 24/i)).toBeTruthy();
       expect(screen.getByText(/Protein pace/i)).toBeTruthy();
+    });
+  });
+
+  it('shows a planned recipe meal and lets today log it immediately', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    await db.recipeCatalogItems.put({
+      id: 'themealdb:52772',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      title: 'Teriyaki Chicken Casserole',
+      sourceType: 'themealdb',
+      sourceName: 'TheMealDB',
+      externalId: '52772',
+      mealType: 'dinner',
+      cuisine: 'Japanese',
+      ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'recipe',
+      itemId: 'themealdb:52772',
+      title: 'Teriyaki Chicken Casserole',
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    const plannedMealSection = () =>
+      screen.getByRole('heading', { name: 'Planned next meal' }).closest('section') as HTMLElement;
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Teriyaki Chicken Casserole').length).toBeGreaterThan(0);
+      expect(within(plannedMealSection()).getByText(/Meal type: dinner/i)).toBeTruthy();
+      expect(within(plannedMealSection()).getByText(/Source: TheMealDB/i)).toBeTruthy();
+      expect(within(plannedMealSection()).queryByText(/Calories: 0/i)).toBeNull();
+      expect(within(plannedMealSection()).queryByText(/Protein: 0/i)).toBeNull();
+      expect(screen.queryByText(/If you log the planned meal next:/i)).toBeNull();
+      expect(screen.queryByText(/Protein is still low so far\./i)).toBeNull();
+      expect(screen.getByText(/nutrition totals are still unknown/i)).toBeTruthy();
+      expect(
+        screen.queryByText(/changes today's intake more than another unplanned snack/i)
+      ).toBeNull();
+      expect(
+        screen.queryAllByText(/logging it now keeps plan, Today, and Review aligned/i).length
+      ).toBeGreaterThan(0);
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Log planned meal' }));
+    await waitFor(() => {
+      expect(screen.getByText(/Planned meal logged\./i)).toBeTruthy();
+      expect(screen.getByText(/Latest meal: Teriyaki Chicken Casserole/i)).toBeTruthy();
+    });
+  });
+
+  it('prefers a later valid planned meal over an earlier stale slot', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'missing-food',
+      mealType: 'breakfast',
+      title: 'Missing breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'lunch',
+      title: food.name,
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
+      expect(screen.getByText(/Meal type: lunch/i)).toBeTruthy();
+      expect(screen.queryByText(/Planned meal unavailable\./i)).toBeNull();
+    });
+  });
+
+  it('lets the user clear a planned meal handoff', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'breakfast',
+      title: food.name,
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
+      expect(screen.getByText(/Meal type: breakfast/i)).toBeTruthy();
+    });
+    expect(await db.planSlots.count()).toBe(1);
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Clear plan' }));
+    await waitFor(async () => {
+      expect(screen.getByText(/Planned meal cleared\./i)).toBeTruthy();
+      expect(screen.getByText(/No meal queued up\./i)).toBeTruthy();
+      expect(await db.planSlots.count()).toBe(0);
+    });
+  });
+
+  it('clears stale sibling meal slots alongside the visible planned meal handoff', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'missing-food',
+      mealType: 'breakfast',
+      title: 'Missing breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'lunch',
+      title: food.name,
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
+      expect(screen.getByText(/Meal type: lunch/i)).toBeTruthy();
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Clear plan' }));
+    await waitFor(async () => {
+      expect(screen.getByText(/Planned meal cleared\./i)).toBeTruthy();
+      expect(screen.getByText(/No meal queued up\./i)).toBeTruthy();
+      expect(screen.queryByText(/Planned meal unavailable\./i)).toBeNull();
+      expect(await db.planSlots.count()).toBe(0);
+    });
+  });
+
+  it('clears stale sibling meal slots when the visible planned meal is marked done', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'missing-food',
+      mealType: 'breakfast',
+      title: 'Missing breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'lunch',
+      title: food.name,
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
+      expect(screen.getByText(/Meal type: lunch/i)).toBeTruthy();
+    });
+
+    const todayPlanSection = Array.from(document.querySelectorAll('section')).find((section) =>
+      section.textContent?.includes("Today's plan")
+    );
+    const toastRow = Array.from(todayPlanSection?.querySelectorAll('li') ?? []).find((row) =>
+      row.textContent?.includes('Greek yogurt bowl')
+    );
+    const doneButton = Array.from(toastRow?.querySelectorAll('button') ?? []).find((button) =>
+      button.textContent?.includes('Done')
+    ) as HTMLButtonElement | undefined;
+    doneButton?.click();
+
+    await waitFor(async () => {
+      expect(screen.getByText(/Plan item marked done\./i)).toBeTruthy();
+      expect(screen.getByText(/No meal queued up\./i)).toBeTruthy();
+      expect(screen.queryByText(/Planned meal unavailable\./i)).toBeNull();
+      expect(todayPlanSection?.textContent).not.toContain('Missing breakfast');
+      expect(
+        (await db.planSlots.toArray()).filter((slot) => slot.status === 'planned')
+      ).toHaveLength(0);
     });
   });
 
@@ -482,6 +735,199 @@ describe('Today route', () => {
     await waitFor(() => {
       expect(screen.getByText(/Recovery workout applied\./i)).toBeTruthy();
       expect(screen.getAllByText('Recovery walk').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('drops stale sibling meal slots when recovery swaps the visible planned meal', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Toast and jam',
+      calories: 260,
+      protein: 6,
+      fiber: 2,
+      carbs: 42,
+      fat: 6,
+    });
+    await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    await db.dailyRecords.put({
+      id: `daily:${localDay}`,
+      createdAt: '2026-04-02T08:00:00.000Z',
+      updatedAt: '2026-04-02T08:00:00.000Z',
+      date: localDay,
+      mood: 3,
+      energy: 2,
+      stress: 4,
+      focus: 3,
+      sleepHours: 5.5,
+      sleepQuality: 2,
+      freeformNote: 'Dragging today.',
+    });
+    await logSymptomEvent(db, {
+      localDay,
+      symptom: 'Headache',
+      severity: 4,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'missing-food',
+      mealType: 'breakfast',
+      title: 'Missing breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'lunch',
+      title: food.name,
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Swap to recovery meal' })).toBeTruthy();
+      expect(screen.getByText('Missing breakfast')).toBeTruthy();
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Swap to recovery meal' }));
+    await waitFor(async () => {
+      expect(screen.getByText(/Recovery meal applied\./i)).toBeTruthy();
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
+      expect(screen.queryByText('Missing breakfast')).toBeNull();
+      expect(await db.planSlots.count()).toBe(1);
+    });
+  });
+
+  it('targets the visible planned workout when recovery swap runs beside an earlier stale slot', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    const template = await saveWorkoutTemplate(db, {
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    });
+
+    await db.dailyRecords.put({
+      id: `daily:${localDay}`,
+      createdAt: '2026-04-02T08:00:00.000Z',
+      updatedAt: '2026-04-02T08:00:00.000Z',
+      date: localDay,
+      mood: 3,
+      energy: 2,
+      stress: 4,
+      focus: 3,
+      sleepHours: 5.5,
+      sleepQuality: 2,
+      freeformNote: 'Dragging today.',
+    });
+    await logSymptomEvent(db, {
+      localDay,
+      symptom: 'Headache',
+      severity: 4,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: 'template-missing',
+      title: 'Missing workout',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: template.id,
+      title: template.title,
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Swap to recovery walk' })).toBeTruthy();
+      expect(screen.getAllByText('Full body reset').length).toBeGreaterThan(0);
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Swap to recovery walk' }));
+    await waitFor(async () => {
+      const todayPlanSection = Array.from(document.querySelectorAll('section')).find((section) =>
+        section.textContent?.includes("Today's plan")
+      );
+      expect(screen.getByText(/Recovery workout applied\./i)).toBeTruthy();
+      expect(screen.getAllByText('Recovery walk').length).toBeGreaterThan(0);
+      expect(todayPlanSection?.textContent).not.toContain('Full body reset');
+      expect(todayPlanSection?.textContent).not.toContain('Missing workout');
+      expect(
+        (await db.planSlots.toArray()).filter((slot) => slot.title === 'Recovery walk')
+      ).toHaveLength(1);
+    });
+  });
+
+  it('clears stale sibling workout slots when the visible planned workout is marked done', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    const template = await saveWorkoutTemplate(db, {
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    });
+
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: 'template-missing',
+      title: 'Missing workout',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: template.id,
+      title: template.title,
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getByRole('button', { name: 'Mark workout done' })).toBeTruthy();
+      expect(screen.getAllByText('Full body reset').length).toBeGreaterThan(0);
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Mark workout done' }));
+    await waitFor(async () => {
+      const todayPlanSection = Array.from(document.querySelectorAll('section')).find((section) =>
+        section.textContent?.includes("Today's plan")
+      );
+      expect(screen.getByText(/Plan item marked done\./i)).toBeTruthy();
+      expect(screen.getByText(/No workout lined up\./i)).toBeTruthy();
+      expect(screen.queryByText(/Planned workout unavailable\./i)).toBeNull();
+      expect(todayPlanSection?.textContent).not.toContain('Missing workout');
+      expect(
+        (await db.planSlots.toArray()).filter((slot) => slot.status === 'planned')
+      ).toHaveLength(0);
     });
   });
 });

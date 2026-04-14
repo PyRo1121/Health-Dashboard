@@ -1,6 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getTestHealthDb, resetTestHealthDb } from '$lib/core/db/test-client';
+import { currentLocalDay } from '$lib/core/domain/time';
+import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import NutritionPage from '../../../../src/routes/nutrition/+page.svelte';
 
 describe('Nutrition route', () => {
@@ -98,6 +100,9 @@ describe('Nutrition route', () => {
       expect((screen.getByLabelText('Meal name') as HTMLInputElement).value).toBe(
         'Teriyaki Chicken Casserole'
       );
+      expect((screen.getByLabelText('Meal type') as HTMLSelectElement).value).toBe('dinner');
+      expect((screen.getByLabelText('Calories') as HTMLInputElement).value).toBe('0');
+      expect((screen.getByLabelText('Protein') as HTMLInputElement).value).toBe('0');
     });
   });
 
@@ -129,6 +134,122 @@ describe('Nutrition route', () => {
       expect((screen.getByLabelText('Protein') as HTMLInputElement).value).toBe('24');
       expect((screen.getByLabelText('Carbs') as HTMLInputElement).value).toBe('34');
     });
+  });
+
+  it('plans a recommended saved food without duplicating the local catalog item', async () => {
+    const db = getTestHealthDb();
+    await db.foodCatalogItems.put({
+      id: 'food-catalog-1',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      name: 'Greek yogurt bowl',
+      sourceType: 'custom',
+      sourceName: 'Local catalog',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    render(NutritionPage);
+
+    await screen.findByText('Recommended next');
+    await fireEvent.click(screen.getByRole('button', { name: 'Plan next' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Planned next meal saved\./i)).toBeTruthy();
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
+    });
+
+    const planSlots = await db.planSlots.toArray();
+    expect(planSlots).toHaveLength(1);
+    expect(planSlots[0]?.itemId).toBe('food-catalog-1');
+    expect(await db.foodCatalogItems.count()).toBe(1);
+  });
+
+  it('plans a recommended recipe as a recipe slot without cloning it into the local food catalog', async () => {
+    const db = getTestHealthDb();
+    await db.recipeCatalogItems.put({
+      id: 'recipe-1',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      title: 'Teriyaki Chicken Bowl',
+      sourceType: 'themealdb',
+      sourceName: 'TheMealDB',
+      externalId: '52772',
+      mealType: 'dinner',
+      cuisine: 'Japanese',
+      ingredients: ['Chicken', 'Soy sauce', 'Rice', 'Broccoli'],
+    });
+
+    render(NutritionPage);
+
+    await screen.findByText('Recommended next');
+    await fireEvent.click(screen.getByRole('button', { name: 'Plan next' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Planned next meal saved\./i)).toBeTruthy();
+      expect(screen.getAllByText('Teriyaki Chicken Bowl').length).toBeGreaterThan(0);
+    });
+
+    const planSlots = await db.planSlots.toArray();
+    expect(planSlots).toHaveLength(1);
+    expect(planSlots[0]).toEqual(
+      expect.objectContaining({
+        itemType: 'recipe',
+        itemId: 'recipe-1',
+        mealType: 'dinner',
+        title: 'Teriyaki Chicken Bowl',
+      })
+    );
+    expect(
+      (await db.foodCatalogItems.toArray()).find(
+        (item) => item.name === 'Teriyaki Chicken Bowl' && item.sourceName === 'Local catalog'
+      )
+    ).toBeUndefined();
+  });
+
+  it('drops the saved-food identity once the loaded draft is manually edited before planning', async () => {
+    const db = getTestHealthDb();
+    await db.foodCatalogItems.put({
+      id: 'food-catalog-1',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      name: 'Greek yogurt bowl',
+      sourceType: 'custom',
+      sourceName: 'Local catalog',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    render(NutritionPage);
+
+    await screen.findByText('Recommended next');
+    await fireEvent.click(screen.getByRole('button', { name: 'Load food' }));
+    await waitFor(() => {
+      expect((screen.getByLabelText('Meal name') as HTMLInputElement).value).toBe(
+        'Greek yogurt bowl'
+      );
+    });
+
+    await fireEvent.input(screen.getByLabelText('Meal name'), {
+      target: { value: 'Greek yogurt bowl remix' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Plan next meal' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Planned next meal saved\./i)).toBeTruthy();
+      expect(screen.getAllByText('Greek yogurt bowl remix').length).toBeGreaterThan(0);
+    });
+
+    const planSlots = await db.planSlots.toArray();
+    expect(planSlots).toHaveLength(1);
+    expect(planSlots[0]?.itemId).not.toBe('food-catalog-1');
+    expect(await db.foodCatalogItems.count()).toBe(2);
   });
 
   it('plans the current draft and can reload it later', async () => {
@@ -167,6 +288,165 @@ describe('Nutrition route', () => {
       expect(screen.getByText(/Nothing planned yet\./i)).toBeTruthy();
     });
     expect(await db.planSlots.count()).toBe(0);
+  });
+
+  it('still surfaces a valid planned meal when an earlier slot is stale', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+
+    await db.foodCatalogItems.put({
+      id: 'food-catalog-2',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      name: 'Greek yogurt bowl',
+      sourceType: 'custom',
+      sourceName: 'Local catalog',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'missing-food',
+      mealType: 'breakfast',
+      title: 'Missing breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'food-catalog-2',
+      mealType: 'lunch',
+      title: 'Greek yogurt bowl',
+    });
+
+    render(NutritionPage);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
+      expect(screen.getByText(/Meal type: lunch/i)).toBeTruthy();
+      expect(screen.queryByText(/Planned meal unavailable\./i)).toBeNull();
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Load into draft' }));
+    await waitFor(() => {
+      expect((screen.getByLabelText('Meal name') as HTMLInputElement).value).toBe(
+        'Greek yogurt bowl'
+      );
+      expect((screen.getByLabelText('Meal type') as HTMLSelectElement).value).toBe('lunch');
+    });
+  });
+
+  it('clears stale sibling plan slots when clearing the visible planned meal', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+
+    await db.foodCatalogItems.put({
+      id: 'food-catalog-2',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      name: 'Greek yogurt bowl',
+      sourceType: 'custom',
+      sourceName: 'Local catalog',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'missing-food',
+      mealType: 'breakfast',
+      title: 'Missing breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'food-catalog-2',
+      mealType: 'lunch',
+      title: 'Greek yogurt bowl',
+    });
+
+    render(NutritionPage);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Greek yogurt bowl').length).toBeGreaterThan(0);
+      expect(screen.getByText(/Meal type: lunch/i)).toBeTruthy();
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Clear plan' }));
+    await waitFor(async () => {
+      expect(screen.getByText(/Planned meal cleared\./i)).toBeTruthy();
+      expect(screen.getByText(/Nothing planned yet\./i)).toBeTruthy();
+      expect(screen.queryByText(/Planned meal unavailable\./i)).toBeNull();
+      expect(await db.planSlots.count()).toBe(0);
+    });
+  });
+
+  it('surfaces a planned recipe slot and can load it into the draft', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+
+    await db.recipeCatalogItems.put({
+      id: 'themealdb:52772',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      title: 'Teriyaki Chicken Casserole',
+      sourceType: 'themealdb',
+      sourceName: 'TheMealDB',
+      externalId: '52772',
+      mealType: 'dinner',
+      cuisine: 'Japanese',
+      ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
+    });
+
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'recipe',
+      itemId: 'themealdb:52772',
+      title: 'Teriyaki Chicken Casserole',
+    });
+
+    render(NutritionPage);
+
+    await waitFor(() => {
+      expect(screen.getAllByText('Teriyaki Chicken Casserole').length).toBeGreaterThan(0);
+      expect(screen.getByText(/Meal type: dinner/i)).toBeTruthy();
+      expect(screen.queryByText(/Calories: 0/i)).toBeNull();
+      expect(screen.queryByText(/Protein: 0/i)).toBeNull();
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Load into draft' }));
+    await waitFor(() => {
+      expect((screen.getByLabelText('Meal name') as HTMLInputElement).value).toBe(
+        'Teriyaki Chicken Casserole'
+      );
+      expect((screen.getByLabelText('Meal type') as HTMLSelectElement).value).toBe('dinner');
+      expect((screen.getByLabelText('Calories') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Protein') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Fiber') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Carbs') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Fat') as HTMLInputElement).value).toBe('');
+    });
   });
 
   it('hydrates a review strategy deep link into the meal draft and clears the query', async () => {
