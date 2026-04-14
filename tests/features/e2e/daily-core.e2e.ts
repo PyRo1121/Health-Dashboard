@@ -80,6 +80,82 @@ test('nutrition flow with recurring meal reuse', async ({ page }) => {
   await expect(todaySummarySection.locator('.summary-list')).toContainText('Calories: 640');
 });
 
+test('packaged food search keeps cached local hits selectable alongside remote results', async ({
+  page,
+}) => {
+  const localDay = new Intl.DateTimeFormat('en-CA', {
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        dailyRecords: [],
+        journalEntries: [],
+        foodEntries: [],
+        foodCatalogItems: [
+          {
+            id: 'off:049000028911',
+            createdAt: '2026-04-03T00:00:00.000Z',
+            updatedAt: '2026-04-03T00:00:00.000Z',
+            name: 'Diet Cola',
+            sourceType: 'open-food-facts',
+            sourceName: 'Open Food Facts',
+            brandName: 'Acme Drinks',
+            barcode: '049000028911',
+            calories: 1,
+            protein: 0,
+            fiber: 0,
+            carbs: 0,
+            fat: 0,
+          },
+        ],
+        recipeCatalogItems: [],
+        weeklyPlans: [
+          {
+            id: 'weekly-plan-1',
+            createdAt: '2026-04-03T00:00:00.000Z',
+            updatedAt: '2026-04-03T00:00:00.000Z',
+            weekStart: localDay,
+            title: `Week of ${localDay}`,
+          },
+        ],
+        planSlots: [],
+        derivedGroceryItems: [],
+        manualGroceryItems: [],
+        workoutTemplates: [],
+        exerciseCatalogItems: [],
+        favoriteMeals: [],
+        healthEvents: [],
+        healthTemplates: [],
+        sobrietyEvents: [],
+        assessmentResults: [],
+        importBatches: [],
+        importArtifacts: [],
+        reviewSnapshots: [],
+        adherenceMatches: [],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/nutrition');
+  await page.getByLabel('Packaged product search').fill('cola');
+  await page.getByRole('button', { name: 'Search packaged foods' }).click();
+
+  const mealLoggingSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Meal logging' }),
+  });
+  const dietColaRow = mealLoggingSection.locator('li').filter({ hasText: 'Diet Cola Acme Drinks' });
+  await expect(dietColaRow).toBeVisible();
+
+  await dietColaRow.getByRole('button', { name: 'Use packaged' }).click();
+  await expect(page.getByLabel('Meal name')).toHaveValue('Diet Cola');
+});
+
 test('weekly review flow', async ({ page }) => {
   await page.goto('/today');
   await page.getByLabel('Mood').fill('5');

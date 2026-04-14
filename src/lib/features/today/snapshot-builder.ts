@@ -112,6 +112,22 @@ function deriveTodayPlannedWorkoutIssue(
   return null;
 }
 
+export function listStalePlannedWorkoutSlotIdsFromData(
+  planSlots: PlanSlot[],
+  workoutTemplates: WorkoutTemplate[]
+): string[] {
+  return planSlots
+    .filter(
+      (slot) =>
+        slot.slotType === 'workout' &&
+        slot.itemType === 'workout-template' &&
+        slot.itemId &&
+        slot.status === 'planned' &&
+        !workoutTemplates.some((template) => template.id === slot.itemId)
+    )
+    .map((slot) => slot.id);
+}
+
 function createTodayPlanItems(
   planSlots: PlanSlot[],
   foodCatalogItems: FoodCatalogItem[],
@@ -180,7 +196,11 @@ export function buildTodaySnapshotFromData(input: {
     workoutTemplates,
     exerciseCatalogItems
   );
-  const plannedMealResolution = resolveNutritionPlannedMeal(planSlots, foodCatalogItems);
+  const plannedMealResolution = resolveNutritionPlannedMeal(
+    planSlots,
+    foodCatalogItems,
+    recipeCatalogItems
+  );
   const plannedWorkoutIssue = plannedWorkout
     ? null
     : deriveTodayPlannedWorkoutIssue(planSlots, workoutTemplates);

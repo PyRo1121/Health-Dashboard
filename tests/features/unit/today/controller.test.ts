@@ -9,6 +9,7 @@ import {
   clearTodayPlannedMealPage,
   loadTodayPage,
   logTodayPlannedMealPage,
+  markTodayPlanSlotStatusPage,
   saveTodayPage,
 } from '$lib/features/today/controller';
 
@@ -135,6 +136,135 @@ describe('today controller', () => {
     expect(await db.reviewSnapshots.count()).toBe(1);
   });
 
+  it('clears stale sibling meal slots when the user clears the visible planned meal', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'missing-food',
+      mealType: 'breakfast',
+      title: 'Missing breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'lunch',
+      title: food.name,
+    });
+
+    let state = await loadTodayPage(db, '2026-04-02');
+    expect(state.snapshot?.plannedMeal?.name).toBe('Greek yogurt bowl');
+
+    state = await clearTodayPlannedMealPage(db, state);
+
+    expect(state.saveNotice).toBe('Planned meal cleared.');
+    expect(state.snapshot?.plannedMeal).toBeNull();
+    expect(state.snapshot?.plannedMealIssue).toBeNull();
+    expect(await db.planSlots.count()).toBe(0);
+  });
+
+  it('drops stale sibling meal slots after logging the visible planned meal', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'missing-food',
+      mealType: 'breakfast',
+      title: 'Missing breakfast',
+    });
+    const validSlot = await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'lunch',
+      title: food.name,
+    });
+
+    let state = await loadTodayPage(db, '2026-04-02');
+    expect(state.snapshot?.plannedMeal?.name).toBe('Greek yogurt bowl');
+
+    state = await logTodayPlannedMealPage(db, state);
+
+    expect(state.saveNotice).toBe('Planned meal logged.');
+    expect(state.snapshot?.plannedMeal).toBeNull();
+    expect(state.snapshot?.plannedMealIssue).toBeNull();
+    expect(await db.foodEntries.count()).toBe(1);
+    expect(await db.planSlots.count()).toBe(1);
+    expect((await db.planSlots.get(validSlot.id))?.status).toBe('done');
+  });
+
+  it('clears stale sibling meal slots when the visible planned meal is marked done', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'missing-food',
+      mealType: 'breakfast',
+      title: 'Missing breakfast',
+    });
+    const visibleSlot = await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'lunch',
+      title: food.name,
+    });
+
+    let state = await loadTodayPage(db, '2026-04-02');
+    expect(state.snapshot?.plannedMeal?.name).toBe('Greek yogurt bowl');
+
+    state = await markTodayPlanSlotStatusPage(db, state, visibleSlot.id, 'done');
+
+    expect(state.saveNotice).toBe('Plan item marked done.');
+    expect(state.snapshot?.plannedMeal).toBeNull();
+    expect(state.snapshot?.plannedMealIssue).toBeNull();
+    expect((await db.planSlots.get(visibleSlot.id))?.status).toBe('done');
+    expect(await db.planSlots.count()).toBe(1);
+  });
+
   it('applies the recovery meal and workout swaps from today state', async () => {
     const db = getDb();
     const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
@@ -162,6 +292,7 @@ describe('today controller', () => {
       itemId: toast.id,
       mealType: 'breakfast',
       title: toast.name,
+      notes: 'Use the sourdough loaf before it goes stale.',
     });
     const workoutSlot = await savePlanSlot(db, {
       weeklyPlanId: weeklyPlan.id,
@@ -208,7 +339,9 @@ describe('today controller', () => {
     state = await applyTodayRecoveryActionPage(db, state, 'apply-recovery-meal');
     expect(state.saveNotice).toBe('Recovery meal applied.');
     expect(state.snapshot?.plannedMeal?.name).toBe('Greek yogurt bowl');
+    expect(state.snapshot?.plannedMeal?.notes).toBeUndefined();
     expect((await db.planSlots.get(mealSlot.id))?.itemId).toBe(yogurt.id);
+    expect((await db.planSlots.get(mealSlot.id))?.notes).toBeUndefined();
     expect(state.snapshot?.intelligence.primaryRecommendation).toMatchObject({
       kind: 'recovery',
       primaryAction: { kind: 'recovery-action', actionId: 'apply-recovery-workout' },
@@ -218,5 +351,180 @@ describe('today controller', () => {
     expect(state.saveNotice).toBe('Recovery workout applied.');
     expect(state.snapshot?.plannedWorkout?.title).toBe('Recovery walk');
     expect((await db.planSlots.get(workoutSlot.id))?.itemType).toBe('freeform');
+  });
+
+  it('targets the visible planned meal when recovery swaps run beside an earlier stale slot', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const toast = await saveFoodCatalogItem(db, {
+      name: 'Toast and jam',
+      calories: 260,
+      protein: 6,
+      fiber: 2,
+      carbs: 42,
+      fat: 6,
+    });
+    const yogurt = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+
+    const staleSlot = await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: 'missing-food',
+      mealType: 'breakfast',
+      title: 'Missing breakfast',
+    });
+    const visibleSlot = await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: toast.id,
+      mealType: 'lunch',
+      title: toast.name,
+    });
+
+    await db.dailyRecords.put({
+      id: 'daily:2026-04-02',
+      createdAt: '2026-04-02T08:00:00.000Z',
+      updatedAt: '2026-04-02T08:00:00.000Z',
+      date: '2026-04-02',
+      mood: 3,
+      energy: 2,
+      stress: 4,
+      focus: 3,
+      sleepHours: 5.5,
+      sleepQuality: 2,
+      freeformNote: 'Dragging today.',
+    });
+    await logSymptomEvent(db, {
+      localDay: '2026-04-02',
+      symptom: 'Headache',
+      severity: 4,
+    });
+
+    let state = await loadTodayPage(db, '2026-04-02');
+    expect(state.snapshot?.plannedMeal?.name).toBe('Toast and jam');
+
+    state = await applyTodayRecoveryActionPage(db, state, 'apply-recovery-meal');
+
+    expect(state.saveNotice).toBe('Recovery meal applied.');
+    expect(state.snapshot?.plannedMeal?.name).toBe('Greek yogurt bowl');
+    expect(await db.planSlots.get(staleSlot.id)).toBeUndefined();
+    expect((await db.planSlots.get(visibleSlot.id))?.itemId).toBe(yogurt.id);
+    expect((await db.planSlots.get(visibleSlot.id))?.title).toBe('Greek yogurt bowl');
+    expect(await db.planSlots.count()).toBe(1);
+  });
+
+  it('targets the visible planned workout when recovery swaps run beside an earlier stale slot', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const visibleTemplate = {
+      id: 'template-1',
+      createdAt: '2026-04-02T08:00:00.000Z',
+      updatedAt: '2026-04-02T08:00:00.000Z',
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    };
+
+    await db.workoutTemplates.put(visibleTemplate);
+    const staleSlot = await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: 'template-missing',
+      title: 'Missing workout',
+    });
+    const visibleSlot = await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: visibleTemplate.id,
+      title: visibleTemplate.title,
+    });
+
+    await db.dailyRecords.put({
+      id: 'daily:2026-04-02',
+      createdAt: '2026-04-02T08:00:00.000Z',
+      updatedAt: '2026-04-02T08:00:00.000Z',
+      date: '2026-04-02',
+      mood: 3,
+      energy: 2,
+      stress: 4,
+      focus: 3,
+      sleepHours: 5.5,
+      sleepQuality: 2,
+      freeformNote: 'Dragging today.',
+    });
+    await logSymptomEvent(db, {
+      localDay: '2026-04-02',
+      symptom: 'Headache',
+      severity: 4,
+    });
+
+    let state = await loadTodayPage(db, '2026-04-02');
+    expect(state.snapshot?.plannedWorkout?.title).toBe('Full body reset');
+
+    state = await applyTodayRecoveryActionPage(db, state, 'apply-recovery-workout');
+
+    expect(state.saveNotice).toBe('Recovery workout applied.');
+    expect(state.snapshot?.plannedWorkout?.title).toBe('Recovery walk');
+    expect(await db.planSlots.get(staleSlot.id)).toBeUndefined();
+    expect((await db.planSlots.get(visibleSlot.id))?.itemType).toBe('freeform');
+    expect((await db.planSlots.get(visibleSlot.id))?.title).toBe('Recovery walk');
+    expect(await db.planSlots.count()).toBe(1);
+  });
+
+  it('clears stale sibling workout slots when the visible planned workout is marked done', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const template = {
+      id: 'template-1',
+      createdAt: '2026-04-02T08:00:00.000Z',
+      updatedAt: '2026-04-02T08:00:00.000Z',
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    };
+
+    await db.workoutTemplates.put(template);
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: 'template-missing',
+      title: 'Missing workout',
+    });
+    const visibleSlot = await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: template.id,
+      title: template.title,
+    });
+
+    let state = await loadTodayPage(db, '2026-04-02');
+    expect(state.snapshot?.plannedWorkout?.title).toBe('Full body reset');
+
+    state = await markTodayPlanSlotStatusPage(db, state, visibleSlot.id, 'done');
+
+    expect(state.saveNotice).toBe('Plan item marked done.');
+    expect(state.snapshot?.plannedWorkout).toBeNull();
+    expect(state.snapshot?.plannedWorkoutIssue).toBeNull();
+    expect((await db.planSlots.get(visibleSlot.id))?.status).toBe('done');
+    expect(await db.planSlots.count()).toBe(1);
   });
 });

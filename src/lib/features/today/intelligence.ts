@@ -36,6 +36,8 @@ export type TodayRecoveryActionId =
   | 'apply-recovery-meal'
   | 'apply-recovery-workout';
 
+export type TodayRecommendationHref = '/' | '/journal' | '/nutrition' | '/plan' | `#${string}`;
+
 export type TodayRecommendationAction =
   | { kind: 'recovery-action'; label: string; actionId: TodayRecoveryActionId }
   | { kind: 'log-planned-meal'; label: string }
@@ -43,7 +45,7 @@ export type TodayRecommendationAction =
   | { kind: 'plan-status'; label: string; slotId: string; status: PlanSlot['status'] }
   | { kind: 'open-journal-recovery-note'; label: string }
   | { kind: 'open-journal-context-capture'; label: string }
-  | { kind: 'href'; label: string; href: string };
+  | { kind: 'href'; label: string; href: TodayRecommendationHref };
 
 export interface TodayRecommendation {
   id: string;

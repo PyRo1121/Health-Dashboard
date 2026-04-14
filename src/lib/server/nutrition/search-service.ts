@@ -60,7 +60,17 @@ export async function searchPackagedFoodsServer(query: string): Promise<FoodLook
 
   const catalogItems = await listFoodCatalogItemsServer();
   const localMatches = searchPackagedFoodCatalog(normalizedQuery, catalogItems);
-  const remoteProducts = await searchOpenFoodFactsProducts(normalizedQuery);
+  const remoteProducts = await (async () => {
+    try {
+      return await searchOpenFoodFactsProducts(normalizedQuery);
+    } catch {
+      return null;
+    }
+  })();
+  if (!remoteProducts) {
+    return localMatches;
+  }
+
   const remoteMatches: FoodLookupResult[] = [];
 
   for (const product of remoteProducts) {
@@ -106,7 +116,17 @@ export async function searchRecipesServer(query: string): Promise<RecipeCatalogI
   const localMatches = (await listRecipeCatalogItemsServer()).filter((recipe) =>
     recipe.title.toLowerCase().includes(normalizedQuery.toLowerCase())
   );
-  const remoteMatches = await searchThemealdbRecipes(normalizedQuery);
+  const remoteMatches = await (async (): Promise<RecipeCatalogItem[] | null> => {
+    try {
+      return await searchThemealdbRecipes(normalizedQuery);
+    } catch {
+      return null;
+    }
+  })();
+  if (!remoteMatches) {
+    return localMatches;
+  }
+
   const cachedRemoteMatches = await Promise.all(
     remoteMatches.map((recipe) => upsertRecipeCatalogItemServer(recipe))
   );
@@ -126,7 +146,14 @@ export async function lookupNutritionBarcodeServer(code: string): Promise<FoodLo
     return local;
   }
 
-  const product = await fetchOpenFoodFactsProductByBarcode(barcode);
+  let product: Awaited<ReturnType<typeof fetchOpenFoodFactsProductByBarcode>>;
+
+  try {
+    product = await fetchOpenFoodFactsProductByBarcode(barcode);
+  } catch {
+    return null;
+  }
+
   if (!product) return null;
 
   const normalized = normalizeOpenFoodFactsProduct(product);

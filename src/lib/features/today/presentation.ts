@@ -70,16 +70,18 @@ export function createTodayPlanRows(snapshot: TodaySnapshot | null): TodayPlanRo
 }
 
 export function createPlannedMealRows(plannedMeal: PlannedMeal | null): string[] {
-  return plannedMeal
-    ? [
-        `Meal type: ${plannedMeal.mealType}`,
-        `Calories: ${plannedMeal.calories ?? 0}`,
-        `Protein: ${plannedMeal.protein ?? 0}`,
-        `Fiber: ${plannedMeal.fiber ?? 0}`,
-        `Carbs: ${plannedMeal.carbs ?? 0}`,
-        `Fat: ${plannedMeal.fat ?? 0}`,
-      ]
-    : [];
+  if (!plannedMeal) {
+    return [];
+  }
+
+  return [
+    `Meal type: ${plannedMeal.mealType}`,
+    ...(plannedMeal.calories !== undefined ? [`Calories: ${plannedMeal.calories}`] : []),
+    ...(plannedMeal.protein !== undefined ? [`Protein: ${plannedMeal.protein}`] : []),
+    ...(plannedMeal.fiber !== undefined ? [`Fiber: ${plannedMeal.fiber}`] : []),
+    ...(plannedMeal.carbs !== undefined ? [`Carbs: ${plannedMeal.carbs}`] : []),
+    ...(plannedMeal.fat !== undefined ? [`Fat: ${plannedMeal.fat}`] : []),
+  ];
 }
 
 export function createPlannedWorkoutRows(plannedWorkout: TodayPlannedWorkout | null): string[] {
@@ -108,10 +110,14 @@ export function createTodayNutritionPulseMetrics(
   }
 
   const projectedProtein = snapshot.plannedMeal
-    ? snapshot.nutritionSummary.protein + (snapshot.plannedMeal.protein ?? 0)
+    ? snapshot.plannedMeal.protein !== undefined
+      ? snapshot.nutritionSummary.protein + snapshot.plannedMeal.protein
+      : null
     : null;
   const projectedFiber = snapshot.plannedMeal
-    ? snapshot.nutritionSummary.fiber + (snapshot.plannedMeal.fiber ?? 0)
+    ? snapshot.plannedMeal.fiber !== undefined
+      ? snapshot.nutritionSummary.fiber + snapshot.plannedMeal.fiber
+      : null
     : null;
 
   return [
@@ -150,20 +156,28 @@ export function createTodayNutritionGuidance(snapshot: TodaySnapshot | null): st
   const guidance: string[] = [];
   const protein = snapshot.nutritionSummary.protein;
   const fiber = snapshot.nutritionSummary.fiber;
-  const projectedProtein = protein + (snapshot.plannedMeal?.protein ?? 0);
-  const projectedFiber = fiber + (snapshot.plannedMeal?.fiber ?? 0);
+  const plannedProtein = snapshot.plannedMeal?.protein;
+  const plannedFiber = snapshot.plannedMeal?.fiber;
+  const projectedProtein = plannedProtein !== undefined ? protein + plannedProtein : null;
+  const projectedFiber = plannedFiber !== undefined ? fiber + plannedFiber : null;
 
   if (snapshot.plannedMeal) {
-    if (projectedProtein >= DAILY_NUTRITION_TARGETS.protein * 0.75) {
+    if (projectedProtein !== null && projectedProtein >= DAILY_NUTRITION_TARGETS.protein * 0.75) {
       guidance.push('The planned meal meaningfully lifts your protein pace.');
-    } else if (projectedProtein > protein) {
+    } else if (projectedProtein !== null && projectedProtein > protein) {
       guidance.push('The planned meal helps, but protein still looks light for the day.');
     }
 
-    if (projectedFiber >= DAILY_NUTRITION_TARGETS.fiber * 0.75) {
+    if (projectedFiber !== null && projectedFiber >= DAILY_NUTRITION_TARGETS.fiber * 0.75) {
       guidance.push('The planned meal keeps fiber moving in the right direction.');
-    } else if (projectedFiber > fiber) {
+    } else if (projectedFiber !== null && projectedFiber > fiber) {
       guidance.push('Fiber still needs attention after the planned meal.');
+    }
+
+    if (!guidance.length && plannedProtein === undefined && plannedFiber === undefined) {
+      guidance.push(
+        'The queued meal keeps plan and Today aligned, but its nutrition totals are still unknown.'
+      );
     }
   }
 
@@ -191,13 +205,25 @@ export function createPlannedMealProjectionRows(snapshot: TodaySnapshot | null):
     return [];
   }
 
-  return [
-    `Projected calories: ${snapshot.nutritionSummary.calories + (snapshot.plannedMeal.calories ?? 0)}`,
-    `Projected protein: ${snapshot.nutritionSummary.protein + (snapshot.plannedMeal.protein ?? 0)}`,
-    `Projected fiber: ${snapshot.nutritionSummary.fiber + (snapshot.plannedMeal.fiber ?? 0)}`,
-    `Projected carbs: ${snapshot.nutritionSummary.carbs + (snapshot.plannedMeal.carbs ?? 0)}`,
-    `Projected fat: ${snapshot.nutritionSummary.fat + (snapshot.plannedMeal.fat ?? 0)}`,
+  const rows = [
+    snapshot.plannedMeal.calories !== undefined
+      ? `Projected calories: ${snapshot.nutritionSummary.calories + snapshot.plannedMeal.calories}`
+      : null,
+    snapshot.plannedMeal.protein !== undefined
+      ? `Projected protein: ${snapshot.nutritionSummary.protein + snapshot.plannedMeal.protein}`
+      : null,
+    snapshot.plannedMeal.fiber !== undefined
+      ? `Projected fiber: ${snapshot.nutritionSummary.fiber + snapshot.plannedMeal.fiber}`
+      : null,
+    snapshot.plannedMeal.carbs !== undefined
+      ? `Projected carbs: ${snapshot.nutritionSummary.carbs + snapshot.plannedMeal.carbs}`
+      : null,
+    snapshot.plannedMeal.fat !== undefined
+      ? `Projected fat: ${snapshot.nutritionSummary.fat + snapshot.plannedMeal.fat}`
+      : null,
   ];
+
+  return rows.filter((row): row is string => row !== null);
 }
 
 export function createTodayConfidenceLabel(confidence: TodayConfidence): string {

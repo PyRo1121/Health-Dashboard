@@ -1,3 +1,4 @@
+import type { NutritionCatalogItemDraft } from '$lib/features/nutrition/actions';
 import type { NutritionPageState } from '$lib/features/nutrition/state';
 import { upsertFoodCatalogItemServer } from '$lib/server/nutrition/catalog-store';
 import { refreshNutritionPageAfterMutationServer } from '$lib/server/nutrition/page-loader';
@@ -21,14 +22,7 @@ export { loadNutritionPageServer } from '$lib/server/nutrition/page-loader';
 
 export async function saveNutritionCatalogItemServer(
   state: NutritionPageState,
-  draft: {
-    name: string;
-    calories: number;
-    protein: number;
-    fiber: number;
-    carbs: number;
-    fat: number;
-  }
+  draft: NutritionCatalogItemDraft
 ): Promise<NutritionPageState> {
   if (!draft.name.trim()) {
     return { ...state, saveNotice: 'Custom food name is required.' };

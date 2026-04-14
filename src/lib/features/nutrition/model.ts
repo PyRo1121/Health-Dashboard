@@ -31,6 +31,13 @@ export interface NutritionDraftShape {
   fat: number;
   notes: string;
   foodCatalogItemId?: string;
+  recipeCatalogItemId?: string;
+  sourceName?: string;
+}
+
+export interface NutritionDraftSource {
+  kind: 'food' | 'recipe';
+  id: string;
   sourceName?: string;
 }
 
@@ -50,7 +57,8 @@ export function createNutritionForm(): NutritionFormState {
 export function createNutritionDraftFromForm(
   localDay: string,
   form: NutritionFormState,
-  selectedMatch: FoodLookupResult | null
+  selectedMatch: FoodLookupResult | null,
+  selectedDraftSource: NutritionDraftSource | null
 ): NutritionDraftShape {
   return {
     localDay,
@@ -62,8 +70,11 @@ export function createNutritionDraftFromForm(
     carbs: Number(form.carbs),
     fat: Number(form.fat),
     notes: form.notes,
-    foodCatalogItemId: selectedMatch?.id,
-    sourceName: selectedMatch?.sourceName,
+    foodCatalogItemId:
+      selectedDraftSource?.kind === 'food' ? selectedDraftSource.id : selectedMatch?.id,
+    recipeCatalogItemId:
+      selectedDraftSource?.kind === 'recipe' ? selectedDraftSource.id : undefined,
+    sourceName: selectedDraftSource?.sourceName ?? selectedMatch?.sourceName,
   };
 }
 
@@ -107,16 +118,18 @@ export function createNutritionSummaryRows(summary: {
 }
 
 export function createPlannedMealRows(plannedMeal: PlannedMeal | null): string[] {
-  return plannedMeal
-    ? [
-        `Meal type: ${plannedMeal.mealType}`,
-        `Calories: ${plannedMeal.calories ?? 0}`,
-        `Protein: ${plannedMeal.protein ?? 0}`,
-        `Fiber: ${plannedMeal.fiber ?? 0}`,
-        `Carbs: ${plannedMeal.carbs ?? 0}`,
-        `Fat: ${plannedMeal.fat ?? 0}`,
-      ]
-    : [];
+  if (!plannedMeal) {
+    return [];
+  }
+
+  return [
+    `Meal type: ${plannedMeal.mealType}`,
+    ...(plannedMeal.calories !== undefined ? [`Calories: ${plannedMeal.calories}`] : []),
+    ...(plannedMeal.protein !== undefined ? [`Protein: ${plannedMeal.protein}`] : []),
+    ...(plannedMeal.fiber !== undefined ? [`Fiber: ${plannedMeal.fiber}`] : []),
+    ...(plannedMeal.carbs !== undefined ? [`Carbs: ${plannedMeal.carbs}`] : []),
+    ...(plannedMeal.fat !== undefined ? [`Fat: ${plannedMeal.fat}`] : []),
+  ];
 }
 
 export function createRecipeSummary(recipe: RecipeCatalogItem): string {

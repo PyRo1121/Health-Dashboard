@@ -15,6 +15,7 @@ function createNutritionRouteState() {
     plannedMeal: null,
     plannedMealIssue: '',
     plannedMealSlotId: null,
+    plannedMealSource: null,
     searchQuery: '',
     matches: [],
     packagedQuery: '',
@@ -23,6 +24,7 @@ function createNutritionRouteState() {
     recipeQuery: '',
     recipeMatches: [],
     selectedMatch: null,
+    selectedDraftSource: null,
     form: {
       mealType: 'breakfast',
       name: '',
@@ -102,10 +104,14 @@ describe('nutrition route', () => {
   });
 
   it('dispatches nutrition write actions through the server route', async () => {
+    const saveNutritionMealServer = vi.fn(async () => ({
+      ...createNutritionRouteState(),
+      saveNotice: 'Meal saved.',
+    }));
     const {
       pageState,
       route: { POST },
-    } = await importRoute({});
+    } = await importRoute({ saveNutritionMealServer });
     expect(
       await (
         await POST({
@@ -124,12 +130,20 @@ describe('nutrition route', () => {
                 carbs: 34,
                 fat: 8,
                 notes: '',
+                sourceName: 'USDA FoodData Central',
               },
             }),
           }),
         } as Parameters<typeof POST>[0])
       ).json()
     ).toEqual(expect.objectContaining({ saveNotice: 'Meal saved.' }));
+    expect(saveNutritionMealServer).toHaveBeenCalledWith(
+      pageState,
+      expect.objectContaining({
+        name: 'Greek yogurt bowl',
+        sourceName: 'USDA FoodData Central',
+      })
+    );
     expect(
       await (
         await POST({

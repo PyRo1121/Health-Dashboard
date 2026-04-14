@@ -40,11 +40,27 @@ export interface TodaySnapshotStore
     MovementStorage,
     JournalEntriesStore {}
 
+function sortTodayEventsChronologically(events: HealthEvent[]): HealthEvent[] {
+  return [...events].sort((left, right) => {
+    const leftTimestamp = left.sourceTimestamp ?? left.createdAt;
+    const rightTimestamp = right.sourceTimestamp ?? right.createdAt;
+
+    return (
+      leftTimestamp.localeCompare(rightTimestamp) ||
+      left.createdAt.localeCompare(right.createdAt) ||
+      left.eventType.localeCompare(right.eventType) ||
+      left.id.localeCompare(right.id)
+    );
+  });
+}
+
 export async function listEventsForDay(
   store: NutritionRecommendationContextStore,
   date: string
 ): Promise<HealthEvent[]> {
-  return store.healthEvents.where('localDay').equals(date).sortBy('eventType');
+  return sortTodayEventsChronologically(
+    await store.healthEvents.where('localDay').equals(date).toArray()
+  );
 }
 
 async function getLatestJournalEntryForDay(

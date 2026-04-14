@@ -1,5 +1,4 @@
 <script lang="ts">
-  import type { RecipeCatalogItem } from '$lib/core/domain/types';
   import {
     clearNutritionPlannedMeal,
     createNutritionPageState,
@@ -25,10 +24,6 @@
   import NutritionPlannedMealSection from '$lib/features/nutrition/components/NutritionPlannedMealSection.svelte';
   import NutritionRecommendationsSection from '$lib/features/nutrition/components/NutritionRecommendationsSection.svelte';
   import {
-    clearNutritionIntentFromLocation,
-    readNutritionIntentFromSearch,
-  } from '$lib/features/nutrition/navigation';
-  import {
     createRecommendationContextRows,
     createNutritionDraftFromForm,
     createPlannedMealRows,
@@ -37,12 +32,23 @@
   import { buildNutritionRecommendations } from '$lib/features/nutrition/recommend';
   import { onBrowserRouteMount } from '$lib/core/ui/route-runtime';
   import RoutePageHeader from '$lib/core/ui/shell/RoutePageHeader.svelte';
-  import { foodLookupResultFromCatalogItem } from '$lib/features/nutrition/lookup';
   import type { FoodLookupResult } from '$lib/features/nutrition/types';
+  import {
+    applyNutritionRecommendationSelection,
+    getNutritionRecommendationPlanDraft,
+    loadPlannedMealIntoDraft,
+    updateNutritionFormField,
+  } from '$lib/features/nutrition/page-actions';
+  import { applyPendingNutritionIntent } from '$lib/features/nutrition/page-intent';
 
   let page = $state(createNutritionPageState());
   let draftFromForm = $derived(
-    createNutritionDraftFromForm(page.localDay, page.form, page.selectedMatch)
+    createNutritionDraftFromForm(
+      page.localDay,
+      page.form,
+      page.selectedMatch,
+      page.selectedDraftSource
+    )
   );
   let summaryRows = $derived(createNutritionSummaryRows(page.summary));
   let plannedMealRows = $derived(createPlannedMealRows(page.plannedMeal));
@@ -70,48 +76,13 @@
     return next;
   }
 
-  async function applyPendingIntent(nextPage: typeof page): Promise<typeof page> {
-    const intent = readNutritionIntentFromSearch(window.location.search);
-    if (!intent) {
-      return nextPage;
-    }
-
-    clearNutritionIntentFromLocation(window.location, window.history);
-
-    if (intent.kind === 'food') {
-      const item = nextPage.catalogItems.find((candidate) => candidate.id === intent.id);
-      if (!item) {
-        return {
-          ...nextPage,
-          searchNotice: 'That saved food is no longer available in your local catalog.',
-        };
-      }
-
-      const hydrated = await useNutritionMatch(nextPage, foodLookupResultFromCatalogItem(item));
-      return {
-        ...hydrated,
-        searchNotice: 'Loaded from Review strategy.',
-      };
-    }
-
-    const recipe = nextPage.recipeCatalogItems.find((candidate) => candidate.id === intent.id);
-    if (!recipe) {
-      return {
-        ...nextPage,
-        recipeNotice: 'That saved recipe is no longer available in your local cache.',
-      };
-    }
-
-    return {
-      ...useNutritionRecipeIdea(nextPage, recipe),
-      recipeNotice: 'Loaded from Review strategy.',
-    };
-  }
-
   async function refreshData() {
     await runNutritionAction(async () => {
       const loaded = await loadNutritionPage(page);
-      page = await applyPendingIntent(loaded);
+      page = await applyPendingNutritionIntent(loaded, window, {
+        hydrateFoodMatch: useNutritionMatch,
+        applyRecipe: useNutritionRecipeIdea,
+      });
     });
   }
 
@@ -189,88 +160,39 @@
   }
 
   function updateFormField(field: keyof typeof page.form, value: string) {
-    page = {
-      ...page,
-      form: {
-        ...page.form,
-        [field]: value,
-      },
-    };
+    page = updateNutritionFormField(page, field, value);
   }
 
-  async function useRecipe(recipe: RecipeCatalogItem) {
+  async function useRecipe(recipe: (typeof page.recipeCatalogItems)[number]) {
     await runNutritionAction(async () => {
       page = useNutritionRecipeIdea(page, recipe);
     });
   }
 
   function loadPlannedMeal() {
-    if (!page.plannedMeal) return;
-    page = {
-      ...page,
-      selectedMatch: null,
-      saveNotice: 'Planned meal loaded into draft.',
-      form: {
-        ...page.form,
-        mealType: page.plannedMeal.mealType,
-        name: page.plannedMeal.name,
-        calories: String(page.plannedMeal.calories ?? 0),
-        protein: String(page.plannedMeal.protein ?? 0),
-        fiber: String(page.plannedMeal.fiber ?? 0),
-        carbs: String(page.plannedMeal.carbs ?? 0),
-        fat: String(page.plannedMeal.fat ?? 0),
-        notes: page.plannedMeal.notes ?? '',
-      },
-    };
+    page = loadPlannedMealIntoDraft(page);
   }
 
   async function planRecommendation(recommendationId: string, kind: 'food' | 'recipe') {
     await runNutritionAction(async () => {
-      if (kind === 'food') {
-        const item = page.catalogItems.find((candidate) => candidate.id === recommendationId);
-        if (!item) return;
-        page = await planNutritionMeal(page, {
-          name: item.name,
-          mealType: page.form.mealType,
-          calories: item.calories ?? 0,
-          protein: item.protein ?? 0,
-          fiber: item.fiber ?? 0,
-          carbs: item.carbs ?? 0,
-          fat: item.fat ?? 0,
-          notes: '',
-          sourceName: item.sourceName,
-        });
+      const draft = getNutritionRecommendationPlanDraft(page, recommendationId, kind);
+      if (!draft) {
         return;
       }
 
-      const recipe = page.recipeCatalogItems.find((candidate) => candidate.id === recommendationId);
-      if (!recipe) return;
-      page = await planNutritionMeal(page, {
-        name: recipe.title,
-        mealType: recipe.mealType ?? page.form.mealType,
-        calories: 0,
-        protein: 0,
-        fiber: 0,
-        carbs: 0,
-        fat: 0,
-        notes: recipe.ingredients.slice(0, 4).join(', '),
-        sourceName: recipe.sourceName,
-      });
+      page = await planNutritionMeal(page, draft);
     });
   }
 
   async function useRecommendation(recommendationId: string, kind: 'food' | 'recipe') {
     await runNutritionAction(async () => {
-      if (kind === 'food') {
-        const item = page.catalogItems.find((candidate) => candidate.id === recommendationId);
-        if (!item) return;
-        page = await useNutritionMatch(page, foodLookupResultFromCatalogItem(item));
-        return;
-      }
-
-      const recipe = page.recipeCatalogItems.find((candidate) => candidate.id === recommendationId);
-      if (!recipe) return;
-      page = useNutritionRecipeIdea(page, recipe);
+      page = await applyNutritionRecommendationSelection(
+        page,
+        recommendationId,
+        kind,
+        useNutritionMatch,
+        useNutritionRecipeIdea
+      );
     });
   }
 

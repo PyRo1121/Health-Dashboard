@@ -57,12 +57,12 @@ describe('today snapshot', () => {
 
     const events = await listEventsForDay(db, '2026-04-02');
     expect(events.map((event) => event.eventType)).toEqual([
-      'energy',
-      'focus',
       'mood',
+      'energy',
+      'stress',
+      'focus',
       'sleepHours',
       'sleepQuality',
-      'stress',
     ]);
   });
 
@@ -101,12 +101,12 @@ describe('today snapshot', () => {
     const snapshot = await getTodaySnapshot(db, '2026-04-02');
 
     expect(snapshot.events.map((event) => event.eventType)).toEqual([
-      'anxiety-episode',
       'sleep-duration',
+      'anxiety-episode',
     ]);
     expect(snapshot.events.map((event) => event.sourceType)).toEqual([
-      'manual',
       'native-companion',
+      'manual',
     ]);
   });
 
@@ -218,6 +218,44 @@ describe('today snapshot', () => {
       kind: 'planned_meal',
       title: 'Log Greek yogurt bowl next',
       confidence: 'high',
+    });
+  });
+
+  it('does not claim intake gains when a planned recipe has no known nutrition totals', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    await db.recipeCatalogItems.put({
+      id: 'themealdb:52772',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      title: 'Teriyaki Chicken Casserole',
+      sourceType: 'themealdb',
+      sourceName: 'TheMealDB',
+      externalId: '52772',
+      mealType: 'dinner',
+      cuisine: 'Japanese',
+      ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'recipe',
+      itemId: 'themealdb:52772',
+      title: 'Teriyaki Chicken Casserole',
+    });
+
+    const snapshot = await getTodaySnapshot(db, '2026-04-02');
+
+    expect(snapshot.plannedMeal).toMatchObject({
+      name: 'Teriyaki Chicken Casserole',
+      mealType: 'dinner',
+      sourceName: 'TheMealDB',
+    });
+    expect(snapshot.intelligence.primaryRecommendation).toMatchObject({
+      kind: 'planned_meal',
+      title: 'Log Teriyaki Chicken Casserole next',
+      summary: 'dinner is already queued, so logging it now keeps plan, Today, and Review aligned.',
     });
   });
 

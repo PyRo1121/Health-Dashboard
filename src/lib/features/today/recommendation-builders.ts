@@ -111,22 +111,29 @@ export function buildPlannedMealRecommendation(
     return null;
   }
 
-  const projectedProtein = input.nutritionSummary.protein + (input.plannedMeal.protein ?? 0);
-  const projectedFiber = input.nutritionSummary.fiber + (input.plannedMeal.fiber ?? 0);
+  const plannedProtein = input.plannedMeal.protein;
+  const plannedFiber = input.plannedMeal.fiber;
+  const projectedProtein =
+    plannedProtein !== undefined ? input.nutritionSummary.protein + plannedProtein : null;
+  const projectedFiber =
+    plannedFiber !== undefined ? input.nutritionSummary.fiber + plannedFiber : null;
 
   return {
     id: `recommendation:planned-meal:${input.date}`,
     kind: 'planned_meal',
     title: `Log ${input.plannedMeal.name} next`,
-    summary: `${input.plannedMeal.mealType} is already queued and changes today's intake more than another unplanned snack.`,
+    summary:
+      projectedProtein !== null || projectedFiber !== null
+        ? `${input.plannedMeal.mealType} is already queued and changes today's intake more than another unplanned snack.`
+        : `${input.plannedMeal.mealType} is already queued, so logging it now keeps plan, Today, and Review aligned.`,
     confidence: 'high',
     score: 76,
     reasons: [
       'The next meal is already planned.',
-      projectedProtein > input.nutritionSummary.protein
+      projectedProtein !== null && projectedProtein > input.nutritionSummary.protein
         ? 'It materially improves protein pace.'
         : 'It keeps the day structured and lower-friction.',
-      projectedFiber > input.nutritionSummary.fiber
+      projectedFiber !== null && projectedFiber > input.nutritionSummary.fiber
         ? 'It also lifts fiber pace.'
         : 'Logging it now keeps Today and Review aligned.',
     ].slice(0, 3),

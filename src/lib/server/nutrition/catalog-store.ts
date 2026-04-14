@@ -4,6 +4,7 @@ import type {
   FoodEntry,
   RecipeCatalogItem,
 } from '$lib/core/domain/types';
+import type { NutritionPlannedMealDraft } from '$lib/features/nutrition/actions';
 import {
   buildFavoriteMealRecord,
   buildFoodCatalogItemRecord,
@@ -61,15 +62,12 @@ export async function saveFavoriteMealServer(
   return meal;
 }
 
-export async function resolveNutritionPlannedFoodIdServer(draft: {
-  name: string;
-  calories: number;
-  protein: number;
-  fiber: number;
-  carbs: number;
-  fat: number;
-  foodCatalogItemId?: string;
-}): Promise<string> {
+export async function resolveNutritionPlannedFoodIdServer(
+  draft: Pick<
+    NutritionPlannedMealDraft,
+    'name' | 'calories' | 'protein' | 'fiber' | 'carbs' | 'fat' | 'foodCatalogItemId'
+  >
+): Promise<string> {
   if (draft.foodCatalogItemId) {
     const existing = (await listFoodCatalogItemsServer()).find(
       (item) => item.id === draft.foodCatalogItemId

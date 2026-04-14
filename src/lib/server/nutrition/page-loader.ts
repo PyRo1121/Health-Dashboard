@@ -64,10 +64,8 @@ function createLoadedNutritionPageState(
     recipeCatalogItems: data.recipeCatalogItems,
     plannedMeal: data.plannedMeal.candidate?.meal ?? null,
     plannedMealIssue: data.plannedMeal.issue ?? '',
-    plannedMealSlotId:
-      data.plannedMeal.candidate?.kind === 'plan-slot-food'
-        ? (data.plannedMeal.candidate.slotId ?? null)
-        : null,
+    plannedMealSlotId: data.plannedMeal.candidate?.slotId ?? null,
+    plannedMealSource: data.plannedMeal.candidate?.source ?? null,
     recommendationContext: data.recommendationContext,
   };
 }
@@ -100,7 +98,7 @@ export async function loadNutritionPageServer(
     favoriteMeals,
     catalogItems,
     recipeCatalogItems,
-    plannedMeal: resolveNutritionPlannedMeal(planSlots, catalogItems),
+    plannedMeal: resolveNutritionPlannedMeal(planSlots, catalogItems, recipeCatalogItems),
     recommendationContext: buildNutritionRecommendationContextFromData(
       dailyRecords[0] ?? null,
       healthEvents

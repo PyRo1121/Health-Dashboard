@@ -176,4 +176,48 @@ describe('today model', () => {
       'Recovery workout: Recovery walk.',
     ]);
   });
+
+  it('does not fabricate planned-meal projections or fallback meal advice when a recipe handoff has no nutrition totals', () => {
+    const snapshot: TodaySnapshot = {
+      date: '2026-04-02',
+      dailyRecord: null,
+      foodEntries: [],
+      nutritionSummary: {
+        calories: 320,
+        protein: 24,
+        fiber: 6,
+        carbs: 34,
+        fat: 8,
+      },
+      plannedMeal: {
+        id: 'planned-slot:recipe-1',
+        createdAt: '2026-04-02T08:00:00.000Z',
+        updatedAt: '2026-04-02T08:00:00.000Z',
+        name: 'Teriyaki Chicken Casserole',
+        mealType: 'dinner',
+        sourceName: 'TheMealDB',
+        notes: '3/4 cup soy sauce, 2 chicken breast',
+      },
+      plannedMealIssue: null,
+      plannedWorkout: null,
+      plannedWorkoutIssue: null,
+      recoveryAdaptation: null,
+      intelligence: {
+        primaryRecommendation: null,
+        fallbackState: null,
+      },
+      planItems: [],
+      events: [],
+      latestJournalEntry: null,
+    };
+
+    expect(createTodayNutritionPulseMetrics(snapshot)).toEqual([
+      { label: 'Protein pace', current: 24, target: 80, projected: null, tone: 'steady' },
+      { label: 'Fiber pace', current: 6, target: 25, projected: null, tone: 'steady' },
+    ]);
+    expect(createTodayNutritionGuidance(snapshot)).toEqual([
+      'The queued meal keeps plan and Today aligned, but its nutrition totals are still unknown.',
+    ]);
+    expect(createPlannedMealProjectionRows(snapshot)).toEqual([]);
+  });
 });

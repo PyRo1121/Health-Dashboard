@@ -65,3 +65,62 @@ test('weekly plan meal can be created from a saved food', async ({ page }) => {
   await expect(page.getByText(/Planned meal logged\./i)).toBeVisible();
   await expect(page.getByText(/Latest meal: Greek yogurt bowl/i)).toBeVisible();
 });
+
+test('weekly plan recipe meal flows into today logging', async ({ page }) => {
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        dailyRecords: [],
+        journalEntries: [],
+        foodEntries: [],
+        foodCatalogItems: [],
+        recipeCatalogItems: [
+          {
+            id: 'themealdb:52772',
+            createdAt: '2026-04-03T00:00:00.000Z',
+            updatedAt: '2026-04-03T00:00:00.000Z',
+            title: 'Teriyaki Chicken Casserole',
+            sourceType: 'themealdb',
+            sourceName: 'TheMealDB',
+            externalId: '52772',
+            mealType: 'dinner',
+            cuisine: 'Japanese',
+            ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
+          },
+        ],
+        weeklyPlans: [],
+        planSlots: [],
+        derivedGroceryItems: [],
+        manualGroceryItems: [],
+        workoutTemplates: [],
+        exerciseCatalogItems: [],
+        favoriteMeals: [],
+        healthEvents: [],
+        healthTemplates: [],
+        sobrietyEvents: [],
+        assessmentResults: [],
+        importBatches: [],
+        importArtifacts: [],
+        reviewSnapshots: [],
+        adherenceMatches: [],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/plan');
+  await page.getByLabel('Meal source').selectOption('recipe');
+  await page.getByLabel('Recipe').selectOption({ label: 'Teriyaki Chicken Casserole' });
+  await page.getByRole('button', { name: 'Add to week' }).click();
+  await expect(page.getByText(/Plan slot saved\./i)).toBeVisible();
+
+  await page.goto('/today');
+  const plannedMealSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Planned next meal' }),
+  });
+  await expect(plannedMealSection.getByText('Teriyaki Chicken Casserole')).toBeVisible();
+  await expect(plannedMealSection.getByText(/Meal type: dinner/i)).toBeVisible();
+  await page.getByRole('button', { name: 'Log planned meal' }).click();
+  await expect(page.getByText(/Planned meal logged\./i)).toBeVisible();
+  await expect(page.getByText(/Latest meal: Teriyaki Chicken Casserole/i)).toBeVisible();
+});
