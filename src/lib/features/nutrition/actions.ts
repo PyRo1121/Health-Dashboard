@@ -27,11 +27,11 @@ import {
 
 interface NutritionMacroDraft {
   name: string;
-  calories: number;
-  protein: number;
-  fiber: number;
-  carbs: number;
-  fat: number;
+  calories?: number;
+  protein?: number;
+  fiber?: number;
+  carbs?: number;
+  fat?: number;
   sourceName?: string;
 }
 
@@ -53,11 +53,11 @@ export interface NutritionPlannedMealDraft extends NutritionRecurringMealDraft {
 
 export interface NutritionCatalogItemDraft {
   name: string;
-  calories: number;
-  protein: number;
-  fiber: number;
-  carbs: number;
-  fat: number;
+  calories?: number;
+  protein?: number;
+  fiber?: number;
+  carbs?: number;
+  fat?: number;
 }
 
 export interface NutritionActionsStorage

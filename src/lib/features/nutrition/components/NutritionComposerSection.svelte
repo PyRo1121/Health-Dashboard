@@ -2,6 +2,7 @@
   import type { RecipeCatalogItem } from '$lib/core/domain/types';
   import { Button, Field, SectionCard } from '$lib/core/ui/primitives';
   import {
+    createNutritionMetricRows,
     createRecipeSummary,
     nutritionMealTypeOptions,
     type NutritionFormState,
@@ -90,8 +91,13 @@
         <li>
           <div>
             <strong>{match.name}</strong>
-            <p>{match.calories} kcal · {match.protein}g protein · {match.fiber}g fiber</p>
-            <p>{match.carbs}g carbs · {match.fat}g fat</p>
+            {#if createNutritionMetricRows(match).length}
+              {#each createNutritionMetricRows(match) as row (row)}
+                <p>{row}</p>
+              {/each}
+            {:else}
+              <p>Nutrition totals unknown.</p>
+            {/if}
           </div>
           <Button variant="ghost" onclick={() => onUseMatch(match)}>Use match</Button>
         </li>
@@ -135,8 +141,13 @@
             <div>
               <strong>{match.name}</strong>
               <p>{match.brandName ?? match.sourceName}</p>
-              <p>{match.calories} kcal · {match.protein}g protein · {match.fiber}g fiber</p>
-              <p>{match.carbs}g carbs · {match.fat}g fat</p>
+              {#if createNutritionMetricRows(match).length}
+                {#each createNutritionMetricRows(match) as row (row)}
+                  <p>{row}</p>
+                {/each}
+              {:else}
+                <p>Nutrition totals unknown.</p>
+              {/if}
             </div>
             <Button variant="ghost" onclick={() => onUseMatch(match)}>Use packaged</Button>
           </li>

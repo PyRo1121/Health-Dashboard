@@ -15,11 +15,11 @@ const SELECTED_MATCH_INVALIDATION_FIELDS = new Set<keyof NutritionPageState['for
 export interface NutritionActionDraft {
   name: string;
   mealType: string;
-  calories: number;
-  protein: number;
-  fiber: number;
-  carbs: number;
-  fat: number;
+  calories?: number;
+  protein?: number;
+  fiber?: number;
+  carbs?: number;
+  fat?: number;
   notes: string;
   foodCatalogItemId?: string;
   recipeCatalogItemId?: string;
@@ -87,11 +87,11 @@ export function getNutritionRecommendationPlanDraft(
     return {
       name: item.name,
       mealType: state.form.mealType,
-      calories: item.calories ?? 0,
-      protein: item.protein ?? 0,
-      fiber: item.fiber ?? 0,
-      carbs: item.carbs ?? 0,
-      fat: item.fat ?? 0,
+      calories: item.calories,
+      protein: item.protein,
+      fiber: item.fiber,
+      carbs: item.carbs,
+      fat: item.fat,
       notes: '',
       foodCatalogItemId: item.id,
       sourceName: item.sourceName,
@@ -106,11 +106,6 @@ export function getNutritionRecommendationPlanDraft(
   return {
     name: recipe.title,
     mealType: recipe.mealType ?? state.form.mealType,
-    calories: 0,
-    protein: 0,
-    fiber: 0,
-    carbs: 0,
-    fat: 0,
     notes: recipe.ingredients.slice(0, 4).join(', '),
     recipeCatalogItemId: recipe.id,
     sourceName: recipe.sourceName,

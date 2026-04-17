@@ -24,7 +24,7 @@
       {#each todayNutritionPulseMetrics as metric (metric.label)}
         <article class={`nutrition-pulse-card nutrition-pulse-card--${metric.tone}`}>
           <p class="nutrition-pulse-label">{metric.label}</p>
-          <strong>{metric.current} / {metric.target}g</strong>
+          <strong>{metric.current === null ? 'unknown' : metric.current} / {metric.target}g</strong>
           {#if metric.projected !== null}
             <p class="status-copy">Planned next: {metric.projected} / {metric.target}g</p>
           {/if}

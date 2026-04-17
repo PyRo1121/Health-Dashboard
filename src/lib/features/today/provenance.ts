@@ -68,14 +68,24 @@ export function buildPlanProvenance(input: TodayIntelligenceInput): TodayProvena
 export function buildNutritionProvenance(input: TodayIntelligenceInput): TodayProvenanceRow[] {
   const rows: TodayProvenanceRow[] = [];
 
-  if (input.nutritionSummary.protein < DAILY_NUTRITION_TARGETS.protein) {
+  if (input.nutritionSummaryUnknown?.protein) {
+    rows.push({
+      label: 'Protein pace is still unknown because one logged meal is missing nutrition totals.',
+      sourceKind: 'nutrition_summary',
+    });
+  } else if (input.nutritionSummary.protein < DAILY_NUTRITION_TARGETS.protein) {
     rows.push({
       label: `Protein pace: ${input.nutritionSummary.protein} / ${DAILY_NUTRITION_TARGETS.protein}g`,
       sourceKind: 'nutrition_summary',
     });
   }
 
-  if (input.nutritionSummary.fiber < DAILY_NUTRITION_TARGETS.fiber) {
+  if (input.nutritionSummaryUnknown?.fiber) {
+    rows.push({
+      label: 'Fiber pace is still unknown because one logged meal is missing nutrition totals.',
+      sourceKind: 'nutrition_summary',
+    });
+  } else if (input.nutritionSummary.fiber < DAILY_NUTRITION_TARGETS.fiber) {
     rows.push({
       label: `Fiber pace: ${input.nutritionSummary.fiber} / ${DAILY_NUTRITION_TARGETS.fiber}g`,
       sourceKind: 'nutrition_summary',

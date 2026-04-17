@@ -106,14 +106,21 @@ Updated:
 
 - `src/lib/features/nutrition/Page.svelte`
 - `src/lib/features/nutrition/actions.ts`
+- `src/lib/features/nutrition/components/NutritionComposerSection.svelte`
+- `src/lib/features/nutrition/components/NutritionCollectionsSection.svelte`
 - `src/lib/features/nutrition/contracts.ts`
+- `src/lib/features/nutrition/lookup.ts`
 - `src/lib/features/nutrition/model.ts`
+- `src/lib/features/nutrition/recommend.ts`
 - `src/lib/features/nutrition/planned-meal-resolution.ts`
 - `src/lib/features/nutrition/state.ts`
+- `src/lib/features/planning/model.ts`
 - `src/lib/features/today/actions.ts`
 - `src/lib/features/today/components/TodaySignalsSection.svelte`
+- `src/lib/features/today/components/TodayNutritionPulseSection.svelte`
 - `src/lib/features/today/presentation.ts`
 - `src/lib/features/today/recommendation-builders.ts`
+- `src/lib/features/today/provenance.ts`
 - `src/lib/features/today/snapshot.ts`
 - `src/lib/features/today/snapshot-builder.ts`
 - `src/lib/server/nutrition/meal-mutations.ts`
@@ -130,12 +137,17 @@ Added or expanded tests:
 - `tests/features/unit/nutrition/page-actions.test.ts`
 - `tests/features/unit/nutrition/page-intent.test.ts`
 - `tests/features/unit/nutrition/planned-meal-resolution.test.ts`
+- `tests/features/unit/nutrition/recommend.test.ts`
 - `tests/features/unit/nutrition/server.meal-mutations.test.ts`
 - `tests/features/unit/nutrition/search-service.test.ts`
 - `tests/features/unit/today/controller.test.ts`
 - `tests/features/unit/today/model.test.ts`
+- `tests/features/unit/today/intelligence.test.ts`
+- `tests/features/unit/planning/model.test.ts`
 - `tests/features/component/nutrition/NutritionPage.spec.ts`
+- `tests/features/component/planning/PlanPage.spec.ts`
 - `tests/features/component/today/TodayPage.spec.ts`
+- `tests/features/component/today/TodayNutritionPulseSection.spec.ts`
 - `tests/features/component/today/TodaySignalsSection.spec.ts`
 - `tests/features/component/today/TodayRecommendationSection.spec.ts`
 - `tests/features/component/today/TodayRecommendationActionControl.spec.ts`
@@ -162,6 +174,14 @@ These checks are green against the current workspace state:
 2. If new code is added beyond the current shell/helper boundaries, extend verification to the new seam instead of relying on this proof set alone.
 3. Keep the stale planned-food replacement path covered in production-mode E2E, since that regression only shows up on the server route path.
 4. Keep recipe handoff guidance truthful when nutrition totals are unknown; this path is easy to regress if `undefined` starts behaving like `0` again in Today presentation helpers or Nutrition draft-loading helpers.
+5. Keep unknown-macro custom foods truthful when they round-trip back through Nutrition search, recommendation planning drafts, and local-match hydration; saved catalog items must not silently come back as `0 kcal` / `0g protein` after a search or reuse flow.
+6. Keep Nutrition recommendation copy and scoring truthful when a saved food has unknown macros; recommendation reasons must not praise zero-valued phantom nutrition or claim steady-energy support without real metric evidence.
+7. Keep Today nutrition pulse, guidance, recommendation provenance, and nutrition-support recommendations truthful when logged meals have unknown macros; same-day totals must not fall back to `0` or trigger low-intake advice without evidence.
+8. Keep partial-known Today nutrition states precise metric-by-metric; if protein is known but fiber is unknown, Today must not collapse both into one generic unknown or hide the actionable known signal.
+9. Keep fresh Nutrition drafts truthful too; blank macro inputs on a new draft must not silently save as `0` when a user records or catalogs a name-only meal.
+10. Keep Nutrition day-summary copy truthful when any logged meal has unknown macros; the daily summary must not collapse partial unknown intake into fake `0` totals.
+11. Keep saved-food plan-slot summaries truthful across Plan → Today handoffs; unknown-macro saved foods should surface `Nutrition totals unknown` instead of silently dropping nutrition context or implying zero.
+12. Keep Today recovery meal swaps evidence-based; unknown-macro saved foods should not be promoted as recovery swap targets when their nutrition totals are still unknown.
 
 ## Risks
 
@@ -179,7 +199,11 @@ These checks are green against the current workspace state:
 - Client/server nutrition draft contracts could silently drop optional provenance like `sourceName`, creating parity drift between local and routed save flows.
 - Loading a recipe into the composer could fail to carry its meal type forward, or could leak stale food macros into the recipe draft, drifting the composer path from direct recommendation planning.
 - Recipe recommendations or recipe-loaded drafts could lose recipe identity when planned from Nutrition, cloning a fake local food instead of preserving the recipe slot and its grocery derivation.
-- Recipe handoffs with unknown nutrition totals could render bogus `0` calorie/protein/fiber/carbs/fat values, fake planned-meal projections, or fake composer draft metrics when a planned recipe slot is loaded back into Nutrition.
+- Recipe handoffs with unknown nutrition totals could render bogus `0` calorie/protein/fiber/carbs/fat values, fake planned-meal projections, fake composer draft metrics, or fake custom-food catalog macros when recipe-loaded drafts pass through Nutrition save flows.
+- Unknown-macro custom foods saved from recipe drafts could round-trip back through local Nutrition search as fake zero-macro matches, causing the meal composer and recommendation plan drafts to silently replace unknown totals with `0`.
+- Unknown-macro saved foods could still leak fake certainty through Nutrition recommendations if scoring and visible reasons treat missing metrics like zero and claim baseline or steady-energy fitness without evidence.
+- Fresh Nutrition drafts could fabricate zero-macro custom foods if untouched inputs still default to `'0'` before a name-only save.
+- Logged meals with unknown macros could still make the Nutrition day summary claim `Calories: 0` or `Protein: 0`, even though total intake is actually unknown rather than zero.
 - Remote recipe lookup failures could bubble a 500 through `/api/nutrition/search-recipes` instead of falling back to the local recipe cache.
 - Remote Open Food Facts search or barcode lookup failures could bubble a 500 through Nutrition search flows instead of falling back to cached local results or a null barcode miss.
 - Client/server nutrition draft types could drift if page-helper changes stop matching route/server mutation contracts.
@@ -196,9 +220,13 @@ These checks are green against the current workspace state:
 - Marking a visible planned meal or workout done could leave stale sibling handoffs behind, surfacing false unavailable states on the next reload.
 - Same-day event streams could sort by event type instead of real event time, hiding the actual sequence between imported and manual signals.
 - Planned recipe meals with unknown nutrition totals could regress back into misleading Today guidance if presentation helpers collapse unknown protein/fiber into fallback meal advice or fabricated intake-gain copy.
+- Logged same-day meals with unknown macros could regress back into misleading Today pulse cards, guidance, provenance, or nutrition-support recommendations if snapshot totals or recommendation inputs collapse missing metrics into `0`.
+- Partially logged same-day meals could still blur known and unknown nutrition signals together, causing Today guidance/support copy to overstate uncertainty for known metrics or overstate certainty for unknown ones.
 - Stale sibling recipe meal slots could survive Today/Nutrition clear flows even after the visible planned meal is cleared.
 - Nutrition pulse and journal prompt empty states could regress silently because the split is presentation-only.
 - Style drift across the extracted Today child components could change the current section rendering if not covered by component tests.
+- Saved-food plan-slot summaries could hide unknown nutrition state during Plan and Today handoffs, leaving name-only custom foods looking like fully described saved-food plans without any explicit unknown-macro warning.
+- Recovery adaptation could promote an unknown-macro saved food as a recovery meal swap, creating a high-confidence action without enough nutrition evidence to justify it.
 
 ## Verification
 

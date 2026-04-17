@@ -17,6 +17,11 @@ describe('Nutrition route', () => {
     await waitFor(() => {
       expect(screen.getByText(/No meals logged for today/i)).toBeTruthy();
     });
+    expect((screen.getByLabelText('Calories') as HTMLInputElement).value).toBe('');
+    expect((screen.getByLabelText('Protein') as HTMLInputElement).value).toBe('');
+    expect((screen.getByLabelText('Fiber') as HTMLInputElement).value).toBe('');
+    expect((screen.getByLabelText('Carbs') as HTMLInputElement).value).toBe('');
+    expect((screen.getByLabelText('Fat') as HTMLInputElement).value).toBe('');
   });
 
   it('searches, saves a meal, and reuses it as recurring', async () => {
@@ -65,6 +70,131 @@ describe('Nutrition route', () => {
     });
   });
 
+  it('shows unknown summary totals instead of zeroes after saving a name-only meal', async () => {
+    render(NutritionPage);
+
+    await screen.findByLabelText('Meal name');
+    await fireEvent.input(screen.getByLabelText('Meal name'), {
+      target: { value: 'Teriyaki Chicken Casserole' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Save meal' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Meal saved\./i)).toBeTruthy();
+      const summarySection = Array.from(document.querySelectorAll('section')).find((section) =>
+        section.textContent?.includes('Today summary')
+      );
+      expect(summarySection?.textContent).toContain('Teriyaki Chicken Casserole');
+      expect(summarySection?.textContent).toContain('Calories: unknown');
+      expect(summarySection?.textContent).toContain('Protein: unknown');
+      expect(summarySection?.textContent).not.toContain('Calories: 0');
+      expect(summarySection?.textContent).not.toContain('Protein: 0');
+    });
+  });
+
+  it('does not fabricate zero macros when a recipe-loaded draft is saved into the custom catalog', async () => {
+    const db = getTestHealthDb();
+    await db.recipeCatalogItems.put({
+      id: 'themealdb:52772',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      title: 'Teriyaki Chicken Casserole',
+      sourceType: 'themealdb',
+      sourceName: 'TheMealDB',
+      externalId: '52772',
+      mealType: 'dinner',
+      cuisine: 'Japanese',
+      ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
+    });
+
+    render(NutritionPage);
+
+    await screen.findByLabelText('Recipe search');
+    await fireEvent.input(screen.getByLabelText('Recipe search'), {
+      target: { value: 'teriyaki' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Search recipes' }));
+    await fireEvent.click(screen.getAllByRole('button', { name: 'Use recipe' })[0]!);
+    await waitFor(() => {
+      expect((screen.getByLabelText('Calories') as HTMLInputElement).value).toBe('');
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Save as custom food' }));
+    await waitFor(() => {
+      expect(screen.getByText(/Saved to custom food catalog\./i)).toBeTruthy();
+      const catalogSection = Array.from(document.querySelectorAll('section')).find((section) =>
+        section.textContent?.includes('Custom food catalog')
+      );
+      expect(catalogSection?.textContent).toContain('Teriyaki Chicken Casserole');
+      expect(catalogSection?.textContent).not.toContain('0 kcal');
+      expect(catalogSection?.textContent).not.toContain('0g protein');
+      expect(catalogSection?.textContent).toContain('Nutrition totals unknown.');
+    });
+  });
+
+  it('does not fabricate zero macros when saving a name-only custom food from a fresh draft', async () => {
+    render(NutritionPage);
+
+    await screen.findByLabelText('Meal name');
+    await fireEvent.input(screen.getByLabelText('Meal name'), {
+      target: { value: 'Mystery soup' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Save as custom food' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Saved to custom food catalog\./i)).toBeTruthy();
+      const catalogSection = Array.from(document.querySelectorAll('section')).find((section) =>
+        section.textContent?.includes('Custom food catalog')
+      );
+      expect(catalogSection?.textContent).toContain('Mystery soup');
+      expect(catalogSection?.textContent).toContain('Nutrition totals unknown.');
+      expect(catalogSection?.textContent).not.toContain('0 kcal');
+      expect(catalogSection?.textContent).not.toContain('0g protein');
+    });
+  });
+
+  it('does not fabricate zero macros when an unknown-macro custom food is searched and reused', async () => {
+    const db = getTestHealthDb();
+    await db.foodCatalogItems.put({
+      id: 'food-catalog-1',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      name: 'Teriyaki Chicken Casserole',
+      sourceType: 'custom',
+      sourceName: 'Local catalog',
+    });
+
+    render(NutritionPage);
+
+    await screen.findByLabelText('Food search');
+    await fireEvent.input(screen.getByLabelText('Food search'), {
+      target: { value: 'teriyaki' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Search foods' }));
+
+    await waitFor(() => {
+      const mealLoggingSection = Array.from(document.querySelectorAll('section')).find((section) =>
+        section.textContent?.includes('Meal logging')
+      );
+      expect(mealLoggingSection?.textContent).toContain('Teriyaki Chicken Casserole');
+      expect(mealLoggingSection?.textContent).toContain('Nutrition totals unknown.');
+      expect(mealLoggingSection?.textContent).not.toContain('0 kcal');
+      expect(mealLoggingSection?.textContent).not.toContain('0g protein');
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Use match' }));
+    await waitFor(() => {
+      expect((screen.getByLabelText('Meal name') as HTMLInputElement).value).toBe(
+        'Teriyaki Chicken Casserole'
+      );
+      expect((screen.getByLabelText('Calories') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Protein') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Fiber') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Carbs') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Fat') as HTMLInputElement).value).toBe('');
+    });
+  });
+
   it('loads cached recipe ideas and uses a recipe to prefill the meal form', async () => {
     const db = getTestHealthDb();
     await db.recipeCatalogItems.put({
@@ -101,8 +231,11 @@ describe('Nutrition route', () => {
         'Teriyaki Chicken Casserole'
       );
       expect((screen.getByLabelText('Meal type') as HTMLSelectElement).value).toBe('dinner');
-      expect((screen.getByLabelText('Calories') as HTMLInputElement).value).toBe('0');
-      expect((screen.getByLabelText('Protein') as HTMLInputElement).value).toBe('0');
+      expect((screen.getByLabelText('Calories') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Protein') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Fiber') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Carbs') as HTMLInputElement).value).toBe('');
+      expect((screen.getByLabelText('Fat') as HTMLInputElement).value).toBe('');
     });
   });
 
@@ -208,6 +341,37 @@ describe('Nutrition route', () => {
         (item) => item.name === 'Teriyaki Chicken Bowl' && item.sourceName === 'Local catalog'
       )
     ).toBeUndefined();
+  });
+
+  it('keeps recommendation copy truthful for saved foods whose nutrition totals are still unknown', async () => {
+    const db = getTestHealthDb();
+    await db.foodCatalogItems.put({
+      id: 'food-catalog-1',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      name: 'Teriyaki Chicken Casserole',
+      sourceType: 'custom',
+      sourceName: 'Local catalog',
+    });
+
+    render(NutritionPage);
+
+    await screen.findByText('Recommended next');
+    await waitFor(() => {
+      const recommendationSection = Array.from(document.querySelectorAll('section')).find(
+        (section) => section.textContent?.includes('Recommended next')
+      );
+      expect(recommendationSection?.textContent).toContain('Teriyaki Chicken Casserole');
+      expect(recommendationSection?.textContent).toContain(
+        'nutrition totals are still unknown, so treat this as a saved rotation idea.'
+      );
+      expect(recommendationSection?.textContent).not.toContain(
+        'saved food with decent baseline nutrition'
+      );
+      expect(recommendationSection?.textContent).not.toContain(
+        'good fit for a steadier-energy day'
+      );
+    });
   });
 
   it('drops the saved-food identity once the loaded draft is manually edited before planning', async () => {
