@@ -58,6 +58,7 @@ export async function saveSymptomPage(
     symptom: state.symptomForm.symptom,
     severity: Number(state.symptomForm.severity),
     note: state.symptomForm.note,
+    referenceUrl: state.symptomForm.referenceUrl,
   });
   return await refreshHealthPageAfterMutation(store, state, {
     saveNotice: 'Symptom logged.',
@@ -122,6 +123,7 @@ export async function saveTemplatePage(
     defaultDose: parseOptionalNumber(state.templateForm.defaultDose),
     defaultUnit: state.templateForm.defaultUnit,
     note: state.templateForm.note,
+    referenceUrl: state.templateForm.referenceUrl,
   });
   return await refreshHealthPageAfterMutation(store, state, {
     saveNotice: 'Template saved.',

@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { commitImportBatch, listImportBatches, previewImport } from '$lib/features/imports/store';
+import {
+  commitImportBatch,
+  dedupeImportedEvents,
+  listImportBatches,
+  previewImport,
+} from '$lib/features/imports/store';
 import { describeImportPayload } from '$lib/features/imports/analyze';
 import { inferImportSourceType } from '$lib/features/imports/detect';
 import { parseAppleHealthXml, parseDayOneExport } from '$lib/features/imports/parsers';
@@ -54,7 +59,9 @@ describe('imports store', () => {
     expect(records[0]?.createdAt).toBe(records[0]?.updatedAt);
     expect(records[0]?.createdAt).toBe(records[0]?.sourceTimestamp);
     expect(records[0]?.localDay).toBe(records[0]?.sourceTimestamp?.slice(0, 10));
-    expect(records[0]?.sourceRecordId).toBe(`iPhone:${records[0]?.sourceTimestamp}`);
+    expect(records[0]?.sourceRecordId).toBe(
+      `iPhone:HKQuantityTypeIdentifierStepCount:${records[0]?.sourceTimestamp}:${records[0]?.sourceTimestamp}:count:4321`
+    );
   });
 
   it('uses one fallback timestamp per Day One parse when creation dates are missing', () => {
@@ -66,6 +73,44 @@ describe('imports store', () => {
 
     expect(entries[0]?.createdAt).toBe(entries[0]?.updatedAt);
     expect(entries[0]?.localDay).toBe(entries[0]?.createdAt?.slice(0, 10));
+  });
+
+  it('dedupes duplicate sourceRecordId values within same incoming event batch', async () => {
+    const db = getDb();
+    const timestamp = '2026-04-02T08:00:00.000Z';
+
+    const result = await dedupeImportedEvents(db, [
+      {
+        id: 'event-a',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        sourceType: 'import',
+        sourceApp: 'Apple Health XML',
+        sourceRecordId: 'apple:record:1',
+        sourceTimestamp: timestamp,
+        localDay: '2026-04-02',
+        confidence: 0.95,
+        eventType: 'step-count',
+        value: 1000,
+      },
+      {
+        id: 'event-b',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        sourceType: 'import',
+        sourceApp: 'Apple Health XML',
+        sourceRecordId: 'apple:record:1',
+        sourceTimestamp: timestamp,
+        localDay: '2026-04-02',
+        confidence: 0.95,
+        eventType: 'step-count',
+        value: 1000,
+      },
+    ]);
+
+    expect(result.adds).toHaveLength(1);
+    expect(result.duplicates).toHaveLength(1);
+    expect(result.duplicates[0]?.id).toBe('event-b');
   });
 
   it('infers import source types from filename and content', () => {
@@ -122,8 +167,17 @@ describe('imports store', () => {
       sourceType: 'apple-health-xml',
       rawText: APPLE_HEALTH_XML,
     });
-    expect(first.summary).toEqual({ adds: 2, duplicates: 0, warnings: 0 });
-    await commitImportBatch(db, first.id);
+    expect(first).toEqual({
+      sourceType: 'apple-health-xml',
+      status: 'preview',
+      summary: { adds: 2, duplicates: 0, warnings: 0 },
+    });
+    expect(await db.importBatches.count()).toBe(0);
+    expect(await db.importArtifacts.count()).toBe(0);
+    await commitImportBatch(db, {
+      sourceType: 'apple-health-xml',
+      rawText: APPLE_HEALTH_XML,
+    });
     expect(await db.healthEvents.count()).toBe(2);
     expect(await db.reviewSnapshots.count()).toBe(1);
 
@@ -136,9 +190,23 @@ describe('imports store', () => {
 
   it('commits Day One imports into journal entries', async () => {
     const db = getDb();
-    const batch = await previewImport(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
-    await commitImportBatch(db, batch.id);
+    const preview = await previewImport(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
+    expect(preview.status).toBe('preview');
+    expect(await db.importBatches.count()).toBe(0);
+    await commitImportBatch(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
     expect(await db.journalEntries.count()).toBe(1);
+  });
+
+  it('keeps Day One preview replay honest after the same entry was already imported', async () => {
+    const db = getDb();
+    const first = await previewImport(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
+    expect(first.summary).toEqual({ adds: 1, duplicates: 0, warnings: 0 });
+    expect(await db.importArtifacts.count()).toBe(0);
+    await commitImportBatch(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
+    expect(await db.journalEntries.count()).toBe(1);
+
+    const second = await previewImport(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
+    expect(second.summary).toEqual({ adds: 0, duplicates: 1, warnings: 0 });
   });
 
   it('stages HealthKit companion bundle previews and dedupes replay', async () => {
@@ -147,9 +215,18 @@ describe('imports store', () => {
       sourceType: 'healthkit-companion',
       rawText: HEALTHKIT_BUNDLE_JSON,
     });
-    expect(first.summary).toEqual({ adds: 3, duplicates: 0, warnings: 0 });
+    expect(first).toEqual({
+      sourceType: 'healthkit-companion',
+      status: 'preview',
+      summary: { adds: 3, duplicates: 0, warnings: 0 },
+    });
+    expect(await db.importBatches.count()).toBe(0);
+    expect(await db.importArtifacts.count()).toBe(0);
 
-    await commitImportBatch(db, first.id);
+    await commitImportBatch(db, {
+      sourceType: 'healthkit-companion',
+      rawText: HEALTHKIT_BUNDLE_JSON,
+    });
     expect(await db.reviewSnapshots.count()).toBe(1);
 
     const events = await db.healthEvents.toArray();
@@ -205,7 +282,7 @@ describe('imports store', () => {
 
   it('stages and commits SMART sandbox clinical events for the configured owner', async () => {
     const db = getDb();
-    const batch = await previewImport(db, {
+    const preview = await previewImport(db, {
       sourceType: 'smart-fhir-sandbox',
       rawText: SMART_FHIR_BUNDLE_JSON,
       ownerProfile: {
@@ -214,9 +291,20 @@ describe('imports store', () => {
       },
     });
 
-    expect(batch.summary).toEqual({ adds: 3, duplicates: 0, warnings: 0 });
+    expect(preview).toEqual({
+      sourceType: 'smart-fhir-sandbox',
+      status: 'preview',
+      summary: { adds: 3, duplicates: 0, warnings: 0 },
+    });
 
-    await commitImportBatch(db, batch.id);
+    await commitImportBatch(db, {
+      sourceType: 'smart-fhir-sandbox',
+      rawText: SMART_FHIR_BUNDLE_JSON,
+      ownerProfile: {
+        fullName: 'Pyro Example',
+        birthDate: '1990-01-01',
+      },
+    });
 
     const events = await db.healthEvents.toArray();
     expect(events).toHaveLength(3);
@@ -242,8 +330,8 @@ describe('imports store', () => {
 
   it('lists import batches newest first', async () => {
     const db = getDb();
-    await previewImport(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
-    await previewImport(db, { sourceType: 'apple-health-xml', rawText: APPLE_HEALTH_XML });
+    await commitImportBatch(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
+    await commitImportBatch(db, { sourceType: 'apple-health-xml', rawText: APPLE_HEALTH_XML });
 
     const batches = await listImportBatches(db);
     expect(batches).toHaveLength(2);

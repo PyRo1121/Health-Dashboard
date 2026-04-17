@@ -1,6 +1,7 @@
 import { nowIso } from '$lib/core/domain/time';
 import type { BaseRecord, FoodCatalogItem } from '$lib/core/domain/types';
 import { updateRecordMeta } from '$lib/core/shared/records';
+import { withTimeoutInit } from '$lib/server/http/fetch-timeout';
 
 const OPEN_FOOD_FACTS_BASE_URL = 'https://world.openfoodfacts.org';
 const OPEN_FOOD_FACTS_SOURCE_NAME = 'Open Food Facts';
@@ -101,6 +102,8 @@ export function normalizeOpenFoodFactsProduct(
     sourceName: OPEN_FOOD_FACTS_SOURCE_NAME,
     brandName: firstBrand(product.brands),
     barcode,
+    imageUrl: product.image_front_small_url ?? product.image_url,
+    ingredientsText: product.ingredients_text?.trim() || undefined,
     calories: coerceNumber(
       product.nutriments?.['energy-kcal_100g'] ?? product.nutriments?.['energy-kcal']
     ),
@@ -114,9 +117,12 @@ export function normalizeOpenFoodFactsProduct(
 }
 
 async function readJson<T>(url: string, fetchImpl: typeof fetch = fetch): Promise<T> {
-  const response = await fetchImpl(url, {
-    headers: openFoodFactsHeaders(),
-  });
+  const response = await fetchImpl(
+    url,
+    withTimeoutInit({
+      headers: openFoodFactsHeaders(),
+    })
+  );
 
   if (!response.ok) {
     throw new Error(`Open Food Facts request failed with ${response.status}`);

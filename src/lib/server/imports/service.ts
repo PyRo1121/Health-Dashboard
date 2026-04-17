@@ -3,6 +3,7 @@ import type {
   HealthEvent,
   ImportArtifact,
   ImportBatch,
+  ImportPreviewResult,
   ImportSourceType,
   JournalEntry,
   OwnerProfile,
@@ -24,7 +25,9 @@ import {
   selectMirrorRecordsByField,
   selectMirrorRecordsByFieldValues,
   upsertMirrorRecord,
+  upsertMirrorRecordSync,
   upsertMirrorRecords,
+  upsertMirrorRecordsSync,
 } from '$lib/server/db/drizzle/mirror';
 import { refreshWeeklyReviewArtifactsForDaysServer } from '$lib/server/review/service';
 import {
@@ -41,6 +44,11 @@ function ownerCandidate(ownerProfile: OwnerProfile): LocalPatientCandidate {
     displayName: ownerProfile.fullName,
     birthDate: ownerProfile.birthDate,
   };
+}
+
+function normalizeSourceRecordId(value: string | undefined): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
 }
 
 function resolveSmartClinicalImport(
@@ -80,6 +88,25 @@ async function stageArtifacts(input: {
   await upsertMirrorRecords(db, 'importArtifacts', drizzleSchema.importArtifacts, artifacts);
 }
 
+function stageArtifactsSync(input: {
+  db: Parameters<typeof upsertMirrorRecordSync>[0];
+  batchId: string;
+  artifactType: 'healthEvent' | 'journalEntry';
+  records: Array<HealthEvent | JournalEntry>;
+}): void {
+  const timestamp = nowIso();
+
+  const artifacts: ImportArtifact[] = input.records.map((record) => ({
+    ...createRecordMeta(createRecordId('import-artifact'), timestamp),
+    batchId: input.batchId,
+    artifactType: input.artifactType,
+    fingerprint: textFingerprint(JSON.stringify(record)),
+    payload: record as unknown as Record<string, unknown>,
+  }));
+
+  upsertMirrorRecordsSync(input.db, 'importArtifacts', drizzleSchema.importArtifacts, artifacts);
+}
+
 export async function listImportBatchesServer(): Promise<ImportBatch[]> {
   const { db } = getServerDrizzleClient();
   return (await selectAllMirrorRecords<ImportBatch>(db, drizzleSchema.importBatches)).sort(
@@ -103,21 +130,63 @@ export async function dedupeImportedEventsServer(
   events: HealthEvent[]
 ): Promise<{ adds: HealthEvent[]; duplicates: HealthEvent[] }> {
   const { db } = getServerDrizzleClient();
+  const candidateSourceRecordIds = events
+    .map((event) => normalizeSourceRecordId(event.sourceRecordId))
+    .filter((value): value is string => value !== null);
+
   const existing = await selectMirrorRecordsByFieldValues<HealthEvent>(
     db,
     drizzleSchema.healthEvents,
     'sourceRecordId',
-    events.map((event) => event.sourceRecordId ?? '')
+    candidateSourceRecordIds
   );
-  const existingIds = new Set(existing.map((event) => event.sourceRecordId ?? ''));
+
+  const seenSourceRecordIds = new Set(
+    existing
+      .map((event) => normalizeSourceRecordId(event.sourceRecordId))
+      .filter((value): value is string => value !== null)
+  );
+
   const adds: HealthEvent[] = [];
   const duplicates: HealthEvent[] = [];
 
   for (const event of events) {
-    if (existingIds.has(event.sourceRecordId ?? '')) {
-      duplicates.push(event);
-    } else {
+    const sourceRecordId = normalizeSourceRecordId(event.sourceRecordId);
+    if (!sourceRecordId) {
       adds.push(event);
+      continue;
+    }
+
+    if (seenSourceRecordIds.has(sourceRecordId)) {
+      duplicates.push(event);
+      continue;
+    }
+
+    seenSourceRecordIds.add(sourceRecordId);
+    adds.push(event);
+  }
+
+  return { adds, duplicates };
+}
+
+export async function dedupeImportedJournalEntriesServer(
+  entries: JournalEntry[]
+): Promise<{ adds: JournalEntry[]; duplicates: JournalEntry[] }> {
+  const { db } = getServerDrizzleClient();
+  const adds: JournalEntry[] = [];
+  const duplicates: JournalEntry[] = [];
+
+  for (const entry of entries) {
+    const existing = await selectMirrorRecordById<JournalEntry>(
+      db,
+      drizzleSchema.journalEntries,
+      entry.id
+    );
+
+    if (existing) {
+      duplicates.push(entry);
+    } else {
+      adds.push(entry);
     }
   }
 
@@ -131,34 +200,24 @@ async function stageHealthEventBatch(
   >,
   events: HealthEvent[],
   analysis: ImportPayloadAnalysis | null
-): Promise<ImportBatch> {
-  const { db } = getServerDrizzleClient();
+): Promise<ImportPreviewResult> {
   const { adds, duplicates } = await dedupeImportedEventsServer(events);
-  const batch = await createImportBatchServer(sourceType);
-  await stageArtifacts({
-    batchId: batch.id,
-    artifactType: 'healthEvent',
-    records: adds,
-  });
-
-  const staged: ImportBatch = {
-    ...batch,
+  return {
+    sourceType,
+    status: 'preview',
     summary: {
       adds: adds.length,
       duplicates: duplicates.length,
       warnings: warningCount(analysis),
     },
   };
-  await upsertMirrorRecord(db, 'importBatches', drizzleSchema.importBatches, staged);
-  return staged;
 }
 
 export async function previewImportServer(input: {
   sourceType: ImportSourceType;
   rawText: string;
   ownerProfile?: OwnerProfile | null;
-}): Promise<ImportBatch> {
-  const { db } = getServerDrizzleClient();
+}): Promise<ImportPreviewResult> {
   const analysis = analyzeImportPayload(input.rawText);
   const resolvedSourceType = analysis?.sourceType ?? input.sourceType;
 
@@ -193,64 +252,105 @@ export async function previewImportServer(input: {
   }
 
   const parsedEntries = analysis?.journalEntries ?? parseDayOneExport(input.rawText);
-  const batch = await createImportBatchServer(resolvedSourceType);
-  await stageArtifacts({
-    batchId: batch.id,
-    artifactType: 'journalEntry',
-    records: parsedEntries,
-  });
-
-  const staged: ImportBatch = {
-    ...batch,
+  const { adds, duplicates } = await dedupeImportedJournalEntriesServer(parsedEntries);
+  return {
+    sourceType: resolvedSourceType,
+    status: 'preview',
     summary: {
-      adds: parsedEntries.length,
-      duplicates: 0,
+      adds: adds.length,
+      duplicates: duplicates.length,
       warnings: warningCount(analysis),
     },
   };
-  await upsertMirrorRecord(db, 'importBatches', drizzleSchema.importBatches, staged);
-  return staged;
 }
 
-export async function commitImportBatchServer(batchId: string): Promise<ImportBatch> {
+export async function commitImportBatchServer(input: {
+  sourceType: ImportSourceType;
+  rawText: string;
+  ownerProfile?: OwnerProfile | null;
+}): Promise<ImportBatch> {
   const { db } = getServerDrizzleClient();
-  const batch = await selectMirrorRecordById<ImportBatch>(db, drizzleSchema.importBatches, batchId);
-  if (!batch) {
-    throw new Error('Import batch not found');
-  }
-
-  const artifacts = await selectMirrorRecordsByField<ImportArtifact>(
-    db,
-    drizzleSchema.importArtifacts,
-    'batchId',
-    batchId
-  );
+  const analysis = analyzeImportPayload(input.rawText);
+  const resolvedSourceType = analysis?.sourceType ?? input.sourceType;
+  const timestamp = nowIso();
+  const batch: ImportBatch = {
+    ...createRecordMeta(createRecordId('import-batch'), timestamp),
+    sourceType: resolvedSourceType,
+    status: 'staged',
+  };
   const affectedDays = new Set<string>();
-  const healthEvents: HealthEvent[] = [];
-  const journalEntries: JournalEntry[] = [];
+  let healthEvents: HealthEvent[] = [];
+  let journalEntries: JournalEntry[] = [];
+  let adds = 0;
+  let duplicates = 0;
 
-  for (const artifact of artifacts) {
-    if (artifact.artifactType === 'healthEvent' && artifact.payload) {
-      const event = structuredClone(artifact.payload) as unknown as HealthEvent;
-      healthEvents.push(event);
-      affectedDays.add(event.localDay);
+  if (resolvedSourceType === 'apple-health-xml') {
+    const parsed = analysis?.healthEvents ?? parseAppleHealthXml(input.rawText);
+    const deduped = await dedupeImportedEventsServer(parsed);
+    healthEvents = deduped.adds;
+    adds = deduped.adds.length;
+    duplicates = deduped.duplicates.length;
+  } else if (resolvedSourceType === 'healthkit-companion') {
+    const parsed = analysis?.healthEvents ?? importHealthKitCompanionBundle(input.rawText).events;
+    const deduped = await dedupeImportedEventsServer(parsed);
+    healthEvents = deduped.adds;
+    adds = deduped.adds.length;
+    duplicates = deduped.duplicates.length;
+  } else if (resolvedSourceType === 'smart-fhir-sandbox') {
+    if (!input.ownerProfile) {
+      throw new Error(
+        'Configure your owner profile in Settings before previewing SMART clinical imports.'
+      );
     }
 
-    if (artifact.artifactType === 'journalEntry' && artifact.payload) {
-      journalEntries.push(structuredClone(artifact.payload) as unknown as JournalEntry);
+    const normalized = analysis ?? analyzeImportPayload(input.rawText);
+    const imported = resolveSmartClinicalImport(normalized, input.rawText);
+    const match = resolveClinicalPatientMatch(imported.patientIdentity, [
+      ownerCandidate(input.ownerProfile),
+    ]);
+
+    if (match.status !== 'exact') {
+      throw new Error(match.reason);
     }
+
+    const deduped = await dedupeImportedEventsServer(imported.events);
+    healthEvents = deduped.adds;
+    adds = deduped.adds.length;
+    duplicates = deduped.duplicates.length;
+  } else {
+    const parsed = analysis?.journalEntries ?? parseDayOneExport(input.rawText);
+    const deduped = await dedupeImportedJournalEntriesServer(parsed);
+    journalEntries = deduped.adds;
+    adds = deduped.adds.length;
+    duplicates = deduped.duplicates.length;
   }
-
-  await upsertMirrorRecords(db, 'healthEvents', drizzleSchema.healthEvents, healthEvents);
-  await upsertMirrorRecords(db, 'journalEntries', drizzleSchema.journalEntries, journalEntries);
 
   const committed: ImportBatch = {
     ...batch,
     ...updateRecordMeta(batch, batch.id, nowIso()),
     status: 'committed',
+    summary: {
+      adds,
+      duplicates,
+      warnings: warningCount(analysis),
+    },
   };
 
-  await upsertMirrorRecord(db, 'importBatches', drizzleSchema.importBatches, committed);
+  db.transaction((tx) => {
+    upsertMirrorRecordsSync(tx, 'healthEvents', drizzleSchema.healthEvents, healthEvents);
+    upsertMirrorRecordsSync(tx, 'journalEntries', drizzleSchema.journalEntries, journalEntries);
+    stageArtifactsSync({
+      db: tx,
+      batchId: batch.id,
+      artifactType: healthEvents.length ? 'healthEvent' : 'journalEntry',
+      records: healthEvents.length ? healthEvents : journalEntries,
+    });
+    upsertMirrorRecordSync(tx, 'importBatches', drizzleSchema.importBatches, committed);
+  });
+
+  for (const event of healthEvents) {
+    affectedDays.add(event.localDay);
+  }
 
   if (affectedDays.size > 0) {
     await refreshWeeklyReviewArtifactsForDaysServer([...affectedDays]);

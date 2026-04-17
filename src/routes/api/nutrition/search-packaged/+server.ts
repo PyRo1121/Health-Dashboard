@@ -1,6 +1,6 @@
 import type { RequestHandler } from './$types';
-import type { FoodLookupResult } from '$lib/features/nutrition/types';
 import { nutritionQueryRequestSchema } from '$lib/features/nutrition/contracts';
+import type { SearchPackagedResponse } from '$lib/server/nutrition/service';
 import { searchPackagedFoodsServer } from '$lib/server/nutrition/service';
 
 export const POST: RequestHandler = async ({ request }) => {
@@ -19,7 +19,14 @@ export const POST: RequestHandler = async ({ request }) => {
 
   const query = parsed.data.query?.trim() ?? '';
   if (!query) {
-    return Response.json([] satisfies FoodLookupResult[]);
+    return Response.json({
+      matches: [],
+      metadata: {
+        provenance: [],
+        cacheStatus: 'none',
+        degradationStatus: 'none',
+      },
+    } satisfies SearchPackagedResponse);
   }
 
   return Response.json(await searchPackagedFoodsServer(query));

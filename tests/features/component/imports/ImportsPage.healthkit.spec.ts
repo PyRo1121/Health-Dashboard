@@ -33,12 +33,32 @@ describe('Imports route healthkit flows', () => {
     await fireEvent.click(getPreviewButton());
 
     await waitFor(() => {
-      expect(screen.getByText(/Adds: 3/i)).toBeTruthy();
+      const previewSummary = screen.getByLabelText('Import payload summary');
+      expect(previewSummary.textContent).toContain('3');
     });
 
     await fireEvent.click(getCommitButton());
     await waitFor(() => {
       expect(screen.getByText(/healthkit-companion/i)).toBeTruthy();
+      const historySection = screen
+        .getByRole('heading', { name: 'Import batch history' })
+        .closest('section') as HTMLElement;
+      expect(historySection.textContent).toContain('Adds: 3');
+      expect(historySection.textContent).toContain('Duplicates: 0');
+      expect(historySection.textContent).toContain('Warnings: 0');
+      expect(historySection.textContent).toContain('Updated:');
+    });
+  });
+
+  it('shows registry-backed trust and auth context for the HealthKit import lane', async () => {
+    renderImportsPage();
+
+    await screen.findByLabelText('Import source');
+    await selectImportSource('healthkit-companion');
+
+    await waitFor(() => {
+      expect(screen.getByText(/Trust: official/i)).toBeTruthy();
+      expect(screen.getByText(/Auth: native-consent/i)).toBeTruthy();
     });
   });
 
@@ -51,7 +71,7 @@ describe('Imports route healthkit flows', () => {
     expect(getPreviewButton()).toHaveProperty('disabled', true);
 
     const summary = await waitForCompanionSummary();
-    expect(summary.getByText(/Detected source: iPhone bundle \/ Shortcuts JSON/i)).toBeTruthy();
+    expect(summary.getByText(/Detected source: iPhone HealthKit Companion/i)).toBeTruthy();
   });
 
   it('loads a bundle from a file input and infers the source type', async () => {
@@ -124,7 +144,7 @@ describe('Imports route healthkit flows', () => {
     await fireEvent.click(getPreviewButton());
 
     await waitFor(() => {
-      expect(screen.getByText(/Adds: 3/i)).toBeTruthy();
+      expect(screen.getAllByText(/Adds: 3/i).length).toBeGreaterThan(0);
       expect(getCommitButton()).toHaveProperty('disabled', false);
     });
 

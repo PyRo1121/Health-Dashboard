@@ -17,6 +17,10 @@
 
   const recommendation = $derived(snapshot?.intelligence.primaryRecommendation ?? null);
   const fallbackState = $derived(snapshot?.intelligence.fallbackState ?? null);
+
+  function createSourceKindLabel(kind: string): string {
+    return kind.replace(/_/g, ' ').replace(/^./, (char) => char.toUpperCase());
+  }
 </script>
 
 <SectionCard title="Today's recommendation">
@@ -43,7 +47,10 @@
         <p class="provenance-label">Why this is showing up</p>
         <ul class="recommendation-list compact-list">
           {#each recommendation.provenance as row (row.label)}
-            <li>{row.label}</li>
+            <li>
+              <span class="provenance-pill">{createSourceKindLabel(row.sourceKind)}</span>
+              {row.label}
+            </li>
           {/each}
         </ul>
       </div>
@@ -172,6 +179,23 @@
       sans-serif;
     text-transform: uppercase;
     letter-spacing: 0.05em;
+  }
+
+  .provenance-pill {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 0.5rem;
+    padding: 0.18rem 0.45rem;
+    border-radius: 999px;
+    border: 0.5px solid var(--phc-border-soft);
+    background: rgba(233, 195, 73, 0.08);
+    color: var(--phc-label);
+    font:
+      700 0.72rem/1 Manrope,
+      system-ui,
+      sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
   }
 
   .compact-list {

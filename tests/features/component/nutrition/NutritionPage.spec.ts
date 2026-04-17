@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from '@testing-library/svelte';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { getTestHealthDb, resetTestHealthDb } from '$lib/core/db/test-client';
 import { currentLocalDay } from '$lib/core/domain/time';
@@ -153,7 +153,7 @@ describe('Nutrition route', () => {
     });
   });
 
-  it('does not fabricate zero macros when an unknown-macro custom food is searched and reused', async () => {
+  it('does not surface unknown-macro custom foods in USDA-backed search results', async () => {
     const db = getTestHealthDb();
     await db.foodCatalogItems.put({
       id: 'food-catalog-1',
@@ -176,22 +176,14 @@ describe('Nutrition route', () => {
       const mealLoggingSection = Array.from(document.querySelectorAll('section')).find((section) =>
         section.textContent?.includes('Meal logging')
       );
-      expect(mealLoggingSection?.textContent).toContain('Teriyaki Chicken Casserole');
-      expect(mealLoggingSection?.textContent).toContain('Nutrition totals unknown.');
-      expect(mealLoggingSection?.textContent).not.toContain('0 kcal');
-      expect(mealLoggingSection?.textContent).not.toContain('0g protein');
-    });
-
-    await fireEvent.click(screen.getByRole('button', { name: 'Use match' }));
-    await waitFor(() => {
-      expect((screen.getByLabelText('Meal name') as HTMLInputElement).value).toBe(
-        'Teriyaki Chicken Casserole'
+      const customCatalogSection = Array.from(document.querySelectorAll('section')).find(
+        (section) => section.textContent?.includes('Custom food catalog')
       );
-      expect((screen.getByLabelText('Calories') as HTMLInputElement).value).toBe('');
-      expect((screen.getByLabelText('Protein') as HTMLInputElement).value).toBe('');
-      expect((screen.getByLabelText('Fiber') as HTMLInputElement).value).toBe('');
-      expect((screen.getByLabelText('Carbs') as HTMLInputElement).value).toBe('');
-      expect((screen.getByLabelText('Fat') as HTMLInputElement).value).toBe('');
+      expect(mealLoggingSection?.textContent).not.toContain('Teriyaki Chicken Casserole');
+      expect(customCatalogSection?.textContent).toContain('Teriyaki Chicken Casserole');
+      expect(customCatalogSection?.textContent).toContain('Nutrition totals unknown.');
+      expect(customCatalogSection?.textContent).not.toContain('0 kcal');
+      expect(customCatalogSection?.textContent).not.toContain('0g protein');
     });
   });
 
@@ -258,6 +250,12 @@ describe('Nutrition route', () => {
     render(NutritionPage);
 
     await screen.findByText('Recommended next');
+    await waitFor(() => {
+      const recommendationSection = Array.from(document.querySelectorAll('section')).find(
+        (section) => section.textContent?.includes('Recommended next')
+      );
+      expect(recommendationSection?.textContent).toContain('310 kcal · 24g protein · 6g fiber');
+    });
     await fireEvent.click(screen.getByRole('button', { name: 'Load food' }));
 
     await waitFor(() => {
@@ -301,7 +299,7 @@ describe('Nutrition route', () => {
     expect(await db.foodCatalogItems.count()).toBe(1);
   });
 
-  it('plans a recommended recipe as a recipe slot without cloning it into the local food catalog', async () => {
+  it('does not offer direct planning for an optional-source recipe recommendation', async () => {
     const db = getTestHealthDb();
     await db.recipeCatalogItems.put({
       id: 'recipe-1',
@@ -319,28 +317,20 @@ describe('Nutrition route', () => {
     render(NutritionPage);
 
     await screen.findByText('Recommended next');
-    await fireEvent.click(screen.getByRole('button', { name: 'Plan next' }));
-
     await waitFor(() => {
-      expect(screen.getByText(/Planned next meal saved\./i)).toBeTruthy();
-      expect(screen.getAllByText('Teriyaki Chicken Bowl').length).toBeGreaterThan(0);
+      const recommendationSection = Array.from(document.querySelectorAll('section')).find(
+        (section) => section.textContent?.includes('Recommended next')
+      );
+      expect(recommendationSection?.textContent).toContain('Source: TheMealDB');
+      expect(recommendationSection?.textContent).toContain('Posture: optional');
+      expect(
+        within(recommendationSection as HTMLElement).queryByRole('button', { name: 'Plan next' })
+      ).toBeNull();
+      expect(
+        within(recommendationSection as HTMLElement).getByRole('button', { name: 'Review first' })
+      ).toBeTruthy();
     });
-
-    const planSlots = await db.planSlots.toArray();
-    expect(planSlots).toHaveLength(1);
-    expect(planSlots[0]).toEqual(
-      expect.objectContaining({
-        itemType: 'recipe',
-        itemId: 'recipe-1',
-        mealType: 'dinner',
-        title: 'Teriyaki Chicken Bowl',
-      })
-    );
-    expect(
-      (await db.foodCatalogItems.toArray()).find(
-        (item) => item.name === 'Teriyaki Chicken Bowl' && item.sourceName === 'Local catalog'
-      )
-    ).toBeUndefined();
+    expect(await db.planSlots.count()).toBe(0);
   });
 
   it('keeps recommendation copy truthful for saved foods whose nutrition totals are still unknown', async () => {

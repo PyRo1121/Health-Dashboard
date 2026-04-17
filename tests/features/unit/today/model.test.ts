@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { TodaySnapshot } from '$lib/features/today/snapshot';
 import {
   createDailyCheckinPayload,
+  createTodayEventRows,
   createTodayNutritionGuidance,
   createTodayNutritionPulseMetrics,
   createPlannedMealProjectionRows,
@@ -90,6 +91,61 @@ describe('today model', () => {
       mood: 4,
       focus: 5,
     });
+  });
+
+  it('carries reference links into today event rows for same-day health events', () => {
+    const snapshot: TodaySnapshot = {
+      date: '2026-04-02',
+      dailyRecord: null,
+      foodEntries: [],
+      nutritionSummary: {
+        calories: 0,
+        protein: 0,
+        fiber: 0,
+        carbs: 0,
+        fat: 0,
+      },
+      plannedMeal: null,
+      plannedMealIssue: null,
+      plannedWorkout: null,
+      plannedWorkoutIssue: null,
+      recoveryAdaptation: null,
+      intelligence: {
+        primaryRecommendation: null,
+        fallbackState: null,
+      },
+      planItems: [],
+      events: [
+        {
+          id: 'symptom-headache',
+          createdAt: '2026-04-02T12:00:00Z',
+          updatedAt: '2026-04-02T12:00:00Z',
+          sourceType: 'manual',
+          sourceApp: 'personal-health-cockpit',
+          sourceTimestamp: '2026-04-02T12:00:00Z',
+          localDay: '2026-04-02',
+          confidence: 1,
+          eventType: 'symptom',
+          value: 4,
+          payload: {
+            kind: 'symptom',
+            symptom: 'Headache',
+            severity: 4,
+            referenceUrl:
+              'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+          },
+        },
+      ],
+      latestJournalEntry: null,
+    };
+
+    expect(createTodayEventRows(snapshot)).toEqual([
+      expect.objectContaining({
+        label: 'Symptom',
+        referenceUrl:
+          'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+      }),
+    ]);
   });
 
   it('builds recommendation support rows from plan, nutrition, and recovery context', () => {
@@ -366,5 +422,70 @@ describe('today model', () => {
         },
       })
     ).toContain('Nutrition: protein 24g so far; fiber pace is unknown.');
+  });
+
+  it('keeps mixed known and unknown planned-meal projections truthful when a planned meal exists', () => {
+    const snapshot: TodaySnapshot = {
+      date: '2026-04-02',
+      dailyRecord: null,
+      foodEntries: [
+        {
+          id: 'food-entry-1',
+          createdAt: '2026-04-02T08:00:00.000Z',
+          updatedAt: '2026-04-02T08:00:00.000Z',
+          localDay: '2026-04-02',
+          mealType: 'breakfast',
+          name: 'Mostly-known meal',
+          calories: 320,
+          protein: 24,
+          carbs: 34,
+          fat: 8,
+        },
+      ],
+      nutritionSummary: {
+        calories: 320,
+        protein: 24,
+        fiber: 0,
+        carbs: 34,
+        fat: 8,
+      },
+      plannedMeal: {
+        id: 'planned-meal-1',
+        createdAt: '2026-04-02T08:30:00.000Z',
+        updatedAt: '2026-04-02T08:30:00.000Z',
+        name: 'Greek yogurt bowl',
+        mealType: 'lunch',
+        calories: 310,
+        protein: 20,
+        carbs: 34,
+        fat: 8,
+        sourceName: 'Local catalog',
+      },
+      plannedMealIssue: null,
+      plannedWorkout: null,
+      plannedWorkoutIssue: null,
+      recoveryAdaptation: null,
+      intelligence: {
+        primaryRecommendation: null,
+        fallbackState: null,
+      },
+      planItems: [],
+      events: [],
+      latestJournalEntry: null,
+    };
+
+    expect(createTodayNutritionPulseMetrics(snapshot)).toEqual([
+      { label: 'Protein pace', current: 24, target: 80, projected: 44, tone: 'steady' },
+      { label: 'Fiber pace', current: null, target: 25, projected: null, tone: 'steady' },
+    ]);
+    expect(createPlannedMealProjectionRows(snapshot)).toEqual([
+      'Projected calories: 630',
+      'Projected protein: 44',
+      'Projected carbs: 68',
+      'Projected fat: 16',
+    ]);
+    expect(createTodayNutritionGuidance(snapshot)).toEqual([
+      'The planned meal helps, but protein still looks light for the day.',
+    ]);
   });
 });

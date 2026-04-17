@@ -3,7 +3,34 @@ import HealthKit
 import UIKit
 
 protocol HealthKitBundleExporting {
-	func exportBundle(for day: Date, mode: HealthKitExportMode) async throws -> HealthKitBridgeBundle
+	func exportBundle(for day: Date, mode: HealthKitExportMode) async throws -> HealthKitBridgeBundleExportResult
+}
+
+enum HealthKitBundleExportError: LocalizedError, Equatable {
+	case emptyBundle
+
+	var errorDescription: String? {
+		switch self {
+		case .emptyBundle:
+			return "No matching HealthKit samples were available for this export."
+		}
+	}
+}
+
+struct HealthKitBridgeBundleExportResult {
+	let bundle: HealthKitBridgeBundle
+	private let anchorCommits: [() -> Void]
+
+	init(bundle: HealthKitBridgeBundle, anchorCommits: [() -> Void]) {
+		self.bundle = bundle
+		self.anchorCommits = anchorCommits
+	}
+
+	func commitAnchors() {
+		for commit in anchorCommits {
+			commit()
+		}
+	}
 }
 
 struct HealthKitBundleExporter: HealthKitBundleExporting {
@@ -30,9 +57,10 @@ struct HealthKitBundleExporter: HealthKitBundleExporting {
 		self.iso8601Formatter = formatter
 	}
 
-	func exportBundle(for day: Date, mode: HealthKitExportMode) async throws -> HealthKitBridgeBundle {
+	func exportBundle(for day: Date, mode: HealthKitExportMode) async throws -> HealthKitBridgeBundleExportResult {
 		let dayWindow = DayWindow(day: day, calendar: calendar)
 		let records: [HealthKitBridgeRecord]
+		let anchorCommits: [() -> Void]
 
 		switch mode {
 		case .dailySnapshot:
@@ -44,22 +72,30 @@ struct HealthKitBundleExporter: HealthKitBundleExporting {
 			let stepRecord = try await steps
 			let restingHeartRateRecord = try await restingHeartRate
 			records = [sleepRecord, stepRecord, restingHeartRateRecord].compactMap { $0 }
+			anchorCommits = []
 		case .incrementalChanges:
-			records = try await incrementalRecords(for: dayWindow)
+			let incremental = try await incrementalRecords(for: dayWindow)
+			records = incremental.records
+			anchorCommits = incremental.anchorCommits
+		}
+
+		guard !records.isEmpty else {
+			throw HealthKitBundleExportError.emptyBundle
 		}
 
 		let capturedAt = iso8601Formatter.string(from: .now)
-
-		return HealthKitBridgeBundle.make(
+		let bundle = HealthKitBridgeBundle.make(
 			deviceId: UIDevice.current.identifierForVendor?.uuidString ?? UIDevice.current.name,
 			deviceName: UIDevice.current.name,
 			capturedAt: capturedAt,
 			timezone: timeZone.identifier,
 			records: records
 		)
+
+		return HealthKitBridgeBundleExportResult(bundle: bundle, anchorCommits: anchorCommits)
 	}
 
-	private func incrementalRecords(for dayWindow: DayWindow) async throws -> [HealthKitBridgeRecord] {
+	private func incrementalRecords(for dayWindow: DayWindow) async throws -> (records: [HealthKitBridgeRecord], anchorCommits: [() -> Void]) {
 		async let sleep = incrementalSleepRecords(for: dayWindow)
 		async let steps = incrementalQuantityRecords(
 			for: .stepCount,
@@ -74,7 +110,14 @@ struct HealthKitBundleExporter: HealthKitBundleExporting {
 			unit: HKUnit.count().unitDivided(by: HKUnit.minute())
 		)
 
-		return try await sleep + steps + restingHeartRate
+		let sleepResult = try await sleep
+		let stepsResult = try await steps
+		let restingHeartRateResult = try await restingHeartRate
+
+		return (
+			records: sleepResult.records + stepsResult.records + restingHeartRateResult.records,
+			anchorCommits: sleepResult.anchorCommits + stepsResult.anchorCommits + restingHeartRateResult.anchorCommits
+		)
 	}
 
 	private func sleepRecord(for dayWindow: DayWindow) async throws -> HealthKitBridgeRecord? {
@@ -213,9 +256,9 @@ struct HealthKitBundleExporter: HealthKitBundleExporting {
 		(value * 10).rounded() / 10
 	}
 
-	private func incrementalSleepRecords(for dayWindow: DayWindow) async throws -> [HealthKitBridgeRecord] {
+	private func incrementalSleepRecords(for dayWindow: DayWindow) async throws -> (records: [HealthKitBridgeRecord], anchorCommits: [() -> Void]) {
 		guard let sleepType = HKObjectType.categoryType(forIdentifier: .sleepAnalysis) else {
-			return []
+			return (records: [], anchorCommits: [])
 		}
 
 		let predicate = HKQuery.predicateForSamples(withStart: dayWindow.start, end: dayWindow.end, options: [])
@@ -226,7 +269,6 @@ struct HealthKitBundleExporter: HealthKitBundleExporting {
 		)
 
 		let result = try await descriptor.result(for: healthStore)
-		anchorStore.saveAnchor(result.newAnchor, for: .sleepDuration)
 
 		let asleepValues: Set<Int> = [
 			HKCategoryValueSleepAnalysis.asleepCore.rawValue,
@@ -235,7 +277,7 @@ struct HealthKitBundleExporter: HealthKitBundleExporting {
 			HKCategoryValueSleepAnalysis.asleepUnspecified.rawValue
 		]
 
-		return result.addedSamples
+		let records = result.addedSamples
 			.filter { asleepValues.contains($0.value) }
 			.map { sample in
 				HealthKitBridgeRecord(
@@ -252,6 +294,8 @@ struct HealthKitBundleExporter: HealthKitBundleExporting {
 					]
 				)
 			}
+
+		return (records: records, anchorCommits: [{ anchorStore.saveAnchor(result.newAnchor, for: .sleepDuration) }])
 	}
 
 	private func incrementalQuantityRecords(
@@ -259,9 +303,9 @@ struct HealthKitBundleExporter: HealthKitBundleExporting {
 		metric: HealthKitBridgeMetric,
 		dayWindow: DayWindow,
 		unit: HKUnit
-	) async throws -> [HealthKitBridgeRecord] {
+	) async throws -> (records: [HealthKitBridgeRecord], anchorCommits: [() -> Void]) {
 		guard let quantityType = HKObjectType.quantityType(forIdentifier: identifier) else {
-			return []
+			return (records: [], anchorCommits: [])
 		}
 
 		let predicate = HKQuery.predicateForSamples(withStart: dayWindow.start, end: dayWindow.end, options: [])
@@ -272,9 +316,8 @@ struct HealthKitBundleExporter: HealthKitBundleExporting {
 		)
 
 		let result = try await descriptor.result(for: healthStore)
-		anchorStore.saveAnchor(result.newAnchor, for: metric)
 
-		return result.addedSamples.map { sample in
+		let records = result.addedSamples.map { sample in
 			HealthKitBridgeRecord(
 				id: sample.uuid.uuidString,
 				recordedAt: iso8601Formatter.string(from: sample.endDate),
@@ -289,6 +332,8 @@ struct HealthKitBundleExporter: HealthKitBundleExporting {
 				]
 			)
 		}
+
+		return (records: records, anchorCommits: [{ anchorStore.saveAnchor(result.newAnchor, for: metric) }])
 	}
 }
 

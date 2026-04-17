@@ -1,4 +1,5 @@
 import { buildHealthEventDisplay } from '$lib/core/shared/health-events';
+import { normalizeSafeExternalUrl } from '$lib/core/shared/external-links';
 import type { PlannedMeal } from '$lib/core/domain/types';
 import type { TodayConfidence, TodayRecommendationAction } from '$lib/features/today/intelligence';
 import type { TodayPlannedWorkout, TodaySnapshot } from '$lib/features/today/snapshot';
@@ -8,6 +9,7 @@ export interface TodayEventRow {
   label: string;
   valueLabel: string;
   sourceLabel: string;
+  referenceUrl?: string;
 }
 
 export interface TodayPlanRow {
@@ -74,6 +76,9 @@ export function createTodayEventRows(snapshot: TodaySnapshot | null): TodayEvent
     snapshot?.events.map((event) => ({
       id: event.id,
       ...buildHealthEventDisplay(event),
+      referenceUrl: normalizeSafeExternalUrl(
+        typeof event.payload?.referenceUrl === 'string' ? event.payload.referenceUrl : undefined
+      ),
     })) ?? []
   );
 }

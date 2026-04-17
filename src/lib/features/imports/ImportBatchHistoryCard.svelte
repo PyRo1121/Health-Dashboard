@@ -16,6 +16,12 @@
         <li>
           <strong>{batch.sourceType}</strong>
           <span>{batch.status}</span>
+          <p>Updated: {batch.updatedAt.slice(0, 10)}</p>
+          {#if batch.summary}
+            <p>Adds: {batch.summary.adds}</p>
+            <p>Duplicates: {batch.summary.duplicates}</p>
+            <p>Warnings: {batch.summary.warnings}</p>
+          {/if}
         </li>
       {/each}
     </ul>

@@ -17,6 +17,7 @@ export {
   createReviewAdherenceCards,
   createReviewSections,
   createReviewTrendRows,
+  type ReviewReferenceItem,
   type ReviewAdherenceAuditItem,
   type ReviewAdherenceCard,
   type ReviewNutritionStrategyCard,

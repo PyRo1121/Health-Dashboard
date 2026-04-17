@@ -241,6 +241,7 @@ exports[`migration golden parity > matches current page-state outputs for seeded
     },
     "symptomForm": {
       "note": "",
+      "referenceUrl": "",
       "severity": "3",
       "symptom": "",
     },
@@ -249,6 +250,7 @@ exports[`migration golden parity > matches current page-state outputs for seeded
       "defaultUnit": "",
       "label": "",
       "note": "",
+      "referenceUrl": "",
       "templateType": "supplement",
     },
   },
@@ -373,6 +375,7 @@ exports[`migration golden parity > matches current page-state outputs for seeded
       "healthHighlights": [
         "Low sleep lined up with higher anxiety on 2026-03-31.",
       ],
+      "healthReferenceLinks": [],
       "journalHighlights": [
         "Evening review on 2026-03-31: Crowded store and headache drained the afternoon.",
       ],
@@ -430,6 +433,7 @@ exports[`migration golden parity > matches current page-state outputs for seeded
         "weekStart": "2026-03-30",
       },
       "sobrietyStreak": 1,
+      "symptomReferenceLinks": [],
       "weeklyDecisionCards": [
         {
           "confidence": "high",

@@ -10,6 +10,7 @@ node_modules/.old_modules-*
 /build
 /coverage
 /playwright-report
+/graphify-out
 
 # OS
 .DS_Store

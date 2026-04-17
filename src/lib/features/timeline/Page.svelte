@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toSafeExternalHref } from '$lib/core/shared/external-links';
   import { Card, EmptyState, Field } from '$lib/core/ui/primitives';
   import {
     createTimelinePageState,
@@ -14,9 +15,23 @@
   import type { TimelineSourceFilter } from '$lib/features/timeline/service';
 
   let page = $state(createTimelinePageState());
+  let loadError = $state('');
+
+  function timelineErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Timeline unavailable right now.';
+  }
 
   async function refreshTimeline() {
-    page = await loadTimelinePage(page);
+    try {
+      page = await loadTimelinePage(page);
+      loadError = '';
+    } catch (error) {
+      page = {
+        ...page,
+        loading: false,
+      };
+      loadError = timelineErrorMessage(error);
+    }
   }
 
   onBrowserRouteMount(refreshTimeline);
@@ -54,6 +69,10 @@
         </Field>
       </div>
 
+      {#if loadError}
+        <p class="status-copy" role="alert">{loadError}</p>
+      {/if}
+
       {#if page.items.length}
         <ul class="timeline-list">
           {#each page.items as item (item.event.id)}
@@ -64,6 +83,19 @@
               </div>
               <p>{item.event.sourceApp}</p>
               <p>{item.sourceLabel} · {item.event.localDay}</p>
+              {#if toSafeExternalHref(item.referenceUrl)}
+                <p>
+                  <a
+                    class="timeline-reference-link"
+                    href={toSafeExternalHref(item.referenceUrl) ?? undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Learn more about timeline event ${item.label}`}
+                  >
+                    Learn more
+                  </a>
+                </p>
+              {/if}
             </li>
           {/each}
         </ul>
@@ -110,6 +142,10 @@
   .timeline-list p {
     margin: 0.3rem 0 0;
     color: var(--phc-muted);
+  }
+
+  .timeline-reference-link {
+    color: var(--phc-label);
   }
 
   @media (max-width: 639px) {

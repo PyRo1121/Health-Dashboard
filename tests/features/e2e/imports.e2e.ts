@@ -32,6 +32,33 @@ test('imports flow with preview and commit', async ({ page }) => {
   await expect(page.getByRole('status')).toBeVisible();
 });
 
+test('day one replay preview reports duplicates after the same entry was already committed', async ({
+  page,
+}) => {
+  const importsPage = new ImportsPage(page);
+  const payload = JSON.stringify({
+    entries: [
+      {
+        uuid: 'entry-1',
+        creationDate: '2026-04-02T09:00:00Z',
+        text: 'Morning reflection from Day One.',
+      },
+    ],
+  });
+
+  await importsPage.goto();
+  await importsPage.selectSource('day-one-json');
+  await importsPage.fillPayload(payload);
+  await importsPage.previewAndExpectAdds(1);
+  await importsPage.commit();
+  await importsPage.expectCommitted();
+
+  await importsPage.fillPayload(payload);
+  await importsPage.preview();
+  await expect(importsPage.previewSummary).toContainText('Adds: 0');
+  await expect(importsPage.previewSummary).toContainText('Duplicates: 1');
+});
+
 test('smart sandbox import requires an owner profile and lands in timeline once configured', async ({
   page,
 }) => {
@@ -162,7 +189,7 @@ test('editing a pasted payload clears stale preview state', async ({ page }) => 
   await expect(importsPage.commitButton).toBeEnabled();
 
   await importsPage.payloadInput.fill(`${HEALTHKIT_BUNDLE_JSON}\n`);
-  await expect(page.getByText(/Adds: 3/i)).toHaveCount(0);
+  await expect(importsPage.previewSummary).toHaveCount(0);
   await expect(importsPage.commitButton).toBeDisabled();
 });
 

@@ -1,4 +1,9 @@
-import type { ImportBatch, ImportSourceType, OwnerProfile } from '$lib/core/domain/types';
+import type {
+  ImportBatch,
+  ImportPreviewResult,
+  ImportSourceType,
+  OwnerProfile,
+} from '$lib/core/domain/types';
 import {
   applyCommitErrorState,
   applyCommitSuccessState,
@@ -15,11 +20,16 @@ export interface ImportsPreviewDeps {
     sourceType: ImportSourceType;
     rawText: string;
     ownerProfile?: OwnerProfile | null;
-  }) => Promise<ImportBatch>;
+  }) => Promise<ImportPreviewResult>;
 }
 
 export interface ImportsCommitDeps {
-  commitImportBatch: (batchId: string) => Promise<ImportBatch>;
+  getOwnerProfile: () => OwnerProfile | null;
+  commitImportBatch: (input: {
+    sourceType: ImportSourceType;
+    rawText: string;
+    ownerProfile?: OwnerProfile | null;
+  }) => Promise<ImportBatch>;
 }
 
 function withUpdatedIntake(
@@ -100,7 +110,6 @@ export async function previewImportsPage(
     return withUpdatedIntake(
       {
         ...state,
-        batches: upsertBatch(state.batches, latestPreview),
       },
       applyPreviewSuccessState(state.intake, latestPreview)
     );
@@ -121,14 +130,18 @@ export async function commitImportsPage(
   }
 
   try {
-    const committed = await deps.commitImportBatch(state.intake.latestPreview.id);
+    const committed = await deps.commitImportBatch({
+      sourceType: state.intake.sourceType,
+      rawText: state.intake.payload,
+      ownerProfile: deps.getOwnerProfile(),
+    });
 
     return withUpdatedIntake(
       {
         ...state,
         batches: upsertBatch(state.batches, committed),
       },
-      applyCommitSuccessState(state.intake, committed)
+      applyCommitSuccessState(state.intake, null)
     );
   } catch (error) {
     return withUpdatedIntake(

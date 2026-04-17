@@ -36,6 +36,28 @@ describe('open food facts adapter', () => {
     });
   });
 
+  it('preserves packaged-food metadata needed for local cache cards', () => {
+    const normalized = normalizeOpenFoodFactsProduct({
+      code: '049000028911',
+      product_name: 'Diet Cola',
+      image_front_small_url: 'https://cdn.test/diet-cola-front.jpg',
+      ingredients_text: 'Carbonated water, natural flavors',
+      nutriments: {
+        'energy-kcal_100g': 1,
+        carbohydrates_100g: 0,
+        fat_100g: 0,
+        proteins_100g: 0,
+        fiber_100g: 0,
+      },
+    });
+
+    expect(normalized).toMatchObject({
+      id: 'off:049000028911',
+      imageUrl: 'https://cdn.test/diet-cola-front.jpg',
+      ingredientsText: 'Carbonated water, natural flavors',
+    });
+  });
+
   it('fetches barcode results and handles misses', async () => {
     const fetchImpl = vi
       .fn<typeof fetch>()
@@ -75,5 +97,6 @@ describe('open food facts adapter', () => {
 
     expect(results).toHaveLength(2);
     expect(fetchImpl.mock.calls[0]?.[0]).toContain('/cgi/search.pl?');
+    expect(fetchImpl.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal);
   });
 });

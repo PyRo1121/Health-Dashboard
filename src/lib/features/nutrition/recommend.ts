@@ -1,4 +1,8 @@
 import type { FoodCatalogItem, RecipeCatalogItem } from '$lib/core/domain/types';
+import {
+  getExternalSourceDefinition,
+  type ExternalSourceProductionPosture,
+} from '$lib/core/domain/external-sources';
 
 export interface NutritionRecommendationContext {
   mealType: string;
@@ -13,6 +17,9 @@ export interface NutritionRecommendation {
   kind: 'food' | 'recipe';
   title: string;
   subtitle: string;
+  sourceName: string;
+  sourcePosture: ExternalSourceProductionPosture;
+  canPlanDirectly: boolean;
   score: number;
   reasons: string[];
 }
@@ -168,6 +175,14 @@ function scoreFood(
     kind: 'food',
     title: item.name,
     subtitle: createFoodRecommendationSubtitle(item),
+    sourceName: item.sourceName,
+    sourcePosture:
+      item.sourceType === 'open-food-facts'
+        ? getExternalSourceDefinition('open-food-facts').productionPosture
+        : item.sourceType === 'usda-fallback'
+          ? getExternalSourceDefinition('usda-fooddata-central').productionPosture
+          : 'adopt',
+    canPlanDirectly: true,
     score: Math.round(score),
     reasons,
   };
@@ -214,6 +229,9 @@ function scoreRecipe(
     kind: 'recipe',
     title: item.title,
     subtitle: [item.mealType, item.cuisine].filter(Boolean).join(' · ') || item.sourceName,
+    sourceName: item.sourceName,
+    sourcePosture: getExternalSourceDefinition('themealdb').productionPosture,
+    canPlanDirectly: getExternalSourceDefinition('themealdb').productionPosture === 'adopt',
     score: Math.round(score),
     reasons,
   };

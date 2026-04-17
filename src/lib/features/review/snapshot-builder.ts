@@ -23,9 +23,11 @@ import {
   buildDeviceHighlights,
   buildGrocerySignals,
   buildHealthHighlights,
+  buildHealthReferenceLinks,
   buildHeadline,
   buildJournalHighlights,
   buildPatternHighlights,
+  buildSymptomReferenceLinks,
   buildNutritionHighlights,
   buildNutritionStrategy,
   buildPlanningHighlights,
@@ -217,6 +219,8 @@ export function buildWeeklySnapshotFromWeekData(input: {
   const planningHighlights = buildPlanningHighlights(weeklyPlan, weekPlanSlots, weekGroceries);
   const deviceHighlights = buildDeviceHighlights(weekHealthEvents);
   const assessmentSummary = buildAssessmentSummary(weekAssessments);
+  const healthReferenceLinks = buildHealthReferenceLinks(weekHealthEvents);
+  const symptomReferenceLinks = buildSymptomReferenceLinks(weekHealthEvents);
   const healthHighlights = buildHealthHighlights(weekRecords, weekHealthEvents);
   const contextSignals = buildContextSignals(weekRecords, weekHealthEvents, weekJournalEntries);
   const patternHighlights = buildPatternHighlights(weekJournalEntries, weekHealthEvents);
@@ -295,6 +299,8 @@ export function buildWeeklySnapshotFromWeekData(input: {
     grocerySignals,
     deviceHighlights,
     assessmentSummary,
+    healthReferenceLinks,
+    symptomReferenceLinks,
     healthHighlights,
     contextSignals,
     contextCaptureLinkedEventIds: weekHealthEvents

@@ -53,10 +53,11 @@ final class CompanionViewModel: ObservableObject {
 		exportState = .exporting
 
 		do {
-			let bundle = try await exporter.exportBundle(for: .now, mode: exportMode)
-			exportURL = try writer.write(bundle)
-			previewJSON = try writer.encodedJSON(for: bundle)
-			lastSummary = "Exported \(bundle.records.count) records from \(bundle.deviceName) using \(exportMode.title.lowercased())."
+			let exportResult = try await exporter.exportBundle(for: .now, mode: exportMode)
+			exportURL = try writer.write(exportResult.bundle)
+			exportResult.commitAnchors()
+			previewJSON = try writer.encodedJSON(for: exportResult.bundle)
+			lastSummary = "Exported \(exportResult.bundle.records.count) records from \(exportResult.bundle.deviceName) using \(exportMode.title.lowercased())."
 			exportState = .ready
 		} catch {
 			exportState = .failed(error.localizedDescription)

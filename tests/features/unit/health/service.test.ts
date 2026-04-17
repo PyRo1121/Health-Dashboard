@@ -38,6 +38,51 @@ describe('health service', () => {
     });
   });
 
+  it('persists a medication template reference link when saving a normalized medication template', async () => {
+    const db = getDb();
+    const template = await saveHealthTemplate(db, {
+      label: 'Metformin 500 MG Oral Tablet',
+      templateType: 'medication',
+      defaultDose: 1,
+      defaultUnit: 'tablet',
+      note: 'With breakfast',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+    });
+
+    expect(template).toMatchObject({
+      label: 'Metformin 500 MG Oral Tablet',
+      templateType: 'medication',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+    });
+  });
+
+  it('carries a saved medication template reference link into the quick-logged event payload', async () => {
+    const db = getDb();
+    const template = await saveHealthTemplate(db, {
+      label: 'Metformin 500 MG Oral Tablet',
+      templateType: 'medication',
+      defaultDose: 1,
+      defaultUnit: 'tablet',
+      note: 'With breakfast',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+    });
+
+    const event = await quickLogHealthTemplate(db, {
+      localDay: '2026-04-02',
+      templateId: template.id,
+    });
+
+    expect(event.payload).toMatchObject({
+      templateId: template.id,
+      templateName: 'Metformin 500 MG Oral Tablet',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+    });
+  });
+
   it('builds a daily health snapshot with imported sleep and manual health events only', async () => {
     const db = getDb();
     await db.healthEvents.bulkAdd([
@@ -96,5 +141,46 @@ describe('health service', () => {
       'sleep-note',
       'symptom',
     ]);
+  });
+
+  it('persists a symptom reference link when logging a suggested symptom', async () => {
+    const db = getDb();
+
+    const event = await logSymptomEvent(db, {
+      localDay: '2026-04-02',
+      symptom: 'Headache',
+      severity: 4,
+      note: 'After lunch',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+    });
+
+    expect(event.payload).toMatchObject({
+      symptom: 'Headache',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+    });
+  });
+
+  it('drops unsafe reference urls when saving templates and symptom events', async () => {
+    const db = getDb();
+    const template = await saveHealthTemplate(db, {
+      label: 'Unsafe template',
+      templateType: 'medication',
+      referenceUrl: 'javascript:alert(1)',
+    });
+
+    const event = await logSymptomEvent(db, {
+      localDay: '2026-04-02',
+      symptom: 'Unsafe symptom',
+      severity: 3,
+      referenceUrl: 'javascript:alert(1)',
+    });
+
+    expect(template.referenceUrl).toBeUndefined();
+    expect(event.payload).toMatchObject({
+      symptom: 'Unsafe symptom',
+      referenceUrl: undefined,
+    });
   });
 });

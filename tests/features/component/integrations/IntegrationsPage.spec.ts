@@ -37,11 +37,14 @@ describe('Integrations route', () => {
 
   it('shows a connected summary after a native companion bundle is committed', async () => {
     const db = getTestHealthDb();
-    const batch = await previewImport(db, {
+    await previewImport(db, {
       sourceType: 'healthkit-companion',
       rawText: HEALTHKIT_BUNDLE_JSON,
     });
-    await commitImportBatch(db, batch.id);
+    await commitImportBatch(db, {
+      sourceType: 'healthkit-companion',
+      rawText: HEALTHKIT_BUNDLE_JSON,
+    });
 
     render(IntegrationsPage);
 

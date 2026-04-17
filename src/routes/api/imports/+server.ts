@@ -13,7 +13,7 @@ export const POST: RequestHandler = createValidatedActionPostHandler({
   handlers: {
     list: async () => await listImportBatchesServer(),
     preview: async (data) => await previewImportServer(data.input),
-    commit: async (data) => await commitImportBatchServer(data.batchId),
+    commit: async (data) => await commitImportBatchServer(data.input),
   },
   onError: (error) => {
     const message = error instanceof Error ? error.message : 'Import request failed.';
