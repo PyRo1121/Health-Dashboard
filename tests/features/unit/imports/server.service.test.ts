@@ -16,7 +16,9 @@ describe('imports server service', () => {
   });
 
   it('keeps import preview ephemeral without writing batches or artifacts', async () => {
-    const transaction = vi.fn((callback: (tx: { mocked: true }) => unknown) => callback({ mocked: true }));
+    const transaction = vi.fn((callback: (tx: { mocked: true }) => unknown) =>
+      callback({ mocked: true })
+    );
     const upsertMirrorRecord = vi.fn();
     const upsertMirrorRecords = vi.fn();
 
@@ -73,8 +75,7 @@ describe('imports server service', () => {
       resolveClinicalPatientMatch: vi.fn(),
     }));
 
-    const { previewImportServer } =
-      await import('../../../../src/lib/server/imports/service.ts');
+    const { previewImportServer } = await import('../../../../src/lib/server/imports/service.ts');
 
     await previewImportServer({
       sourceType: 'day-one-json',
@@ -86,8 +87,86 @@ describe('imports server service', () => {
     expect(upsertMirrorRecords).not.toHaveBeenCalled();
   });
 
+  it('dedupes duplicate sourceRecordId values within same incoming server batch', async () => {
+    const selectMirrorRecordsByFieldValues = vi.fn(async () => []);
+
+    vi.doMock('$lib/server/db/drizzle/client', () => ({
+      getServerDrizzleClient: () => ({ db: {} }),
+    }));
+    vi.doMock('$lib/server/db/drizzle/schema', () => ({
+      drizzleSchema: { healthEvents: {} },
+    }));
+    vi.doMock('$lib/server/db/drizzle/mirror', () => ({
+      selectAllMirrorRecords: vi.fn(async () => []),
+      selectMirrorRecordById: vi.fn(async () => undefined),
+      selectMirrorRecordsByField: vi.fn(async () => []),
+      selectMirrorRecordsByFieldValues,
+      upsertMirrorRecord: vi.fn(),
+      upsertMirrorRecordSync: vi.fn(),
+      upsertMirrorRecords: vi.fn(),
+      upsertMirrorRecordsSync: vi.fn(),
+    }));
+    vi.doMock('$lib/server/review/service', () => ({
+      refreshWeeklyReviewArtifactsForDaysServer: vi.fn(),
+    }));
+    vi.doMock('$lib/features/imports/analyze', () => ({
+      analyzeImportPayload: vi.fn(() => null),
+    }));
+    vi.doMock('$lib/features/imports/parsers', () => ({
+      parseAppleHealthXml: vi.fn(() => []),
+      parseDayOneExport: vi.fn(() => []),
+    }));
+    vi.doMock('$lib/features/integrations/connectors/healthkit', () => ({
+      importHealthKitCompanionBundle: vi.fn(() => ({ events: [] })),
+    }));
+    vi.doMock('$lib/features/integrations/connectors/smart-fhir', () => ({
+      importSmartFhirSandboxBundle: vi.fn(() => ({ events: [], patientIdentity: {} })),
+    }));
+    vi.doMock('$lib/features/integrations/identity/patient-match', () => ({
+      resolveClinicalPatientMatch: vi.fn(),
+    }));
+
+    const { dedupeImportedEventsServer } =
+      await import('../../../../src/lib/server/imports/service.ts');
+
+    const timestamp = '2026-04-02T08:00:00.000Z';
+    const result = await dedupeImportedEventsServer([
+      {
+        id: 'event-a',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        localDay: '2026-04-02',
+        sourceType: 'import',
+        sourceApp: 'Apple Health XML',
+        sourceRecordId: 'apple:record:1',
+        confidence: 0.95,
+        eventType: 'step-count',
+        value: 1000,
+      },
+      {
+        id: 'event-b',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        localDay: '2026-04-02',
+        sourceType: 'import',
+        sourceApp: 'Apple Health XML',
+        sourceRecordId: 'apple:record:1',
+        confidence: 0.95,
+        eventType: 'step-count',
+        value: 1000,
+      },
+    ]);
+
+    expect(selectMirrorRecordsByFieldValues).toHaveBeenCalledTimes(1);
+    expect(result.adds).toHaveLength(1);
+    expect(result.duplicates).toHaveLength(1);
+    expect(result.duplicates[0]?.id).toBe('event-b');
+  });
+
   it('does not refresh review artifacts if import commit persistence fails inside the transaction', async () => {
-    const transaction = vi.fn((callback: (tx: { mocked: true }) => unknown) => callback({ mocked: true }));
+    const transaction = vi.fn((callback: (tx: { mocked: true }) => unknown) =>
+      callback({ mocked: true })
+    );
     const upsertMirrorRecord = vi.fn(() => {
       throw new Error('write failed');
     });
@@ -97,7 +176,12 @@ describe('imports server service', () => {
       getServerDrizzleClient: () => ({ db: { transaction } }),
     }));
     vi.doMock('$lib/server/db/drizzle/schema', () => ({
-      drizzleSchema: { importBatches: {}, importArtifacts: {}, healthEvents: {}, journalEntries: {} },
+      drizzleSchema: {
+        importBatches: {},
+        importArtifacts: {},
+        healthEvents: {},
+        journalEntries: {},
+      },
     }));
     vi.doMock('$lib/server/db/drizzle/mirror', () => ({
       selectAllMirrorRecords: vi.fn(async () => []),

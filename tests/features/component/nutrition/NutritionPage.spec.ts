@@ -176,8 +176,8 @@ describe('Nutrition route', () => {
       const mealLoggingSection = Array.from(document.querySelectorAll('section')).find((section) =>
         section.textContent?.includes('Meal logging')
       );
-      const customCatalogSection = Array.from(document.querySelectorAll('section')).find((section) =>
-        section.textContent?.includes('Custom food catalog')
+      const customCatalogSection = Array.from(document.querySelectorAll('section')).find(
+        (section) => section.textContent?.includes('Custom food catalog')
       );
       expect(mealLoggingSection?.textContent).not.toContain('Teriyaki Chicken Casserole');
       expect(customCatalogSection?.textContent).toContain('Teriyaki Chicken Casserole');

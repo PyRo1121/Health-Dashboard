@@ -1,5 +1,8 @@
 import { currentLocalDay } from '$lib/core/domain/time';
-import { createFeatureActionClient, createFeatureRequestClient } from '$lib/core/http/feature-client';
+import {
+  createFeatureActionClient,
+  createFeatureRequestClient,
+} from '$lib/core/http/feature-client';
 import {
   createHealthPageState,
   loadHealthPage as loadHealthPageController,
@@ -69,15 +72,18 @@ export async function quickLogTemplatePage(
 export async function searchHealthSymptomSuggestions(
   query: string
 ): Promise<HealthSymptomSuggestionResponse> {
-  return await symptomSearchClient.request<HealthSymptomSuggestionResponse>({ query }, async () => ({
-    suggestions: [] satisfies HealthSymptomSuggestion[],
-    notice: '',
-    metadata: {
-      provenance: [],
-      cacheStatus: 'none',
-      degradationStatus: 'none',
-    },
-  }));
+  return await symptomSearchClient.request<HealthSymptomSuggestionResponse>(
+    { query },
+    async () => ({
+      suggestions: [] satisfies HealthSymptomSuggestion[],
+      notice: '',
+      metadata: {
+        provenance: [],
+        cacheStatus: 'none',
+        degradationStatus: 'none',
+      },
+    })
+  );
 }
 
 export async function searchHealthMedicationSuggestions(

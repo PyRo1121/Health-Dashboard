@@ -10,10 +10,9 @@ describe('Health route medication suggestion metadata', () => {
 
   it('clears medication suggestion notice and metadata after applying a suggested medication', async () => {
     vi.doMock('$lib/features/health/client', async () => {
-      const actual =
-        await vi.importActual<typeof import('../../../../src/lib/features/health/client')>(
-          '$lib/features/health/client'
-        );
+      const actual = await vi.importActual<
+        typeof import('../../../../src/lib/features/health/client')
+      >('$lib/features/health/client');
 
       return {
         ...actual,
@@ -75,5 +74,4 @@ describe('Health route medication suggestion metadata', () => {
     expect(screen.queryByText('Server-owned medication guidance.')).toBeNull();
     expect(screen.queryByText(/Sources: RxNorm/i)).toBeNull();
   });
-
 });

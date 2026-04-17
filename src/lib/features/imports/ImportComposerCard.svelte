@@ -184,9 +184,7 @@
     <Button variant="secondary" onclick={onPreview} disabled={!canPreviewPayload}>
       Preview import
     </Button>
-    <Button onclick={onCommit} disabled={!latestPreview}>
-      Commit import
-    </Button>
+    <Button onclick={onCommit} disabled={!latestPreview}>Commit import</Button>
   </div>
 
   {#if latestPreview}

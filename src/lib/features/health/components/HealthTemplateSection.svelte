@@ -46,7 +46,6 @@
       `Status: ${metadata.degradationStatus}`,
     ].filter(Boolean);
   }
-
 </script>
 
 <SectionCard title="Medication and supplement templates">

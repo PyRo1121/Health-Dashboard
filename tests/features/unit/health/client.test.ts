@@ -70,9 +70,7 @@ describe('health client', () => {
     await client.saveTemplatePage(state);
     await client.quickLogTemplatePage(state, 'template-1');
     await expect(client.searchHealthSymptomSuggestions('head')).resolves.toEqual({
-      suggestions: [
-        { label: 'Headache', code: 'R51', sourceName: 'Clinical Tables Conditions' },
-      ],
+      suggestions: [{ label: 'Headache', code: 'R51', sourceName: 'Clinical Tables Conditions' }],
       notice: 'Suggestions from Clinical Tables Conditions.',
       metadata: {
         provenance: [],

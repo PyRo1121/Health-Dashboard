@@ -15,9 +15,23 @@
   import type { TimelineSourceFilter } from '$lib/features/timeline/service';
 
   let page = $state(createTimelinePageState());
+  let loadError = $state('');
+
+  function timelineErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Timeline unavailable right now.';
+  }
 
   async function refreshTimeline() {
-    page = await loadTimelinePage(page);
+    try {
+      page = await loadTimelinePage(page);
+      loadError = '';
+    } catch (error) {
+      page = {
+        ...page,
+        loading: false,
+      };
+      loadError = timelineErrorMessage(error);
+    }
   }
 
   onBrowserRouteMount(refreshTimeline);
@@ -54,6 +68,10 @@
           </select>
         </Field>
       </div>
+
+      {#if loadError}
+        <p class="status-copy" role="alert">{loadError}</p>
+      {/if}
 
       {#if page.items.length}
         <ul class="timeline-list">

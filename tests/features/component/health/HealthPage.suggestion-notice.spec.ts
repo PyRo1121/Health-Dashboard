@@ -10,10 +10,9 @@ describe('Health route symptom suggestion notice', () => {
 
   it('uses the notice returned by the health suggestion client instead of hardcoding it', async () => {
     vi.doMock('$lib/features/health/client', async () => {
-      const actual =
-        await vi.importActual<typeof import('../../../../src/lib/features/health/client')>(
-          '$lib/features/health/client'
-        );
+      const actual = await vi.importActual<
+        typeof import('../../../../src/lib/features/health/client')
+      >('$lib/features/health/client');
 
       return {
         ...actual,

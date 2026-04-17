@@ -83,30 +83,27 @@ describe('nutrition client', () => {
   it('looks up packaged barcode hits through a dynamic request client endpoint', async () => {
     const requestSpies = new Map<string, ReturnType<typeof vi.fn>>();
     const createFeatureRequestClient = vi.fn((endpoint: string) => {
-      const request = vi.fn(
-        async () =>
-          ({
-            match: {
-              id: 'off:049000028911',
-              name: 'Diet Cola',
-              calories: 1,
-              protein: 0,
-              fiber: 0,
-              carbs: 0,
-              fat: 0,
-              sourceName: 'Open Food Facts',
-              sourceType: 'open-food-facts' as const,
-              barcode: '049000028911',
-              isEnriched: true,
-            } satisfies FoodLookupResult,
-            notice: 'Packaged food loaded from local cache.',
-            metadata: {
-              provenance: [],
-              cacheStatus: 'local-cache' as const,
-              degradationStatus: 'none' as const,
-            },
-          })
-      );
+      const request = vi.fn(async () => ({
+        match: {
+          id: 'off:049000028911',
+          name: 'Diet Cola',
+          calories: 1,
+          protein: 0,
+          fiber: 0,
+          carbs: 0,
+          fat: 0,
+          sourceName: 'Open Food Facts',
+          sourceType: 'open-food-facts' as const,
+          barcode: '049000028911',
+          isEnriched: true,
+        } satisfies FoodLookupResult,
+        notice: 'Packaged food loaded from local cache.',
+        metadata: {
+          provenance: [],
+          cacheStatus: 'local-cache' as const,
+          degradationStatus: 'none' as const,
+        },
+      }));
       requestSpies.set(endpoint, request);
       return { request };
     });

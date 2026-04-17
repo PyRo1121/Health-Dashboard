@@ -48,7 +48,10 @@ export async function searchMovementExercisesServer(query: string): Promise<Exer
     return [];
   }
 
-  const cachedMatches = searchExerciseCatalog(normalizedQuery, await listExerciseCatalogItemsServer());
+  const cachedMatches = searchExerciseCatalog(
+    normalizedQuery,
+    await listExerciseCatalogItemsServer()
+  );
   if (cachedMatches.length) {
     return cachedMatches;
   }

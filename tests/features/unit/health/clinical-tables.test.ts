@@ -57,9 +57,9 @@ describe('clinical tables condition adapter', () => {
   });
 
   it('requests the documented Clinical Tables fields for condition suggestions', async () => {
-    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(JSON.stringify([0, [], null, []]))
-    );
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(new Response(JSON.stringify([0, [], null, []])));
 
     await searchClinicalConditionSuggestions('head', fetchImpl);
 
@@ -69,21 +69,23 @@ describe('clinical tables condition adapter', () => {
   });
 
   it('ignores malformed record tuples and keeps only rows with a non-empty label', async () => {
-    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(
-        JSON.stringify([
-          4,
-          [],
-          null,
-          [
-            ['Headache', 'R51', 'Headache'],
-            [undefined, 'R51.9', 'Headache disorder'],
-            ['   ', 'R42', 'Dizziness'],
-            'not-a-tuple',
-          ],
-        ])
-      )
-    );
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(
+          JSON.stringify([
+            4,
+            [],
+            null,
+            [
+              ['Headache', 'R51', 'Headache'],
+              [undefined, 'R51.9', 'Headache disorder'],
+              ['   ', 'R42', 'Dizziness'],
+              'not-a-tuple',
+            ],
+          ])
+        )
+      );
 
     await expect(searchClinicalConditionSuggestions('head', fetchImpl)).resolves.toEqual([
       expect.objectContaining({
@@ -122,16 +124,11 @@ describe('clinical tables condition adapter', () => {
   });
 
   it('trims documented label and code fields before returning suggestions', async () => {
-    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(
-        JSON.stringify([
-          1,
-          [],
-          null,
-          [['  Headache  ', '  R51  ', 'Headache']],
-        ])
-      )
-    );
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(JSON.stringify([1, [], null, [['  Headache  ', '  R51  ', 'Headache']]]))
+      );
 
     await expect(searchClinicalConditionSuggestions('head', fetchImpl)).resolves.toEqual([
       expect.objectContaining({
@@ -143,18 +140,15 @@ describe('clinical tables condition adapter', () => {
   });
 
   it('returns a metadata-bearing envelope for successful suggestion searches', async () => {
-    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(
-        JSON.stringify([
-          1,
-          [],
-          null,
-          [['Headache', 'R51', 'Headache']],
-        ])
-      )
-    );
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(JSON.stringify([1, [], null, [['Headache', 'R51', 'Headache']]]))
+      );
 
-    await expect(searchClinicalConditionSuggestionsWithMetadata('head', fetchImpl)).resolves.toEqual({
+    await expect(
+      searchClinicalConditionSuggestionsWithMetadata('head', fetchImpl)
+    ).resolves.toEqual({
       suggestions: [
         {
           label: 'Headache',
@@ -201,9 +195,13 @@ describe('clinical tables condition adapter', () => {
   });
 
   it('returns degraded metadata instead of throwing when Clinical Tables is unavailable', async () => {
-    const fetchImpl = vi.fn<typeof fetch>().mockRejectedValue(new Error('Clinical Tables unavailable'));
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockRejectedValue(new Error('Clinical Tables unavailable'));
 
-    await expect(searchClinicalConditionSuggestionsWithMetadata('head', fetchImpl)).resolves.toEqual({
+    await expect(
+      searchClinicalConditionSuggestionsWithMetadata('head', fetchImpl)
+    ).resolves.toEqual({
       suggestions: [],
       notice: 'Clinical condition suggestions unavailable right now.',
       metadata: expect.objectContaining({
@@ -214,16 +212,11 @@ describe('clinical tables condition adapter', () => {
   });
 
   it('applies a timeout signal to outbound Clinical Tables requests', async () => {
-    const fetchImpl = vi.fn<typeof fetch>().mockResolvedValue(
-      new Response(
-        JSON.stringify([
-          1,
-          [],
-          null,
-          [['Headache', 'R51', 'Headache']],
-        ])
-      )
-    );
+    const fetchImpl = vi
+      .fn<typeof fetch>()
+      .mockResolvedValue(
+        new Response(JSON.stringify([1, [], null, [['Headache', 'R51', 'Headache']]]))
+      );
 
     await searchClinicalConditionSuggestions('head', fetchImpl);
 

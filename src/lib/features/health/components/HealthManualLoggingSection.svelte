@@ -54,7 +54,6 @@
       `Status: ${metadata.degradationStatus}`,
     ].filter(Boolean);
   }
-
 </script>
 
 <SectionCard title="Log symptom">

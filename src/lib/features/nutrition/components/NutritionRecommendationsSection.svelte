@@ -12,11 +12,7 @@
     recommendationContextRows: string[];
     recommendations: NutritionRecommendation[];
     onUseRecommendation: (id: string, kind: 'food' | 'recipe') => void;
-    onPlanRecommendation: (
-      id: string,
-      kind: 'food' | 'recipe',
-      canPlanDirectly: boolean
-    ) => void;
+    onPlanRecommendation: (id: string, kind: 'food' | 'recipe', canPlanDirectly: boolean) => void;
   } = $props();
 </script>
 

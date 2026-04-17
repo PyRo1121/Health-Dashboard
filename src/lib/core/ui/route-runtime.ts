@@ -8,6 +8,17 @@ function isDatabaseClosedError(error: unknown): boolean {
   );
 }
 
+function reportUnhandledRouteError(error: unknown): void {
+  if (typeof globalThis.reportError === 'function') {
+    globalThis.reportError(error);
+    return;
+  }
+
+  setTimeout(() => {
+    throw (error instanceof Error ? error : new Error(String(error)));
+  }, 0);
+}
+
 export function onBrowserRouteMount(run: () => void | (() => void) | Promise<void>): void {
   onMount(() => {
     if (!browser) return;
@@ -17,7 +28,7 @@ export function onBrowserRouteMount(run: () => void | (() => void) | Promise<voi
     }
     void Promise.resolve(result).catch((error) => {
       if (!isDatabaseClosedError(error)) {
-        throw error;
+        reportUnhandledRouteError(error);
       }
     });
   });

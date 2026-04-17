@@ -21,8 +21,20 @@
   let assessmentDefinition = $derived(renderAssessment(page.instrument));
   let latestResultRows = $derived(createAssessmentResultRows(page.latest));
 
+  function assessmentsActionErrorMessage(error: unknown): string {
+    return error instanceof Error ? error.message : 'Unable to reach assessments right now.';
+  }
+
   async function loadLatest() {
-    page = await loadAssessmentsPage(page);
+    try {
+      page = await loadAssessmentsPage(page);
+    } catch (error) {
+      page = {
+        ...page,
+        loading: false,
+        validationError: assessmentsActionErrorMessage(error),
+      };
+    }
   }
 
   function setResponse(index: number, value: string) {
@@ -33,11 +45,25 @@
   }
 
   async function saveProgress() {
-    page = await saveAssessmentsProgressPage(page);
+    try {
+      page = await saveAssessmentsProgressPage(page);
+    } catch (error) {
+      page = {
+        ...page,
+        validationError: assessmentsActionErrorMessage(error),
+      };
+    }
   }
 
   async function saveAssessment() {
-    page = await submitAssessmentsPage(page);
+    try {
+      page = await submitAssessmentsPage(page);
+    } catch (error) {
+      page = {
+        ...page,
+        validationError: assessmentsActionErrorMessage(error),
+      };
+    }
   }
 
   onBrowserRouteMount(loadLatest);

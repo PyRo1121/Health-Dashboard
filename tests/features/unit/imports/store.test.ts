@@ -1,5 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { commitImportBatch, listImportBatches, previewImport } from '$lib/features/imports/store';
+import {
+  commitImportBatch,
+  dedupeImportedEvents,
+  listImportBatches,
+  previewImport,
+} from '$lib/features/imports/store';
 import { describeImportPayload } from '$lib/features/imports/analyze';
 import { inferImportSourceType } from '$lib/features/imports/detect';
 import { parseAppleHealthXml, parseDayOneExport } from '$lib/features/imports/parsers';
@@ -54,7 +59,9 @@ describe('imports store', () => {
     expect(records[0]?.createdAt).toBe(records[0]?.updatedAt);
     expect(records[0]?.createdAt).toBe(records[0]?.sourceTimestamp);
     expect(records[0]?.localDay).toBe(records[0]?.sourceTimestamp?.slice(0, 10));
-    expect(records[0]?.sourceRecordId).toBe(`iPhone:${records[0]?.sourceTimestamp}`);
+    expect(records[0]?.sourceRecordId).toBe(
+      `iPhone:HKQuantityTypeIdentifierStepCount:${records[0]?.sourceTimestamp}:${records[0]?.sourceTimestamp}:count:4321`
+    );
   });
 
   it('uses one fallback timestamp per Day One parse when creation dates are missing', () => {
@@ -66,6 +73,44 @@ describe('imports store', () => {
 
     expect(entries[0]?.createdAt).toBe(entries[0]?.updatedAt);
     expect(entries[0]?.localDay).toBe(entries[0]?.createdAt?.slice(0, 10));
+  });
+
+  it('dedupes duplicate sourceRecordId values within same incoming event batch', async () => {
+    const db = getDb();
+    const timestamp = '2026-04-02T08:00:00.000Z';
+
+    const result = await dedupeImportedEvents(db, [
+      {
+        id: 'event-a',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        sourceType: 'import',
+        sourceApp: 'Apple Health XML',
+        sourceRecordId: 'apple:record:1',
+        sourceTimestamp: timestamp,
+        localDay: '2026-04-02',
+        confidence: 0.95,
+        eventType: 'step-count',
+        value: 1000,
+      },
+      {
+        id: 'event-b',
+        createdAt: timestamp,
+        updatedAt: timestamp,
+        sourceType: 'import',
+        sourceApp: 'Apple Health XML',
+        sourceRecordId: 'apple:record:1',
+        sourceTimestamp: timestamp,
+        localDay: '2026-04-02',
+        confidence: 0.95,
+        eventType: 'step-count',
+        value: 1000,
+      },
+    ]);
+
+    expect(result.adds).toHaveLength(1);
+    expect(result.duplicates).toHaveLength(1);
+    expect(result.duplicates[0]?.id).toBe('event-b');
   });
 
   it('infers import source types from filename and content', () => {

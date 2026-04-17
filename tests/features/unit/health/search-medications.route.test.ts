@@ -21,7 +21,8 @@ describe('health medication search route', () => {
       searchRxNormMedicationSuggestionsWithMetadata,
     }));
 
-    const { POST } = await import('../../../../src/routes/api/health/search-medications/+server.ts');
+    const { POST } =
+      await import('../../../../src/routes/api/health/search-medications/+server.ts');
     const response = await POST({
       request: new Request('http://health.test/api/health/search-medications', {
         method: 'POST',
@@ -58,7 +59,8 @@ describe('health medication search route', () => {
       searchRxNormMedicationSuggestionsWithMetadata,
     }));
 
-    const { POST } = await import('../../../../src/routes/api/health/search-medications/+server.ts');
+    const { POST } =
+      await import('../../../../src/routes/api/health/search-medications/+server.ts');
     const response = await POST({
       request: new Request('http://health.test/api/health/search-medications', {
         method: 'POST',
@@ -68,7 +70,9 @@ describe('health medication search route', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      suggestions: [{ label: 'Metformin 500 MG Oral Tablet', code: '860975', sourceName: 'RxNorm' }],
+      suggestions: [
+        { label: 'Metformin 500 MG Oral Tablet', code: '860975', sourceName: 'RxNorm' },
+      ],
       notice: 'Suggestions from RxNorm.',
       metadata: {
         provenance: [],
@@ -84,7 +88,8 @@ describe('health medication search route', () => {
       searchRxNormMedicationSuggestionsWithMetadata: vi.fn(),
     }));
 
-    const { POST } = await import('../../../../src/routes/api/health/search-medications/+server.ts');
+    const { POST } =
+      await import('../../../../src/routes/api/health/search-medications/+server.ts');
     const response = await POST({
       request: new Request('http://health.test/api/health/search-medications', {
         method: 'POST',
@@ -104,7 +109,8 @@ describe('health medication search route', () => {
       searchRxNormMedicationSuggestionsWithMetadata,
     }));
 
-    const { POST } = await import('../../../../src/routes/api/health/search-medications/+server.ts');
+    const { POST } =
+      await import('../../../../src/routes/api/health/search-medications/+server.ts');
     const response = await POST({
       request: new Request('http://health.test/api/health/search-medications', {
         method: 'POST',

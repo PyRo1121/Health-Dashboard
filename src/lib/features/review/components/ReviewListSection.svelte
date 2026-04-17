@@ -10,9 +10,7 @@
     section: ReviewSection;
   } = $props();
 
-  function isLinkItem(
-    item: ReviewSection['items'][number]
-  ): item is ReviewReferenceItem {
+  function isLinkItem(item: ReviewSection['items'][number]): item is ReviewReferenceItem {
     return (
       typeof item === 'object' &&
       item !== null &&

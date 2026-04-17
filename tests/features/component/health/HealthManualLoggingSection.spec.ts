@@ -54,7 +54,9 @@ describe('HealthManualLoggingSection', () => {
     expect(screen.getByText(/Sources: Clinical Tables Conditions/i)).toBeTruthy();
     expect(screen.getByText(/Cache: remote-live/i)).toBeTruthy();
     expect(screen.getByText(/Status: none/i)).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Learn more about Headache' }).getAttribute('href')).toBe(
+    expect(
+      screen.getByRole('link', { name: 'Learn more about Headache' }).getAttribute('href')
+    ).toBe(
       'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en'
     );
     await fireEvent.click(screen.getByRole('button', { name: 'Use symptom Headache' }));

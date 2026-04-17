@@ -4,6 +4,18 @@ import type { HealthEvent, JournalEntry } from '$lib/core/domain/types';
 import { createRecordId } from '$lib/core/shared/ids';
 import { createRecordMeta } from '$lib/core/shared/records';
 
+function buildAppleHealthSourceRecordId(
+  attributes: Record<string, string>,
+  sourceTimestamp: string
+): string {
+  const sourceName = attributes.sourceName?.trim() || 'unknown';
+  const metricType = attributes.type?.trim() || 'unknown';
+  const endTimestamp = attributes.endDate?.trim() || sourceTimestamp;
+  const unit = attributes.unit?.trim() || '';
+  const value = attributes.value?.trim() || '';
+  return `${sourceName}:${metricType}:${sourceTimestamp}:${endTimestamp}:${unit}:${value}`;
+}
+
 export function parseAppleHealthXml(xml: string): HealthEvent[] {
   const recordMatches = [...xml.matchAll(/<Record\s+([^>]+?)\s*\/?>/g)];
   const importedAt = nowIso();
@@ -18,7 +30,7 @@ export function parseAppleHealthXml(xml: string): HealthEvent[] {
       ...createRecordMeta(createRecordId('apple-import'), importedAt),
       sourceType: 'import',
       sourceApp: 'Apple Health XML',
-      sourceRecordId: `${attributes.sourceName ?? 'unknown'}:${sourceTimestamp}`,
+      sourceRecordId: buildAppleHealthSourceRecordId(attributes, sourceTimestamp),
       sourceTimestamp,
       localDay: sourceTimestamp.slice(0, 10),
       timezone: 'UTC',

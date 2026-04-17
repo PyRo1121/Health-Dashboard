@@ -48,7 +48,10 @@ const sleepNoteFormSchema = z.object({
   note: z.string(),
   restfulness: z
     .string()
-    .refine((value) => !value.trim() || isBoundedNumberString(value, 1, 5), 'Expected a score from 1 to 5 or blank'),
+    .refine(
+      (value) => !value.trim() || isBoundedNumberString(value, 1, 5),
+      'Expected a score from 1 to 5 or blank'
+    ),
   context: z.string(),
 });
 

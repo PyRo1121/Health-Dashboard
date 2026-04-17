@@ -97,7 +97,11 @@ describe('Health route', () => {
     await fireEvent.click(screen.getByRole('button', { name: 'Log now' }));
 
     await waitFor(() => {
-      expect(screen.getByRole('link', { name: 'Learn more about logged medication Metformin 500 MG Oral Tablet' })).toBeTruthy();
+      expect(
+        screen.getByRole('link', {
+          name: 'Learn more about logged medication Metformin 500 MG Oral Tablet',
+        })
+      ).toBeTruthy();
     });
   });
 });

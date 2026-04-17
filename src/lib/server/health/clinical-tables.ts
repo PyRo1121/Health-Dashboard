@@ -12,7 +12,7 @@ type ClinicalTablesSearchResponse = [
   total: number,
   labels: string[],
   unknown: unknown,
-  records?: Array<[label?: string, code?: string, consumerName?: string]>
+  records?: Array<[label?: string, code?: string, consumerName?: string]>,
 ];
 
 export interface HealthSymptomSuggestion {

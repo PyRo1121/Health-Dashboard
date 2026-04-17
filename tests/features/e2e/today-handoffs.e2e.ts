@@ -351,9 +351,7 @@ test('today can clear a planned meal handoff after nutrition queues it', async (
   await expect(page.getByText(/No meal queued up\./i)).toBeVisible();
 });
 
-test('recommended optional-source recipes require review before planning', async ({
-  page,
-}) => {
+test('recommended optional-source recipes require review before planning', async ({ page }) => {
   const seedResponse = await page.request.post('/api/db/migrate', {
     data: {
       snapshot: {
@@ -402,12 +400,8 @@ test('recommended optional-source recipes require review before planning', async
   await expect(recommendationsSection.getByText('Teriyaki Chicken Casserole')).toBeVisible();
   await expect(recommendationsSection.getByText(/Source: TheMealDB/i)).toBeVisible();
   await expect(recommendationsSection.getByText(/Posture: optional/i)).toBeVisible();
-  await expect(
-    recommendationsSection.getByRole('button', { name: 'Load recipe' })
-  ).toBeVisible();
-  await expect(
-    recommendationsSection.getByRole('button', { name: 'Review first' })
-  ).toBeDisabled();
+  await expect(recommendationsSection.getByRole('button', { name: 'Load recipe' })).toBeVisible();
+  await expect(recommendationsSection.getByRole('button', { name: 'Review first' })).toBeDisabled();
 });
 
 test('nutrition planning replaces stale planned-food slots instead of leaving the handoff broken', async ({
@@ -2836,7 +2830,6 @@ test('saving a recipe-loaded draft as a custom food does not fabricate zero macr
   await expect(recommendationsSection.getByText(/good fit for a steadier-energy day/i)).toHaveCount(
     0
   );
-
 });
 
 test('saving a fresh name-only custom food does not fabricate zero macros', async ({ page }) => {

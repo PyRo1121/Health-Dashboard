@@ -47,8 +47,12 @@ describe('HealthTemplateSection', () => {
     expect(screen.getByText(/Sources: RxNorm/i)).toBeTruthy();
     expect(screen.getByText(/Cache: remote-live/i)).toBeTruthy();
     expect(screen.getByText(/Status: none/i)).toBeTruthy();
-    expect(screen.getByRole('link', { name: 'Learn more about Metformin 500 MG Oral Tablet' })).toBeTruthy();
-    await fireEvent.click(screen.getByRole('button', { name: 'Use medication Metformin 500 MG Oral Tablet' }));
+    expect(
+      screen.getByRole('link', { name: 'Learn more about Metformin 500 MG Oral Tablet' })
+    ).toBeTruthy();
+    await fireEvent.click(
+      screen.getByRole('button', { name: 'Use medication Metformin 500 MG Oral Tablet' })
+    );
 
     expect(onTemplateFieldChange).toHaveBeenCalledWith(
       'label',
@@ -89,7 +93,11 @@ describe('HealthTemplateSection', () => {
       onApplyMedicationSuggestion: vi.fn(),
     });
 
-    expect(screen.getByRole('link', { name: 'Learn more about saved medication Metformin 500 MG Oral Tablet' })).toBeTruthy();
+    expect(
+      screen.getByRole('link', {
+        name: 'Learn more about saved medication Metformin 500 MG Oral Tablet',
+      })
+    ).toBeTruthy();
   });
 
   it('renders a saved supplement template reference link without mislabeling it as medication', () => {

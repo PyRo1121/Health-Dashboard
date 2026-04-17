@@ -122,18 +122,34 @@ export async function createImportBatch(
   return batch;
 }
 
+function normalizeSourceRecordId(value: string | undefined): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
 export async function dedupeImportedEvents(
   store: ImportedRecordsStore,
   events: HealthEvent[]
 ): Promise<{ adds: HealthEvent[]; duplicates: HealthEvent[] }> {
   const adds: HealthEvent[] = [];
   const duplicates: HealthEvent[] = [];
+  const seenSourceRecordIds = new Set<string>();
 
   for (const event of events) {
-    const existing = await store.healthEvents
-      .where('sourceRecordId')
-      .equals(event.sourceRecordId ?? '')
-      .first();
+    const sourceRecordId = normalizeSourceRecordId(event.sourceRecordId);
+    if (!sourceRecordId) {
+      adds.push(event);
+      continue;
+    }
+
+    if (seenSourceRecordIds.has(sourceRecordId)) {
+      duplicates.push(event);
+      continue;
+    }
+
+    seenSourceRecordIds.add(sourceRecordId);
+
+    const existing = await store.healthEvents.where('sourceRecordId').equals(sourceRecordId).first();
 
     if (existing) {
       duplicates.push(event);

@@ -219,8 +219,7 @@ export async function lookupPackagedBarcode(
       cacheStatus: 'local-cache',
       degradationStatus: 'none',
     } satisfies ExternalSourceMetadata,
-  })
-  );
+  }));
 
   return applyNutritionBarcodeMatch(
     state,

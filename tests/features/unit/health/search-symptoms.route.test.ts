@@ -44,9 +44,7 @@ describe('health symptom search route', () => {
 
   it('delegates valid symptom queries to the clinical tables adapter', async () => {
     const searchClinicalConditionSuggestionsWithMetadata = vi.fn(async () => ({
-      suggestions: [
-        { label: 'Headache', code: 'R51', sourceName: 'Clinical Tables Conditions' },
-      ],
+      suggestions: [{ label: 'Headache', code: 'R51', sourceName: 'Clinical Tables Conditions' }],
       notice: 'Suggestions from Clinical Tables Conditions.',
       metadata: {
         provenance: [],

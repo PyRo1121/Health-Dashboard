@@ -158,7 +158,9 @@ describe('Today route', () => {
     await waitFor(() => {
       expect(screen.getByText('Symptom')).toBeTruthy();
     });
-    expect(screen.queryByRole('link', { name: 'Learn more about same-day event Symptom' })).toBeNull();
+    expect(
+      screen.queryByRole('link', { name: 'Learn more about same-day event Symptom' })
+    ).toBeNull();
   });
 
   it('shows a planned meal and lets today log it immediately', async () => {

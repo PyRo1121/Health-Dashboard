@@ -11,8 +11,20 @@ describe('rxnorm adapter', () => {
         JSON.stringify({
           approximateGroup: {
             candidate: [
-              { rxcui: '860975', rxaui: '123', score: '95', rank: '1', name: 'Metformin 500 MG Oral Tablet' },
-              { rxcui: '617314', rxaui: '124', score: '88', rank: '2', name: 'Metformin 850 MG Oral Tablet' },
+              {
+                rxcui: '860975',
+                rxaui: '123',
+                score: '95',
+                rank: '1',
+                name: 'Metformin 500 MG Oral Tablet',
+              },
+              {
+                rxcui: '617314',
+                rxaui: '124',
+                score: '88',
+                rank: '2',
+                name: 'Metformin 850 MG Oral Tablet',
+              },
             ],
           },
         })
@@ -53,7 +65,9 @@ describe('rxnorm adapter', () => {
       )
     );
 
-    await expect(searchRxNormMedicationSuggestionsWithMetadata('metformin', fetchImpl)).resolves.toEqual({
+    await expect(
+      searchRxNormMedicationSuggestionsWithMetadata('metformin', fetchImpl)
+    ).resolves.toEqual({
       suggestions: [
         expect.objectContaining({
           label: 'Metformin 500 MG Oral Tablet',
@@ -170,7 +184,9 @@ describe('rxnorm adapter', () => {
   it('returns degraded metadata instead of throwing when RxNorm is unavailable', async () => {
     const fetchImpl = vi.fn<typeof fetch>().mockRejectedValue(new Error('RxNorm unavailable'));
 
-    await expect(searchRxNormMedicationSuggestionsWithMetadata('metformin', fetchImpl)).resolves.toEqual({
+    await expect(
+      searchRxNormMedicationSuggestionsWithMetadata('metformin', fetchImpl)
+    ).resolves.toEqual({
       suggestions: [],
       notice: 'RxNorm suggestions unavailable right now.',
       metadata: expect.objectContaining({

@@ -10,10 +10,9 @@ describe('Health route symptom suggestion metadata', () => {
 
   it('clears symptom suggestion notice and metadata after logging the selected symptom', async () => {
     vi.doMock('$lib/features/health/client', async () => {
-      const actual =
-        await vi.importActual<typeof import('../../../../src/lib/features/health/client')>(
-          '$lib/features/health/client'
-        );
+      const actual = await vi.importActual<
+        typeof import('../../../../src/lib/features/health/client')
+      >('$lib/features/health/client');
       const saveSymptomPage = vi.fn(async (state) => ({
         ...state,
         loading: false,
@@ -72,5 +71,4 @@ describe('Health route symptom suggestion metadata', () => {
     expect(screen.queryByText('Server-owned symptom guidance.')).toBeNull();
     expect(screen.queryByText(/Sources: Clinical Tables Conditions/i)).toBeNull();
   });
-
 });

@@ -71,8 +71,7 @@ export function upsertMirrorRecordSync<T extends { id: string }>(
 ): void {
   const payload = toMirrorInsertRecord(tableName, record);
   const t = asTable(table);
-  db
-    .insert(table as never)
+  db.insert(table as never)
     .values(payload as never)
     .onConflictDoUpdate({
       target: t.id as never,

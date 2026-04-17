@@ -46,6 +46,11 @@ function ownerCandidate(ownerProfile: OwnerProfile): LocalPatientCandidate {
   };
 }
 
+function normalizeSourceRecordId(value: string | undefined): string | null {
+  const normalized = value?.trim();
+  return normalized ? normalized : null;
+}
+
 function resolveSmartClinicalImport(
   analysis: ImportPayloadAnalysis | null,
   rawText: string
@@ -99,12 +104,7 @@ function stageArtifactsSync(input: {
     payload: record as unknown as Record<string, unknown>,
   }));
 
-  upsertMirrorRecordsSync(
-    input.db,
-    'importArtifacts',
-    drizzleSchema.importArtifacts,
-    artifacts
-  );
+  upsertMirrorRecordsSync(input.db, 'importArtifacts', drizzleSchema.importArtifacts, artifacts);
 }
 
 export async function listImportBatchesServer(): Promise<ImportBatch[]> {
@@ -130,22 +130,40 @@ export async function dedupeImportedEventsServer(
   events: HealthEvent[]
 ): Promise<{ adds: HealthEvent[]; duplicates: HealthEvent[] }> {
   const { db } = getServerDrizzleClient();
+  const candidateSourceRecordIds = events
+    .map((event) => normalizeSourceRecordId(event.sourceRecordId))
+    .filter((value): value is string => value !== null);
+
   const existing = await selectMirrorRecordsByFieldValues<HealthEvent>(
     db,
     drizzleSchema.healthEvents,
     'sourceRecordId',
-    events.map((event) => event.sourceRecordId ?? '')
+    candidateSourceRecordIds
   );
-  const existingIds = new Set(existing.map((event) => event.sourceRecordId ?? ''));
+
+  const seenSourceRecordIds = new Set(
+    existing
+      .map((event) => normalizeSourceRecordId(event.sourceRecordId))
+      .filter((value): value is string => value !== null)
+  );
+
   const adds: HealthEvent[] = [];
   const duplicates: HealthEvent[] = [];
 
   for (const event of events) {
-    if (existingIds.has(event.sourceRecordId ?? '')) {
-      duplicates.push(event);
-    } else {
+    const sourceRecordId = normalizeSourceRecordId(event.sourceRecordId);
+    if (!sourceRecordId) {
       adds.push(event);
+      continue;
     }
+
+    if (seenSourceRecordIds.has(sourceRecordId)) {
+      duplicates.push(event);
+      continue;
+    }
+
+    seenSourceRecordIds.add(sourceRecordId);
+    adds.push(event);
   }
 
   return { adds, duplicates };
@@ -159,7 +177,11 @@ export async function dedupeImportedJournalEntriesServer(
   const duplicates: JournalEntry[] = [];
 
   for (const entry of entries) {
-    const existing = await selectMirrorRecordById<JournalEntry>(db, drizzleSchema.journalEntries, entry.id);
+    const existing = await selectMirrorRecordById<JournalEntry>(
+      db,
+      drizzleSchema.journalEntries,
+      entry.id
+    );
 
     if (existing) {
       duplicates.push(entry);

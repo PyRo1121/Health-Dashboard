@@ -49,6 +49,8 @@ describe('Timeline route', () => {
     await waitFor(() => {
       expect(screen.getByText(/Symptom/i)).toBeTruthy();
     });
-    expect(screen.queryByRole('link', { name: 'Learn more about timeline event Symptom' })).toBeNull();
+    expect(
+      screen.queryByRole('link', { name: 'Learn more about timeline event Symptom' })
+    ).toBeNull();
   });
 });
