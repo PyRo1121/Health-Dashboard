@@ -1,4 +1,4 @@
-import type { ImportBatch, ImportSourceType } from '$lib/core/domain/types';
+import type { ImportBatch, ImportPreviewResult, ImportSourceType } from '$lib/core/domain/types';
 import type { ImportPayloadSummary } from './core';
 
 export type PayloadOrigin = 'manual' | 'file' | 'sample';
@@ -11,7 +11,7 @@ export interface ImportIntakeState {
   fileNotice: string;
   payloadSummary: ImportPayloadSummary | null;
   isManualAnalysisPending: boolean;
-  latestPreview: ImportBatch | null;
+  latestPreview: ImportPreviewResult | null;
   saveNotice: string;
   errorNotice: string;
 }
@@ -146,7 +146,7 @@ export function clearLoadedPayloadState(state: ImportIntakeState): ImportIntakeS
 
 export function applyPreviewSuccessState(
   state: ImportIntakeState,
-  latestPreview: ImportBatch
+  latestPreview: ImportPreviewResult
 ): ImportIntakeState {
   return clearFeedbackState(state, { latestPreview });
 }
@@ -160,7 +160,7 @@ export function applyPreviewErrorState(
 
 export function applyCommitSuccessState(
   state: ImportIntakeState,
-  latestPreview: ImportBatch,
+  latestPreview: ImportPreviewResult | null,
   saveNotice = 'Import committed.'
 ): ImportIntakeState {
   return clearFeedbackState(state, { latestPreview, saveNotice });

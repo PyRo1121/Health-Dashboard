@@ -117,4 +117,34 @@ describe('TodayRecommendationSection', () => {
       label: 'Capture context',
     });
   });
+
+  it('renders source-kind badges for recommendation provenance rows', () => {
+    render(TodayRecommendationSection, {
+      snapshot: createSnapshot({
+        intelligence: {
+          primaryRecommendation: {
+            ...createSnapshot().intelligence.primaryRecommendation!,
+            provenance: [
+              {
+                label: 'Sleep hours: 5.5, daily check-in',
+                sourceKind: 'daily_record',
+                sourceId: 'daily:2026-04-14',
+              },
+              {
+                label: 'Symptom: 4, manual',
+                sourceKind: 'health_event',
+                sourceId: 'symptom-1',
+              },
+            ],
+          },
+          fallbackState: null,
+        },
+      }),
+      recommendationSupportRows: [],
+      onRecommendationAction: vi.fn(),
+    });
+
+    expect(screen.getByText('Daily record')).toBeTruthy();
+    expect(screen.getByText('Health event')).toBeTruthy();
+  });
 });

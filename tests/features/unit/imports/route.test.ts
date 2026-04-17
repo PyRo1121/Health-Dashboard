@@ -17,11 +17,9 @@ describe('imports route', () => {
       previewImportServer:
         overrides.previewImportServer ??
         vi.fn(async () => ({
-          id: 'batch-1',
-          createdAt: '2026-04-02T08:00:00.000Z',
-          updatedAt: '2026-04-02T08:00:00.000Z',
           sourceType: 'healthkit-companion',
-          status: 'staged',
+          status: 'preview',
+          summary: { adds: 3, duplicates: 0, warnings: 0 },
         })),
       commitImportBatchServer:
         overrides.commitImportBatchServer ??
@@ -65,11 +63,9 @@ describe('imports route', () => {
 
   it('previews imports through the server imports service', async () => {
     const previewImportServer = vi.fn(async () => ({
-      id: 'batch-2',
-      createdAt: '2026-04-02T08:00:00.000Z',
-      updatedAt: '2026-04-02T08:00:00.000Z',
       sourceType: 'day-one-json',
-      status: 'staged',
+      status: 'preview',
+      summary: { adds: 1, duplicates: 0, warnings: 0 },
     }));
     const { POST } = await importRoute({ previewImportServer });
     const input = {
@@ -86,7 +82,13 @@ describe('imports route', () => {
     } as Parameters<typeof POST>[0]);
 
     expect(response.status).toBe(200);
-    expect(await response.json()).toEqual(expect.objectContaining({ id: 'batch-2' }));
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        sourceType: 'day-one-json',
+        status: 'preview',
+        summary: { adds: 1, duplicates: 0, warnings: 0 },
+      })
+    );
     expect(previewImportServer).toHaveBeenCalledWith(input);
   });
 
@@ -97,19 +99,31 @@ describe('imports route', () => {
       updatedAt: '2026-04-02T08:05:00.000Z',
       sourceType: 'healthkit-companion',
       status: 'committed',
+      summary: { adds: 3, duplicates: 0, warnings: 0 },
     }));
     const { POST } = await importRoute({ commitImportBatchServer });
 
     const response = await POST({
       request: new Request('http://health.test/api/imports', {
         method: 'POST',
-        body: JSON.stringify({ action: 'commit', batchId: 'batch-3' }),
+        body: JSON.stringify({
+          action: 'commit',
+          input: {
+            sourceType: 'healthkit-companion',
+            rawText: '{}',
+            ownerProfile: null,
+          },
+        }),
       }),
     } as Parameters<typeof POST>[0]);
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual(expect.objectContaining({ status: 'committed' }));
-    expect(commitImportBatchServer).toHaveBeenCalledWith('batch-3');
+    expect(commitImportBatchServer).toHaveBeenCalledWith({
+      sourceType: 'healthkit-companion',
+      rawText: '{}',
+      ownerProfile: null,
+    });
   });
 
   it('returns 400 for invalid import payloads and service errors', async () => {
@@ -142,6 +156,15 @@ describe('imports route', () => {
     } as Parameters<typeof POST>[0]);
     expect(invalidSourceType.status).toBe(400);
     expect(await invalidSourceType.text()).toBe('Invalid import request payload.');
+
+    const invalidCommit = await POST({
+      request: new Request('http://health.test/api/imports', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'commit', batchId: 'batch-1' }),
+      }),
+    } as Parameters<typeof POST>[0]);
+    expect(invalidCommit.status).toBe(400);
+    expect(await invalidCommit.text()).toBe('Invalid import request payload.');
 
     const failing = await POST({
       request: new Request('http://health.test/api/imports', {

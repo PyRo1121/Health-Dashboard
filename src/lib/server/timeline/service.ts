@@ -1,4 +1,5 @@
 import type { HealthEvent, SourceType } from '$lib/core/domain/types';
+import { normalizeSafeExternalUrl } from '$lib/core/shared/external-links';
 import {
   buildHealthEventDisplay,
   compareHealthEventsNewestFirst,
@@ -15,12 +16,18 @@ export interface TimelineEventItem {
   label: string;
   valueLabel: string;
   sourceLabel: string;
+  referenceUrl?: string;
 }
 
 function buildTimelineItem(event: HealthEvent): TimelineEventItem {
+  const payload = event.payload as { referenceUrl?: unknown } | undefined;
+
   return {
     event,
     ...buildHealthEventDisplay(event),
+    referenceUrl: normalizeSafeExternalUrl(
+      typeof payload?.referenceUrl === 'string' ? payload.referenceUrl : undefined
+    ),
   };
 }
 

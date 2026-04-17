@@ -7,6 +7,7 @@ import type {
 } from '$lib/core/domain/types';
 import { buildHealthEventDisplay } from '$lib/core/shared/health-events';
 import { MIN_SLEEP_HOURS } from './analytics-shared';
+import type { ReviewReferenceLink } from './analytics-shared';
 
 export function buildAssessmentSummary(assessments: AssessmentResult[]): string[] {
   return assessments
@@ -63,6 +64,66 @@ export function buildHealthHighlights(records: DailyRecord[], events: HealthEven
   }
 
   return highlights;
+}
+
+export function buildHealthReferenceLinks(events: HealthEvent[]): ReviewReferenceLink[] {
+  const seen = new Set<string>();
+  const links: ReviewReferenceLink[] = [];
+
+  for (const event of events) {
+    if (event.eventType !== 'medication-dose') {
+      continue;
+    }
+
+    const payload = event.payload as { templateName?: unknown; referenceUrl?: unknown } | undefined;
+    const label =
+      typeof payload?.templateName === 'string' && payload.templateName.trim().length > 0
+        ? payload.templateName.trim()
+        : null;
+    const href =
+      typeof payload?.referenceUrl === 'string' && payload.referenceUrl.trim().length > 0
+        ? payload.referenceUrl.trim()
+        : null;
+
+    if (!label || !href || seen.has(href)) {
+      continue;
+    }
+
+    seen.add(href);
+    links.push({ label, href });
+  }
+
+  return links;
+}
+
+export function buildSymptomReferenceLinks(events: HealthEvent[]): ReviewReferenceLink[] {
+  const seen = new Set<string>();
+  const links: ReviewReferenceLink[] = [];
+
+  for (const event of events) {
+    if (event.eventType !== 'symptom') {
+      continue;
+    }
+
+    const payload = event.payload as { symptom?: unknown; referenceUrl?: unknown } | undefined;
+    const label =
+      typeof payload?.symptom === 'string' && payload.symptom.trim().length > 0
+        ? payload.symptom.trim()
+        : null;
+    const href =
+      typeof payload?.referenceUrl === 'string' && payload.referenceUrl.trim().length > 0
+        ? payload.referenceUrl.trim()
+        : null;
+
+    if (!label || !href || seen.has(href)) {
+      continue;
+    }
+
+    seen.add(href);
+    links.push({ label, href });
+  }
+
+  return links;
 }
 
 function formatJournalEntryLabel(entry: JournalEntry): string {

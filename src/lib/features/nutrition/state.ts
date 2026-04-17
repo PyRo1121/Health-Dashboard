@@ -17,6 +17,7 @@ import {
 } from './planned-meal-resolution';
 import { attachNutrientsToFoodEntry, searchFoodData } from './lookup';
 import type { FoodLookupResult } from './types';
+import type { ExternalSourceMetadata } from '$lib/core/domain/external-sources';
 import {
   buildNutritionRecommendationContext,
   buildDailyNutritionSummary,
@@ -62,6 +63,8 @@ export interface NutritionPageState {
   searchNotice: string;
   packagedNotice: string;
   recipeNotice: string;
+  searchMetadata: ExternalSourceMetadata | null;
+  packagedMetadata: ExternalSourceMetadata | null;
   summary: NutritionSummary;
   favoriteMeals: FavoriteMeal[];
   catalogItems: FoodCatalogItem[];
@@ -116,6 +119,8 @@ export function createNutritionPageState(): NutritionPageState {
     searchNotice: '',
     packagedNotice: '',
     recipeNotice: '',
+    searchMetadata: null,
+    packagedMetadata: null,
     summary: createEmptyNutritionSummary(),
     favoriteMeals: [],
     catalogItems: [],
@@ -244,24 +249,28 @@ export function runNutritionSearch(state: NutritionPageState): NutritionPageStat
 export function applyNutritionSearchMatches(
   state: NutritionPageState,
   matches: FoodLookupResult[],
-  searchNotice = ''
+  searchNotice = '',
+  searchMetadata: ExternalSourceMetadata | null = null
 ): NutritionPageState {
   return {
     ...state,
     matches,
     searchNotice,
+    searchMetadata,
   };
 }
 
 export function applyPackagedNutritionMatches(
   state: NutritionPageState,
   packagedMatches: FoodLookupResult[],
-  packagedNotice = ''
+  packagedNotice = '',
+  packagedMetadata: ExternalSourceMetadata | null = null
 ): NutritionPageState {
   return {
     ...state,
     packagedMatches,
     packagedNotice,
+    packagedMetadata,
   };
 }
 
@@ -279,13 +288,16 @@ export function applyNutritionRecipeMatches(
 
 export function applyNutritionBarcodeMatch(
   state: NutritionPageState,
-  match: FoodLookupResult | null
+  match: FoodLookupResult | null,
+  packagedNotice?: string,
+  packagedMetadata: ExternalSourceMetadata | null = null
 ): NutritionPageState {
   if (!match) {
     return {
       ...state,
       packagedMatches: [],
-      packagedNotice: 'No packaged food found for that barcode.',
+      packagedNotice: packagedNotice ?? 'No packaged food found for that barcode.',
+      packagedMetadata,
     };
   }
 
@@ -297,7 +309,8 @@ export function applyNutritionBarcodeMatch(
       },
       match
     ),
-    packagedNotice: 'Packaged food loaded from barcode.',
+    packagedNotice: packagedNotice ?? 'Packaged food loaded from barcode.',
+    packagedMetadata,
   };
 }
 

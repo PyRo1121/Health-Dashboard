@@ -238,6 +238,7 @@ export interface SymptomHealthEventPayload {
   symptom: string;
   severity: number;
   note?: string;
+  referenceUrl?: string;
 }
 
 export interface AnxietyHealthEventPayload {
@@ -263,6 +264,7 @@ export interface TemplateDoseHealthEventPayload {
   amount?: number;
   unit?: string;
   note?: string;
+  referenceUrl?: string;
 }
 
 export type ManualHealthEventPayload =
@@ -284,6 +286,7 @@ export interface HealthTemplate extends BaseRecord {
   defaultDose?: number;
   defaultUnit?: string;
   note?: string;
+  referenceUrl?: string;
   archived?: boolean;
 }
 
@@ -336,6 +339,16 @@ export interface ImportBatch extends BaseRecord {
   sourceType: ImportSourceType;
   status: 'staged' | 'committed' | 'failed';
   summary?: {
+    adds: number;
+    duplicates: number;
+    warnings: number;
+  };
+}
+
+export interface ImportPreviewResult {
+  sourceType: ImportSourceType;
+  status: 'preview';
+  summary: {
     adds: number;
     duplicates: number;
     warnings: number;

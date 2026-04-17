@@ -24,7 +24,7 @@ describe('Imports route base flows', () => {
     expect(screen.getByRole('heading', { name: 'Imports' })).toBeTruthy();
     await waitFor(() => {
       expect(getImportSourceSelect()).toBeTruthy();
-      expect(screen.getByRole('option', { name: 'iPhone bundle / Shortcuts JSON' })).toBeTruthy();
+      expect(screen.getByRole('option', { name: 'iPhone HealthKit Companion' })).toBeTruthy();
       expect(screen.getByRole('option', { name: 'SMART sandbox FHIR JSON' })).toBeTruthy();
       expect(screen.getByText(/Apple Shortcuts/i)).toBeTruthy();
       expect(
@@ -47,13 +47,21 @@ describe('Imports route base flows', () => {
     await fireEvent.click(getPreviewButton());
 
     await waitFor(() => {
-      expect(screen.getByText(/Adds: 1/i)).toBeTruthy();
+      const previewSummary = screen.getByLabelText('Import payload summary');
+      expect(previewSummary.textContent).toContain('1');
     });
 
     await fireEvent.click(getCommitButton());
     await waitFor(() => {
       expect(screen.getByRole('status')).toBeTruthy();
       expect(screen.getByText(/day-one-json/i)).toBeTruthy();
+      const historySection = screen
+        .getByRole('heading', { name: 'Import batch history' })
+        .closest('section') as HTMLElement;
+      expect(historySection.textContent).toContain('Adds: 1');
+      expect(historySection.textContent).toContain('Duplicates: 0');
+      expect(historySection.textContent).toContain('Warnings: 0');
+      expect(historySection.textContent).toContain('Updated:');
     });
   });
 
@@ -65,7 +73,8 @@ describe('Imports route base flows', () => {
     await pasteImportPayload(APPLE_HEALTH_XML);
     await fireEvent.click(getPreviewButton());
     await waitFor(() => {
-      expect(screen.getByText(/Adds: 1/i)).toBeTruthy();
+      const previewSummary = screen.getByLabelText('Import payload summary');
+      expect(previewSummary.textContent).toContain('1');
     });
     await fireEvent.click(getCommitButton());
     await waitFor(() => {
@@ -75,7 +84,11 @@ describe('Imports route base flows', () => {
     await fireEvent.click(getPreviewButton());
     await waitFor(() => {
       expect(screen.getAllByText(/apple-health-xml/i).length).toBeGreaterThan(0);
-      expect(screen.getByText(/Duplicates: 1/i)).toBeTruthy();
+      expect(screen.getAllByText(/Duplicates: 1/i).length).toBeGreaterThan(0);
+      const historySection = screen
+        .getByRole('heading', { name: 'Import batch history' })
+        .closest('section') as HTMLElement;
+      expect(historySection.textContent).toContain('Updated:');
     });
   });
 });

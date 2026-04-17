@@ -173,9 +173,18 @@
     page = loadPlannedMealIntoDraft(page);
   }
 
-  async function planRecommendation(recommendationId: string, kind: 'food' | 'recipe') {
+  async function planRecommendation(
+    recommendationId: string,
+    kind: 'food' | 'recipe',
+    canPlanDirectly: boolean
+  ) {
     await runNutritionAction(async () => {
-      const draft = getNutritionRecommendationPlanDraft(page, recommendationId, kind);
+      const draft = getNutritionRecommendationPlanDraft(
+        page,
+        recommendationId,
+        kind,
+        canPlanDirectly
+      );
       if (!draft) {
         return;
       }
@@ -208,10 +217,12 @@
     <NutritionComposerSection
       searchQuery={page.searchQuery}
       searchNotice={page.searchNotice}
+      searchMetadata={page.searchMetadata}
       matches={page.matches}
       packagedQuery={page.packagedQuery}
       barcodeQuery={page.barcodeQuery}
       packagedNotice={page.packagedNotice}
+      packagedMetadata={page.packagedMetadata}
       packagedMatches={page.packagedMatches}
       recipeQuery={page.recipeQuery}
       recipeNotice={page.recipeNotice}

@@ -14,12 +14,28 @@
     saveSleepNotePage,
     saveSymptomPage,
     saveTemplatePage,
+    searchHealthMedicationSuggestions,
+    searchHealthSymptomSuggestions,
   } from './client';
-  import { createHealthEventRows, createSleepCardLines } from './model';
+  import {
+    createHealthEventRows,
+    createSleepCardLines,
+    type HealthMedicationSuggestion,
+    type HealthSymptomSuggestion,
+    updateSymptomFormValue,
+    updateTemplateFormValue,
+  } from './model';
+  import type { ExternalSourceMetadata } from '$lib/core/domain/external-sources';
 
   let page = $state(createHealthPageState());
   let eventRows = $derived(createHealthEventRows(page.snapshot?.events ?? []));
   let sleepCardLines = $derived(createSleepCardLines(page.snapshot));
+  let symptomSuggestions = $state<HealthSymptomSuggestion[]>([]);
+  let symptomSuggestionNotice = $state('');
+  let symptomSuggestionMetadata = $state<ExternalSourceMetadata | null>(null);
+  let medicationSuggestions = $state<HealthMedicationSuggestion[]>([]);
+  let medicationSuggestionNotice = $state('');
+  let medicationSuggestionMetadata = $state<ExternalSourceMetadata | null>(null);
 
   async function loadSnapshot() {
     page = await loadHealthPage();
@@ -85,11 +101,11 @@
   function updateSymptomField(field: keyof typeof page.symptomForm, value: string) {
     page = {
       ...page,
-      symptomForm: {
-        ...page.symptomForm,
-        [field]: value,
-      },
+      symptomForm: updateSymptomFormValue(page.symptomForm, field, value),
     };
+    symptomSuggestions = [];
+    symptomSuggestionNotice = '';
+    symptomSuggestionMetadata = null;
   }
 
   function updateAnxietyField(field: keyof typeof page.anxietyForm, value: string) {
@@ -115,11 +131,55 @@
   function updateTemplateField(field: keyof typeof page.templateForm, value: string) {
     page = {
       ...page,
-      templateForm: {
-        ...page.templateForm,
-        [field]: value,
+      templateForm: updateTemplateFormValue(page.templateForm, field, value),
+    };
+    medicationSuggestions = [];
+    medicationSuggestionNotice = '';
+    medicationSuggestionMetadata = null;
+  }
+
+  async function searchSymptomSuggestions() {
+    const response = await searchHealthSymptomSuggestions(page.symptomForm.symptom);
+    symptomSuggestions = response.suggestions;
+    symptomSuggestionNotice =
+      response.notice || (page.symptomForm.symptom.trim() ? 'No symptom suggestions found.' : '');
+    symptomSuggestionMetadata = response.metadata;
+  }
+
+  function applySymptomSuggestion(suggestion: HealthSymptomSuggestion) {
+    page = {
+      ...page,
+      symptomForm: {
+        ...page.symptomForm,
+        symptom: suggestion.label,
+        referenceUrl: suggestion.referenceUrl ?? '',
       },
     };
+    symptomSuggestions = [];
+    symptomSuggestionNotice = '';
+    symptomSuggestionMetadata = null;
+  }
+
+  async function searchMedicationSuggestions() {
+    const response = await searchHealthMedicationSuggestions(page.templateForm.label);
+    medicationSuggestions = response.suggestions;
+    medicationSuggestionNotice =
+      response.notice || (page.templateForm.label.trim() ? 'No medication suggestions found.' : '');
+    medicationSuggestionMetadata = response.metadata;
+  }
+
+  function applyMedicationSuggestion(suggestion: HealthMedicationSuggestion) {
+    page = {
+      ...page,
+      templateForm: {
+        ...page.templateForm,
+        label: suggestion.label,
+        referenceUrl: suggestion.referenceUrl ?? '',
+      },
+    };
+    medicationSuggestions = [];
+    medicationSuggestionNotice = '';
+    medicationSuggestionMetadata = null;
   }
 
   onBrowserRouteMount(loadSnapshot);
@@ -143,6 +203,9 @@
 
     <HealthManualLoggingSection
       symptomForm={page.symptomForm}
+      {symptomSuggestions}
+      {symptomSuggestionNotice}
+      {symptomSuggestionMetadata}
       anxietyForm={page.anxietyForm}
       sleepNoteForm={page.sleepNoteForm}
       onSymptomFieldChange={updateSymptomField}
@@ -151,14 +214,21 @@
       onSaveSymptom={saveSymptom}
       onSaveAnxiety={saveAnxiety}
       onSaveSleepNote={saveSleepNote}
+      onSearchSymptomSuggestions={searchSymptomSuggestions}
+      onApplySymptomSuggestion={applySymptomSuggestion}
     />
 
     <HealthTemplateSection
       templateForm={page.templateForm}
       templates={page.snapshot?.templates ?? []}
+      {medicationSuggestions}
+      {medicationSuggestionNotice}
+      {medicationSuggestionMetadata}
       onTemplateFieldChange={updateTemplateField}
       onSaveTemplate={saveTemplate}
       onQuickLogTemplate={quickLogTemplate}
+      onSearchMedicationSuggestions={searchMedicationSuggestions}
+      onApplyMedicationSuggestion={applyMedicationSuggestion}
     />
 
     <HealthEventStreamSection {eventRows} />

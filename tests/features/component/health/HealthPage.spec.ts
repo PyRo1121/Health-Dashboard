@@ -1,5 +1,6 @@
 import { fireEvent, render, screen, waitFor, within } from '@testing-library/svelte';
 import { beforeEach, describe, expect, it } from 'vitest';
+import { getTestHealthDb } from '$lib/core/db/test-client';
 import HealthPage from '../../../../src/routes/health/+page.svelte';
 import { expectHeading, resetRouteDb } from '../../../support/component/routeHarness';
 
@@ -70,6 +71,33 @@ describe('Health route', () => {
         within(healthStream as HTMLElement).getByText('Sleep note', { exact: true })
       ).toBeTruthy();
       expect(within(healthStream as HTMLElement).getByText('Magnesium glycinate')).toBeTruthy();
+    });
+  });
+
+  it('surfaces a saved medication template reference link after quick logging it', async () => {
+    await getTestHealthDb().healthTemplates.put({
+      id: 'template-med-1',
+      createdAt: '2026-04-17T00:00:00.000Z',
+      updatedAt: '2026-04-17T00:00:00.000Z',
+      label: 'Metformin 500 MG Oral Tablet',
+      templateType: 'medication',
+      defaultDose: 1,
+      defaultUnit: 'tablet',
+      note: 'With breakfast',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+    });
+
+    render(HealthPage);
+
+    await waitFor(() => {
+      expect(screen.getByText('Metformin 500 MG Oral Tablet')).toBeTruthy();
+    });
+
+    await fireEvent.click(screen.getByRole('button', { name: 'Log now' }));
+
+    await waitFor(() => {
+      expect(screen.getByRole('link', { name: 'Learn more about logged medication Metformin 500 MG Oral Tablet' })).toBeTruthy();
     });
   });
 });

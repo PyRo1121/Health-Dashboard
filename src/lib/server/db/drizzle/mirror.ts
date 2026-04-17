@@ -3,6 +3,7 @@ import type { createDrizzleSqliteClient } from './client';
 import { SCHEMA_STORES } from '$lib/core/db/schema';
 
 type DrizzleDb = ReturnType<typeof createDrizzleSqliteClient>['db'];
+type DrizzleWriteDb = Pick<DrizzleDb, 'insert'>;
 
 function asTable(table: unknown): Record<string, unknown> {
   return table as Record<string, unknown>;
@@ -62,6 +63,24 @@ export async function upsertMirrorRecord<T extends { id: string }>(
     });
 }
 
+export function upsertMirrorRecordSync<T extends { id: string }>(
+  db: DrizzleWriteDb,
+  tableName: keyof typeof SCHEMA_STORES,
+  table: unknown,
+  record: T
+): void {
+  const payload = toMirrorInsertRecord(tableName, record);
+  const t = asTable(table);
+  db
+    .insert(table as never)
+    .values(payload as never)
+    .onConflictDoUpdate({
+      target: t.id as never,
+      set: payload as never,
+    })
+    .run();
+}
+
 export async function upsertMirrorRecords<T extends { id: string }>(
   db: DrizzleDb,
   tableName: keyof typeof SCHEMA_STORES,
@@ -70,6 +89,17 @@ export async function upsertMirrorRecords<T extends { id: string }>(
 ): Promise<void> {
   for (const record of records) {
     await upsertMirrorRecord(db, tableName, table, record);
+  }
+}
+
+export function upsertMirrorRecordsSync<T extends { id: string }>(
+  db: DrizzleWriteDb,
+  tableName: keyof typeof SCHEMA_STORES,
+  table: unknown,
+  records: readonly T[]
+): void {
+  for (const record of records) {
+    upsertMirrorRecordSync(db, tableName, table, record);
   }
 }
 

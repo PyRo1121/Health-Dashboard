@@ -11,12 +11,19 @@ import {
 export type ReviewSection = {
   kind?: 'default' | 'decision-engine';
   title: string;
-  items: string[];
+  items: Array<string | ReviewReferenceItem>;
   emptyTitle?: string;
   emptyMessage?: string;
   emphasis?: 'default' | 'strategy';
   actionHref?: JournalIntentHref;
   actionLabel?: string;
+};
+
+export type ReviewReferenceItem = {
+  kind: 'medication' | 'symptom';
+  categoryLabel: 'Medication' | 'Symptom';
+  label: string;
+  href: string;
 };
 
 export type ReviewNutritionStrategyCard = {
@@ -40,6 +47,19 @@ export type ReviewAdherenceAuditItem = {
   detail: string;
   tone: 'steady' | 'mixed' | 'attention';
 };
+
+function createReferenceItems(
+  kind: ReviewReferenceItem['kind'],
+  categoryLabel: ReviewReferenceItem['categoryLabel'],
+  items: Array<{ label: string; href: string }>
+): ReviewReferenceItem[] {
+  return items.map((item) => ({
+    kind,
+    categoryLabel,
+    label: item.label,
+    href: item.href,
+  }));
+}
 
 function normalizeStrategyDetail(detail: string): string {
   const trimmed = detail.trim();
@@ -181,6 +201,16 @@ export function createReviewSections(weekly: WeeklyReviewData | null): ReviewSec
           title: 'Health highlights',
           items: weekly.healthHighlights,
           emptyMessage: 'Keep logging health context to unlock more useful weekly patterns.',
+        },
+        {
+          kind: 'default',
+          title: 'Health references',
+          items: [
+            ...createReferenceItems('medication', 'Medication', weekly.healthReferenceLinks ?? []),
+            ...createReferenceItems('symptom', 'Symptom', weekly.symptomReferenceLinks ?? []),
+          ],
+          emptyMessage:
+            'Log medications or suggested symptoms with reference links to surface trusted reading here during Review.',
         },
         {
           kind: 'default',

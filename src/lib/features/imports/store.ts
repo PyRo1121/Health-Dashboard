@@ -10,6 +10,7 @@ import type {
   HealthEvent,
   ImportArtifact,
   ImportBatch,
+  ImportPreviewResult,
   ImportSourceType,
   JournalEntry,
   OwnerProfile,
@@ -49,23 +50,17 @@ async function stageHealthEventBatch(
   >,
   events: HealthEvent[],
   analysis: ImportPayloadAnalysis | null
-): Promise<ImportBatch> {
+): Promise<ImportPreviewResult> {
   const { adds, duplicates } = await dedupeImportedEvents(store, events);
-  const batch = await createImportBatch(store, sourceType);
-  await stageArtifacts({
-    artifactTable: store.importArtifacts,
-    batchId: batch.id,
-    artifactType: 'healthEvent',
-    records: adds,
-  });
-
-  batch.summary = {
-    adds: adds.length,
-    duplicates: duplicates.length,
-    warnings: warningCount(analysis),
+  return {
+    sourceType,
+    status: 'preview',
+    summary: {
+      adds: adds.length,
+      duplicates: duplicates.length,
+      warnings: warningCount(analysis),
+    },
   };
-  await store.importBatches.put(batch);
-  return batch;
 }
 
 async function stageArtifacts<T extends HealthEvent | JournalEntry>(input: {
@@ -150,10 +145,30 @@ export async function dedupeImportedEvents(
   return { adds, duplicates };
 }
 
+export async function dedupeImportedJournalEntries(
+  store: ImportedRecordsStore,
+  entries: JournalEntry[]
+): Promise<{ adds: JournalEntry[]; duplicates: JournalEntry[] }> {
+  const adds: JournalEntry[] = [];
+  const duplicates: JournalEntry[] = [];
+
+  for (const entry of entries) {
+    const existing = await store.journalEntries.get(entry.id);
+
+    if (existing) {
+      duplicates.push(entry);
+    } else {
+      adds.push(entry);
+    }
+  }
+
+  return { adds, duplicates };
+}
+
 export async function previewImport(
   store: ImportsStorage,
   input: { sourceType: ImportSourceType; rawText: string; ownerProfile?: OwnerProfile | null }
-): Promise<ImportBatch> {
+): Promise<ImportPreviewResult> {
   const analysis = analyzeImportPayload(input.rawText);
   const resolvedSourceType = analysis?.sourceType ?? input.sourceType;
 
@@ -188,41 +203,101 @@ export async function previewImport(
   }
 
   const parsedEntries = analysis?.journalEntries ?? parseDayOneExport(input.rawText);
-  const batch = await createImportBatch(store, resolvedSourceType);
-  await stageArtifacts({
-    artifactTable: store.importArtifacts,
-    batchId: batch.id,
-    artifactType: 'journalEntry',
-    records: parsedEntries,
-  });
-
-  batch.summary = {
-    adds: parsedEntries.length,
-    duplicates: 0,
-    warnings: warningCount(analysis),
+  const { adds, duplicates } = await dedupeImportedJournalEntries(store, parsedEntries);
+  return {
+    sourceType: resolvedSourceType,
+    status: 'preview',
+    summary: {
+      adds: adds.length,
+      duplicates: duplicates.length,
+      warnings: warningCount(analysis),
+    },
   };
-  await store.importBatches.put(batch);
-  return batch;
 }
 
 export async function commitImportBatch(
   store: ImportsStorage,
-  batchId: string
+  input: { sourceType: ImportSourceType; rawText: string; ownerProfile?: OwnerProfile | null }
 ): Promise<ImportBatch> {
-  const batch = await store.importBatches.get(batchId);
-  if (!batch) throw new Error('Import batch not found');
-
-  const artifacts = await store.importArtifacts.where('batchId').equals(batchId).toArray();
+  const analysis = analyzeImportPayload(input.rawText);
+  const resolvedSourceType = analysis?.sourceType ?? input.sourceType;
+  const batch = await createImportBatch(store, resolvedSourceType);
   const affectedDays = new Set<string>();
+  let adds = 0;
+  let duplicates = 0;
 
-  for (const artifact of artifacts) {
-    if (artifact.artifactType === 'healthEvent' && artifact.payload) {
-      const event = structuredClone(artifact.payload) as unknown as HealthEvent;
+  if (resolvedSourceType === 'apple-health-xml') {
+    const parsed = analysis?.healthEvents ?? parseAppleHealthXml(input.rawText);
+    const deduped = await dedupeImportedEvents(store, parsed);
+    adds = deduped.adds.length;
+    duplicates = deduped.duplicates.length;
+    await stageArtifacts({
+      artifactTable: store.importArtifacts,
+      batchId: batch.id,
+      artifactType: 'healthEvent',
+      records: deduped.adds,
+    });
+    for (const event of deduped.adds) {
       await store.healthEvents.put(event);
       affectedDays.add(event.localDay);
     }
-    if (artifact.artifactType === 'journalEntry' && artifact.payload) {
-      await store.journalEntries.put(structuredClone(artifact.payload) as unknown as JournalEntry);
+  } else if (resolvedSourceType === 'healthkit-companion') {
+    const parsed = analysis?.healthEvents ?? importHealthKitCompanionBundle(input.rawText).events;
+    const deduped = await dedupeImportedEvents(store, parsed);
+    adds = deduped.adds.length;
+    duplicates = deduped.duplicates.length;
+    await stageArtifacts({
+      artifactTable: store.importArtifacts,
+      batchId: batch.id,
+      artifactType: 'healthEvent',
+      records: deduped.adds,
+    });
+    for (const event of deduped.adds) {
+      await store.healthEvents.put(event);
+      affectedDays.add(event.localDay);
+    }
+  } else if (resolvedSourceType === 'smart-fhir-sandbox') {
+    if (!input.ownerProfile) {
+      throw new Error(
+        'Configure your owner profile in Settings before previewing SMART clinical imports.'
+      );
+    }
+    const normalized = analysis ?? analyzeImportPayload(input.rawText);
+    const imported = resolveSmartClinicalImport(normalized, input.rawText);
+    const match = resolveClinicalPatientMatch(imported.patientIdentity, [
+      ownerCandidate(input.ownerProfile),
+    ]);
+
+    if (match.status !== 'exact') {
+      throw new Error(match.reason);
+    }
+
+    const deduped = await dedupeImportedEvents(store, imported.events);
+    adds = deduped.adds.length;
+    duplicates = deduped.duplicates.length;
+    await stageArtifacts({
+      artifactTable: store.importArtifacts,
+      batchId: batch.id,
+      artifactType: 'healthEvent',
+      records: deduped.adds,
+    });
+    for (const event of deduped.adds) {
+      await store.healthEvents.put(event);
+      affectedDays.add(event.localDay);
+    }
+  } else {
+    const parsedEntries = analysis?.journalEntries ?? parseDayOneExport(input.rawText);
+    const deduped = await dedupeImportedJournalEntries(store, parsedEntries);
+    adds = deduped.adds.length;
+    duplicates = deduped.duplicates.length;
+    await stageArtifacts({
+      artifactTable: store.importArtifacts,
+      batchId: batch.id,
+      artifactType: 'journalEntry',
+      records: deduped.adds,
+    });
+    for (const entry of deduped.adds) {
+      await store.journalEntries.put(entry);
     }
   }
 
@@ -230,6 +305,11 @@ export async function commitImportBatch(
     ...batch,
     ...updateRecordMeta(batch, batch.id, nowIso()),
     status: 'committed',
+    summary: {
+      adds,
+      duplicates,
+      warnings: warningCount(analysis),
+    },
   };
 
   await store.importBatches.put(committed);

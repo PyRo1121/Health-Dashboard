@@ -10,8 +10,10 @@ export {
   saveNutritionRecurringMealServer,
 } from '$lib/server/nutrition/meal-mutations';
 export {
+  type BarcodeLookupResponse,
   enrichNutritionFoodServer,
   lookupNutritionBarcodeServer,
+  type SearchPackagedResponse,
   searchPackagedFoodsServer,
   searchRecipesServer,
   searchUsdaFoodsServer,

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toSafeExternalHref } from '$lib/core/shared/external-links';
   import { Card, EmptyState, Field } from '$lib/core/ui/primitives';
   import {
     createTimelinePageState,
@@ -64,6 +65,19 @@
               </div>
               <p>{item.event.sourceApp}</p>
               <p>{item.sourceLabel} · {item.event.localDay}</p>
+              {#if toSafeExternalHref(item.referenceUrl)}
+                <p>
+                  <a
+                    class="timeline-reference-link"
+                    href={toSafeExternalHref(item.referenceUrl) ?? undefined}
+                    target="_blank"
+                    rel="noreferrer"
+                    aria-label={`Learn more about timeline event ${item.label}`}
+                  >
+                    Learn more
+                  </a>
+                </p>
+              {/if}
             </li>
           {/each}
         </ul>
@@ -110,6 +124,10 @@
   .timeline-list p {
     margin: 0.3rem 0 0;
     color: var(--phc-muted);
+  }
+
+  .timeline-reference-link {
+    color: var(--phc-label);
   }
 
   @media (max-width: 639px) {

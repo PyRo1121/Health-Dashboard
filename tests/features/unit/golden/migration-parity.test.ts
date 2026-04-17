@@ -164,11 +164,14 @@ async function seedGoldenDataset(db: InMemoryTestHealthRuntime) {
     linkedEventIds: [],
   });
 
-  const batch = await previewImport(db, {
+  await previewImport(db, {
     sourceType: 'healthkit-companion',
     rawText: HEALTHKIT_BUNDLE_JSON,
   });
-  await commitImportBatch(db, batch.id);
+  await commitImportBatch(db, {
+    sourceType: 'healthkit-companion',
+    rawText: HEALTHKIT_BUNDLE_JSON,
+  });
 }
 
 describe('migration golden parity', () => {
@@ -209,7 +212,8 @@ describe('migration golden parity', () => {
     });
 
     const committed = await commitImportsPage(previewed, {
-      commitImportBatch: (batchId) => commitImportBatch(db, batchId),
+      getOwnerProfile: () => OWNER_PROFILE,
+      commitImportBatch: (input) => commitImportBatch(db, input),
     });
 
     const golden = stripKeys({

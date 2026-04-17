@@ -1,6 +1,6 @@
 <script lang="ts">
   import { resolve } from '$app/paths';
-  import type { ImportBatch, ImportSourceType } from '$lib/core/domain/types';
+  import type { ImportPreviewResult, ImportSourceType } from '$lib/core/domain/types';
   import type { DeviceSourceManifest } from '$lib/features/integrations/manifests/device-sources';
   import { Button, Field, SectionCard, StatusBanner } from '$lib/core/ui/primitives';
   import ImportPayloadSummaryCard from './ImportPayloadSummaryCard.svelte';
@@ -26,7 +26,7 @@
     showHelperLinks?: boolean;
     currentSampleBundle?: SampleBundle | null;
     canPreviewPayload?: boolean;
-    latestPreview?: ImportBatch | null;
+    latestPreview?: ImportPreviewResult | null;
     saveNotice?: string;
     fileNotice?: string;
     errorNotice?: string;
@@ -136,6 +136,14 @@
     />
   {/if}
 
+  {#if currentSourceConfig.sourceMetadata}
+    <div class="source-metadata soft-panel">
+      <p class="status-copy">Source: {currentSourceConfig.sourceMetadata.sourceName}</p>
+      <p class="status-copy">Trust: {currentSourceConfig.sourceMetadata.reliability}</p>
+      <p class="status-copy">Auth: {currentSourceConfig.sourceMetadata.authMode}</p>
+    </div>
+  {/if}
+
   {#if currentHelperCopy}
     <div class="helper-copy soft-panel">
       <p><strong>{currentHelperCopy.title}</strong></p>
@@ -176,7 +184,7 @@
     <Button variant="secondary" onclick={onPreview} disabled={!canPreviewPayload}>
       Preview import
     </Button>
-    <Button onclick={onCommit} disabled={!latestPreview || latestPreview.status === 'committed'}>
+    <Button onclick={onCommit} disabled={!latestPreview}>
       Commit import
     </Button>
   </div>
@@ -212,7 +220,12 @@
     margin: 0 0 1rem;
   }
 
+  .source-metadata {
+    margin: 0 0 1rem;
+  }
+
   .helper-copy p,
+  .source-metadata p,
   .helper-copy ul {
     margin: 0;
   }

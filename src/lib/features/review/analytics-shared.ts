@@ -78,6 +78,11 @@ export interface ReviewSavedExperimentVerdict {
   provenance: string[];
 }
 
+export interface ReviewReferenceLink {
+  label: string;
+  href: string;
+}
+
 export interface WeeklyReviewData {
   anchorDay: string;
   snapshot: ReviewSnapshot;
@@ -94,6 +99,8 @@ export interface WeeklyReviewData {
   grocerySignals: string[];
   deviceHighlights: string[];
   assessmentSummary: string[];
+  healthReferenceLinks?: ReviewReferenceLink[];
+  symptomReferenceLinks?: ReviewReferenceLink[];
   healthHighlights: string[];
   contextSignals: string[];
   contextCaptureLinkedEventIds: string[];

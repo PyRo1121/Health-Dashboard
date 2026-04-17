@@ -11,8 +11,23 @@ describe('nutrition dynamic routes', () => {
 
   it('returns a cached barcode hit before calling remote enrichment', async () => {
     const lookupNutritionBarcodeServer = vi.fn(async () => ({
-      id: 'off:049000028911',
-      name: 'Diet Cola',
+      match: {
+        id: 'off:049000028911',
+        name: 'Diet Cola',
+      },
+      notice: 'Packaged food loaded from local cache.',
+      metadata: {
+        provenance: [
+          {
+            sourceId: 'open-food-facts',
+            sourceName: 'Open Food Facts',
+            category: 'nutrition',
+            productionPosture: 'adopt',
+          },
+        ],
+        cacheStatus: 'local-cache',
+        degradationStatus: 'none',
+      },
     }));
     vi.doMock('$lib/server/nutrition/service', () => ({
       lookupNutritionBarcodeServer,
@@ -32,10 +47,75 @@ describe('nutrition dynamic routes', () => {
 
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({
-      id: 'off:049000028911',
-      name: 'Diet Cola',
+      match: {
+        id: 'off:049000028911',
+        name: 'Diet Cola',
+      },
+      notice: 'Packaged food loaded from local cache.',
+      metadata: {
+        provenance: [
+          {
+            sourceId: 'open-food-facts',
+            sourceName: 'Open Food Facts',
+            category: 'nutrition',
+            productionPosture: 'adopt',
+          },
+        ],
+        cacheStatus: 'local-cache',
+        degradationStatus: 'none',
+      },
     });
     expect(lookupNutritionBarcodeServer).toHaveBeenCalledWith('049000028911');
+  });
+
+  it('returns a barcode miss envelope unchanged', async () => {
+    const lookupNutritionBarcodeServer = vi.fn(async () => ({
+      match: null,
+      metadata: {
+        provenance: [
+          {
+            sourceId: 'open-food-facts',
+            sourceName: 'Open Food Facts',
+            category: 'nutrition',
+            productionPosture: 'adopt',
+          },
+        ],
+        cacheStatus: 'none',
+        degradationStatus: 'none',
+      },
+    }));
+    vi.doMock('$lib/server/nutrition/service', () => ({
+      lookupNutritionBarcodeServer,
+      enrichNutritionFoodServer: vi.fn(),
+      searchPackagedFoodsServer: vi.fn(),
+      searchUsdaFoodsServer: vi.fn(),
+      searchRecipesServer: vi.fn(),
+    }));
+
+    const { POST } = await import('../../../../src/routes/api/nutrition/barcode/[code]/+server.ts');
+    const response = await POST({
+      request: new Request('http://health.test/api/nutrition/barcode/000', {
+        method: 'POST',
+      }),
+      params: { code: '000' },
+    } as unknown as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual({
+      match: null,
+      metadata: {
+        provenance: [
+          {
+            sourceId: 'open-food-facts',
+            sourceName: 'Open Food Facts',
+            category: 'nutrition',
+            productionPosture: 'adopt',
+          },
+        ],
+        cacheStatus: 'none',
+        degradationStatus: 'none',
+      },
+    });
   });
 
   it('maps missing USDA API keys to a 503 enrich response', async () => {
@@ -115,6 +195,18 @@ describe('nutrition dynamic routes', () => {
     const searchUsdaFoodsServer = vi.fn(async () => ({
       matches: [{ id: 'fdc-oatmeal', name: 'Oatmeal with berries' }],
       notice: 'USDA live search unavailable, using local fallback foods.',
+      metadata: {
+        provenance: [
+          {
+            sourceId: 'usda-fooddata-central',
+            sourceName: 'USDA FoodData Central',
+            category: 'nutrition',
+            productionPosture: 'adopt',
+          },
+        ],
+        cacheStatus: 'local-cache',
+        degradationStatus: 'degraded',
+      },
     }));
     vi.doMock('$lib/server/nutrition/service', () => ({
       lookupNutritionBarcodeServer: vi.fn(),
@@ -136,6 +228,18 @@ describe('nutrition dynamic routes', () => {
     expect(await response.json()).toEqual({
       matches: [{ id: 'fdc-oatmeal', name: 'Oatmeal with berries' }],
       notice: 'USDA live search unavailable, using local fallback foods.',
+      metadata: {
+        provenance: [
+          {
+            sourceId: 'usda-fooddata-central',
+            sourceName: 'USDA FoodData Central',
+            category: 'nutrition',
+            productionPosture: 'adopt',
+          },
+        ],
+        cacheStatus: 'local-cache',
+        degradationStatus: 'degraded',
+      },
     });
     expect(searchUsdaFoodsServer).toHaveBeenCalledWith('oatmeal');
   });

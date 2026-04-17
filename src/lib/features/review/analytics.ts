@@ -6,6 +6,7 @@ export {
   type ReviewDecision,
   type ReviewDecisionCard,
   type ReviewNutritionStrategyItem,
+  type ReviewReferenceLink,
   type ReviewRecommendationTarget,
   type ReviewWeeklyRecommendation,
   type WeeklyReviewData,
@@ -39,6 +40,8 @@ export {
   buildContextSignals,
   buildDeviceHighlights,
   buildHealthHighlights,
+  buildHealthReferenceLinks,
   buildJournalHighlights,
   buildPatternHighlights,
+  buildSymptomReferenceLinks,
 } from './analytics-health';

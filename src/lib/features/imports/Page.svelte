@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { ImportBatch, ImportSourceType } from '$lib/core/domain/types';
+  import type { ImportBatch, ImportPreviewResult, ImportSourceType } from '$lib/core/domain/types';
   import { DEVICE_SOURCE_MANIFESTS } from '$lib/features/integrations/manifests/device-sources';
   import { createSampleHealthKitBundle } from '$lib/features/integrations/connectors/healthkit';
   import { createSampleSmartFhirBundle } from '$lib/features/integrations/connectors/smart-fhir';
@@ -51,7 +51,7 @@
   let fileNotice = $state(initialPageState.intake.fileNotice);
   let payloadSummary = $state(initialPageState.intake.payloadSummary);
   let isManualAnalysisPending = $state(initialPageState.intake.isManualAnalysisPending);
-  let latestPreview = $state<ImportBatch | null>(initialPageState.intake.latestPreview);
+  let latestPreview = $state<ImportPreviewResult | null>(initialPageState.intake.latestPreview);
   let saveNotice = $state(initialPageState.intake.saveNotice);
   let errorNotice = $state(initialPageState.intake.errorNotice);
   let batches = $state<ImportBatch[]>(initialPageState.batches);
@@ -147,6 +147,7 @@
 
   async function commitPreview() {
     const nextState = await commitImportsPage(readPageState(), {
+      getOwnerProfile,
       commitImportBatch: commitImportBatchClient,
     });
 

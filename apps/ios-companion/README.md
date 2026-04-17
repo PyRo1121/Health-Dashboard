@@ -12,7 +12,7 @@ Scope:
   - `resting-heart-rate`
 - support two export paths:
   - `Daily snapshot`
-  - `Changes since last export`
+  - `Today changes since last sync`
 
 The generated bundle matches the web bridge contract in:
 
@@ -23,7 +23,7 @@ The generated bundle matches the web bridge contract in:
 Current query approach:
 
 - snapshot exports use Swift-concurrency HealthKit descriptors for one-shot reads
-- incremental exports use anchored object query descriptors so the app can export only new samples after the previous export
+- incremental exports use anchored object query descriptors so the app can export only new matching samples from today after the previous successful local sync
 
 Why:
 
@@ -49,6 +49,6 @@ This scaffold uses XcodeGen so the repo can hold source and target config withou
 ## Handoff flow
 
 1. Tap `Request Health Access`.
-2. Tap `Export Today Bundle`.
+2. Tap `Export Today Bundle` and confirm the app found at least one matching HealthKit record.
 3. Share the JSON file out of the app.
 4. Paste the JSON into `/imports` in the web app and commit it.

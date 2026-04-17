@@ -150,4 +150,5 @@ describe('timeline service', () => {
     expect(items[0]?.event.id).toBe('native-sleep');
     expect(items[0]?.valueLabel).toBe('8 hours');
   });
+
 });

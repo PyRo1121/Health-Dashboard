@@ -12,7 +12,11 @@
     recommendationContextRows: string[];
     recommendations: NutritionRecommendation[];
     onUseRecommendation: (id: string, kind: 'food' | 'recipe') => void;
-    onPlanRecommendation: (id: string, kind: 'food' | 'recipe') => void;
+    onPlanRecommendation: (
+      id: string,
+      kind: 'food' | 'recipe',
+      canPlanDirectly: boolean
+    ) => void;
   } = $props();
 </script>
 
@@ -29,6 +33,9 @@
         <li>
           <div>
             <strong>{recommendation.title}</strong>
+            <p>{recommendation.subtitle}</p>
+            <p>Source: {recommendation.sourceName}</p>
+            <p>Posture: {recommendation.sourcePosture}</p>
             <p class="recommendation-meta">
               <span class="recommendation-score score-chip">{recommendation.score}</span>
               <span>{createRecommendationSummary(recommendation)}</span>
@@ -46,9 +53,15 @@
             </Button>
             <Button
               variant="secondary"
-              onclick={() => onPlanRecommendation(recommendation.id, recommendation.kind)}
+              onclick={() =>
+                onPlanRecommendation(
+                  recommendation.id,
+                  recommendation.kind,
+                  recommendation.canPlanDirectly
+                )}
+              disabled={!recommendation.canPlanDirectly}
             >
-              Plan next
+              {recommendation.canPlanDirectly ? 'Plan next' : 'Review first'}
             </Button>
           </div>
         </li>

@@ -95,6 +95,72 @@ describe('Today route', () => {
     });
   });
 
+  it('renders learn-more links for same-day events that carry a reference url', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    await db.healthEvents.bulkAdd([
+      {
+        id: `manual-symptom-${localDay}`,
+        createdAt: '2026-04-02T09:10:00Z',
+        updatedAt: '2026-04-02T09:10:00Z',
+        sourceType: 'manual',
+        sourceApp: 'Personal Health Cockpit',
+        localDay,
+        confidence: 1,
+        eventType: 'symptom',
+        value: 4,
+        payload: {
+          kind: 'symptom',
+          symptom: 'Headache',
+          severity: 4,
+          referenceUrl:
+            'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+        },
+      },
+    ]);
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole('link', { name: 'Learn more about same-day event Symptom' })
+      ).toBeTruthy();
+    });
+  });
+
+  it('does not render unsafe learn-more links for same-day events', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    await db.healthEvents.bulkAdd([
+      {
+        id: `manual-symptom-unsafe-${localDay}`,
+        createdAt: '2026-04-02T09:10:00Z',
+        updatedAt: '2026-04-02T09:10:00Z',
+        sourceType: 'manual',
+        sourceApp: 'Personal Health Cockpit',
+        localDay,
+        confidence: 1,
+        eventType: 'symptom',
+        value: 4,
+        payload: {
+          kind: 'symptom',
+          symptom: 'Headache',
+          severity: 4,
+          referenceUrl: 'javascript:alert(1)',
+        },
+      },
+    ]);
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getByText('Symptom')).toBeTruthy();
+    });
+    expect(screen.queryByRole('link', { name: 'Learn more about same-day event Symptom' })).toBeNull();
+  });
+
   it('shows a planned meal and lets today log it immediately', async () => {
     const db = getTestHealthDb();
     const localDay = currentLocalDay();

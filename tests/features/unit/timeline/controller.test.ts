@@ -13,11 +13,14 @@ describe('timeline controller', () => {
 
   it('loads timeline controller state from imported events', async () => {
     const db = getDb();
-    const batch = await previewImport(db, {
+    await previewImport(db, {
       sourceType: 'healthkit-companion',
       rawText: HEALTHKIT_BUNDLE_JSON,
     });
-    await commitImportBatch(db, batch.id);
+    await commitImportBatch(db, {
+      sourceType: 'healthkit-companion',
+      rawText: HEALTHKIT_BUNDLE_JSON,
+    });
 
     let state = setTimelineFilter(createTimelinePageState(), 'native-companion');
     state = await loadTimelinePage(db, state);

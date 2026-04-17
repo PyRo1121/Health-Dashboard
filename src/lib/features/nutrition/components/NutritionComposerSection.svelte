@@ -1,4 +1,5 @@
 <script lang="ts">
+  import type { ExternalSourceMetadata } from '$lib/core/domain/external-sources';
   import type { RecipeCatalogItem } from '$lib/core/domain/types';
   import { Button, Field, SectionCard } from '$lib/core/ui/primitives';
   import {
@@ -12,10 +13,12 @@
   let {
     searchQuery,
     searchNotice,
+    searchMetadata,
     matches,
     packagedQuery,
     barcodeQuery,
     packagedNotice,
+    packagedMetadata,
     packagedMatches,
     recipeQuery,
     recipeNotice,
@@ -40,10 +43,12 @@
   }: {
     searchQuery: string;
     searchNotice: string;
+    searchMetadata: ExternalSourceMetadata | null;
     matches: FoodLookupResult[];
     packagedQuery: string;
     barcodeQuery: string;
     packagedNotice: string;
+    packagedMetadata: ExternalSourceMetadata | null;
     packagedMatches: FoodLookupResult[];
     recipeQuery: string;
     recipeNotice: string;
@@ -66,6 +71,20 @@
     onSaveCustomFood: () => void;
     onSaveRecurringMeal: () => void;
   } = $props();
+
+  function createMetadataRows(metadata: ExternalSourceMetadata | null): string[] {
+    if (!metadata) {
+      return [];
+    }
+
+    const sourceNames = metadata.provenance.map((item) => item.sourceName).join(', ');
+
+    return [
+      sourceNames ? `Sources: ${sourceNames}` : '',
+      `Cache: ${metadata.cacheStatus}`,
+      `Status: ${metadata.degradationStatus}`,
+    ].filter(Boolean);
+  }
 </script>
 
 <SectionCard title="Meal logging">
@@ -83,6 +102,13 @@
 
   {#if searchNotice}
     <p class="status-copy">{searchNotice}</p>
+  {/if}
+  {#if searchMetadata}
+    <div class="metadata-block">
+      {#each createMetadataRows(searchMetadata) as row (row)}
+        <p class="status-copy">{row}</p>
+      {/each}
+    </div>
   {/if}
 
   {#if matches.length}
@@ -132,6 +158,13 @@
 
     {#if packagedNotice}
       <p class="status-copy">{packagedNotice}</p>
+    {/if}
+    {#if packagedMetadata}
+      <div class="metadata-block">
+        {#each createMetadataRows(packagedMetadata) as row (row)}
+          <p class="status-copy">{row}</p>
+        {/each}
+      </div>
     {/if}
 
     {#if packagedMatches.length}
@@ -276,6 +309,10 @@
 <style>
   .field-grid {
     margin: 1rem 0;
+  }
+
+  .metadata-block {
+    margin-top: 0.35rem;
   }
 
   .match-list {

@@ -1,5 +1,5 @@
 import { currentLocalDay } from '$lib/core/domain/time';
-import { createFeatureActionClient } from '$lib/core/http/feature-client';
+import { createFeatureActionClient, createFeatureRequestClient } from '$lib/core/http/feature-client';
 import {
   createHealthPageState,
   loadHealthPage as loadHealthPageController,
@@ -13,10 +13,16 @@ import {
   saveTemplatePage as saveTemplatePageController,
   type HealthActionsStorage,
 } from './actions';
+import type { HealthSymptomSuggestion } from './model';
+import type { HealthSymptomSuggestionResponse } from '$lib/server/health/clinical-tables';
+import type { HealthMedicationSuggestion } from './model';
+import type { HealthMedicationSuggestionResponse } from '$lib/server/health/rxnorm';
 
 export { createHealthPageState };
 
 const healthClient = createFeatureActionClient<HealthActionsStorage>('/api/health');
+const symptomSearchClient = createFeatureRequestClient<never>('/api/health/search-symptoms');
+const medicationSearchClient = createFeatureRequestClient<never>('/api/health/search-medications');
 
 export async function loadHealthPage(localDay = currentLocalDay()): Promise<HealthPageState> {
   return await healthClient.action('load', (db) => loadHealthPageController(db, localDay), {
@@ -57,5 +63,36 @@ export async function quickLogTemplatePage(
     state,
     (db) => quickLogTemplatePageController(db, state, templateId),
     { templateId }
+  );
+}
+
+export async function searchHealthSymptomSuggestions(
+  query: string
+): Promise<HealthSymptomSuggestionResponse> {
+  return await symptomSearchClient.request<HealthSymptomSuggestionResponse>({ query }, async () => ({
+    suggestions: [] satisfies HealthSymptomSuggestion[],
+    notice: '',
+    metadata: {
+      provenance: [],
+      cacheStatus: 'none',
+      degradationStatus: 'none',
+    },
+  }));
+}
+
+export async function searchHealthMedicationSuggestions(
+  query: string
+): Promise<HealthMedicationSuggestionResponse> {
+  return await medicationSearchClient.request<HealthMedicationSuggestionResponse>(
+    { query },
+    async () => ({
+      suggestions: [] satisfies HealthMedicationSuggestion[],
+      notice: '',
+      metadata: {
+        provenance: [],
+        cacheStatus: 'none',
+        degradationStatus: 'none',
+      },
+    })
   );
 }

@@ -4,6 +4,8 @@ import {
   createHealthEventRows,
   createSleepCardLines,
   describeHealthTemplate,
+  updateSymptomFormValue,
+  updateTemplateFormValue,
 } from '$lib/features/health/model';
 
 describe('health model', () => {
@@ -38,6 +40,8 @@ describe('health model', () => {
           symptom: 'Headache',
           severity: 4,
           note: 'After lunch',
+          referenceUrl:
+            'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
         },
       },
     ];
@@ -51,6 +55,8 @@ describe('health model', () => {
       title: 'Headache',
       badge: 'Severity 4/5',
       lines: ['After lunch'],
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
     });
     expect(
       createSleepCardLines({ localDay: '2026-04-02', events, templates: [], sleepEvent: events[0] })
@@ -129,6 +135,118 @@ describe('health model', () => {
       title: 'Magnesium glycinate',
       badge: 'Supplement',
       lines: ['2 capsules'],
+    });
+  });
+
+  it('surfaces a reference link on medication event rows when one exists', () => {
+    const events: HealthEvent[] = [
+      {
+        id: 'medication-1',
+        createdAt: '2026-04-02T12:00:00Z',
+        updatedAt: '2026-04-02T12:00:00Z',
+        sourceType: 'manual',
+        sourceApp: 'personal-health-cockpit',
+        sourceTimestamp: '2026-04-02T12:00:00Z',
+        localDay: '2026-04-02',
+        confidence: 1,
+        eventType: 'medication-dose',
+        value: 1,
+        unit: 'tablet',
+        payload: {
+          kind: 'template-dose',
+          templateId: 'template-1',
+          templateName: 'Metformin 500 MG Oral Tablet',
+          templateType: 'medication',
+          amount: 1,
+          unit: 'tablet',
+          referenceUrl:
+            'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+        },
+      },
+    ];
+
+    const rows = createHealthEventRows(events);
+    expect(rows[0]).toMatchObject({
+      title: 'Metformin 500 MG Oral Tablet',
+      badge: 'Medication',
+      lines: ['1 tablet'],
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+    });
+  });
+
+  it('clears suggestion reference urls when the identifying symptom or template fields change', () => {
+    expect(
+      updateSymptomFormValue(
+        {
+          symptom: 'Headache',
+          severity: '4',
+          note: 'After lunch',
+          referenceUrl:
+            'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+        },
+        'symptom',
+        'Migraine'
+      )
+    ).toMatchObject({
+      symptom: 'Migraine',
+      referenceUrl: '',
+    });
+
+    expect(
+      updateSymptomFormValue(
+        {
+          symptom: 'Headache',
+          severity: '4',
+          note: 'After lunch',
+          referenceUrl:
+            'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+        },
+        'note',
+        'Worse after dinner'
+      )
+    ).toMatchObject({
+      note: 'Worse after dinner',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+    });
+
+    expect(
+      updateTemplateFormValue(
+        {
+          label: 'Metformin 500 MG Oral Tablet',
+          templateType: 'medication',
+          defaultDose: '1',
+          defaultUnit: 'tablet',
+          note: 'With breakfast',
+          referenceUrl:
+            'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+        },
+        'label',
+        'Ibuprofen'
+      )
+    ).toMatchObject({
+      label: 'Ibuprofen',
+      referenceUrl: '',
+    });
+
+    expect(
+      updateTemplateFormValue(
+        {
+          label: 'Metformin 500 MG Oral Tablet',
+          templateType: 'medication',
+          defaultDose: '1',
+          defaultUnit: 'tablet',
+          note: 'With breakfast',
+          referenceUrl:
+            'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+        },
+        'templateType',
+        'supplement'
+      )
+    ).toMatchObject({
+      templateType: 'supplement',
+      referenceUrl: '',
     });
   });
 });

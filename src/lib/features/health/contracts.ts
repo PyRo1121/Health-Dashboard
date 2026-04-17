@@ -1,30 +1,64 @@
 import { z } from 'zod';
+import { normalizeSafeExternalUrl } from '$lib/core/shared/external-links';
+
+function isFiniteNumberString(value: string): boolean {
+  const parsed = Number(value);
+  return Number.isFinite(parsed);
+}
+
+function isBoundedNumberString(value: string, min: number, max: number): boolean {
+  if (!isFiniteNumberString(value)) {
+    return false;
+  }
+
+  const parsed = Number(value);
+  return parsed >= min && parsed <= max;
+}
+
+const safeReferenceUrlSchema = z
+  .string()
+  .transform((value) => normalizeSafeExternalUrl(value) ?? '');
+
+const scoreStringSchema = z
+  .string()
+  .refine((value) => isBoundedNumberString(value, 1, 5), 'Expected a score from 1 to 5');
+
+const optionalNonNegativeNumberStringSchema = z
+  .string()
+  .refine(
+    (value) => !value.trim() || (isFiniteNumberString(value) && Number(value) >= 0),
+    'Expected a non-negative finite number or blank'
+  );
 
 const symptomFormSchema = z.object({
   symptom: z.string(),
-  severity: z.string(),
+  severity: scoreStringSchema,
   note: z.string(),
+  referenceUrl: safeReferenceUrlSchema,
 });
 
 const anxietyFormSchema = z.object({
-  intensity: z.string(),
+  intensity: scoreStringSchema,
   trigger: z.string(),
-  durationMinutes: z.string(),
+  durationMinutes: optionalNonNegativeNumberStringSchema,
   note: z.string(),
 });
 
 const sleepNoteFormSchema = z.object({
   note: z.string(),
-  restfulness: z.string(),
+  restfulness: z
+    .string()
+    .refine((value) => !value.trim() || isBoundedNumberString(value, 1, 5), 'Expected a score from 1 to 5 or blank'),
   context: z.string(),
 });
 
 const templateFormSchema = z.object({
   label: z.string(),
   templateType: z.enum(['medication', 'supplement']),
-  defaultDose: z.string(),
+  defaultDose: optionalNonNegativeNumberStringSchema,
   defaultUnit: z.string(),
   note: z.string(),
+  referenceUrl: safeReferenceUrlSchema,
 });
 
 export const healthMutationStateSchema = z.object({

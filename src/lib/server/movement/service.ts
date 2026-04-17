@@ -1,6 +1,7 @@
 import type { ExerciseCatalogItem } from '$lib/core/domain/types';
 import { createWorkoutTemplateForm, normalizeExerciseDrafts } from '$lib/features/movement/model';
 import { createMovementPageState, type MovementPageState } from '$lib/features/movement/controller';
+import { searchExerciseCatalog } from '$lib/features/movement/service';
 import { searchWgerExercises } from '$lib/server/movement/wger';
 import { getServerDrizzleClient } from '$lib/server/db/drizzle/client';
 import { drizzleSchema } from '$lib/server/db/drizzle/schema';
@@ -47,7 +48,23 @@ export async function searchMovementExercisesServer(query: string): Promise<Exer
     return [];
   }
 
-  const results = await searchWgerExercises(normalizedQuery);
+  const cachedMatches = searchExerciseCatalog(normalizedQuery, await listExerciseCatalogItemsServer());
+  if (cachedMatches.length) {
+    return cachedMatches;
+  }
+
+  const results = await (async (): Promise<ExerciseCatalogItem[] | null> => {
+    try {
+      return await searchWgerExercises(normalizedQuery);
+    } catch {
+      return null;
+    }
+  })();
+
+  if (!results?.length) {
+    return [];
+  }
+
   const { db } = getServerDrizzleClient();
 
   for (const item of results) {

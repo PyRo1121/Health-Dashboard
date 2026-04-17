@@ -76,8 +76,13 @@ export function updateNutritionFormField(
 export function getNutritionRecommendationPlanDraft(
   state: NutritionPageState,
   recommendationId: string,
-  kind: 'food' | 'recipe'
+  kind: 'food' | 'recipe',
+  canPlanDirectly = true
 ): NutritionActionDraft | null {
+  if (!canPlanDirectly) {
+    return null;
+  }
+
   if (kind === 'food') {
     const item = state.catalogItems.find((candidate) => candidate.id === recommendationId);
     if (!item) {

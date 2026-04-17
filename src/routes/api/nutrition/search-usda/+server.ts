@@ -19,7 +19,14 @@ export const POST: RequestHandler = async ({ request }) => {
 
   const query = parsed.data.query?.trim() ?? '';
   if (!query) {
-    return Response.json({ matches: [] } satisfies SearchUsdaResponse);
+    return Response.json({
+      matches: [],
+      metadata: {
+        provenance: [],
+        cacheStatus: 'none',
+        degradationStatus: 'none',
+      },
+    } satisfies SearchUsdaResponse);
   }
 
   return Response.json(await searchUsdaFoodsServer(query));

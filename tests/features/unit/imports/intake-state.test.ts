@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ImportBatch } from '$lib/core/domain/types';
+import type { ImportBatch, ImportPreviewResult } from '$lib/core/domain/types';
 import type { ImportPayloadSummary } from '$lib/features/imports/core';
 import {
   allowsHelperLinks,
@@ -39,6 +39,16 @@ const STAGED_BATCH: ImportBatch = {
   updatedAt: '2026-04-02T08:00:00.000Z',
   sourceType: 'healthkit-companion',
   status: 'staged',
+};
+
+const PREVIEW_RESULT: ImportPreviewResult = {
+  sourceType: 'healthkit-companion',
+  status: 'preview',
+  summary: {
+    adds: 3,
+    duplicates: 0,
+    warnings: 0,
+  },
 };
 
 describe('imports intake state', () => {
@@ -82,7 +92,7 @@ describe('imports intake state', () => {
       origin: 'file',
       summary: READY_SUMMARY,
     });
-    const previewed = applyPreviewSuccessState(loaded, STAGED_BATCH);
+    const previewed = applyPreviewSuccessState(loaded, PREVIEW_RESULT);
     const edited = applyManualPayloadEditState(previewed, '{"connector":"healthkit-ios"}\n');
 
     expect(edited.payloadOrigin).toBe('manual');
@@ -129,14 +139,14 @@ describe('imports intake state', () => {
 
   it('tracks preview and commit result states separately from errors', () => {
     const state = createImportIntakeState();
-    const previewed = applyPreviewSuccessState(state, STAGED_BATCH);
-    const committed = applyCommitSuccessState(previewed, { ...STAGED_BATCH, status: 'committed' });
+    const previewed = applyPreviewSuccessState(state, PREVIEW_RESULT);
+    const committed = applyCommitSuccessState(previewed, null);
     const previewError = applyPreviewErrorState(committed, 'Preview failed.');
     const fileError = applyFileLoadErrorState(previewError, 'File upload failed.');
     const commitError = applyCommitErrorState(fileError, 'Commit failed.');
 
-    expect(previewed.latestPreview?.status).toBe('staged');
-    expect(committed.latestPreview?.status).toBe('committed');
+    expect(previewed.latestPreview?.status).toBe('preview');
+    expect(committed.latestPreview).toBeNull();
     expect(committed.saveNotice).toBe('Import committed.');
     expect(previewError.latestPreview).toBeNull();
     expect(fileError.selectedFileName).toBe('');

@@ -52,12 +52,25 @@ describe('Imports route SMART clinical flows', () => {
     await fireEvent.click(getPreviewButton());
 
     await waitFor(() => {
-      expect(screen.getByText(/Adds: 3/i)).toBeTruthy();
+      const previewSummary = screen.getByLabelText('Import payload summary');
+      expect(previewSummary.textContent).toContain('3');
     });
 
     await fireEvent.click(getCommitButton());
     await waitFor(() => {
       expect(screen.getByText(/smart-fhir-sandbox/i)).toBeTruthy();
+    });
+  });
+
+  it('shows registry-backed trust and auth context for the SMART sandbox lane', async () => {
+    renderImportsPage();
+
+    await screen.findByLabelText('Import source');
+    await selectImportSource('smart-fhir-sandbox');
+
+    await waitFor(() => {
+      expect(screen.getByText(/Trust: sandbox/i)).toBeTruthy();
+      expect(screen.getByText(/Auth: oauth2/i)).toBeTruthy();
     });
   });
 });

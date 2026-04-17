@@ -20,7 +20,7 @@ export const importsRequestSchema = z.discriminatedUnion('action', [
   }),
   z.object({
     action: z.literal('commit'),
-    batchId: z.string(),
+    input: importPreviewInputSchema,
   }),
 ]);
 

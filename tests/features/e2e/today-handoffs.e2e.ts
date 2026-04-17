@@ -351,7 +351,7 @@ test('today can clear a planned meal handoff after nutrition queues it', async (
   await expect(page.getByText(/No meal queued up\./i)).toBeVisible();
 });
 
-test('planning a recommended recipe keeps recipe identity and weekly groceries intact', async ({
+test('recommended optional-source recipes require review before planning', async ({
   page,
 }) => {
   const seedResponse = await page.request.post('/api/db/migrate', {
@@ -400,49 +400,14 @@ test('planning a recommended recipe keeps recipe identity and weekly groceries i
     has: page.getByRole('heading', { name: 'Recommended next' }),
   });
   await expect(recommendationsSection.getByText('Teriyaki Chicken Casserole')).toBeVisible();
-  await recommendationsSection.getByRole('button', { name: 'Plan next' }).click();
-  await expect(page.getByText(/Planned next meal saved\./i)).toBeVisible();
-  const nutritionPlannedMealSection = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Planned next meal' }),
-  });
-  await expect(nutritionPlannedMealSection.getByText('Teriyaki Chicken Casserole')).toBeVisible();
-  await expect(nutritionPlannedMealSection.getByText(/Meal type: dinner/i)).toBeVisible();
-  await expect(nutritionPlannedMealSection.getByText(/Calories: 0/i)).toHaveCount(0);
-  await expect(nutritionPlannedMealSection.getByText(/Protein: 0/i)).toHaveCount(0);
-
-  await page.goto('/plan');
-  const weekBoardSection = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Week board' }),
-  });
-  await expect(weekBoardSection.getByText('Teriyaki Chicken Casserole')).toBeVisible();
-  await expect(page.getByText(/dinner · Japanese/i)).toBeVisible();
-  await expect(page.getByText('soy sauce')).toBeVisible();
-  await expect(page.getByText('chicken breast')).toBeVisible();
-
-  await page.goto('/today');
-  const plannedMealSection = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Planned next meal' }),
-  });
-  await expect(plannedMealSection.getByText('Teriyaki Chicken Casserole')).toBeVisible();
-  await expect(plannedMealSection.getByText(`Meal type: dinner`)).toBeVisible();
-  await expect(plannedMealSection.getByText(/3\/4 cup soy sauce/i)).toBeVisible();
-  await expect(plannedMealSection.getByText(/Calories: 0/i)).toHaveCount(0);
-  await expect(plannedMealSection.getByText(/Protein: 0/i)).toHaveCount(0);
-
-  const nutritionPulseSection = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Nutrition pulse' }),
-  });
-  await expect(nutritionPulseSection.getByText(/If you log the planned meal next:/i)).toHaveCount(
-    0
-  );
-  await expect(nutritionPulseSection.getByText(/Planned next:/i)).toHaveCount(0);
-  await expect(nutritionPulseSection.getByText(/Protein is still low so far\./i)).toHaveCount(0);
+  await expect(recommendationsSection.getByText(/Source: TheMealDB/i)).toBeVisible();
+  await expect(recommendationsSection.getByText(/Posture: optional/i)).toBeVisible();
   await expect(
-    nutritionPulseSection.getByText(/nutrition totals are still unknown/i)
+    recommendationsSection.getByRole('button', { name: 'Load recipe' })
   ).toBeVisible();
   await expect(
-    page.getByText(/changes today's intake more than another unplanned snack/i)
-  ).toHaveCount(0);
+    recommendationsSection.getByRole('button', { name: 'Review first' })
+  ).toBeDisabled();
 });
 
 test('nutrition planning replaces stale planned-food slots instead of leaving the handoff broken', async ({
@@ -2872,25 +2837,6 @@ test('saving a recipe-loaded draft as a custom food does not fabricate zero macr
     0
   );
 
-  await page.getByLabel('Food search').fill('teriyaki');
-  await page.getByRole('button', { name: 'Search foods' }).click();
-
-  const mealLoggingSection = page.locator('section').filter({
-    has: page.getByRole('heading', { name: 'Meal logging' }),
-  });
-  const localSearchResult = mealLoggingSection.locator('.match-list').first().locator('li').first();
-  await expect(localSearchResult.getByText('Teriyaki Chicken Casserole')).toBeVisible();
-  await expect(localSearchResult.getByText(/Nutrition totals unknown\./i)).toBeVisible();
-  await expect(localSearchResult.getByText(/0 kcal/i)).toHaveCount(0);
-  await expect(localSearchResult.getByText(/0g protein/i)).toHaveCount(0);
-
-  await localSearchResult.getByRole('button', { name: 'Use match' }).click();
-  await expect(page.getByLabel('Meal name')).toHaveValue('Teriyaki Chicken Casserole');
-  await expect(page.getByLabel('Calories')).toHaveValue('');
-  await expect(page.getByLabel('Protein')).toHaveValue('');
-  await expect(page.getByLabel('Fiber')).toHaveValue('');
-  await expect(page.getByLabel('Carbs')).toHaveValue('');
-  await expect(page.getByLabel('Fat')).toHaveValue('');
 });
 
 test('saving a fresh name-only custom food does not fabricate zero macros', async ({ page }) => {

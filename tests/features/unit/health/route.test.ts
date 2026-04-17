@@ -9,7 +9,7 @@ describe('health route', () => {
 
   const mutationState = {
     localDay: '2026-04-04',
-    symptomForm: { symptom: 'Headache', severity: '4', note: 'After lunch' },
+    symptomForm: { symptom: 'Headache', severity: '4', note: 'After lunch', referenceUrl: '' },
     anxietyForm: {
       intensity: '4',
       trigger: 'Crowded store',
@@ -23,6 +23,7 @@ describe('health route', () => {
       defaultDose: '2',
       defaultUnit: 'capsules',
       note: 'Evening stack',
+      referenceUrl: '',
     },
   };
 
@@ -49,7 +50,7 @@ describe('health route', () => {
           localDay: '2026-04-04',
           snapshot: null,
           saveNotice: '',
-          symptomForm: { symptom: '', severity: '3', note: '' },
+          symptomForm: { symptom: '', severity: '3', note: '', referenceUrl: '' },
           anxietyForm: { intensity: '3', trigger: '', durationMinutes: '', note: '' },
           sleepNoteForm: { note: '', restfulness: '', context: '' },
           templateForm: {
@@ -58,6 +59,7 @@ describe('health route', () => {
             defaultDose: '',
             defaultUnit: '',
             note: '',
+            referenceUrl: '',
           },
         })),
       saveSymptomPageServer:
@@ -111,7 +113,7 @@ describe('health route', () => {
       localDay: '2026-04-04',
       snapshot: null,
       saveNotice: '',
-      symptomForm: { symptom: '', severity: '3', note: '' },
+      symptomForm: { symptom: '', severity: '3', note: '', referenceUrl: '' },
       anxietyForm: { intensity: '3', trigger: '', durationMinutes: '', note: '' },
       sleepNoteForm: { note: '', restfulness: '', context: '' },
       templateForm: {
@@ -120,6 +122,7 @@ describe('health route', () => {
         defaultDose: '',
         defaultUnit: '',
         note: '',
+        referenceUrl: '',
       },
     }));
     const { POST } = await importRoute({ loadHealthPageServer });
@@ -244,5 +247,71 @@ describe('health route', () => {
     expect(response.status).toBe(400);
     expect(await response.text()).toBe('Invalid health request payload.');
     expect(loadHealthPageServer).not.toHaveBeenCalled();
+  });
+
+  it('sanitizes unsafe symptom reference urls before dispatching to the server action', async () => {
+    const saveSymptomPageServer = vi.fn(async (state: unknown) => ({
+      ...(state as object),
+      loading: false,
+      snapshot: null,
+      saveNotice: 'Symptom logged.',
+    }));
+    const { POST } = await importRoute({ saveSymptomPageServer });
+
+    const unsafeState = {
+      ...requestState,
+      symptomForm: {
+        ...requestState.symptomForm,
+        referenceUrl: 'javascript:alert(1)',
+      },
+    };
+
+    const response = await POST({
+      request: new Request('http://health.test/api/health', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'saveSymptom', state: unsafeState }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(200);
+    expect(saveSymptomPageServer).toHaveBeenCalledWith({
+      ...mutationState,
+      symptomForm: {
+        ...mutationState.symptomForm,
+        referenceUrl: '',
+      },
+    });
+  });
+
+  it('rejects non-finite and out-of-range health numeric inputs at the route boundary', async () => {
+    const saveSymptomPageServer = vi.fn();
+    const { POST } = await importRoute({ saveSymptomPageServer });
+
+    const invalidState = {
+      ...requestState,
+      symptomForm: {
+        ...requestState.symptomForm,
+        severity: 'Infinity',
+      },
+      anxietyForm: {
+        ...requestState.anxietyForm,
+        intensity: '12',
+      },
+      sleepNoteForm: {
+        ...requestState.sleepNoteForm,
+        restfulness: '-1',
+      },
+    };
+
+    const response = await POST({
+      request: new Request('http://health.test/api/health', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'saveSymptom', state: invalidState }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid health request payload.');
+    expect(saveSymptomPageServer).not.toHaveBeenCalled();
   });
 });

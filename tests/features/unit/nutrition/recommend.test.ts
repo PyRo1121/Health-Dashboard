@@ -77,4 +77,38 @@ describe('nutrition recommendations', () => {
     ]);
     expect(recommendation?.score).toBeLessThan(35);
   });
+
+  it('preserves source provenance for recommendation cards', () => {
+    const recommendations = buildNutritionRecommendations({
+      context: {
+        mealType: 'dinner',
+        sleepHours: 7,
+        sleepQuality: 4,
+        anxietyCount: 0,
+        symptomCount: 0,
+      },
+      foods: [],
+      recipes: [
+        {
+          id: 'themealdb:52772',
+          createdAt: '2026-04-03T00:00:00.000Z',
+          updatedAt: '2026-04-03T00:00:00.000Z',
+          title: 'Teriyaki Chicken Bowl',
+          sourceType: 'themealdb',
+          sourceName: 'TheMealDB',
+          externalId: '52772',
+          mealType: 'dinner',
+          cuisine: 'Japanese',
+          ingredients: ['Chicken', 'Soy sauce', 'Rice', 'Broccoli'],
+        },
+      ],
+    });
+
+    expect(recommendations[0]).toMatchObject({
+      title: 'Teriyaki Chicken Bowl',
+      sourceName: 'TheMealDB',
+      sourcePosture: 'optional',
+      canPlanDirectly: false,
+    });
+  });
 });

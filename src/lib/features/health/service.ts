@@ -4,6 +4,7 @@ import {
   isHealthMetricVisibleOnSurface,
   matchesHealthMetric,
 } from '$lib/core/domain/health-metrics';
+import { normalizeSafeExternalUrl } from '$lib/core/shared/external-links';
 import type {
   AnxietyHealthEventPayload,
   HealthEvent,
@@ -38,6 +39,7 @@ export interface SymptomLogInput {
   symptom: string;
   severity: number;
   note?: string;
+  referenceUrl?: string;
 }
 
 export interface AnxietyLogInput {
@@ -61,6 +63,7 @@ export interface CreateHealthTemplateInput {
   defaultDose?: number;
   defaultUnit?: string;
   note?: string;
+  referenceUrl?: string;
 }
 
 export interface HealthSnapshot {
@@ -189,6 +192,7 @@ export function buildHealthTemplateRecord(
   const normalizedLabel = input.label.trim();
   const normalizedUnit = normalizeOptionalText(input.defaultUnit);
   const normalizedNote = normalizeOptionalText(input.note);
+  const normalizedReferenceUrl = normalizeSafeExternalUrl(input.referenceUrl);
   const normalizedDose = normalizeOptionalNumber(input.defaultDose);
 
   return {
@@ -202,6 +206,7 @@ export function buildHealthTemplateRecord(
     defaultDose: normalizedDose,
     defaultUnit: normalizedUnit,
     note: normalizedNote,
+    referenceUrl: normalizedReferenceUrl,
     archived: false,
   };
 }
@@ -215,6 +220,7 @@ export async function logSymptomEvent(
     symptom: input.symptom.trim(),
     severity: input.severity,
     note: normalizeOptionalText(input.note),
+    referenceUrl: normalizeSafeExternalUrl(input.referenceUrl),
   };
 
   const event = buildManualHealthEvent({
@@ -307,6 +313,7 @@ export async function quickLogHealthTemplate(
     amount: template.defaultDose,
     unit: template.defaultUnit,
     note: template.note,
+    referenceUrl: template.referenceUrl,
   };
 
   const eventType: ManualHealthEventType =

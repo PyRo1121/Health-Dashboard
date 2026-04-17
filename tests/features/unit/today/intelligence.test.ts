@@ -144,6 +144,64 @@ describe('today intelligence', () => {
     expect(result.primaryRecommendation?.provenance).not.toHaveLength(0);
   });
 
+  it('keeps health-event provenance rows text-only even when the driving event has a reference url', () => {
+    const result = buildTodayIntelligence(
+      createBaseInput({
+        dailyRecord: {
+          id: 'daily:2026-04-02',
+          createdAt: '2026-04-02T08:00:00.000Z',
+          updatedAt: '2026-04-02T08:00:00.000Z',
+          date: '2026-04-02',
+          mood: 3,
+          energy: 2,
+          stress: 4,
+          focus: 3,
+          sleepHours: 5.5,
+          sleepQuality: 2,
+          freeformNote: 'Dragging today.',
+        },
+        recoveryAdaptation: {
+          level: 'recovery',
+          headline: 'Recovery mode: simplify the day.',
+          reasons: ['Sleep landed under 6 hours.'],
+          mealFallback: [],
+          workoutFallback: [],
+          mealRecommendation: null,
+          workoutRecommendation: null,
+          actions: [],
+        },
+        events: [
+          {
+            id: 'symptom-1',
+            createdAt: '2026-04-02T09:00:00.000Z',
+            updatedAt: '2026-04-02T09:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            localDay: '2026-04-02',
+            confidence: 1,
+            eventType: 'symptom',
+            value: 4,
+            payload: {
+              symptom: 'Headache',
+              severity: 4,
+              referenceUrl:
+                'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+            },
+          },
+        ],
+      })
+    );
+
+    expect(result.primaryRecommendation?.provenance).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          sourceKind: 'health_event',
+          label: 'Symptom: 4, manual',
+        }),
+      ])
+    );
+  });
+
   it('prefers the planned workout when the day is calm and both meal and workout are queued', () => {
     const result = buildTodayIntelligence(
       createBaseInput({

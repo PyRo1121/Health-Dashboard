@@ -122,8 +122,17 @@ describe('imports store', () => {
       sourceType: 'apple-health-xml',
       rawText: APPLE_HEALTH_XML,
     });
-    expect(first.summary).toEqual({ adds: 2, duplicates: 0, warnings: 0 });
-    await commitImportBatch(db, first.id);
+    expect(first).toEqual({
+      sourceType: 'apple-health-xml',
+      status: 'preview',
+      summary: { adds: 2, duplicates: 0, warnings: 0 },
+    });
+    expect(await db.importBatches.count()).toBe(0);
+    expect(await db.importArtifacts.count()).toBe(0);
+    await commitImportBatch(db, {
+      sourceType: 'apple-health-xml',
+      rawText: APPLE_HEALTH_XML,
+    });
     expect(await db.healthEvents.count()).toBe(2);
     expect(await db.reviewSnapshots.count()).toBe(1);
 
@@ -136,9 +145,23 @@ describe('imports store', () => {
 
   it('commits Day One imports into journal entries', async () => {
     const db = getDb();
-    const batch = await previewImport(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
-    await commitImportBatch(db, batch.id);
+    const preview = await previewImport(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
+    expect(preview.status).toBe('preview');
+    expect(await db.importBatches.count()).toBe(0);
+    await commitImportBatch(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
     expect(await db.journalEntries.count()).toBe(1);
+  });
+
+  it('keeps Day One preview replay honest after the same entry was already imported', async () => {
+    const db = getDb();
+    const first = await previewImport(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
+    expect(first.summary).toEqual({ adds: 1, duplicates: 0, warnings: 0 });
+    expect(await db.importArtifacts.count()).toBe(0);
+    await commitImportBatch(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
+    expect(await db.journalEntries.count()).toBe(1);
+
+    const second = await previewImport(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
+    expect(second.summary).toEqual({ adds: 0, duplicates: 1, warnings: 0 });
   });
 
   it('stages HealthKit companion bundle previews and dedupes replay', async () => {
@@ -147,9 +170,18 @@ describe('imports store', () => {
       sourceType: 'healthkit-companion',
       rawText: HEALTHKIT_BUNDLE_JSON,
     });
-    expect(first.summary).toEqual({ adds: 3, duplicates: 0, warnings: 0 });
+    expect(first).toEqual({
+      sourceType: 'healthkit-companion',
+      status: 'preview',
+      summary: { adds: 3, duplicates: 0, warnings: 0 },
+    });
+    expect(await db.importBatches.count()).toBe(0);
+    expect(await db.importArtifacts.count()).toBe(0);
 
-    await commitImportBatch(db, first.id);
+    await commitImportBatch(db, {
+      sourceType: 'healthkit-companion',
+      rawText: HEALTHKIT_BUNDLE_JSON,
+    });
     expect(await db.reviewSnapshots.count()).toBe(1);
 
     const events = await db.healthEvents.toArray();
@@ -205,7 +237,7 @@ describe('imports store', () => {
 
   it('stages and commits SMART sandbox clinical events for the configured owner', async () => {
     const db = getDb();
-    const batch = await previewImport(db, {
+    const preview = await previewImport(db, {
       sourceType: 'smart-fhir-sandbox',
       rawText: SMART_FHIR_BUNDLE_JSON,
       ownerProfile: {
@@ -214,9 +246,20 @@ describe('imports store', () => {
       },
     });
 
-    expect(batch.summary).toEqual({ adds: 3, duplicates: 0, warnings: 0 });
+    expect(preview).toEqual({
+      sourceType: 'smart-fhir-sandbox',
+      status: 'preview',
+      summary: { adds: 3, duplicates: 0, warnings: 0 },
+    });
 
-    await commitImportBatch(db, batch.id);
+    await commitImportBatch(db, {
+      sourceType: 'smart-fhir-sandbox',
+      rawText: SMART_FHIR_BUNDLE_JSON,
+      ownerProfile: {
+        fullName: 'Pyro Example',
+        birthDate: '1990-01-01',
+      },
+    });
 
     const events = await db.healthEvents.toArray();
     expect(events).toHaveLength(3);
@@ -242,8 +285,8 @@ describe('imports store', () => {
 
   it('lists import batches newest first', async () => {
     const db = getDb();
-    await previewImport(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
-    await previewImport(db, { sourceType: 'apple-health-xml', rawText: APPLE_HEALTH_XML });
+    await commitImportBatch(db, { sourceType: 'day-one-json', rawText: DAY_ONE_JSON });
+    await commitImportBatch(db, { sourceType: 'apple-health-xml', rawText: APPLE_HEALTH_XML });
 
     const batches = await listImportBatches(db);
     expect(batches).toHaveLength(2);

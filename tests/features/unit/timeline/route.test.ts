@@ -56,6 +56,45 @@ describe('timeline route', () => {
     expect(loadTimelinePageServer).toHaveBeenCalledWith(state);
   });
 
+  it('accepts timeline items that carry a reference url from the server path', async () => {
+    const state = { loading: true, filter: 'all', items: [] };
+    const loadTimelinePageServer = vi.fn(async () => ({
+      ...state,
+      loading: false,
+      items: [
+        {
+          event: { sourceType: 'manual' },
+          label: 'Symptom',
+          valueLabel: '4',
+          sourceLabel: 'Manual',
+          referenceUrl:
+            'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+        },
+      ],
+    }));
+    const { POST } = await importRoute({ loadTimelinePageServer });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/timeline', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'load', state }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(200);
+    expect(await response.json()).toEqual(
+      expect.objectContaining({
+        items: [
+          expect.objectContaining({
+            label: 'Symptom',
+            referenceUrl:
+              'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+          }),
+        ],
+      })
+    );
+  });
+
   it('returns 400 for invalid timeline payloads', async () => {
     const { POST } = await importRoute({});
     const missingState = await POST({
