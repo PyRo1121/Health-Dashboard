@@ -28,6 +28,24 @@ describe('groceries derivation helpers', () => {
       label: 'baby spinach',
       quantityText: undefined,
     });
+
+    expect(parseIngredientLine('cup noodles')).toEqual({
+      ingredientKey: 'cup noodles',
+      label: 'cup noodles',
+      quantityText: undefined,
+    });
+
+    expect(parseIngredientLine('bottle brush')).toEqual({
+      ingredientKey: 'bottle brush',
+      label: 'bottle brush',
+      quantityText: undefined,
+    });
+
+    expect(parseIngredientLine('1 bottle soy sauce')).toEqual({
+      ingredientKey: 'soy sauce',
+      label: 'soy sauce',
+      quantityText: '1 bottle',
+    });
   });
 
   it('infers aisles and preserves manual state when building manual records', () => {
@@ -77,6 +95,8 @@ describe('groceries derivation helpers', () => {
       onHand: true,
     });
     expect(inferAisle('Greek yogurt bowl')).toBe('Protein & Dairy');
+    expect(inferAisle('black pepper')).toBe('Pantry');
+    expect(inferAisle('pepper flakes')).toBe('Pantry');
   });
 
   it('merges derived and manual grocery rows into stable combined items', () => {

@@ -22,10 +22,8 @@ describe('db migrate route', () => {
     return await import('../../../../src/routes/api/db/migrate/+server.ts');
   }
 
-  it('ignores legacy plannedMeals data when importing a snapshot', async () => {
-    const importHealthDbSnapshot = vi.fn(async () => undefined);
-    const countMigratedRecords = vi.fn(() => 0);
-    const snapshot = {
+  function createSnapshot(): HealthDbSnapshot & { plannedMeals?: unknown[] } {
+    return {
       dailyRecords: [],
       journalEntries: [],
       foodEntries: [],
@@ -46,6 +44,56 @@ describe('db migrate route', () => {
       importArtifacts: [],
       reviewSnapshots: [],
       adherenceMatches: [],
+    };
+  }
+
+  it('returns 400 for malformed JSON bodies', async () => {
+    const importHealthDbSnapshot = vi.fn(async () => undefined);
+    const countMigratedRecords = vi.fn(() => 0);
+    const { POST } = await importRoute({ importHealthDbSnapshot, countMigratedRecords });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/db/migrate', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: '{',
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid migration request payload.');
+    expect(importHealthDbSnapshot).not.toHaveBeenCalled();
+    expect(countMigratedRecords).not.toHaveBeenCalled();
+  });
+
+  it('returns 400 for invalid snapshot shapes', async () => {
+    const importHealthDbSnapshot = vi.fn(async () => undefined);
+    const countMigratedRecords = vi.fn(() => 0);
+    const { POST } = await importRoute({ importHealthDbSnapshot, countMigratedRecords });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/db/migrate', {
+        method: 'POST',
+        body: JSON.stringify({
+          snapshot: {
+            ...createSnapshot(),
+            dailyRecords: {},
+          },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(400);
+    expect(await response.text()).toBe('Invalid migration request payload.');
+    expect(importHealthDbSnapshot).not.toHaveBeenCalled();
+    expect(countMigratedRecords).not.toHaveBeenCalled();
+  });
+
+  it('ignores legacy plannedMeals data when importing a snapshot', async () => {
+    const importHealthDbSnapshot = vi.fn(async () => undefined);
+    const countMigratedRecords = vi.fn(() => 0);
+    const snapshot = {
+      ...createSnapshot(),
       plannedMeals: [
         {
           id: 'planned-meal:next',

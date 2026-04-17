@@ -98,9 +98,22 @@ export function generateReviewFlags(
   assessments: AssessmentResult[]
 ): string[] {
   const flags: string[] = [];
+  const lapseLogged = sobrietyEvents.some((event) => event.eventType === 'lapse');
+  const highRiskAssessment = assessments.find((assessment) => assessment.highRisk);
 
   if (!records.length) {
-    flags.push('Need more tracked days before weekly trends can become meaningful.');
+    if (lapseLogged) {
+      flags.push('A lapse was logged this week, so recovery context deserves special attention.');
+    }
+
+    if (highRiskAssessment) {
+      flags.push(`${highRiskAssessment.instrument} entered a high-risk state this week.`);
+    }
+
+    if (!flags.length) {
+      flags.push('Need more tracked days before weekly trends can become meaningful.');
+    }
+
     return flags;
   }
 
@@ -111,11 +124,10 @@ export function generateReviewFlags(
     flags.push('Sleep dipped below 7 hours on multiple tracked days.');
   }
 
-  if (sobrietyEvents.some((event) => event.eventType === 'lapse')) {
+  if (lapseLogged) {
     flags.push('A lapse was logged this week, so recovery context deserves special attention.');
   }
 
-  const highRiskAssessment = assessments.find((assessment) => assessment.highRisk);
   if (highRiskAssessment) {
     flags.push(`${highRiskAssessment.instrument} entered a high-risk state this week.`);
   }
@@ -237,7 +249,7 @@ function buildHeadlineFromTheme(
   decision: ReviewHeadlineDecision,
   recordCount: number
 ): string {
-  if (recordCount === 0) {
+  if (recordCount === 0 && theme !== 'support' && theme !== 'recovery') {
     return 'Need more data to build your first weekly briefing';
   }
 

@@ -58,6 +58,38 @@ describe('workflow structure invariants', () => {
     expect(perms['pull-requests']).toBe('read');
   });
 
+  it('workflow_dispatch workflows admit dispatch in their job guards', () => {
+    const prManager = readWorkflow('pr-manager-grok.yml');
+    const grokDescribe = readWorkflow('grok-describe.yml');
+    expect(prManager).not.toBeNull();
+    expect(grokDescribe).not.toBeNull();
+
+    const prManagerJobs = prManager!.jobs as Record<string, Record<string, unknown>>;
+    const describeJobs = grokDescribe!.jobs as Record<string, Record<string, unknown>>;
+
+    expect(String(prManagerJobs['manage-pr']?.if ?? '')).toContain(
+      "github.event_name == 'workflow_dispatch'"
+    );
+    expect(String(prManagerJobs['manage-pr']?.if ?? '')).toContain(
+      "github.event.inputs.pr_number != ''"
+    );
+    expect(String(describeJobs['describe']?.if ?? '')).toContain(
+      "github.event_name == 'workflow_dispatch'"
+    );
+    expect(String(describeJobs['describe']?.if ?? '')).toContain(
+      "github.event.inputs.pr_number != ''"
+    );
+  });
+
+  it('grok-threat-monitor has an authenticated push path without permission widening', () => {
+    const wf = readWorkflow('grok-threat-monitor.yml');
+    expect(wf).not.toBeNull();
+    const perms = wf!.permissions as Record<string, string>;
+    expect(perms['contents']).toBe('write');
+    const content = JSON.stringify(wf);
+    expect(content).toContain('git remote set-url origin');
+    expect(content).toContain('x-access-token:${GITHUB_TOKEN}');
+  });
   it('audit doc "what was reviewed" entries match real workflow files', () => {
     const workflowsDir = resolve(__dirname, '../../.github/workflows');
     const reviewedWorkflows = [

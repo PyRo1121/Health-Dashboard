@@ -32,7 +32,13 @@ export function inferAisle(label: string): string {
   const normalized = label.toLowerCase();
 
   if (
-    /(berry|apple|banana|lettuce|spinach|kale|onion|tomato|pepper|broccoli|carrot|avocado)/.test(
+    /(black pepper|pepper flakes|red pepper flakes|crushed red pepper|peppercorn)/.test(normalized)
+  ) {
+    return 'Pantry';
+  }
+
+  if (
+    /\b(berry|apple|banana|lettuce|spinach|kale|onion|tomato|pepper|broccoli|carrot|avocado)\b/.test(
       normalized
     )
   ) {
@@ -68,19 +74,26 @@ export function parseIngredientLine(rawLine: string): {
   const tokens = normalized.split(' ');
   const consumed: string[] = [];
   let index = 0;
+  let foundQuantity = false;
 
   while (index < tokens.length) {
     const token = tokens[index]!.toLowerCase();
-    if (
-      /^\d+$/.test(token) ||
-      /^\d+\/\d+$/.test(token) ||
-      /^\d+(?:\.\d+)?$/.test(token) ||
-      COMMON_UNITS.has(token)
-    ) {
+    const isQuantityToken =
+      /^\d+$/.test(token) || /^\d+\/\d+$/.test(token) || /^\d+(?:\.\d+)?$/.test(token);
+
+    if (isQuantityToken) {
+      foundQuantity = true;
       consumed.push(tokens[index]!);
       index += 1;
       continue;
     }
+
+    if (foundQuantity && COMMON_UNITS.has(token)) {
+      consumed.push(tokens[index]!);
+      index += 1;
+      continue;
+    }
+
     break;
   }
 

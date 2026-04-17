@@ -1,6 +1,9 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
-import { resetServerDrizzleStorage } from '$lib/server/db/drizzle/client';
+import {
+  PlaywrightModeRequiredError,
+  resetServerDrizzleStorage,
+} from '$lib/server/db/drizzle/client';
 
 const HEALTH_RESET_TOKEN = 'codex-e2e';
 
@@ -10,6 +13,14 @@ export const POST: RequestHandler = async ({ request }) => {
     return new Response('Forbidden', { status: 403 });
   }
 
-  resetServerDrizzleStorage();
+  try {
+    resetServerDrizzleStorage();
+  } catch (error) {
+    if (error instanceof PlaywrightModeRequiredError) {
+      return new Response('Forbidden', { status: 403 });
+    }
+    throw error;
+  }
+
   return json({ ok: true });
 };
