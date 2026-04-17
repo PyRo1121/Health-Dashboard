@@ -15,7 +15,7 @@ function reportUnhandledRouteError(error: unknown): void {
   }
 
   setTimeout(() => {
-    throw (error instanceof Error ? error : new Error(String(error)));
+    throw error instanceof Error ? error : new Error(String(error));
   }, 0);
 }
 

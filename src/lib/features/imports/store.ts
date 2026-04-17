@@ -149,7 +149,10 @@ export async function dedupeImportedEvents(
 
     seenSourceRecordIds.add(sourceRecordId);
 
-    const existing = await store.healthEvents.where('sourceRecordId').equals(sourceRecordId).first();
+    const existing = await store.healthEvents
+      .where('sourceRecordId')
+      .equals(sourceRecordId)
+      .first();
 
     if (existing) {
       duplicates.push(event);
