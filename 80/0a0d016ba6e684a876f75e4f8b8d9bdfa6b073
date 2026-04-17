@@ -1,0 +1,125 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "800a0d016ba6e684a876f75e4f8b8d9bdfa6b073",
+  "prompts": {
+    "0c0c80f1d2405e28": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9db2-11ab-72ce-9a27-b1467d9e5b8c",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 61,
+      "total_deletions": 10,
+      "accepted_lines": 61,
+      "overriden_lines": 0
+    },
+    "130b35d1ba119a2e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9ad7-0cb9-7202-95f5-6da1a7fd2390",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3352,
+      "overriden_lines": 0
+    },
+    "1917e003de4f9960": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9a63-9093-7c80-93e1-e596c392e3f8",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 212,
+      "overriden_lines": 0
+    },
+    "3bf12cb8188362ab": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9dad-050c-72c0-b6b9-73662549aa4f",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "47c34d3fa84690a8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d99b5-7b8e-7cf2-bbd2-09318c858741",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "8bdc48748206392f": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9dad-107d-731b-b33e-203fd4894407",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 67,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    },
+    "a44ff3651257f229": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d993c-14b5-7f72-b685-2e4689abed60",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 45242,
+      "overriden_lines": 0
+    },
+    "ba1d1cee94990ed0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d999a-7e6e-7033-8e9e-83062035c04e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 9234,
+      "overriden_lines": 0
+    },
+    "f9cb98d9a0934787": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9a6c-77df-7b00-9772-2f8d64455e8a",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
