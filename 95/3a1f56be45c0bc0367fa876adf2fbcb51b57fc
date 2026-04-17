@@ -1,0 +1,130 @@
+src/lib/features/nutrition/components/NutritionCollectionsSection.svelte
+  737c5762a7f1aa2f 4,77-83
+tests/features/component/nutrition/NutritionPage.spec.ts
+  737c5762a7f1aa2f 20-24,73-197,234-238,346-374
+src/lib/features/nutrition/actions.ts
+  737c5762a7f1aa2f 30-34,56-60
+src/lib/features/today/provenance.ts
+  737c5762a7f1aa2f 71-76,83-88
+src/lib/features/planning/model.ts
+  737c5762a7f1aa2f 70-83
+src/lib/features/nutrition/contracts.ts
+  737c5762a7f1aa2f 86-90,98-102,114-118
+src/lib/features/nutrition/types.ts
+  737c5762a7f1aa2f 4-8
+src/lib/features/today/intelligence.ts
+  737c5762a7f1aa2f 116-122
+src/lib/features/nutrition/state.ts
+  737c5762a7f1aa2f 355-359
+tests/features/unit/nutrition/recommend.test.ts
+  737c5762a7f1aa2f 47-79
+tests/features/unit/nutrition/page-actions.test.ts
+  737c5762a7f1aa2f 220-244
+.gitignore
+  737c5762a7f1aa2f 32
+src/lib/features/today/snapshot-builder.ts
+  737c5762a7f1aa2f 204-210,231
+tests/features/unit/nutrition/model.test.ts
+  737c5762a7f1aa2f 3,6,61-117,129-185
+tests/features/unit/planning/model.test.ts
+  737c5762a7f1aa2f 170-188
+tests/features/unit/today/model.test.ts
+  737c5762a7f1aa2f 223-369
+tests/features/unit/nutrition/store-lookup-summary.test.ts
+  737c5762a7f1aa2f 51-52
+src/lib/features/today/components/TodayNutritionPulseSection.svelte
+  737c5762a7f1aa2f 27
+tests/features/e2e/plan-to-today.e2e.ts
+  737c5762a7f1aa2f 69-93
+tests/features/unit/nutrition/page-state-actions.test.ts
+  737c5762a7f1aa2f 242-246,250-279
+src/lib/features/nutrition/components/NutritionComposerSection.svelte
+  737c5762a7f1aa2f 5,94-100,144-150
+src/lib/features/nutrition/model.ts
+  737c5762a7f1aa2f 1-6,32-36,43-47,54-61,66-70,85-89,113-117,121-135,144-146,148-152,171-172
+SPEC.md
+  737c5762a7f1aa2f 109-110,112,114,117,120,123,140,145-146,148,150,177-184,202-206,223-224,228-229
+src/lib/features/today/recommendation-builders.ts
+  737c5762a7f1aa2f 116-117,119-121,123,235-236
+tests/features/unit/today/snapshot.test.ts
+  737c5762a7f1aa2f 465-535
+src/lib/features/today/recovery.ts
+  737c5762a7f1aa2f 131-135
+tests/features/component/planning/PlanPage.spec.ts
+  737c5762a7f1aa2f 204-238
+src/lib/features/nutrition/lookup.ts
+  737c5762a7f1aa2f 41-45
+src/lib/features/nutrition/recommend.ts
+  737c5762a7f1aa2f 75-92,98-102,104-107,110-113,115-118,120-129,133-143,146,148,152-155,158-164,170
+src/lib/features/today/presentation.ts
+  737c5762a7f1aa2f 22,33-45,110-114,125-127,129,134,142,146,154,158,173-174,179-181,204-226,250,254,258,261,264,314-331
+tests/features/component/today/TodayNutritionPulseSection.spec.ts
+  737c5762a7f1aa2f 93-142
+tests/features/component/today/TodayPage.spec.ts
+  737c5762a7f1aa2f 7,195-259,806-880
+tests/features/e2e/today-handoffs.e2e.ts
+  737c5762a7f1aa2f 613-617,1082-1250,2789-3003
+tests/features/unit/today/intelligence.test.ts
+  737c5762a7f1aa2f 210-237
+src/lib/features/nutrition/page-actions.ts
+  737c5762a7f1aa2f 18-22,90-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "953a1f56be45c0bc0367fa876adf2fbcb51b57fc",
+  "prompts": {
+    "3a3c56a6dbec304e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7a4f-c83f-7fd3-9d3a-e52ffc06f97e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 649,
+      "overriden_lines": 0
+    },
+    "737c5762a7f1aa2f": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d995d-611a-78b3-b733-40f40fc09563",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1690,
+      "total_deletions": 195,
+      "accepted_lines": 1669,
+      "overriden_lines": 0
+    },
+    "e32f9530a5463689": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d7f45-6dcd-7810-b362-d89c40778896",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 3,
+      "overriden_lines": 0
+    },
+    "f78fa76e7aa06e40": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "opencode-transcript-ses_2a4e989bcffe0gWTgFfn7nU7X6-4f4f967f-4eed-4bf6-83ee-9218514fcb8c",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
