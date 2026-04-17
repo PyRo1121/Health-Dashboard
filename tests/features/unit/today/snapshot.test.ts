@@ -462,4 +462,75 @@ describe('today snapshot', () => {
       action: { kind: 'href', label: 'Open check-in', href: '#today-check-in' },
     });
   });
+
+  it('does not suggest an unknown-macro saved food as a recovery meal swap', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Toast and jam',
+      calories: 260,
+      protein: 6,
+      fiber: 2,
+      carbs: 42,
+      fat: 6,
+    });
+    await saveFoodCatalogItem(db, {
+      name: 'Mystery soup',
+    });
+    const workout = await saveWorkoutTemplate(db, {
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    });
+
+    await db.dailyRecords.put({
+      id: 'daily:2026-04-02',
+      createdAt: '2026-04-02T08:00:00.000Z',
+      updatedAt: '2026-04-02T08:00:00.000Z',
+      date: '2026-04-02',
+      mood: 3,
+      energy: 2,
+      stress: 4,
+      focus: 3,
+      sleepHours: 5.5,
+      sleepQuality: 2,
+      freeformNote: 'Dragging today.',
+    });
+    await logSymptomEvent(db, {
+      localDay: '2026-04-02',
+      symptom: 'Headache',
+      severity: 4,
+    });
+    await logAnxietyEvent(db, {
+      localDay: '2026-04-02',
+      intensity: 7,
+      trigger: 'Cramped schedule',
+      durationMinutes: 25,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      title: food.name,
+      mealType: 'breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: workout.id,
+      title: workout.title,
+    });
+
+    const snapshot = await getTodaySnapshot(db, '2026-04-02');
+
+    expect(snapshot.recoveryAdaptation?.mealRecommendation).toBeNull();
+    expect(snapshot.recoveryAdaptation?.actions).not.toContainEqual(
+      expect.objectContaining({ id: 'apply-recovery-meal' })
+    );
+    expect(snapshot.intelligence.primaryRecommendation?.secondaryAction).toBeNull();
+  });
 });

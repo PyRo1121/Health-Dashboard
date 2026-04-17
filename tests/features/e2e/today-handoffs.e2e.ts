@@ -610,11 +610,11 @@ test('switching from a food match to a recipe does not carry stale food macros i
 
   await expect(page.getByLabel('Meal name')).toHaveValue('Teriyaki Chicken Casserole');
   await expect(page.getByLabel('Meal type')).toHaveValue('dinner');
-  await expect(page.getByLabel('Calories')).toHaveValue('0');
-  await expect(page.getByLabel('Protein')).toHaveValue('0');
-  await expect(page.getByLabel('Fiber')).toHaveValue('0');
-  await expect(page.getByLabel('Carbs')).toHaveValue('0');
-  await expect(page.getByLabel('Fat')).toHaveValue('0');
+  await expect(page.getByLabel('Calories')).toHaveValue('');
+  await expect(page.getByLabel('Protein')).toHaveValue('');
+  await expect(page.getByLabel('Fiber')).toHaveValue('');
+  await expect(page.getByLabel('Carbs')).toHaveValue('');
+  await expect(page.getByLabel('Fat')).toHaveValue('');
 
   await page.getByRole('button', { name: 'Plan next meal' }).click();
   await expect(page.getByText(/Planned next meal saved\./i)).toBeVisible();
@@ -1077,6 +1077,175 @@ test('today recovery actions swap in the fallback suggestions', async ({ page })
   await page.getByRole('button', { name: 'Swap to recovery walk' }).click();
   await expect(page.getByText(/Recovery workout applied\./i)).toBeVisible();
   await expect(plannedWorkoutSection.getByText('Recovery walk')).toBeVisible();
+});
+
+test('today recovery mode does not offer an unknown-macro saved food as a swap target', async ({
+  page,
+}) => {
+  const localDay = new Intl.DateTimeFormat('en-CA', {
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        dailyRecords: [
+          {
+            id: `daily:${localDay}`,
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            date: localDay,
+            mood: 3,
+            energy: 2,
+            stress: 4,
+            focus: 3,
+            sleepHours: 5.5,
+            sleepQuality: 2,
+            freeformNote: 'Dragging today.',
+          },
+        ],
+        journalEntries: [],
+        foodEntries: [],
+        foodCatalogItems: [
+          {
+            id: 'food-catalog-1',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            name: 'Toast and jam',
+            sourceType: 'custom',
+            sourceName: 'Local catalog',
+            calories: 260,
+            protein: 6,
+            fiber: 2,
+            carbs: 42,
+            fat: 6,
+          },
+          {
+            id: 'food-catalog-2',
+            createdAt: '2026-04-02T08:05:00.000Z',
+            updatedAt: '2026-04-02T08:05:00.000Z',
+            name: 'Mystery soup',
+            sourceType: 'custom',
+            sourceName: 'Local catalog',
+          },
+        ],
+        recipeCatalogItems: [],
+        weeklyPlans: [
+          {
+            id: 'weekly-plan-1',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            weekStart: localDay,
+            title: `Week of ${localDay}`,
+          },
+        ],
+        planSlots: [
+          {
+            id: 'slot-meal-1',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            weeklyPlanId: 'weekly-plan-1',
+            localDay,
+            slotType: 'meal',
+            itemType: 'food',
+            itemId: 'food-catalog-1',
+            mealType: 'breakfast',
+            title: 'Toast and jam',
+            status: 'planned',
+            order: 0,
+          },
+          {
+            id: 'slot-workout-1',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            weeklyPlanId: 'weekly-plan-1',
+            localDay,
+            slotType: 'workout',
+            itemType: 'workout-template',
+            itemId: 'workout-template-1',
+            title: 'Full body reset',
+            status: 'planned',
+            order: 1,
+          },
+        ],
+        derivedGroceryItems: [],
+        manualGroceryItems: [],
+        workoutTemplates: [
+          {
+            id: 'workout-template-1',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            title: 'Full body reset',
+            goal: 'Recovery',
+            exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+          },
+        ],
+        exerciseCatalogItems: [],
+        favoriteMeals: [],
+        healthEvents: [
+          {
+            id: 'symptom-1',
+            createdAt: '2026-04-02T09:00:00.000Z',
+            updatedAt: '2026-04-02T09:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'symptom:1',
+            sourceTimestamp: '2026-04-02T09:00:00.000Z',
+            localDay,
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'symptom',
+            value: 4,
+            payload: {
+              kind: 'symptom',
+              symptom: 'Headache',
+              severity: 4,
+            },
+          },
+          {
+            id: 'anxiety-1',
+            createdAt: '2026-04-02T10:00:00.000Z',
+            updatedAt: '2026-04-02T10:00:00.000Z',
+            sourceType: 'manual',
+            sourceApp: 'personal-health-cockpit',
+            sourceRecordId: 'anxiety:1',
+            sourceTimestamp: '2026-04-02T10:00:00.000Z',
+            localDay,
+            timezone: 'UTC',
+            confidence: 1,
+            eventType: 'anxiety-episode',
+            value: 7,
+            payload: {
+              kind: 'anxiety',
+              intensity: 7,
+              trigger: 'Cramped schedule',
+              durationMinutes: 25,
+            },
+          },
+        ],
+        healthTemplates: [],
+        sobrietyEvents: [],
+        assessmentResults: [],
+        importBatches: [],
+        importArtifacts: [],
+        reviewSnapshots: [],
+        adherenceMatches: [],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/today');
+  await expect(page.getByText('Keep today lighter')).toBeVisible();
+  await expect(
+    page.getByText(/Meal fallback: keep the next meal familiar, easy, and protein-forward\./i)
+  ).toBeVisible();
+  await expect(page.getByText(/Recovery meal: Mystery soup\./i)).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Swap to recovery meal' })).toHaveCount(0);
+  await expect(page.getByRole('button', { name: 'Swap to recovery walk' })).toBeVisible();
 });
 
 test('recovery meal swap clears stale notes from the replaced planned meal', async ({ page }) => {
@@ -2615,6 +2784,223 @@ test('nutrition can load a planned recipe slot into the draft', async ({ page })
   await expect(page.getByLabel('Fiber')).toHaveValue('');
   await expect(page.getByLabel('Carbs')).toHaveValue('');
   await expect(page.getByLabel('Fat')).toHaveValue('');
+});
+
+test('saving a recipe-loaded draft as a custom food does not fabricate zero macros', async ({
+  page,
+}) => {
+  const seedResponse = await page.request.post('/api/db/migrate', {
+    data: {
+      snapshot: {
+        dailyRecords: [],
+        journalEntries: [],
+        foodEntries: [],
+        foodCatalogItems: [],
+        recipeCatalogItems: [
+          {
+            id: 'themealdb:52772',
+            createdAt: '2026-04-03T00:00:00.000Z',
+            updatedAt: '2026-04-03T00:00:00.000Z',
+            title: 'Teriyaki Chicken Casserole',
+            sourceType: 'themealdb',
+            sourceName: 'TheMealDB',
+            externalId: '52772',
+            mealType: 'dinner',
+            cuisine: 'Japanese',
+            ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
+          },
+        ],
+        weeklyPlans: [],
+        planSlots: [],
+        derivedGroceryItems: [],
+        manualGroceryItems: [],
+        workoutTemplates: [],
+        exerciseCatalogItems: [],
+        favoriteMeals: [],
+        healthEvents: [],
+        healthTemplates: [],
+        sobrietyEvents: [],
+        assessmentResults: [],
+        importBatches: [],
+        importArtifacts: [],
+        reviewSnapshots: [],
+        adherenceMatches: [],
+      },
+    },
+  });
+  expect(seedResponse.ok()).toBe(true);
+
+  await page.goto('/nutrition');
+  await page.getByLabel('Recipe search').fill('teriyaki');
+  await page.getByRole('button', { name: 'Search recipes' }).click();
+  await page
+    .locator('.recipe-search li')
+    .first()
+    .getByRole('button', { name: 'Use recipe' })
+    .click();
+
+  await expect(page.getByLabel('Calories')).toHaveValue('');
+  await page.getByRole('button', { name: 'Save as custom food' }).click();
+  await expect(page.getByText(/Saved to custom food catalog\./i)).toBeVisible();
+
+  const catalogSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Custom food catalog' }),
+  });
+  await expect(catalogSection.getByText('Teriyaki Chicken Casserole')).toBeVisible();
+  await expect(catalogSection.getByText(/0 kcal/i)).toHaveCount(0);
+  await expect(catalogSection.getByText(/0g protein/i)).toHaveCount(0);
+  await expect(catalogSection.getByText(/0g fiber/i)).toHaveCount(0);
+  await expect(catalogSection.getByText(/0g carbs/i)).toHaveCount(0);
+  await expect(catalogSection.getByText(/0g fat/i)).toHaveCount(0);
+
+  const recommendationsSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Recommended next' }),
+  });
+  const unknownFoodRecommendation = recommendationsSection.locator('li').filter({
+    hasText: 'nutrition totals are still unknown, so treat this as a saved rotation idea.',
+  });
+  await expect(unknownFoodRecommendation.getByText('Teriyaki Chicken Casserole')).toBeVisible();
+  await expect(
+    unknownFoodRecommendation.getByText(
+      /nutrition totals are still unknown, so treat this as a saved rotation idea\./i
+    )
+  ).toBeVisible();
+  await expect(
+    recommendationsSection.getByText(/saved food with decent baseline nutrition/i)
+  ).toHaveCount(0);
+  await expect(recommendationsSection.getByText(/good fit for a steadier-energy day/i)).toHaveCount(
+    0
+  );
+
+  await page.getByLabel('Food search').fill('teriyaki');
+  await page.getByRole('button', { name: 'Search foods' }).click();
+
+  const mealLoggingSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Meal logging' }),
+  });
+  const localSearchResult = mealLoggingSection.locator('.match-list').first().locator('li').first();
+  await expect(localSearchResult.getByText('Teriyaki Chicken Casserole')).toBeVisible();
+  await expect(localSearchResult.getByText(/Nutrition totals unknown\./i)).toBeVisible();
+  await expect(localSearchResult.getByText(/0 kcal/i)).toHaveCount(0);
+  await expect(localSearchResult.getByText(/0g protein/i)).toHaveCount(0);
+
+  await localSearchResult.getByRole('button', { name: 'Use match' }).click();
+  await expect(page.getByLabel('Meal name')).toHaveValue('Teriyaki Chicken Casserole');
+  await expect(page.getByLabel('Calories')).toHaveValue('');
+  await expect(page.getByLabel('Protein')).toHaveValue('');
+  await expect(page.getByLabel('Fiber')).toHaveValue('');
+  await expect(page.getByLabel('Carbs')).toHaveValue('');
+  await expect(page.getByLabel('Fat')).toHaveValue('');
+});
+
+test('saving a fresh name-only custom food does not fabricate zero macros', async ({ page }) => {
+  await page.goto('/nutrition');
+
+  await expect(page.getByLabel('Calories')).toHaveValue('');
+  await expect(page.getByLabel('Protein')).toHaveValue('');
+  await expect(page.getByLabel('Fiber')).toHaveValue('');
+  await expect(page.getByLabel('Carbs')).toHaveValue('');
+  await expect(page.getByLabel('Fat')).toHaveValue('');
+
+  await page.getByLabel('Meal name').fill('Mystery soup');
+  await page.getByRole('button', { name: 'Save as custom food' }).click();
+  await expect(page.getByText(/Saved to custom food catalog\./i)).toBeVisible();
+
+  const catalogSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Custom food catalog' }),
+  });
+  const savedItem = catalogSection.locator('li').filter({ hasText: 'Mystery soup' });
+  await expect(savedItem.getByText('Mystery soup')).toBeVisible();
+  await expect(savedItem.getByText(/Nutrition totals unknown\./i)).toBeVisible();
+  await expect(savedItem.getByText(/0 kcal/i)).toHaveCount(0);
+  await expect(savedItem.getByText(/0g protein/i)).toHaveCount(0);
+  await expect(savedItem.getByText(/0g fiber/i)).toHaveCount(0);
+  await expect(savedItem.getByText(/0g carbs/i)).toHaveCount(0);
+  await expect(savedItem.getByText(/0g fat/i)).toHaveCount(0);
+});
+
+test('saving a fresh name-only meal keeps today summary totals unknown instead of zero', async ({
+  page,
+}) => {
+  await page.goto('/nutrition');
+
+  await expect(page.getByLabel('Calories')).toHaveValue('');
+  await page.getByLabel('Meal name').fill('Mystery soup');
+  await page.getByRole('button', { name: 'Save meal' }).click();
+  await expect(page.getByText(/Meal saved\./i)).toBeVisible();
+
+  const summarySection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Today summary' }),
+  });
+  await expect(summarySection.getByText('Mystery soup')).toBeVisible();
+  await expect(summarySection.getByText('Calories: unknown')).toBeVisible();
+  await expect(summarySection.getByText('Protein: unknown')).toBeVisible();
+  await expect(summarySection.getByText('Fiber: unknown')).toBeVisible();
+  await expect(summarySection.getByText('Carbs: unknown')).toBeVisible();
+  await expect(summarySection.getByText('Fat: unknown')).toBeVisible();
+  await expect(summarySection.getByText(/Calories: 0/i)).toHaveCount(0);
+  await expect(summarySection.getByText(/Protein: 0/i)).toHaveCount(0);
+});
+
+test('today nutrition pulse stays unknown after logging a fresh name-only meal', async ({
+  page,
+}) => {
+  await page.goto('/nutrition');
+
+  await page.getByLabel('Meal name').fill('Name-only meal');
+  await page.getByRole('button', { name: 'Save meal' }).click();
+  await expect(page.getByText(/Meal saved\./i)).toBeVisible();
+
+  await page.goto('/today');
+
+  const nutritionPulseSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Nutrition pulse' }),
+  });
+  await expect(nutritionPulseSection.getByText('unknown / 80g')).toBeVisible();
+  await expect(nutritionPulseSection.getByText('unknown / 25g')).toBeVisible();
+  await expect(
+    nutritionPulseSection.getByText(
+      /logged meals are missing nutrition totals, so protein and fiber pace are still unknown/i
+    )
+  ).toBeVisible();
+  await expect(nutritionPulseSection.getByText('Calories: unknown')).toBeVisible();
+  await expect(nutritionPulseSection.getByText('Protein: unknown')).toBeVisible();
+  await expect(nutritionPulseSection.getByText('Fiber: unknown')).toBeVisible();
+  await expect(nutritionPulseSection.getByText('Carbs: unknown')).toBeVisible();
+  await expect(nutritionPulseSection.getByText('Fat: unknown')).toBeVisible();
+  await expect(nutritionPulseSection.getByText(/Protein is still low so far\./i)).toHaveCount(0);
+  await expect(nutritionPulseSection.getByText(/Calories: 0/i)).toHaveCount(0);
+  await expect(nutritionPulseSection.getByText(/Protein: 0/i)).toHaveCount(0);
+});
+
+test('today nutrition pulse stays precise when only some meal macros are missing', async ({
+  page,
+}) => {
+  await page.goto('/nutrition');
+
+  await page.getByLabel('Meal name').fill('Protein-only meal');
+  await page.getByLabel('Protein').fill('24');
+  await page.getByRole('button', { name: 'Save meal' }).click();
+  await expect(page.getByText(/Meal saved\./i)).toBeVisible();
+
+  await page.goto('/today');
+
+  const nutritionPulseSection = page.locator('section').filter({
+    has: page.getByRole('heading', { name: 'Nutrition pulse' }),
+  });
+  await expect(nutritionPulseSection.getByText('24 / 80g')).toBeVisible();
+  await expect(nutritionPulseSection.getByText('unknown / 25g')).toBeVisible();
+  await expect(nutritionPulseSection.getByText(/Protein is still low so far\./i)).toBeVisible();
+  await expect(
+    nutritionPulseSection.getByText(
+      /Fiber pace is still unknown because one logged meal is missing nutrition totals\./i
+    )
+  ).toBeVisible();
+  await expect(nutritionPulseSection.getByText('Protein: 24')).toBeVisible();
+  await expect(nutritionPulseSection.getByText('Fiber: unknown')).toBeVisible();
+  await expect(
+    nutritionPulseSection.getByText(/protein and fiber pace are still unknown/i)
+  ).toHaveCount(0);
 });
 
 test('today clear plan removes stale sibling recipe meal slots too', async ({ page }) => {

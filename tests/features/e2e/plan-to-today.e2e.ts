@@ -66,6 +66,31 @@ test('weekly plan meal can be created from a saved food', async ({ page }) => {
   await expect(page.getByText(/Latest meal: Greek yogurt bowl/i)).toBeVisible();
 });
 
+test('weekly plan saved-food meal keeps unknown nutrition truthful across plan and today', async ({
+  page,
+}) => {
+  await page.goto('/nutrition');
+  await page.getByLabel('Meal name').fill('Mystery soup');
+  await page.getByRole('button', { name: 'Save as custom food' }).click();
+  await expect(page.getByText(/Saved to custom food catalog\./i)).toBeVisible();
+
+  await page.goto('/plan');
+  await page.getByLabel('Meal source').selectOption('food');
+  await page.getByLabel('Saved food').selectOption({ label: 'Mystery soup' });
+  await page.getByRole('button', { name: 'Add to week' }).click();
+  await expect(page.getByText(/Plan slot saved\./i)).toBeVisible();
+  await expect(
+    page.getByText(/Saved food · Local catalog · Nutrition totals unknown/i)
+  ).toBeVisible();
+  await expect(page.getByText(/0g protein/i)).toHaveCount(0);
+
+  await page.goto('/today');
+  await expect(
+    page.getByText(/Saved food · Local catalog · Nutrition totals unknown/i)
+  ).toBeVisible();
+  await expect(page.getByText(/0g protein/i)).toHaveCount(0);
+});
+
 test('weekly plan recipe meal flows into today logging', async ({ page }) => {
   const seedResponse = await page.request.post('/api/db/migrate', {
     data: {

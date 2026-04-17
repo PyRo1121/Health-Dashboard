@@ -113,10 +113,14 @@ export function buildPlannedMealRecommendation(
 
   const plannedProtein = input.plannedMeal.protein;
   const plannedFiber = input.plannedMeal.fiber;
+  const proteinKnown = !input.nutritionSummaryUnknown?.protein;
+  const fiberKnown = !input.nutritionSummaryUnknown?.fiber;
   const projectedProtein =
-    plannedProtein !== undefined ? input.nutritionSummary.protein + plannedProtein : null;
+    proteinKnown && plannedProtein !== undefined
+      ? input.nutritionSummary.protein + plannedProtein
+      : null;
   const projectedFiber =
-    plannedFiber !== undefined ? input.nutritionSummary.fiber + plannedFiber : null;
+    fiberKnown && plannedFiber !== undefined ? input.nutritionSummary.fiber + plannedFiber : null;
 
   return {
     id: `recommendation:planned-meal:${input.date}`,
@@ -228,8 +232,8 @@ export function buildNutritionSupportRecommendation(
     return null;
   }
 
-  const proteinLow = input.nutritionSummary.protein < 30;
-  const fiberLow = input.nutritionSummary.fiber < 10;
+  const proteinLow = !input.nutritionSummaryUnknown?.protein && input.nutritionSummary.protein < 30;
+  const fiberLow = !input.nutritionSummaryUnknown?.fiber && input.nutritionSummary.fiber < 10;
   if (!proteinLow && !fiberLow) {
     return null;
   }

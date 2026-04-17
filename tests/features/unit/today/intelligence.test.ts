@@ -207,4 +207,32 @@ describe('today intelligence', () => {
       action: { kind: 'href', href: '#today-check-in', label: 'Open check-in' },
     });
   });
+
+  it('does not generate a nutrition-support recommendation from unknown logged meal totals', () => {
+    const result = buildTodayIntelligence(
+      createBaseInput({
+        dailyRecord: {
+          id: 'daily:2026-04-02',
+          createdAt: '2026-04-02T08:00:00.000Z',
+          updatedAt: '2026-04-02T08:00:00.000Z',
+          date: '2026-04-02',
+          mood: 4,
+          energy: 3,
+          stress: 2,
+          focus: 4,
+          sleepHours: 7,
+          sleepQuality: 4,
+        },
+        nutritionSummaryUnknown: {
+          calories: true,
+          protein: true,
+          fiber: true,
+          carbs: true,
+          fat: true,
+        },
+      })
+    );
+
+    expect(result.primaryRecommendation?.kind).not.toBe('nutrition_support');
+  });
 });

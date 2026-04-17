@@ -113,6 +113,13 @@ export interface TodayIntelligenceInput {
     carbs: number;
     fat: number;
   };
+  nutritionSummaryUnknown?: {
+    calories: boolean;
+    protein: boolean;
+    fiber: boolean;
+    carbs: boolean;
+    fat: boolean;
+  };
   plannedMeal: PlannedMeal | null;
   plannedMealIssue: string | null;
   plannedWorkout: TodayPlannedWorkoutInput | null;

@@ -4,7 +4,7 @@ import { getTestHealthDb } from '$lib/core/db/test-client';
 import { currentLocalDay } from '$lib/core/domain/time';
 import { logAnxietyEvent, logSymptomEvent } from '$lib/features/health/service';
 import { saveWorkoutTemplate } from '$lib/features/movement/service';
-import { saveFoodCatalogItem } from '$lib/features/nutrition/store';
+import { createFoodEntry, saveFoodCatalogItem } from '$lib/features/nutrition/store';
 import { ensureWeeklyPlan, savePlanSlot } from '$lib/features/planning/service';
 import TodayPage from '../../../../src/routes/today/+page.svelte';
 import { expectHeading, resetRouteDb, waitForText } from '../../../support/component/routeHarness';
@@ -189,6 +189,71 @@ describe('Today route', () => {
     await waitFor(() => {
       expect(screen.getByText(/Planned meal logged\./i)).toBeTruthy();
       expect(screen.getByText(/Latest meal: Teriyaki Chicken Casserole/i)).toBeTruthy();
+    });
+  });
+
+  it('keeps today nutrition pulse truthful when a logged meal has unknown nutrition totals', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    await createFoodEntry(db, {
+      localDay,
+      mealType: 'breakfast',
+      name: 'Name-only meal',
+      notes: '',
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    const nutritionSection = () =>
+      screen.getByRole('heading', { name: 'Nutrition pulse' }).closest('section') as HTMLElement;
+
+    await waitFor(() => {
+      expect(within(nutritionSection()).getByText('unknown / 80g')).toBeTruthy();
+      expect(within(nutritionSection()).getByText('unknown / 25g')).toBeTruthy();
+      expect(
+        within(nutritionSection()).getByText(
+          /logged meals are missing nutrition totals, so protein and fiber pace are still unknown/i
+        )
+      ).toBeTruthy();
+      expect(within(nutritionSection()).getByText('Calories: unknown')).toBeTruthy();
+      expect(within(nutritionSection()).queryByText(/Protein is still low so far\./i)).toBeNull();
+      expect(within(nutritionSection()).queryByText(/Calories: 0/i)).toBeNull();
+      expect(within(nutritionSection()).queryByText(/Protein: 0/i)).toBeNull();
+    });
+  });
+
+  it('keeps partial unknown nutrition guidance truthful metric by metric', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    await createFoodEntry(db, {
+      localDay,
+      mealType: 'breakfast',
+      name: 'Protein-only meal',
+      protein: 24,
+      notes: '',
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    const nutritionSection = () =>
+      screen.getByRole('heading', { name: 'Nutrition pulse' }).closest('section') as HTMLElement;
+
+    await waitFor(() => {
+      expect(within(nutritionSection()).getByText('24 / 80g')).toBeTruthy();
+      expect(within(nutritionSection()).getByText('unknown / 25g')).toBeTruthy();
+      expect(within(nutritionSection()).getByText(/Protein is still low so far\./i)).toBeTruthy();
+      expect(
+        within(nutritionSection()).getByText(
+          /Fiber pace is still unknown because one logged meal is missing nutrition totals\./i
+        )
+      ).toBeTruthy();
+      expect(within(nutritionSection()).getByText('Protein: 24')).toBeTruthy();
+      expect(within(nutritionSection()).getByText('Fiber: unknown')).toBeTruthy();
+      expect(
+        within(nutritionSection()).queryByText(/protein and fiber pace are still unknown/i)
+      ).toBeNull();
     });
   });
 
@@ -735,6 +800,84 @@ describe('Today route', () => {
     await waitFor(() => {
       expect(screen.getByText(/Recovery workout applied\./i)).toBeTruthy();
       expect(screen.getAllByText('Recovery walk').length).toBeGreaterThan(0);
+    });
+  });
+
+  it('does not offer a recovery meal swap when only unknown-macro saved foods are available', async () => {
+    const db = getTestHealthDb();
+    const localDay = currentLocalDay();
+    const weeklyPlan = await ensureWeeklyPlan(db, localDay);
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Toast and jam',
+      calories: 260,
+      protein: 6,
+      fiber: 2,
+      carbs: 42,
+      fat: 6,
+    });
+    await saveFoodCatalogItem(db, {
+      name: 'Mystery soup',
+    });
+    const template = await saveWorkoutTemplate(db, {
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    });
+
+    await db.dailyRecords.put({
+      id: `daily:${localDay}`,
+      createdAt: '2026-04-02T08:00:00.000Z',
+      updatedAt: '2026-04-02T08:00:00.000Z',
+      date: localDay,
+      mood: 3,
+      energy: 2,
+      stress: 4,
+      focus: 3,
+      sleepHours: 5.5,
+      sleepQuality: 2,
+      freeformNote: 'Dragging today.',
+    });
+    await logSymptomEvent(db, {
+      localDay,
+      symptom: 'Headache',
+      severity: 4,
+      note: 'Heavy pressure behind the eyes.',
+    });
+    await logAnxietyEvent(db, {
+      localDay,
+      intensity: 7,
+      trigger: 'Cramped schedule',
+      durationMinutes: 25,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      mealType: 'breakfast',
+      title: food.name,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay,
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: template.id,
+      title: template.title,
+    });
+
+    render(TodayPage);
+    expectHeading('Today');
+
+    await waitFor(() => {
+      expect(screen.getByText('Keep today lighter')).toBeTruthy();
+      expect(screen.queryByText(/Recovery meal: Mystery soup\./i)).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Swap to recovery meal' })).toBeNull();
+      expect(screen.getByRole('button', { name: 'Swap to recovery walk' })).toBeTruthy();
+      expect(
+        screen.getByText(/Meal fallback: keep the next meal familiar, easy, and protein-forward\./i)
+      ).toBeTruthy();
     });
   });
 

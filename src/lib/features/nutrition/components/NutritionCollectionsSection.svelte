@@ -1,7 +1,7 @@
 <script lang="ts">
   import type { FavoriteMeal, FoodCatalogItem, RecipeCatalogItem } from '$lib/core/domain/types';
   import { Button, EmptyState, SectionCard } from '$lib/core/ui/primitives';
-  import { createRecipeSummary } from '$lib/features/nutrition/model';
+  import { createFoodCatalogItemRows, createRecipeSummary } from '$lib/features/nutrition/model';
 
   let {
     summary,
@@ -74,10 +74,13 @@
         <li>
           <div>
             <strong>{item.name}</strong>
-            <p>
-              {item.calories ?? 0} kcal · {item.protein ?? 0}g protein · {item.fiber ?? 0}g fiber
-            </p>
-            <p>{item.carbs ?? 0}g carbs · {item.fat ?? 0}g fat</p>
+            {#if createFoodCatalogItemRows(item).length}
+              {#each createFoodCatalogItemRows(item) as row (row)}
+                <p>{row}</p>
+              {/each}
+            {:else}
+              <p>Nutrition totals unknown.</p>
+            {/if}
           </div>
           <span class="status-copy">{item.sourceName}</span>
         </li>

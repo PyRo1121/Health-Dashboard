@@ -211,14 +211,37 @@ describe('nutrition page actions', () => {
     expect(getNutritionRecommendationPlanDraft(state, 'recipe-1', 'recipe')).toEqual({
       name: 'Teriyaki Chicken Bowl',
       mealType: 'dinner',
-      calories: 0,
-      protein: 0,
-      fiber: 0,
-      carbs: 0,
-      fat: 0,
       notes: 'Chicken, Soy sauce, Rice, Broccoli',
       recipeCatalogItemId: 'recipe-1',
       sourceName: 'TheMealDB',
+    });
+  });
+
+  it('preserves unknown saved-food metrics when building a recommendation draft', () => {
+    const state = createState({
+      catalogItems: [
+        {
+          id: 'food-1',
+          createdAt: '2026-04-14T00:00:00.000Z',
+          updatedAt: '2026-04-14T00:00:00.000Z',
+          name: 'Teriyaki Chicken Bowl',
+          sourceType: 'custom',
+          sourceName: 'Local catalog',
+        },
+      ],
+    });
+
+    expect(getNutritionRecommendationPlanDraft(state, 'food-1', 'food')).toEqual({
+      name: 'Teriyaki Chicken Bowl',
+      mealType: 'breakfast',
+      calories: undefined,
+      protein: undefined,
+      fiber: undefined,
+      carbs: undefined,
+      fat: undefined,
+      notes: '',
+      foodCatalogItemId: 'food-1',
+      sourceName: 'Local catalog',
     });
   });
 

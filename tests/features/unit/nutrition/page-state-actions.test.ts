@@ -239,12 +239,44 @@ describe('nutrition page state and actions', () => {
     expect(state.recipeNotice).toBe('Loaded Teriyaki Chicken Bowl into the meal form.');
     expect(state.form.mealType).toBe('dinner');
     expect(state.form.name).toBe('Teriyaki Chicken Bowl');
-    expect(state.form.calories).toBe('0');
-    expect(state.form.protein).toBe('0');
-    expect(state.form.fiber).toBe('0');
-    expect(state.form.carbs).toBe('0');
-    expect(state.form.fat).toBe('0');
+    expect(state.form.calories).toBe('');
+    expect(state.form.protein).toBe('');
+    expect(state.form.fiber).toBe('');
+    expect(state.form.carbs).toBe('');
+    expect(state.form.fat).toBe('');
     expect(state.form.notes).toBe('Chicken, Soy sauce, Rice, Broccoli');
+  });
+
+  it('keeps unknown saved-food metrics blank when a local custom match is selected', () => {
+    const state = selectNutritionMatch(
+      {
+        ...createNutritionPageState(),
+        localDay: '2026-04-02',
+        form: {
+          ...createNutritionPageState().form,
+          calories: '320',
+          protein: '12',
+          fiber: '8',
+          carbs: '52',
+          fat: '7',
+        },
+      },
+      {
+        id: 'food-catalog-1',
+        name: 'Teriyaki Chicken Bowl',
+        sourceName: 'Local catalog',
+        sourceType: 'custom',
+        isEnriched: true,
+      }
+    );
+
+    expect(state.selectedMatch?.id).toBe('food-catalog-1');
+    expect(state.form.name).toBe('Teriyaki Chicken Bowl');
+    expect(state.form.calories).toBe('');
+    expect(state.form.protein).toBe('');
+    expect(state.form.fiber).toBe('');
+    expect(state.form.carbs).toBe('');
+    expect(state.form.fat).toBe('');
   });
 
   it('plans a loaded recipe as a recipe slot without cloning it into the food catalog', async () => {

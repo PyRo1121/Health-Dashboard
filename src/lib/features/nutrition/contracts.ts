@@ -83,11 +83,11 @@ const nutritionMealDraftSchema = z.object({
   localDay: z.string(),
   mealType: z.string(),
   name: z.string(),
-  calories: z.number(),
-  protein: z.number(),
-  fiber: z.number(),
-  carbs: z.number(),
-  fat: z.number(),
+  calories: z.number().optional(),
+  protein: z.number().optional(),
+  fiber: z.number().optional(),
+  carbs: z.number().optional(),
+  fat: z.number().optional(),
   notes: z.string(),
   sourceName: z.string().optional(),
 }) satisfies z.ZodType<NutritionMealDraft>;
@@ -95,11 +95,11 @@ const nutritionMealDraftSchema = z.object({
 const nutritionRecurringMealDraftSchema = z.object({
   mealType: z.string(),
   name: z.string(),
-  calories: z.number(),
-  protein: z.number(),
-  fiber: z.number(),
-  carbs: z.number(),
-  fat: z.number(),
+  calories: z.number().optional(),
+  protein: z.number().optional(),
+  fiber: z.number().optional(),
+  carbs: z.number().optional(),
+  fat: z.number().optional(),
   sourceName: z.string().optional(),
 }) satisfies z.ZodType<NutritionRecurringMealDraft>;
 
@@ -111,11 +111,11 @@ const nutritionPlannedMealDraftSchema = nutritionRecurringMealDraftSchema.extend
 
 const nutritionCatalogItemDraftSchema = z.object({
   name: z.string(),
-  calories: z.number(),
-  protein: z.number(),
-  fiber: z.number(),
-  carbs: z.number(),
-  fat: z.number(),
+  calories: z.number().optional(),
+  protein: z.number().optional(),
+  fiber: z.number().optional(),
+  carbs: z.number().optional(),
+  fat: z.number().optional(),
 }) satisfies z.ZodType<NutritionCatalogItemDraft>;
 
 export const nutritionRequestSchema = z.discriminatedUnion('action', [

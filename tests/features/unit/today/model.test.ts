@@ -220,4 +220,151 @@ describe('today model', () => {
     ]);
     expect(createPlannedMealProjectionRows(snapshot)).toEqual([]);
   });
+
+  it('keeps today nutrition pulse and guidance truthful when a logged meal has unknown nutrition totals', () => {
+    const snapshot: TodaySnapshot = {
+      date: '2026-04-02',
+      dailyRecord: null,
+      foodEntries: [
+        {
+          id: 'food-entry-1',
+          createdAt: '2026-04-02T08:00:00.000Z',
+          updatedAt: '2026-04-02T08:00:00.000Z',
+          localDay: '2026-04-02',
+          mealType: 'breakfast',
+          name: 'Name-only meal',
+        },
+      ],
+      nutritionSummary: {
+        calories: 0,
+        protein: 0,
+        fiber: 0,
+        carbs: 0,
+        fat: 0,
+      },
+      plannedMeal: null,
+      plannedMealIssue: null,
+      plannedWorkout: null,
+      plannedWorkoutIssue: null,
+      recoveryAdaptation: null,
+      intelligence: {
+        primaryRecommendation: null,
+        fallbackState: null,
+      },
+      planItems: [],
+      events: [],
+      latestJournalEntry: null,
+    };
+
+    expect(createTodayNutritionRows(snapshot)).toEqual([
+      'Calories: unknown',
+      'Protein: unknown',
+      'Fiber: unknown',
+      'Carbs: unknown',
+      'Fat: unknown',
+    ]);
+    expect(createTodayNutritionPulseMetrics(snapshot)).toEqual([
+      { label: 'Protein pace', current: null, target: 80, projected: null, tone: 'steady' },
+      { label: 'Fiber pace', current: null, target: 25, projected: null, tone: 'steady' },
+    ]);
+    expect(createTodayNutritionGuidance(snapshot)).toEqual([
+      "Today's logged meals are missing nutrition totals, so protein and fiber pace are still unknown.",
+    ]);
+    expect(
+      createTodayRecommendationSupportRows({
+        ...snapshot,
+        intelligence: {
+          primaryRecommendation: {
+            id: 'recommendation-1',
+            kind: 'recovery',
+            title: 'Keep today lighter',
+            summary: 'Recovery signals are elevated.',
+            confidence: 'high',
+            score: 92,
+            reasons: ['Sleep and symptoms point toward a lighter day.'],
+            provenance: [],
+            primaryAction: { kind: 'href', label: 'Open Plan', href: '/plan' },
+            secondaryAction: null,
+            supportingAction: null,
+          },
+          fallbackState: null,
+        },
+      })
+    ).toContain("Nutrition: today's logged meal totals are still unknown.");
+    expect(createPlannedMealProjectionRows(snapshot)).toEqual([]);
+  });
+
+  it('keeps partial unknown nutrition guidance truthful metric by metric', () => {
+    const snapshot: TodaySnapshot = {
+      date: '2026-04-02',
+      dailyRecord: null,
+      foodEntries: [
+        {
+          id: 'food-entry-1',
+          createdAt: '2026-04-02T08:00:00.000Z',
+          updatedAt: '2026-04-02T08:00:00.000Z',
+          localDay: '2026-04-02',
+          mealType: 'breakfast',
+          name: 'Protein-only meal',
+          protein: 24,
+        },
+      ],
+      nutritionSummary: {
+        calories: 0,
+        protein: 24,
+        fiber: 0,
+        carbs: 0,
+        fat: 0,
+      },
+      plannedMeal: null,
+      plannedMealIssue: null,
+      plannedWorkout: null,
+      plannedWorkoutIssue: null,
+      recoveryAdaptation: null,
+      intelligence: {
+        primaryRecommendation: null,
+        fallbackState: null,
+      },
+      planItems: [],
+      events: [],
+      latestJournalEntry: null,
+    };
+
+    expect(createTodayNutritionRows(snapshot)).toEqual([
+      'Calories: unknown',
+      'Protein: 24',
+      'Fiber: unknown',
+      'Carbs: unknown',
+      'Fat: unknown',
+    ]);
+    expect(createTodayNutritionPulseMetrics(snapshot)).toEqual([
+      { label: 'Protein pace', current: 24, target: 80, projected: null, tone: 'steady' },
+      { label: 'Fiber pace', current: null, target: 25, projected: null, tone: 'steady' },
+    ]);
+    expect(createTodayNutritionGuidance(snapshot)).toEqual([
+      'Protein is still low so far. A 20g+ meal would change the day more than another snack.',
+      'Fiber pace is still unknown because one logged meal is missing nutrition totals.',
+    ]);
+    expect(
+      createTodayRecommendationSupportRows({
+        ...snapshot,
+        intelligence: {
+          primaryRecommendation: {
+            id: 'recommendation-1',
+            kind: 'recovery',
+            title: 'Keep today lighter',
+            summary: 'Recovery signals are elevated.',
+            confidence: 'high',
+            score: 92,
+            reasons: ['Sleep and symptoms point toward a lighter day.'],
+            provenance: [],
+            primaryAction: { kind: 'href', label: 'Open Plan', href: '/plan' },
+            secondaryAction: null,
+            supportingAction: null,
+          },
+          fallbackState: null,
+        },
+      })
+    ).toContain('Nutrition: protein 24g so far; fiber pace is unknown.');
+  });
 });

@@ -201,6 +201,13 @@ export function buildTodaySnapshotFromData(input: {
     foodCatalogItems,
     recipeCatalogItems
   );
+  const nutritionSummaryUnknown = {
+    calories: nutritionSummary.entries.some((entry) => entry.calories === undefined),
+    protein: nutritionSummary.entries.some((entry) => entry.protein === undefined),
+    fiber: nutritionSummary.entries.some((entry) => entry.fiber === undefined),
+    carbs: nutritionSummary.entries.some((entry) => entry.carbs === undefined),
+    fat: nutritionSummary.entries.some((entry) => entry.fat === undefined),
+  };
   const plannedWorkoutIssue = plannedWorkout
     ? null
     : deriveTodayPlannedWorkoutIssue(planSlots, workoutTemplates);
@@ -221,6 +228,7 @@ export function buildTodaySnapshotFromData(input: {
       carbs: nutritionSummary.carbs,
       fat: nutritionSummary.fat,
     },
+    nutritionSummaryUnknown,
     plannedMeal: plannedMealResolution.candidate?.meal ?? null,
     plannedMealIssue: plannedMealResolution.issue,
     plannedWorkout,

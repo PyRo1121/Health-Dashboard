@@ -1,11 +1,11 @@
 export interface FoodLookupResult {
   id: string;
   name: string;
-  calories: number;
-  protein: number;
-  fiber: number;
-  carbs: number;
-  fat: number;
+  calories?: number;
+  protein?: number;
+  fiber?: number;
+  carbs?: number;
+  fat?: number;
   sourceName: string;
   sourceType?: import('$lib/core/domain/types').FoodCatalogItem['sourceType'];
   brandName?: string;

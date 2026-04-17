@@ -19,7 +19,7 @@ export interface TodayPlanRow {
 
 export interface TodayNutritionPulseMetric {
   label: string;
-  current: number;
+  current: number | null;
   target: number;
   projected: number | null;
   tone: 'steady' | 'boost' | 'strong';
@@ -29,6 +29,19 @@ const DAILY_NUTRITION_TARGETS = {
   protein: 80,
   fiber: 25,
 } as const;
+
+type NutritionMetricKey = 'calories' | 'protein' | 'fiber' | 'carbs' | 'fat';
+
+function hasUnknownLoggedNutritionMetric(
+  snapshot: TodaySnapshot,
+  key: NutritionMetricKey
+): boolean {
+  return snapshot.foodEntries.some((entry) => entry[key] === undefined);
+}
+
+function createUnknownPaceGuidance(metric: 'protein' | 'fiber'): string {
+  return `${metric === 'protein' ? 'Protein' : 'Fiber'} pace is still unknown because one logged meal is missing nutrition totals.`;
+}
 
 export function createTodayRecordRows(snapshot: TodaySnapshot | null): string[] {
   if (!snapshot) {
@@ -94,11 +107,11 @@ export function createTodayNutritionRows(snapshot: TodaySnapshot | null): string
   }
 
   return [
-    `Calories: ${snapshot.nutritionSummary.calories}`,
-    `Protein: ${snapshot.nutritionSummary.protein}`,
-    `Fiber: ${snapshot.nutritionSummary.fiber}`,
-    `Carbs: ${snapshot.nutritionSummary.carbs}`,
-    `Fat: ${snapshot.nutritionSummary.fat}`,
+    `Calories: ${hasUnknownLoggedNutritionMetric(snapshot, 'calories') ? 'unknown' : snapshot.nutritionSummary.calories}`,
+    `Protein: ${hasUnknownLoggedNutritionMetric(snapshot, 'protein') ? 'unknown' : snapshot.nutritionSummary.protein}`,
+    `Fiber: ${hasUnknownLoggedNutritionMetric(snapshot, 'fiber') ? 'unknown' : snapshot.nutritionSummary.fiber}`,
+    `Carbs: ${hasUnknownLoggedNutritionMetric(snapshot, 'carbs') ? 'unknown' : snapshot.nutritionSummary.carbs}`,
+    `Fat: ${hasUnknownLoggedNutritionMetric(snapshot, 'fat') ? 'unknown' : snapshot.nutritionSummary.fat}`,
   ];
 }
 
@@ -109,13 +122,16 @@ export function createTodayNutritionPulseMetrics(
     return [];
   }
 
+  const proteinKnown = !hasUnknownLoggedNutritionMetric(snapshot, 'protein');
+  const fiberKnown = !hasUnknownLoggedNutritionMetric(snapshot, 'fiber');
+
   const projectedProtein = snapshot.plannedMeal
-    ? snapshot.plannedMeal.protein !== undefined
+    ? proteinKnown && snapshot.plannedMeal.protein !== undefined
       ? snapshot.nutritionSummary.protein + snapshot.plannedMeal.protein
       : null
     : null;
   const projectedFiber = snapshot.plannedMeal
-    ? snapshot.plannedMeal.fiber !== undefined
+    ? fiberKnown && snapshot.plannedMeal.fiber !== undefined
       ? snapshot.nutritionSummary.fiber + snapshot.plannedMeal.fiber
       : null
     : null;
@@ -123,11 +139,11 @@ export function createTodayNutritionPulseMetrics(
   return [
     {
       label: 'Protein pace',
-      current: snapshot.nutritionSummary.protein,
+      current: proteinKnown ? snapshot.nutritionSummary.protein : null,
       target: DAILY_NUTRITION_TARGETS.protein,
       projected: projectedProtein,
       tone:
-        snapshot.nutritionSummary.protein >= DAILY_NUTRITION_TARGETS.protein
+        proteinKnown && snapshot.nutritionSummary.protein >= DAILY_NUTRITION_TARGETS.protein
           ? 'strong'
           : projectedProtein !== null && projectedProtein >= DAILY_NUTRITION_TARGETS.protein * 0.75
             ? 'boost'
@@ -135,11 +151,11 @@ export function createTodayNutritionPulseMetrics(
     },
     {
       label: 'Fiber pace',
-      current: snapshot.nutritionSummary.fiber,
+      current: fiberKnown ? snapshot.nutritionSummary.fiber : null,
       target: DAILY_NUTRITION_TARGETS.fiber,
       projected: projectedFiber,
       tone:
-        snapshot.nutritionSummary.fiber >= DAILY_NUTRITION_TARGETS.fiber
+        fiberKnown && snapshot.nutritionSummary.fiber >= DAILY_NUTRITION_TARGETS.fiber
           ? 'strong'
           : projectedFiber !== null && projectedFiber >= DAILY_NUTRITION_TARGETS.fiber * 0.75
             ? 'boost'
@@ -154,12 +170,15 @@ export function createTodayNutritionGuidance(snapshot: TodaySnapshot | null): st
   }
 
   const guidance: string[] = [];
+  const proteinKnown = !hasUnknownLoggedNutritionMetric(snapshot, 'protein');
+  const fiberKnown = !hasUnknownLoggedNutritionMetric(snapshot, 'fiber');
   const protein = snapshot.nutritionSummary.protein;
   const fiber = snapshot.nutritionSummary.fiber;
   const plannedProtein = snapshot.plannedMeal?.protein;
   const plannedFiber = snapshot.plannedMeal?.fiber;
-  const projectedProtein = plannedProtein !== undefined ? protein + plannedProtein : null;
-  const projectedFiber = plannedFiber !== undefined ? fiber + plannedFiber : null;
+  const projectedProtein =
+    proteinKnown && plannedProtein !== undefined ? protein + plannedProtein : null;
+  const projectedFiber = fiberKnown && plannedFiber !== undefined ? fiber + plannedFiber : null;
 
   if (snapshot.plannedMeal) {
     if (projectedProtein !== null && projectedProtein >= DAILY_NUTRITION_TARGETS.protein * 0.75) {
@@ -182,7 +201,29 @@ export function createTodayNutritionGuidance(snapshot: TodaySnapshot | null): st
   }
 
   if (!guidance.length) {
-    if (protein < 30) {
+    if (!proteinKnown && !fiberKnown) {
+      guidance.push(
+        "Today's logged meals are missing nutrition totals, so protein and fiber pace are still unknown."
+      );
+    } else if (!proteinKnown || !fiberKnown) {
+      if (proteinKnown && protein < 30) {
+        guidance.push(
+          'Protein is still low so far. A 20g+ meal would change the day more than another snack.'
+        );
+      } else if (fiberKnown && fiber < 10) {
+        guidance.push(
+          'Fiber is still low so far. Oats, beans, berries, or greens would give the day more shape.'
+        );
+      }
+
+      if (!proteinKnown) {
+        guidance.push(createUnknownPaceGuidance('protein'));
+      }
+
+      if (!fiberKnown) {
+        guidance.push(createUnknownPaceGuidance('fiber'));
+      }
+    } else if (protein < 30) {
       guidance.push(
         'Protein is still low so far. A 20g+ meal would change the day more than another snack.'
       );
@@ -206,19 +247,21 @@ export function createPlannedMealProjectionRows(snapshot: TodaySnapshot | null):
   }
 
   const rows = [
+    !hasUnknownLoggedNutritionMetric(snapshot, 'calories') &&
     snapshot.plannedMeal.calories !== undefined
       ? `Projected calories: ${snapshot.nutritionSummary.calories + snapshot.plannedMeal.calories}`
       : null,
+    !hasUnknownLoggedNutritionMetric(snapshot, 'protein') &&
     snapshot.plannedMeal.protein !== undefined
       ? `Projected protein: ${snapshot.nutritionSummary.protein + snapshot.plannedMeal.protein}`
       : null,
-    snapshot.plannedMeal.fiber !== undefined
+    !hasUnknownLoggedNutritionMetric(snapshot, 'fiber') && snapshot.plannedMeal.fiber !== undefined
       ? `Projected fiber: ${snapshot.nutritionSummary.fiber + snapshot.plannedMeal.fiber}`
       : null,
-    snapshot.plannedMeal.carbs !== undefined
+    !hasUnknownLoggedNutritionMetric(snapshot, 'carbs') && snapshot.plannedMeal.carbs !== undefined
       ? `Projected carbs: ${snapshot.nutritionSummary.carbs + snapshot.plannedMeal.carbs}`
       : null,
-    snapshot.plannedMeal.fat !== undefined
+    !hasUnknownLoggedNutritionMetric(snapshot, 'fat') && snapshot.plannedMeal.fat !== undefined
       ? `Projected fat: ${snapshot.nutritionSummary.fat + snapshot.plannedMeal.fat}`
       : null,
   ];
@@ -268,9 +311,24 @@ export function createTodayRecommendationSupportRows(snapshot: TodaySnapshot | n
     rows.push('Plan: one planned item needs repair before it can be used today.');
   }
 
-  rows.push(
-    `Nutrition: protein ${snapshot.nutritionSummary.protein}g, fiber ${snapshot.nutritionSummary.fiber}g so far.`
-  );
+  if (
+    hasUnknownLoggedNutritionMetric(snapshot, 'protein') &&
+    hasUnknownLoggedNutritionMetric(snapshot, 'fiber')
+  ) {
+    rows.push("Nutrition: today's logged meal totals are still unknown.");
+  } else if (hasUnknownLoggedNutritionMetric(snapshot, 'protein')) {
+    rows.push(
+      `Nutrition: protein pace is unknown; fiber ${snapshot.nutritionSummary.fiber}g so far.`
+    );
+  } else if (hasUnknownLoggedNutritionMetric(snapshot, 'fiber')) {
+    rows.push(
+      `Nutrition: protein ${snapshot.nutritionSummary.protein}g so far; fiber pace is unknown.`
+    );
+  } else {
+    rows.push(
+      `Nutrition: protein ${snapshot.nutritionSummary.protein}g, fiber ${snapshot.nutritionSummary.fiber}g so far.`
+    );
+  }
 
   if (snapshot.recoveryAdaptation) {
     rows.push(...snapshot.recoveryAdaptation.mealFallback.slice(0, 1));

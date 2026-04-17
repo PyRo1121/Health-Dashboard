@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest';
 import {
+  createFoodCatalogItemRows,
   createNutritionDraftFromForm,
   createNutritionForm,
+  createNutritionMetricRows,
   createPlannedMealRows,
   createNutritionSummaryRows,
   mergeNutritionFormWithDraft,
@@ -56,7 +58,63 @@ describe('nutrition model', () => {
     ).toEqual(['Calories: 320', 'Protein: 12', 'Fiber: 8', 'Carbs: 52', 'Fat: 7']);
   });
 
-  it('does not render unknown planned-meal nutrition values as zeroes', () => {
+  it('starts a fresh nutrition form with blank macro inputs', () => {
+    expect(createNutritionForm()).toMatchObject({
+      calories: '',
+      protein: '',
+      fiber: '',
+      carbs: '',
+      fat: '',
+    });
+  });
+
+  it('serializes blank nutrition fields as unknown instead of zero', () => {
+    const draft = createNutritionDraftFromForm(
+      '2026-04-02',
+      {
+        ...createNutritionForm(),
+        mealType: 'dinner',
+        name: 'Teriyaki Chicken Bowl',
+        calories: '',
+        protein: '',
+        fiber: '',
+        carbs: '',
+        fat: '',
+        notes: 'Chicken, Soy sauce, Rice, Broccoli',
+      },
+      null,
+      {
+        kind: 'recipe',
+        id: 'recipe-1',
+        sourceName: 'TheMealDB',
+      }
+    );
+
+    expect(draft).toMatchObject({
+      localDay: '2026-04-02',
+      name: 'Teriyaki Chicken Bowl',
+      calories: undefined,
+      protein: undefined,
+      fiber: undefined,
+      carbs: undefined,
+      fat: undefined,
+      recipeCatalogItemId: 'recipe-1',
+      sourceName: 'TheMealDB',
+    });
+  });
+
+  it('does not render unknown custom-food or planned-meal nutrition values as zeroes', () => {
+    expect(
+      createFoodCatalogItemRows({
+        id: 'food-catalog-1',
+        createdAt: '2026-04-02T00:00:00.000Z',
+        updatedAt: '2026-04-02T00:00:00.000Z',
+        name: 'Teriyaki Chicken Bowl',
+        sourceType: 'custom',
+        sourceName: 'Local catalog',
+      })
+    ).toEqual([]);
+
     expect(
       createPlannedMealRows({
         id: 'planned-slot:recipe-1',
@@ -68,5 +126,62 @@ describe('nutrition model', () => {
         notes: 'Chicken, Soy sauce, Rice, Broccoli',
       })
     ).toEqual(['Meal type: dinner']);
+
+    expect(
+      createNutritionMetricRows({
+        calories: undefined,
+        protein: undefined,
+        fiber: undefined,
+        carbs: undefined,
+        fat: undefined,
+      })
+    ).toEqual([]);
+
+    expect(
+      createNutritionSummaryRows({
+        calories: 0,
+        protein: 0,
+        fiber: 0,
+        carbs: 0,
+        fat: 0,
+        entries: [
+          {
+            id: 'food-entry-1',
+            createdAt: '2026-04-02T00:00:00.000Z',
+            updatedAt: '2026-04-02T00:00:00.000Z',
+            localDay: '2026-04-02',
+            mealType: 'dinner',
+            name: 'Teriyaki Chicken Bowl',
+            sourceName: 'Local catalog',
+          },
+        ],
+      })
+    ).toEqual([
+      'Calories: unknown',
+      'Protein: unknown',
+      'Fiber: unknown',
+      'Carbs: unknown',
+      'Fat: unknown',
+    ]);
+  });
+
+  it('keeps unknown matched-food metrics blank when merging into form state', () => {
+    expect(
+      mergeNutritionFormWithDraft(createNutritionForm(), {
+        name: 'Teriyaki Chicken Bowl',
+        calories: undefined,
+        protein: undefined,
+        fiber: undefined,
+        carbs: undefined,
+        fat: undefined,
+      })
+    ).toMatchObject({
+      name: 'Teriyaki Chicken Bowl',
+      calories: '',
+      protein: '',
+      fiber: '',
+      carbs: '',
+      fat: '',
+    });
   });
 });

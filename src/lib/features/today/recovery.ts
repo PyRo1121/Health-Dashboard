@@ -128,7 +128,11 @@ function buildRecoveryWorkoutFallback(
 function toTodayMealRecommendation(
   recommendation: NutritionRecommendation | undefined
 ): TodayRecoveryAdaptationInput['mealRecommendation'] {
-  if (!recommendation || recommendation.kind !== 'food') {
+  if (
+    !recommendation ||
+    recommendation.kind !== 'food' ||
+    recommendation.subtitle === 'Nutrition totals unknown.'
+  ) {
     return null;
   }
 
