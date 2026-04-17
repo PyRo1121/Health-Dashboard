@@ -1,0 +1,384 @@
+tests/features/component/health/HealthTemplateSection.spec.ts
+  130b35d1ba119a2e 1-169
+tests/features/unit/health/client.test.ts
+  130b35d1ba119a2e 13-21,26-28,32,43,62,72-91,94-95,108
+tests/features/component/health/HealthPage.symptom-metadata.spec.ts
+  130b35d1ba119a2e 1-76
+tests/features/unit/movement/search-service.test.ts
+  130b35d1ba119a2e 1-129
+tests/features/unit/nutrition/usda.test.ts
+  130b35d1ba119a2e 70-71
+apps/ios-companion/Tests/HealthCockpitCompanionTests/BridgeBundleEncodingTests.swift
+  a44ff3651257f229 34-38
+src/lib/server/nutrition/usda.ts
+  130b35d1ba119a2e 4,152
+tests/features/unit/health/model.test.ts
+  130b35d1ba119a2e 7-8,43-44,58-59,140-249
+src/lib/core/domain/types.ts
+  130b35d1ba119a2e 241,267,289,345-351
+src/lib/features/nutrition/state.ts
+  130b35d1ba119a2e 20,66-67,122-123,252-253,259,266-267,273,291-293,299-300,312-313
+tests/features/unit/imports/source-config.test.ts
+  130b35d1ba119a2e 39,44-82
+src/lib/features/imports/page-actions.ts
+  130b35d1ba119a2e 1-6,23,27-32,133-137,144
+src/lib/features/health/model.ts
+  130b35d1ba119a2e 9,31,43,46-59,66,85-108,169-172,231-234
+tests/features/unit/timeline/server.service.test.ts
+  130b35d1ba119a2e 1-50
+tests/features/unit/health/medlineplus.test.ts
+  130b35d1ba119a2e 1-23
+src/lib/server/health/rxnorm.ts
+  130b35d1ba119a2e 1-110
+tests/features/component/health/HealthPage.suggestion-notice.spec.ts
+  130b35d1ba119a2e 1-54
+src/lib/features/imports/client.ts
+  130b35d1ba119a2e 4,17,21-26
+tests/features/unit/review/model.test.ts
+  130b35d1ba119a2e 100-101,166,275-288,306-326,338-435,465-466,535-536
+src/lib/features/nutrition/components/NutritionRecommendationsSection.svelte
+  130b35d1ba119a2e 15-19,36-38,56-62,64
+src/lib/features/review/model.ts
+  130b35d1ba119a2e 20
+src/lib/features/timeline/Page.svelte
+  130b35d1ba119a2e 2,68-80,129-130
+src/lib/features/today/components/TodayRecommendationSection.svelte
+  130b35d1ba119a2e 20-23,50-53,184-198
+src/lib/server/db/drizzle/mirror.ts
+  130b35d1ba119a2e 6,66-83,95-102
+tests/features/component/health/HealthManualLoggingSection.spec.ts
+  130b35d1ba119a2e 1-92
+src/lib/core/shared/external-links.ts
+  130b35d1ba119a2e 1-16
+src/lib/features/health/service.ts
+  130b35d1ba119a2e 7,42,66,195,209,223,316
+src/lib/features/imports/store.ts
+  130b35d1ba119a2e 13,53,55-62,148-167,171,206-214,220,222-224,226-273,275-284,288-300,308-312
+src/routes/api/nutrition/search-usda/+server.ts
+  130b35d1ba119a2e 22-29
+tests/features/unit/imports/server.service.test.ts
+  130b35d1ba119a2e 1-187
+tests/features/unit/review/service.test.ts
+  130b35d1ba119a2e 4-9,108-112,294-366
+tests/features/component/today/TodayPage.spec.ts
+  130b35d1ba119a2e 98-163
+tests/features/unit/imports/intake-state.test.ts
+  130b35d1ba119a2e 2,44-53,95,142-143,148-149
+tests/features/unit/imports/route.test.ts
+  130b35d1ba119a2e 21-22,67-68,85-91,102,109-116,122-126,160-167
+tests/features/unit/nutrition/recommend.test.ts
+  130b35d1ba119a2e 80-113
+src/lib/features/review/summary-sections.ts
+  130b35d1ba119a2e 14,22-28,51-63,205-213
+tests/features/unit/health/page-state-actions.test.ts
+  130b35d1ba119a2e 27,65,80-100
+src/lib/features/imports/contracts.ts
+  130b35d1ba119a2e 23
+src/lib/server/nutrition/service.ts
+  130b35d1ba119a2e 13,16
+src/routes/api/nutrition/search-packaged/+server.ts
+  130b35d1ba119a2e 3,22-29
+src/routes/api/health/search-symptoms/+server.ts
+  130b35d1ba119a2e 1-46
+src/lib/server/health/clinical-tables.ts
+  130b35d1ba119a2e 1-114
+tests/features/unit/nutrition/search-service.test.ts
+  130b35d1ba119a2e 135-146,148,151,191-314
+tests/features/unit/imports/store.test.ts
+  130b35d1ba119a2e 125-135,148-151,155-166,173-179,181-184,240,249-253,255-262,288-289
+tests/features/unit/health/rxnorm.test.ts
+  130b35d1ba119a2e 1-198
+src/lib/features/review/components/ReviewListSection.svelte
+  130b35d1ba119a2e 3,5,12-28,37-65,105-138
+src/lib/server/http/fetch-timeout.ts
+  130b35d1ba119a2e 1-11
+tests/features/component/nutrition/NutritionComposerSection.spec.ts
+  130b35d1ba119a2e 1-67
+tests/features/unit/timeline/route.test.ts
+  130b35d1ba119a2e 59-97
+tests/features/unit/timeline/controller.test.ts
+  130b35d1ba119a2e 16-20
+src/lib/features/imports/ImportBatchHistoryCard.svelte
+  130b35d1ba119a2e 19-24
+tests/features/component/integrations/IntegrationsPage.spec.ts
+  130b35d1ba119a2e 40-44
+apps/ios-companion/HealthKit/HealthKitBundleExporter.swift
+  a44ff3651257f229 6-33,60,63,75,77-79,82-84,86-87,94-95,98,113-120,259,261,280,297-298,306,308,320,335-336
+src/lib/features/today/components/TodayPlanSurface.svelte
+  130b35d1ba119a2e 2,142-152,169-171
+tests/features/e2e/imports.e2e.ts
+  130b35d1ba119a2e 35-61,192
+tests/features/component/health/HealthEventStreamSection.spec.ts
+  130b35d1ba119a2e 1-46
+src/lib/features/imports/intake-state.ts
+  130b35d1ba119a2e 1,14,149,163
+src/lib/features/review/analytics-health.ts
+  130b35d1ba119a2e 10,69-126
+src/lib/server/movement/service.ts
+  130b35d1ba119a2e 4,51-67
+tests/features/unit/nutrition/search-service-metadata.test.ts
+  130b35d1ba119a2e 1-367
+.gitignore
+  502af712075941b9 13
+tests/features/unit/health/clinical-tables.test.ts
+  130b35d1ba119a2e 1-232
+src/lib/features/imports/ImportComposerCard.svelte
+  130b35d1ba119a2e 3,29,139-146,187,223-226,228
+src/lib/server/nutrition/open-food-facts.ts
+  130b35d1ba119a2e 4,105-106,120-125
+tests/features/unit/imports/page-state-actions.test.ts
+  130b35d1ba119a2e 2,37-46,112,117-118,125-131,139,141,149,153-154,157,164
+src/lib/server/health/medlineplus.ts
+  130b35d1ba119a2e 1-39
+tests/features/unit/timeline/service.test.ts
+  130b35d1ba119a2e 153
+src/lib/features/health/contracts.ts
+  130b35d1ba119a2e 2-31,35,37,41,43,49-51,58,61
+tests/features/unit/golden/migration-parity.test.ts
+  130b35d1ba119a2e 167-171,215-216
+src/lib/features/health/components/HealthManualLoggingSection.svelte
+  130b35d1ba119a2e 2-3,7,14-16,25-26,29-31,40-41,43-57,97,99-143,249-251
+tests/features/component/health/HealthPage.spec.ts
+  130b35d1ba119a2e 3,76-100
+src/routes/api/health/search-medications/+server.ts
+  130b35d1ba119a2e 1-46
+tests/features/component/today/TodayRecommendationSection.spec.ts
+  130b35d1ba119a2e 120-149
+src/lib/features/nutrition/recommend.ts
+  130b35d1ba119a2e 2-5,20-22,178-185,232-234
+tests/features/unit/health/route.test.ts
+  130b35d1ba119a2e 12,26,53,62,116,125,251-315
+src/lib/features/review/snapshot-builder.ts
+  130b35d1ba119a2e 26,30,222-223,302-303
+tests/features/unit/nutrition/open-food-facts.test.ts
+  130b35d1ba119a2e 39-60,100
+src/lib/features/health/components/HealthEventStreamSection.svelte
+  130b35d1ba119a2e 2,23-35
+src/lib/core/domain/external-sources.ts
+  130b35d1ba119a2e 1-264
+tests/features/unit/today/intelligence.test.ts
+  130b35d1ba119a2e 147-204
+tests/support/component/routeSeeds.ts
+  130b35d1ba119a2e 18-22
+src/lib/features/nutrition/lookup.ts
+  130b35d1ba119a2e 14,25,36,40-49,114-120,132-136
+tests/features/component/nutrition/NutritionPage.spec.ts
+  130b35d1ba119a2e 1,156,179-180,182-186,253-258,302,321-331,333
+tests/features/unit/integrations/controller.test.ts
+  130b35d1ba119a2e 12-16
+src/lib/features/nutrition/components/NutritionComposerSection.svelte
+  130b35d1ba119a2e 2,16,21,46,51,74-87,106-112,162-168,314-315
+src/lib/server/movement/wger.ts
+  130b35d1ba119a2e 3,132-139
+apps/ios-companion/Core/HealthKitExportMode.swift
+  a44ff3651257f229 14,23
+tests/features/component/timeline/TimelinePage.spec.ts
+  130b35d1ba119a2e 3,25-52
+src/lib/server/timeline/service.ts
+  130b35d1ba119a2e 2,19,23-24,28-30
+src/lib/server/imports/service.ts
+  130b35d1ba119a2e 6,28,30,86-109,154-173,181,183-185,198,233-236,238-239,245-249,251-258,260-281,284-291,294-304,310-314,317-331
+src/lib/server/health/service.ts
+  130b35d1ba119a2e 115,215,252
+tests/features/unit/health/search-symptoms.route.test.ts
+  130b35d1ba119a2e 1-134
+tests/features/unit/health/service.test.ts
+  130b35d1ba119a2e 41-85,145-184
+tests/features/component/imports/ImportsPage.smart.spec.ts
+  130b35d1ba119a2e 55-56,64-73
+src/lib/features/nutrition/Page.svelte
+  130b35d1ba119a2e 176-180,182-187,220,225
+tests/features/component/health/HealthPage.medication-metadata.spec.ts
+  130b35d1ba119a2e 1-79
+tests/features/unit/movement/wger.test.ts
+  130b35d1ba119a2e 25
+src/lib/features/imports/Page.svelte
+  130b35d1ba119a2e 2,54,150
+src/lib/features/review/analytics-shared.ts
+  130b35d1ba119a2e 81-85,102-103
+src/lib/server/nutrition/search-service.ts
+  130b35d1ba119a2e 33-42,44-45,47-52,70-78,81-84,97-101,113-122,128-131,135,140,142-158,165-169,200,203-206,210,212-216,224-227,230-235,238-243,245-249
+tests/features/unit/today/model.test.ts
+  130b35d1ba119a2e 5,96-150,426-489
+src/lib/features/health/client.ts
+  130b35d1ba119a2e 2,16-19,24-25,68-96
+tests/core/unit/domain/external-sources.test.ts
+  130b35d1ba119a2e 1-51
+src/routes/api/imports/+server.ts
+  130b35d1ba119a2e 16
+tests/features/component/imports/ImportsPage.base.spec.ts
+  130b35d1ba119a2e 27,50-51,58-64,76-77,87-91
+src/lib/features/health/actions.ts
+  130b35d1ba119a2e 61,126
+tests/features/component/imports/ImportsPage.healthkit.spec.ts
+  130b35d1ba119a2e 36-37,43-61,74,147,154
+apps/ios-companion/README.md
+  a44ff3651257f229 15,26,52
+tests/features/unit/nutrition/client.test.ts
+  130b35d1ba119a2e 89-108,147-244,246-249
+tests/features/component/review/ReviewPage.spec.ts
+  130b35d1ba119a2e 199-200,505-613
+src/lib/features/nutrition/client.ts
+  130b35d1ba119a2e 36-40,44-49,143,147-154,159-161,166,171-176,180-185,209,211-222,225-230
+tests/features/e2e/today-handoffs.e2e.ts
+  130b35d1ba119a2e 354,403-404,406,409-410
+src/lib/features/today/presentation.ts
+  130b35d1ba119a2e 2,12,79-81
+src/lib/features/timeline/service.ts
+  130b35d1ba119a2e 3,17,23-24,28-30
+tests/features/unit/nutrition/route.test.ts
+  130b35d1ba119a2e 14-30,50-66,71-120,198-209,231-242
+src/lib/features/imports/source-config.ts
+  130b35d1ba119a2e 2,13-17,39,42-49,61-68
+src/lib/features/health/components/HealthTemplateSection.svelte
+  130b35d1ba119a2e 2-3,6-10,15-17,21-22,26-28,32-33,35-49,111-113,115-159,167-181,217-220,246-251
+src/lib/features/review/analytics.ts
+  130b35d1ba119a2e 9,43,46
+src/routes/api/nutrition/barcode/[code]/+server.ts
+  130b35d1ba119a2e 6
+src/lib/features/health/Page.svelte
+  130b35d1ba119a2e 17-18,20-28,33-38,104,106-108,132-171,176-177,180-182,206-208,217-218,224-226,230-231
+apps/ios-companion/ViewModels/CompanionViewModel.swift
+  a44ff3651257f229 56-60
+src/lib/features/nutrition/page-actions.ts
+  130b35d1ba119a2e 79-80,82-85
+tests/features/unit/health/search-medications.route.test.ts
+  130b35d1ba119a2e 1-134
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "e03b73470a2e0bb5f55afd83d9826b4546afc5c9",
+  "prompts": {
+    "0ce2265195ebb525": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d999b-8197-7833-831c-aa104595660c",
+        "model": "unknown"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 210,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "130b35d1ba119a2e": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9ad7-0cb9-7202-95f5-6da1a7fd2390",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 9298,
+      "total_deletions": 384,
+      "accepted_lines": 9298,
+      "overriden_lines": 0
+    },
+    "1917e003de4f9960": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9a63-9093-7c80-93e1-e596c392e3f8",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 212,
+      "total_deletions": 1,
+      "accepted_lines": 212,
+      "overriden_lines": 0
+    },
+    "1c27d7d55936e5e8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d998b-1fc4-7601-866a-83f4aade7529",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "310a9d8c3d521874": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d998b-156d-78f1-b85b-f798719b782e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "47c34d3fa84690a8": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d99b5-7b8e-7cf2-bbd2-09318c858741",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "502af712075941b9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9dab-b782-7560-8958-3cb80c8072f6",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 107235,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    },
+    "a44ff3651257f229": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d993c-14b5-7f72-b685-2e4689abed60",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 177966,
+      "total_deletions": 19147,
+      "accepted_lines": 45317,
+      "overriden_lines": 0
+    },
+    "ba1d1cee94990ed0": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d999a-7e6e-7033-8e9e-83062035c04e",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 37151,
+      "total_deletions": 16853,
+      "accepted_lines": 9234,
+      "overriden_lines": 0
+    },
+    "f9cb98d9a0934787": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9a6c-77df-7b00-9772-2f8d64455e8a",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 1,
+      "overriden_lines": 0
+    }
+  }
+}
