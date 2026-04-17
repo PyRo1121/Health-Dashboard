@@ -2,12 +2,16 @@ export type RecordId = string;
 export type IsoDateTime = string;
 export type LocalDay = string;
 
-export type ImportSourceType =
-  | 'apple-health-xml'
-  | 'day-one-json'
-  | 'healthkit-companion'
-  | 'smart-fhir-sandbox';
-export type SourceType = 'manual' | 'import' | 'derived' | 'native-companion';
+export const importSourceTypes = [
+  'apple-health-xml',
+  'day-one-json',
+  'healthkit-companion',
+  'smart-fhir-sandbox',
+] as const;
+export type ImportSourceType = (typeof importSourceTypes)[number];
+
+export const sourceTypes = ['manual', 'import', 'derived', 'native-companion'] as const;
+export type SourceType = (typeof sourceTypes)[number];
 export type NativeCompanionConnector = 'healthkit-ios';
 export type NativeCompanionSourcePlatform = 'ios';
 export type HealthTemplateType = 'medication' | 'supplement';
@@ -58,21 +62,25 @@ export interface DailyRecord extends BaseRecord {
 }
 
 export interface JournalEntry extends BaseRecord {
-  entryType:
-    | 'freeform'
-    | 'morning_intention'
-    | 'evening_review'
-    | 'craving_reflection'
-    | 'lapse_reflection'
-    | 'symptom_note'
-    | 'experiment_note'
-    | 'provider_visit_note';
+  entryType: JournalEntryType;
   localDay: LocalDay;
   title?: string;
   body: string;
   tags: string[];
   linkedEventIds: string[];
 }
+
+export const journalEntryTypes = [
+  'freeform',
+  'morning_intention',
+  'evening_review',
+  'craving_reflection',
+  'lapse_reflection',
+  'symptom_note',
+  'experiment_note',
+  'provider_visit_note',
+] as const;
+export type JournalEntryType = (typeof journalEntryTypes)[number];
 
 export interface FoodEntry extends BaseRecord {
   localDay: LocalDay;

@@ -53,4 +53,18 @@ describe('assessments controller', () => {
 
     expect(state.validationError).toMatch(/incomplete assessment/i);
   });
+
+  it('surfaces validation errors when unanswered sentinel values remain in a full-length draft', async () => {
+    const db = getDb();
+    let state = await loadAssessmentsPage(db, '2026-04-02', createAssessmentsPageState());
+    state = {
+      ...state,
+      draftResponses: [1, -1, 2, -1, -1, -1, -1, -1, -1],
+    };
+
+    state = await submitAssessmentsPage(db, state);
+
+    expect(state.validationError).toMatch(/incomplete assessment/i);
+    expect(state.latest).toBeUndefined();
+  });
 });

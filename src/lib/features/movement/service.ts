@@ -85,19 +85,27 @@ export async function saveWorkoutTemplate(
   return template;
 }
 
+function normalizeSearchText(value: string): string {
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+    .replace(/\s+/g, '');
+}
+
 export function searchExerciseCatalog(
   query: string,
   items: ExerciseCatalogItem[]
 ): ExerciseCatalogItem[] {
-  const normalized = query.trim().toLowerCase();
+  const normalized = normalizeSearchText(query);
   if (!normalized) {
     return [];
   }
 
   return items.filter((item) => {
-    const haystack = [item.title, ...item.muscleGroups, ...item.equipment, item.instructions ?? '']
-      .join(' ')
-      .toLowerCase();
+    const haystack = normalizeSearchText(
+      [item.title, ...item.muscleGroups, ...item.equipment, item.instructions ?? ''].join(' ')
+    );
     return haystack.includes(normalized);
   });
 }

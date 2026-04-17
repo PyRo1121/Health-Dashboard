@@ -135,5 +135,90 @@ describe('sobriety route', () => {
     } as Parameters<typeof POST>[0]);
     expect(response.status).toBe(400);
     expect(await response.text()).toBe('Invalid sobriety request payload.');
+
+    const invalidCravingScoreState = {
+      loading: false,
+      localDay: '2026-04-04',
+      summary: { streak: 1, todayEvents: [] },
+      saveNotice: '',
+      cravingScore: '',
+      cravingNote: '',
+      lapseNote: '',
+      recoveryAction: '',
+    };
+
+    const invalidCravingScore = await POST({
+      request: new Request('http://health.test/api/sobriety', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'saveCraving', state: invalidCravingScoreState }),
+      }),
+    } as Parameters<typeof POST>[0]);
+    expect(invalidCravingScore.status).toBe(400);
+    expect(await invalidCravingScore.text()).toBe('Invalid sobriety request payload.');
+
+    const invalidEventTypeState = {
+      loading: false,
+      localDay: '2026-04-04',
+      summary: {
+        streak: 1,
+        todayEvents: [
+          {
+            id: 'sobriety-1',
+            createdAt: '2026-04-04T08:00:00.000Z',
+            updatedAt: '2026-04-04T08:00:00.000Z',
+            localDay: '2026-04-04',
+            eventType: 'bogus',
+          },
+        ],
+      },
+      saveNotice: '',
+      cravingScore: '3',
+      cravingNote: '',
+      lapseNote: '',
+      recoveryAction: '',
+    };
+
+    const invalidEventType = await POST({
+      request: new Request('http://health.test/api/sobriety', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'load',
+          localDay: '2026-04-04',
+          state: invalidEventTypeState,
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+    expect(invalidEventType.status).toBe(400);
+    expect(await invalidEventType.text()).toBe('Invalid sobriety request payload.');
+
+    const invalidStatusState = {
+      ...invalidEventTypeState,
+      summary: {
+        streak: 1,
+        todayEvents: [
+          {
+            id: 'sobriety-1',
+            createdAt: '2026-04-04T08:00:00.000Z',
+            updatedAt: '2026-04-04T08:00:00.000Z',
+            localDay: '2026-04-04',
+            eventType: 'status',
+            status: 'unknown',
+          },
+        ],
+      },
+    };
+
+    const invalidStatus = await POST({
+      request: new Request('http://health.test/api/sobriety', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'load',
+          localDay: '2026-04-04',
+          state: invalidStatusState,
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+    expect(invalidStatus.status).toBe(400);
+    expect(await invalidStatus.text()).toBe('Invalid sobriety request payload.');
   });
 });

@@ -33,6 +33,48 @@ describe('movement service', () => {
     ]);
   });
 
+  it('normalizes separators and whitespace when searching the exercise catalog', async () => {
+    const db = getDb();
+    await upsertExerciseCatalogItems(db, [
+      {
+        id: 'wger:2',
+        createdAt: '2026-04-03T00:00:00.000Z',
+        updatedAt: '2026-04-03T00:00:00.000Z',
+        sourceType: 'wger',
+        externalId: '2',
+        title: 'Push-up',
+        muscleGroups: ['Chest'],
+        equipment: ['Bodyweight'],
+        instructions: 'Press back to the top.',
+      },
+      {
+        id: 'wger:3',
+        createdAt: '2026-04-03T00:00:00.000Z',
+        updatedAt: '2026-04-03T00:00:00.000Z',
+        sourceType: 'wger',
+        externalId: '3',
+        title: 'Lat pulldown',
+        muscleGroups: ['Back'],
+        equipment: ['Cable'],
+        instructions: 'Pull the bar to your chest.',
+      },
+    ]);
+
+    const items = await db.exerciseCatalogItems.toArray();
+    expect(searchExerciseCatalog('push up', items)).toEqual([
+      expect.objectContaining({ title: 'Push-up' }),
+    ]);
+    expect(searchExerciseCatalog('push-up', items)).toEqual([
+      expect.objectContaining({ title: 'Push-up' }),
+    ]);
+    expect(searchExerciseCatalog('lat pull down', items)).toEqual([
+      expect.objectContaining({ title: 'Lat pulldown' }),
+    ]);
+    expect(searchExerciseCatalog('pulldown', items)).toEqual([
+      expect.objectContaining({ title: 'Lat pulldown' }),
+    ]);
+  });
+
   it('stores workout templates for later planning surfaces', async () => {
     const db = getDb();
     const template = await saveWorkoutTemplate(db, {

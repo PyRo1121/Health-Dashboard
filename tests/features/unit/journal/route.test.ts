@@ -126,5 +126,79 @@ describe('journal route', () => {
     } as Parameters<typeof POST>[0]);
     expect(response.status).toBe(400);
     expect(await response.text()).toBe('Invalid journal request payload.');
+
+    const state = {
+      loading: false,
+      saving: false,
+      localDay: '2026-04-04',
+      saveNotice: '',
+      entries: [],
+      linkedContextRows: [],
+      draft: {
+        localDay: '2026-04-04',
+        entryType: 'bogus',
+        title: '',
+        body: '',
+        tags: [],
+        linkedEventIds: [],
+      },
+    };
+
+    const invalidDraftEntryType = await POST({
+      request: new Request('http://health.test/api/journal', {
+        method: 'POST',
+        body: JSON.stringify({ action: 'save', state }),
+      }),
+    } as Parameters<typeof POST>[0]);
+    expect(invalidDraftEntryType.status).toBe(400);
+    expect(await invalidDraftEntryType.text()).toBe('Invalid journal request payload.');
+
+    const validState = {
+      ...state,
+      draft: {
+        ...state.draft,
+        entryType: 'freeform',
+      },
+    };
+
+    const invalidIntentEntryType = await POST({
+      request: new Request('http://health.test/api/journal', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'hydrateIntent',
+          state: validState,
+          intent: {
+            source: 'today-recovery',
+            localDay: '2026-04-04',
+            entryType: 'bogus',
+            title: 'Recovery note',
+            body: 'Crowded store and headache drained the afternoon.',
+            linkedEventIds: ['symptom-1'],
+          },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+    expect(invalidIntentEntryType.status).toBe(400);
+    expect(await invalidIntentEntryType.text()).toBe('Invalid journal request payload.');
+
+    const invalidIntentSource = await POST({
+      request: new Request('http://health.test/api/journal', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'hydrateIntent',
+          state: validState,
+          intent: {
+            source: 'bogus',
+            localDay: '2026-04-04',
+            entryType: 'symptom_note',
+            title: 'Recovery note',
+            body: 'Crowded store and headache drained the afternoon.',
+            linkedEventIds: ['symptom-1'],
+          },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+    expect(invalidIntentSource.status).toBe(400);
+    expect(await invalidIntentSource.text()).toBe('Invalid journal request payload.');
   });
 });

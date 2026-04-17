@@ -16,6 +16,7 @@ import {
   buildNutritionStrategy,
   computeCorrelations,
   computeTrendComparisonsFromData,
+  generateReviewFlags,
   weekRangeFromAnchorDay,
 } from '$lib/features/review/analytics';
 
@@ -166,6 +167,99 @@ describe('review analytics', () => {
         recommendation: null,
       })
     ).toBe('First signal logged, keep the streak going');
+  });
+
+  it('keeps lapse and high-risk sparse-week signals ahead of generic no-data fallback', () => {
+    expect(
+      generateReviewFlags(
+        [],
+        [
+          {
+            id: 'sobriety-1',
+            createdAt: '2026-04-01T08:00:00.000Z',
+            updatedAt: '2026-04-01T08:00:00.000Z',
+            localDay: '2026-04-01',
+            eventType: 'lapse',
+            status: 'lapse',
+          },
+        ],
+        [
+          {
+            id: 'assessment-1',
+            createdAt: '2026-04-01T08:00:00.000Z',
+            updatedAt: '2026-04-01T08:00:00.000Z',
+            localDay: '2026-04-01',
+            instrument: 'WHO-5',
+            version: 1,
+            recallWindow: 'last 2 weeks',
+            itemResponses: [0, 0, 0, 0, 0],
+            isComplete: true,
+            highRisk: true,
+            totalScore: 0,
+            band: 'High risk',
+          },
+        ]
+      )
+    ).toEqual([
+      'A lapse was logged this week, so recovery context deserves special attention.',
+      'WHO-5 entered a high-risk state this week.',
+    ]);
+
+    expect(
+      buildHeadline({
+        records: [],
+        assessments: [
+          {
+            id: 'assessment-1',
+            createdAt: '2026-04-01T08:00:00.000Z',
+            updatedAt: '2026-04-01T08:00:00.000Z',
+            localDay: '2026-04-01',
+            instrument: 'WHO-5',
+            version: 1,
+            recallWindow: 'last 2 weeks',
+            itemResponses: [0, 0, 0, 0, 0],
+            isComplete: true,
+            highRisk: true,
+            totalScore: 0,
+            band: 'High risk',
+          },
+        ],
+        sobrietyEvents: [
+          {
+            id: 'sobriety-1',
+            createdAt: '2026-04-01T08:00:00.000Z',
+            updatedAt: '2026-04-01T08:00:00.000Z',
+            localDay: '2026-04-01',
+            eventType: 'lapse',
+            status: 'lapse',
+          },
+        ],
+        healthEvents: [],
+        journalEntries: [],
+        averageProtein: 0,
+        adherenceScores: [],
+        recommendation: null,
+      })
+    ).toBe('Support first, metrics second');
+  });
+
+  it('keeps conservative no-data fallback when a sparse week has no stronger signals', () => {
+    expect(generateReviewFlags([], [], [])).toEqual([
+      'Need more tracked days before weekly trends can become meaningful.',
+    ]);
+
+    expect(
+      buildHeadline({
+        records: [],
+        assessments: [],
+        sobrietyEvents: [],
+        healthEvents: [],
+        journalEntries: [],
+        averageProtein: 0,
+        adherenceScores: [],
+        recommendation: null,
+      })
+    ).toBe('Need more data to build your first weekly briefing');
   });
 
   it('builds structured nutrition strategy items for review actions', () => {

@@ -127,6 +127,22 @@ describe('imports route', () => {
     expect(invalid.status).toBe(400);
     expect(await invalid.text()).toBe('Invalid import request payload.');
 
+    const invalidSourceType = await POST({
+      request: new Request('http://health.test/api/imports', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'preview',
+          input: {
+            sourceType: 'bogus',
+            rawText: '{}',
+            ownerProfile: null,
+          },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+    expect(invalidSourceType.status).toBe(400);
+    expect(await invalidSourceType.text()).toBe('Invalid import request payload.');
+
     const failing = await POST({
       request: new Request('http://health.test/api/imports', {
         method: 'POST',

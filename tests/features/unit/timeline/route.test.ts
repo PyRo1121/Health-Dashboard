@@ -58,14 +58,51 @@ describe('timeline route', () => {
 
   it('returns 400 for invalid timeline payloads', async () => {
     const { POST } = await importRoute({});
-    const response = await POST({
+    const missingState = await POST({
       request: new Request('http://health.test/api/timeline', {
         method: 'POST',
         body: JSON.stringify({ action: 'load' }),
       }),
     } as Parameters<typeof POST>[0]);
 
-    expect(response.status).toBe(400);
-    expect(await response.text()).toBe('Invalid timeline request payload.');
+    expect(missingState.status).toBe(400);
+    expect(await missingState.text()).toBe('Invalid timeline request payload.');
+
+    const invalidFilter = await POST({
+      request: new Request('http://health.test/api/timeline', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'load',
+          state: { loading: true, filter: 'bogus', items: [] },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(invalidFilter.status).toBe(400);
+    expect(await invalidFilter.text()).toBe('Invalid timeline request payload.');
+
+    const invalidItemEventSource = await POST({
+      request: new Request('http://health.test/api/timeline', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'load',
+          state: {
+            loading: true,
+            filter: 'all',
+            items: [
+              {
+                event: { sourceType: 'bogus' },
+                label: 'Resting heart rate',
+                valueLabel: '57 bpm',
+                sourceLabel: 'Native companion',
+              },
+            ],
+          },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(invalidItemEventSource.status).toBe(400);
+    expect(await invalidItemEventSource.text()).toBe('Invalid timeline request payload.');
   });
 });

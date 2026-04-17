@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { ImportSourceType } from '$lib/core/domain/types';
+import { importSourceTypes } from '$lib/core/domain/types';
 
 const ownerProfileSchema = z.object({
   fullName: z.string(),
@@ -7,7 +7,7 @@ const ownerProfileSchema = z.object({
 });
 
 const importPreviewInputSchema = z.object({
-  sourceType: z.custom<ImportSourceType>(),
+  sourceType: z.enum(importSourceTypes),
   rawText: z.string(),
   ownerProfile: ownerProfileSchema.nullish(),
 });
