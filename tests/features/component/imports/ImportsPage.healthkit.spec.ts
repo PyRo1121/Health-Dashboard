@@ -151,7 +151,7 @@ describe('Imports route healthkit flows', () => {
     await pasteImportPayload(`${HEALTHKIT_BUNDLE_JSON}\n`);
 
     await waitFor(() => {
-      expect(screen.getAllByText(/Adds: 3/i).length).toBe(1);
+      expect(screen.queryByText(/Adds: 3/i)).toBeNull();
       expect(getCommitButton()).toHaveProperty('disabled', true);
       expect(screen.getByLabelText('Import payload summary')).toBeTruthy();
     });
