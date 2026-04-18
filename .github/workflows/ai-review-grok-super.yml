@@ -58,7 +58,7 @@ jobs:
         run: node .github/scripts/grok-review.mjs
 
       - name: Create GitHub Review with Inline Comments
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           REVIEW_MARKDOWN_PATH: ${{ runner.temp }}/grok-review.md
         with:
@@ -115,7 +115,7 @@ jobs:
             }
 
       - name: Sync review labels
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           REVIEW_JSON_PATH: ${{ runner.temp }}/grok-review.json
         with:

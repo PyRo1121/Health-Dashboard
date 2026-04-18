@@ -23,7 +23,7 @@ jobs:
     steps:
       - name: Resolve pull request from workflow run
         id: pr
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             const prs = context.payload.workflow_run.pull_requests || [];
@@ -58,7 +58,7 @@ jobs:
 
       - name: Retry failed jobs once before surgery
         if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt == '1'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.actions.reRunWorkflowFailedJobs({
@@ -188,7 +188,7 @@ jobs:
 
       - name: Refresh PR manager after CI surgery
         if: steps.pr.outputs.skip_reason == '' && steps.pr.outputs.run_attempt != '1'
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         with:
           script: |
             await github.rest.actions.createWorkflowDispatch({

@@ -43,7 +43,7 @@ jobs:
 
       - name: Post analytics report
         if: success()
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           ANALYTICS_JSON_PATH: ${{ runner.temp }}/grok-analytics.json
           ANALYTICS_MARKDOWN_PATH: ${{ runner.temp }}/grok-analytics.md
