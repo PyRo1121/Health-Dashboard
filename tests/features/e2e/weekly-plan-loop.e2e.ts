@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
-
-const resetHeaders = { 'x-health-reset-token': 'codex-e2e' };
+import { postMigrationSnapshot, resetDb } from '../../support/e2e/http';
 
 function emptySnapshot() {
   return {
@@ -28,7 +27,7 @@ function emptySnapshot() {
 }
 
 test.beforeEach(async ({ page }) => {
-  const response = await page.request.post('/api/test/reset-db', { headers: resetHeaders });
+  const response = await resetDb(page.request);
   expect(response.ok()).toBe(true);
 });
 
@@ -40,7 +39,7 @@ test('weekly plan loop connects plan, today, and review', async ({ page }) => {
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         ...emptySnapshot(),
@@ -196,7 +195,7 @@ test('weekly plan loop connects plan, today, and review', async ({ page }) => {
 });
 
 test('grocery checklist merges duplicate ingredients across recipes', async ({ page }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         ...emptySnapshot(),
@@ -248,7 +247,7 @@ test('grocery checklist merges duplicate ingredients across recipes', async ({ p
 });
 
 test('manual grocery items persist after weekly plan recompute', async ({ page }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         ...emptySnapshot(),

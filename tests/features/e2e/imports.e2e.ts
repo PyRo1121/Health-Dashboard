@@ -220,3 +220,50 @@ test('invalid shortcut bundle surfaces recovery links', async ({ page }) => {
     '/downloads/ios-shortcuts/shortcut-blueprint.md'
   );
 });
+
+test('oversized import payloads are rejected by the server route', async ({ page }) => {
+  const response = await page.request.post('/api/imports', {
+    data: {
+      action: 'preview',
+      input: {
+        sourceType: 'day-one-json',
+        rawText: 'x'.repeat(1_000_001),
+      },
+    },
+  });
+
+  expect(response.status()).toBe(413);
+  await expect(response.text()).resolves.toContain('Import request payload is too large.');
+});
+
+test('cross-midnight Apple Health imports land on the timezone-correct local day', async ({
+  page,
+}) => {
+  const importsPage = new ImportsPage(page);
+  const expectedLocalDay = new Intl.DateTimeFormat('en-CA', {
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date('2026-04-02T04:30:00.000Z'));
+
+  await importsPage.goto();
+  await importsPage.selectSource('apple-health-xml');
+  await importsPage.fillPayload(`<?xml version="1.0" encoding="UTF-8"?>
+<HealthData>
+  <Record
+    type="HKQuantityTypeIdentifierStepCount"
+    sourceName="iPhone"
+    unit="count"
+    value="4321"
+    startDate="2026-04-02T04:30:00.000Z"
+  />
+</HealthData>`);
+  await importsPage.previewAndExpectAdds(1);
+  await importsPage.commit();
+  await importsPage.expectCommitted();
+
+  await page.goto('/timeline');
+  await expect(page.getByText('step count', { exact: false })).toBeVisible();
+  await expect(page.getByText(new RegExp(`import\\s+·\\s+${expectedLocalDay}`, 'i'))).toBeVisible();
+});

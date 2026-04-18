@@ -1,4 +1,4 @@
-import { nowIso } from '$lib/core/domain/time';
+import { nowIso, resolvedTimeZone, toLocalDay } from '$lib/core/domain/time';
 import type { HealthEvent } from '$lib/core/domain/types';
 import type { ClinicalPatientIdentity } from '$lib/features/integrations/identity/patient-match';
 import { createRecordId } from '$lib/core/shared/ids';
@@ -68,6 +68,7 @@ function buildClinicalEvent(input: {
   resourceId: string;
   importedAt: string;
   timestamp: string;
+  timeZone: string;
   patientIdentity: ClinicalPatientIdentity;
   eventType: string;
   value: string | number | boolean;
@@ -83,7 +84,8 @@ function buildClinicalEvent(input: {
       input.resourceId
     ),
     sourceTimestamp: input.timestamp,
-    localDay: input.timestamp.slice(0, 10),
+    localDay: toLocalDay(input.timestamp, input.timeZone),
+    timezone: input.timeZone,
     confidence: input.resourceType === 'Observation' ? 0.92 : 0.9,
     eventType: input.eventType,
     value: input.value,
@@ -98,7 +100,8 @@ function buildClinicalEvent(input: {
 function buildObservationEvent(
   resource: Record<string, unknown>,
   patientIdentity: ClinicalPatientIdentity,
-  importedAt: string
+  importedAt: string,
+  timeZone: string
 ): HealthEvent {
   const quantity = asRecord(resource.valueQuantity);
   const quantityValue = quantity?.value;
@@ -115,6 +118,7 @@ function buildObservationEvent(
     resourceId: asString(resource.id) ?? createRecordId('smart-observation'),
     importedAt,
     timestamp: asString(resource.effectiveDateTime) ?? asString(resource.issued) ?? importedAt,
+    timeZone,
     patientIdentity,
     eventType: readCodeText(resource.code, 'Observation'),
     value,
@@ -125,7 +129,8 @@ function buildObservationEvent(
 function buildConditionEvent(
   resource: Record<string, unknown>,
   patientIdentity: ClinicalPatientIdentity,
-  importedAt: string
+  importedAt: string,
+  timeZone: string
 ): HealthEvent {
   return buildClinicalEvent({
     resourceType: 'Condition',
@@ -136,6 +141,7 @@ function buildConditionEvent(
       asString(resource.abatementDateTime) ??
       importedAt,
     importedAt,
+    timeZone,
     patientIdentity,
     eventType: `Condition: ${readCodeText(resource.code, 'Condition')}`,
     value: readCodeText(resource.clinicalStatus, 'recorded'),
@@ -146,13 +152,15 @@ function buildConditionEvent(
 function buildMedicationRequestEvent(
   resource: Record<string, unknown>,
   patientIdentity: ClinicalPatientIdentity,
-  importedAt: string
+  importedAt: string,
+  timeZone: string
 ): HealthEvent {
   return buildClinicalEvent({
     resourceType: 'MedicationRequest',
     resourceId: asString(resource.id) ?? createRecordId('smart-medication'),
     importedAt,
     timestamp: asString(resource.authoredOn) ?? importedAt,
+    timeZone,
     patientIdentity,
     eventType: `Medication: ${readCodeText(resource.medicationCodeableConcept, 'Medication request')}`,
     value: asString(resource.status) ?? 'recorded',
@@ -160,7 +168,10 @@ function buildMedicationRequestEvent(
   });
 }
 
-export function normalizeSmartFhirBundle(bundle: SmartFhirBundle): SmartFhirImportResult {
+export function normalizeSmartFhirBundle(
+  bundle: SmartFhirBundle,
+  timeZone = resolvedTimeZone()
+): SmartFhirImportResult {
   const importedAt = nowIso();
   const patientEntry = bundle.entry.find(
     (entry) => asRecord(entry.resource)?.resourceType === 'Patient'
@@ -199,17 +210,17 @@ export function normalizeSmartFhirBundle(bundle: SmartFhirBundle): SmartFhirImpo
     }
 
     if (resourceType === 'Observation') {
-      events.push(buildObservationEvent(resource, patientIdentity, importedAt));
+      events.push(buildObservationEvent(resource, patientIdentity, importedAt, timeZone));
       continue;
     }
 
     if (resourceType === 'Condition') {
-      events.push(buildConditionEvent(resource, patientIdentity, importedAt));
+      events.push(buildConditionEvent(resource, patientIdentity, importedAt, timeZone));
       continue;
     }
 
     if (resourceType === 'MedicationRequest') {
-      events.push(buildMedicationRequestEvent(resource, patientIdentity, importedAt));
+      events.push(buildMedicationRequestEvent(resource, patientIdentity, importedAt, timeZone));
       continue;
     }
 

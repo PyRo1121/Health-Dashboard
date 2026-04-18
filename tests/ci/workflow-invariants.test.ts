@@ -39,7 +39,36 @@ describe('workflow structure invariants', () => {
     expect(jobNames).toContain('typecheck');
     expect(jobNames).toContain('unit-tests');
     expect(jobNames).toContain('component-tests');
+    expect(jobNames).toContain('coverage');
+    expect(jobNames).toContain('smoke-tests');
+    expect(jobNames).toContain('operational-check');
     expect(jobNames).toContain('build');
+  });
+
+  it('release.yml requires proof jobs before build and publish', () => {
+    const wf = readWorkflow('release.yml');
+    expect(wf).not.toBeNull();
+    const jobs = wf!.jobs as Record<string, Record<string, unknown>>;
+
+    expect(Object.keys(jobs)).toContain('typecheck');
+    expect(Object.keys(jobs)).toContain('unit-tests');
+    expect(Object.keys(jobs)).toContain('component-tests');
+    expect(Object.keys(jobs)).toContain('e2e');
+    expect(Object.keys(jobs)).toContain('coverage');
+    expect(Object.keys(jobs)).toContain('smoke-tests');
+    expect(Object.keys(jobs)).toContain('operational-check');
+
+    expect(jobs['build']?.needs).toEqual([
+      'typecheck',
+      'unit-tests',
+      'component-tests',
+      'e2e',
+      'coverage',
+      'smoke-tests',
+      'operational-check',
+    ]);
+
+    expect(jobs['publish']?.needs).toEqual(['build', 'sign', 'sbom', 'scan']);
   });
 
   it('grok-ci-surgeon.yml has correct permissions', () => {

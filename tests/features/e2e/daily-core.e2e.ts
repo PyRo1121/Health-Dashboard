@@ -1,9 +1,8 @@
 import { expect, test } from '@playwright/test';
-
-const resetHeaders = { 'x-health-reset-token': 'codex-e2e' };
+import { postMigrationSnapshot, resetDb } from '../../support/e2e/http';
 
 test.beforeEach(async ({ page }) => {
-  const response = await page.request.post('/api/test/reset-db', { headers: resetHeaders });
+  const response = await resetDb(page.request);
   expect(response.ok()).toBe(true);
 });
 
@@ -90,7 +89,7 @@ test('packaged food search keeps cached local hits selectable alongside remote r
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],

@@ -1,20 +1,23 @@
 import type { Handle } from '@sveltejs/kit';
 import { authorizeSessionRequest } from '$lib/server/http/session-guard';
 
-function requestNeedsSession(pathname: string): boolean {
-  if (pathname === '/api/status') {
-    return false;
-  }
+const PUBLIC_PATHS = new Set([
+  '/api/status',
+  '/downloads/ios-shortcuts/healthkit-companion-template.json',
+  '/downloads/ios-shortcuts/shortcut-blueprint.md',
+  '/favicon.ico',
+]);
 
-  if (pathname.startsWith('/api/')) {
-    return true;
+function requestNeedsSession(pathname: string): boolean {
+  if (PUBLIC_PATHS.has(pathname)) {
+    return false;
   }
 
   if (pathname.startsWith('/_app/')) {
     return false;
   }
 
-  return !/\.[a-z0-9]+$/i.test(pathname);
+  return true;
 }
 
 export const handle: Handle = async ({ event, resolve }) => {

@@ -9,6 +9,7 @@ import {
 import { requireControlPlaneToken } from '$lib/server/http/control-plane-guard';
 
 const INVALID_MIGRATION_REQUEST_MESSAGE = 'Invalid migration request payload.';
+const MAX_MIGRATION_REQUEST_BYTES = 5_000_000;
 const SNAPSHOT_KEYS = [
   'dailyRecords',
   'journalEntries',
@@ -69,6 +70,11 @@ function parseMigrationRequest(value: unknown): MigrationRequest | null {
 }
 
 export const POST: RequestHandler = async ({ request }) => {
+  const contentLength = Number.parseInt(request.headers.get('content-length') ?? '', 10);
+  if (Number.isFinite(contentLength) && contentLength > MAX_MIGRATION_REQUEST_BYTES) {
+    return new Response('Migration request payload is too large.', { status: 413 });
+  }
+
   const authResponse = requireControlPlaneToken(request, {
     envVar: 'HEALTH_CONTROL_PLANE_TOKEN',
     headerName: 'x-health-control-token',

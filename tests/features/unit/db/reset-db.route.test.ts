@@ -4,11 +4,15 @@ describe('reset-db route', () => {
   afterEach(() => {
     delete process.env.HEALTH_RESET_TOKEN;
     vi.doUnmock('$lib/server/db/drizzle/client');
+    vi.doUnmock('$lib/server/settings/store');
     vi.restoreAllMocks();
     vi.resetModules();
   });
 
-  async function importRoute(overrides?: { resetServerDrizzleStorage?: ReturnType<typeof vi.fn> }) {
+  async function importRoute(overrides?: {
+    resetServerDrizzleStorage?: ReturnType<typeof vi.fn>;
+    clearServerOwnerProfile?: ReturnType<typeof vi.fn>;
+  }) {
     class MockPlaywrightModeRequiredError extends Error {
       constructor() {
         super('Database reset is only available in Playwright mode.');
@@ -19,6 +23,9 @@ describe('reset-db route', () => {
     vi.doMock('$lib/server/db/drizzle/client', () => ({
       PlaywrightModeRequiredError: MockPlaywrightModeRequiredError,
       resetServerDrizzleStorage: overrides?.resetServerDrizzleStorage ?? vi.fn(() => undefined),
+    }));
+    vi.doMock('$lib/server/settings/store', () => ({
+      clearServerOwnerProfile: overrides?.clearServerOwnerProfile ?? vi.fn(async () => undefined),
     }));
 
     const route = await import('../../../../src/routes/api/test/reset-db/+server.ts');
@@ -63,7 +70,8 @@ describe('reset-db route', () => {
   it('returns ok when the helper succeeds', async () => {
     process.env.HEALTH_RESET_TOKEN = 'reset-token';
     const resetServerDrizzleStorage = vi.fn(() => undefined);
-    const { POST } = await importRoute({ resetServerDrizzleStorage });
+    const clearServerOwnerProfile = vi.fn(async () => undefined);
+    const { POST } = await importRoute({ resetServerDrizzleStorage, clearServerOwnerProfile });
 
     const response = await POST({
       request: new Request('http://health.test/api/test/reset-db', {
@@ -75,6 +83,7 @@ describe('reset-db route', () => {
     expect(response.status).toBe(200);
     expect(await response.json()).toEqual({ ok: true });
     expect(resetServerDrizzleStorage).toHaveBeenCalledTimes(1);
+    expect(clearServerOwnerProfile).toHaveBeenCalledTimes(1);
   });
 });
 
