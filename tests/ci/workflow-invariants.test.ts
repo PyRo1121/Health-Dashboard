@@ -71,6 +71,27 @@ describe('workflow structure invariants', () => {
     expect(jobs['publish']?.needs).toEqual(['build', 'sign', 'sbom', 'scan']);
   });
 
+  it('operational-check jobs explicitly opt into the local insecure auth override', () => {
+    const ci = readWorkflow('ci.yml');
+    const release = readWorkflow('release.yml');
+    expect(ci).not.toBeNull();
+    expect(release).not.toBeNull();
+
+    const ciJobs = ci!.jobs as Record<string, Record<string, unknown>>;
+    const releaseJobs = release!.jobs as Record<string, Record<string, unknown>>;
+
+    expect(ciJobs['operational-check']?.env).toEqual(
+      expect.objectContaining({
+        HEALTH_ALLOW_INSECURE_LOCAL_DEV: 'true',
+      })
+    );
+    expect(releaseJobs['operational-check']?.env).toEqual(
+      expect.objectContaining({
+        HEALTH_ALLOW_INSECURE_LOCAL_DEV: 'true',
+      })
+    );
+  });
+
   it('grok-ci-surgeon.yml has correct permissions', () => {
     const wf = readWorkflow('grok-ci-surgeon.yml');
     expect(wf).not.toBeNull();

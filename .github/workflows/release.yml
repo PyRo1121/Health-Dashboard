@@ -196,6 +196,9 @@ jobs:
     permissions:
       contents: read
 
+    env:
+      HEALTH_ALLOW_INSECURE_LOCAL_DEV: 'true'
+
     steps:
       - name: Check out repository
         uses: actions/checkout@v6
