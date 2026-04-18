@@ -35,7 +35,7 @@ jobs:
           OUTPUT: CHANGELOG.md
 
       - name: Create changelog PR
-        uses: peter-evans/create-pull-request@v7
+        uses: peter-evans/create-pull-request@v8
         with:
           commit-message: 'docs(changelog): update generated changelog'
           title: 'docs(changelog): refresh CHANGELOG.md'
