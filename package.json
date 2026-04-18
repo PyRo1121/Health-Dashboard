@@ -55,7 +55,7 @@
     "@vitest/coverage-v8": "^4.1.2",
     "danger": "^13.0.7",
     "drizzle-kit": "0.31.4",
-    "drizzle-orm": "0.44.5",
+    "drizzle-orm": "0.45.2",
     "eslint": "^10.0.3",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-svelte": "^3.15.2",
