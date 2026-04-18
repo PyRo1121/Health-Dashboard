@@ -1,0 +1,27 @@
+.github/workflows/ci.yml
+  502af712075941b9 237-239
+.github/workflows/release.yml
+  502af712075941b9 199-201
+tests/ci/workflow-invariants.test.ts
+  502af712075941b9 74-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "fd43552790dbb399fd4f972f6aeb81d363c5361c",
+  "prompts": {
+    "502af712075941b9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9dab-b782-7560-8958-3cb80c8072f6",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 27,
+      "total_deletions": 0,
+      "accepted_lines": 27,
+      "overriden_lines": 0
+    }
+  }
+}
