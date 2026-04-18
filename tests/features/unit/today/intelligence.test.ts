@@ -76,6 +76,7 @@ describe('today intelligence', () => {
             'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.',
           ],
           mealRecommendation: {
+            itemId: 'food-1',
             title: 'Greek yogurt bowl',
             subtitle: '310 kcal · 24g protein · easy to log',
             reasons: ['It lifts protein pace without adding friction.'],

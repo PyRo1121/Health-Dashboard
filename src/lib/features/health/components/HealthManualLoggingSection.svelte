@@ -122,7 +122,7 @@
                 class="status-copy"
                 href={toSafeExternalHref(suggestion.referenceUrl) ?? undefined}
                 target="_blank"
-                rel="noreferrer"
+                rel="external noreferrer"
                 aria-label={`Learn more about ${suggestion.label}`}
               >
                 Learn more

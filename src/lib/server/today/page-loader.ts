@@ -9,6 +9,7 @@ import type {
   RecipeCatalogItem,
   WorkoutTemplate,
 } from '$lib/core/domain/types';
+import { sortHealthEventTimestamp } from '$lib/core/shared/health-events';
 import { buildDailyNutritionSummaryFromEntries } from '$lib/features/nutrition/summary';
 import type { TodayPageState } from '$lib/features/today/controller';
 import { createTodayFormFromSnapshot } from '$lib/features/today/model';
@@ -37,13 +38,24 @@ export type TodaySourceData = {
 };
 
 function sortTodayEvents(events: HealthEvent[]): HealthEvent[] {
+  const compareTimestamp = (left: string, right: string): number => {
+    const leftMs = Date.parse(left);
+    const rightMs = Date.parse(right);
+
+    if (Number.isFinite(leftMs) && Number.isFinite(rightMs) && leftMs !== rightMs) {
+      return leftMs - rightMs;
+    }
+
+    return left.localeCompare(right);
+  };
+
   return [...events].sort((left, right) => {
-    const leftTimestamp = left.sourceTimestamp ?? left.createdAt;
-    const rightTimestamp = right.sourceTimestamp ?? right.createdAt;
+    const leftTimestamp = sortHealthEventTimestamp(left);
+    const rightTimestamp = sortHealthEventTimestamp(right);
 
     return (
-      leftTimestamp.localeCompare(rightTimestamp) ||
-      left.createdAt.localeCompare(right.createdAt) ||
+      compareTimestamp(leftTimestamp, rightTimestamp) ||
+      compareTimestamp(left.createdAt, right.createdAt) ||
       left.eventType.localeCompare(right.eventType) ||
       left.id.localeCompare(right.id)
     );

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ImportBatch, ImportPreviewResult } from '$lib/core/domain/types';
+import type { ImportPreviewResult } from '$lib/core/domain/types';
 import type { ImportPayloadSummary } from '$lib/features/imports/core';
 import {
   allowsHelperLinks,
@@ -31,14 +31,6 @@ const INVALID_SUMMARY: ImportPayloadSummary = {
   status: 'invalid',
   headline: 'Invalid',
   detail: 'Looks broken.',
-};
-
-const STAGED_BATCH: ImportBatch = {
-  id: 'batch-1',
-  createdAt: '2026-04-02T08:00:00.000Z',
-  updatedAt: '2026-04-02T08:00:00.000Z',
-  sourceType: 'healthkit-companion',
-  status: 'staged',
 };
 
 const PREVIEW_RESULT: ImportPreviewResult = {

@@ -217,12 +217,12 @@ export async function applyTodayRecoveryAction(
 
   if (actionId === 'apply-recovery-meal') {
     const recommendation = adaptation.mealRecommendation;
-    if (!recommendation) {
+    if (!recommendation?.itemId) {
       return false;
     }
 
     const food = (await listFoodCatalogItems(store)).find(
-      (item) => item.name === recommendation.title
+      (item) => item.id === recommendation.itemId
     );
     if (!food) {
       return false;

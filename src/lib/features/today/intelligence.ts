@@ -73,6 +73,7 @@ export interface TodayIntelligenceResult {
 }
 
 export interface TodayRecoveryRecommendation {
+  itemId?: string;
   title: string;
   subtitle: string;
   reasons: string[];

@@ -18,11 +18,16 @@ import { DEFAULT_WEEKLY_PLAN_TITLE } from '$lib/features/planning/service';
 import { getServerDrizzleClient } from '$lib/server/db/drizzle/client';
 import { drizzleSchema } from '$lib/server/db/drizzle/schema';
 import {
+  deserializeMirrorRows,
   selectAllMirrorRecords,
   selectMirrorRecordById,
   selectMirrorRecordsByField,
+  serializeColumnValue,
   upsertMirrorRecord,
+  upsertMirrorRecordSync,
 } from '$lib/server/db/drizzle/mirror';
+
+type MirrorWriteDb = Pick<ReturnType<typeof getServerDrizzleClient>['db'], 'insert' | 'select'>;
 
 function sortByName<T extends { name: string }>(items: T[]): T[] {
   return [...items].sort((left, right) => left.name.localeCompare(right.name));
@@ -30,6 +35,38 @@ function sortByName<T extends { name: string }>(items: T[]): T[] {
 
 function sortByTitle<T extends { title: string }>(items: T[]): T[] {
   return [...items].sort((left, right) => left.title.localeCompare(right.title));
+}
+
+function asTable(table: unknown): Record<string, unknown> {
+  return table as Record<string, unknown>;
+}
+
+function selectMirrorRecordsByFieldSync<T>(
+  db: MirrorWriteDb,
+  table: unknown,
+  field: string,
+  value: unknown
+): T[] {
+  const t = asTable(table);
+  const rows = db
+    .select({ recordJson: t.recordJson as never })
+    .from(table as never)
+    .where(eq(t[field] as never, serializeColumnValue(value)))
+    .all();
+
+  return deserializeMirrorRows<T>(rows as Array<{ recordJson: string }>);
+}
+
+function compareWeeklyPlans(left: WeeklyPlan, right: WeeklyPlan): number {
+  return (
+    right.updatedAt.localeCompare(left.updatedAt) ||
+    right.createdAt.localeCompare(left.createdAt) ||
+    left.id.localeCompare(right.id)
+  );
+}
+
+function pickCanonicalWeeklyPlan(plans: WeeklyPlan[]): WeeklyPlan | null {
+  return [...plans].sort(compareWeeklyPlans)[0] ?? null;
 }
 
 export async function listFoodCatalogItemsServer(): Promise<FoodCatalogItem[]> {
@@ -74,8 +111,27 @@ export async function listWeeklyPlanSlotsServer(weeklyPlanId: string): Promise<P
 
 export async function listPlanSlotsForDayServer(localDay: string): Promise<PlanSlot[]> {
   const { db } = getServerDrizzleClient();
+  const weeklyPlan = pickCanonicalWeeklyPlan(
+    await selectMirrorRecordsByField<WeeklyPlan>(
+      db,
+      drizzleSchema.weeklyPlans,
+      'weekStart',
+      startOfWeek(localDay)
+    )
+  );
+  if (!weeklyPlan) {
+    return [];
+  }
+
   return sortPlanSlots(
-    await selectMirrorRecordsByField<PlanSlot>(db, drizzleSchema.planSlots, 'localDay', localDay)
+    (
+      await selectMirrorRecordsByField<PlanSlot>(
+        db,
+        drizzleSchema.planSlots,
+        'weeklyPlanId',
+        weeklyPlan.id
+      )
+    ).filter((slot) => slot.localDay === localDay)
   );
 }
 
@@ -106,26 +162,28 @@ export async function listManualGroceriesServer(
 export async function ensureWeeklyPlanServer(anchorDay: string): Promise<WeeklyPlan> {
   const { db } = getServerDrizzleClient();
   const weekStart = startOfWeek(anchorDay);
-  const existing = (
-    await selectMirrorRecordsByField<WeeklyPlan>(
-      db,
-      drizzleSchema.weeklyPlans,
-      'weekStart',
-      weekStart
-    )
-  )[0];
-  if (existing) {
-    return existing;
-  }
+  return db.transaction((tx) => {
+    const existing = pickCanonicalWeeklyPlan(
+      selectMirrorRecordsByFieldSync<WeeklyPlan>(
+        tx,
+        drizzleSchema.weeklyPlans,
+        'weekStart',
+        weekStart
+      )
+    );
+    if (existing) {
+      return existing;
+    }
 
-  const timestamp = new Date().toISOString();
-  const plan: WeeklyPlan = {
-    ...createRecordMeta(createRecordId('weekly-plan'), timestamp),
-    weekStart,
-    title: DEFAULT_WEEKLY_PLAN_TITLE,
-  };
-  await upsertMirrorRecord(db, 'weeklyPlans', drizzleSchema.weeklyPlans, plan);
-  return plan;
+    const timestamp = new Date().toISOString();
+    const plan: WeeklyPlan = {
+      ...createRecordMeta(createRecordId('weekly-plan'), timestamp),
+      weekStart,
+      title: DEFAULT_WEEKLY_PLAN_TITLE,
+    };
+    upsertMirrorRecordSync(tx, 'weeklyPlans', drizzleSchema.weeklyPlans, plan);
+    return plan;
+  });
 }
 
 export async function savePlanSlotServer(input: {
@@ -139,30 +197,30 @@ export async function savePlanSlotServer(input: {
   notes?: string;
 }): Promise<PlanSlot> {
   const { db } = getServerDrizzleClient();
-  const siblings = (
-    await selectMirrorRecordsByField<PlanSlot>(
-      db,
+  return db.transaction((tx) => {
+    const siblings = selectMirrorRecordsByFieldSync<PlanSlot>(
+      tx,
       drizzleSchema.planSlots,
       'weeklyPlanId',
       input.weeklyPlanId
-    )
-  ).filter((slot) => slot.localDay === input.localDay);
-  const timestamp = new Date().toISOString();
-  const slot: PlanSlot = {
-    ...createRecordMeta(createRecordId('plan-slot'), timestamp),
-    weeklyPlanId: input.weeklyPlanId,
-    localDay: input.localDay,
-    slotType: input.slotType,
-    itemType: input.itemType,
-    itemId: input.itemId,
-    mealType: input.slotType === 'meal' ? input.mealType : undefined,
-    title: input.title.trim(),
-    notes: input.notes?.trim() || undefined,
-    status: 'planned',
-    order: siblings.length ? Math.max(...siblings.map((slot) => slot.order)) + 1 : 0,
-  };
-  await upsertMirrorRecord(db, 'planSlots', drizzleSchema.planSlots, slot);
-  return slot;
+    ).filter((slot) => slot.localDay === input.localDay);
+    const timestamp = new Date().toISOString();
+    const slot: PlanSlot = {
+      ...createRecordMeta(createRecordId('plan-slot'), timestamp),
+      weeklyPlanId: input.weeklyPlanId,
+      localDay: input.localDay,
+      slotType: input.slotType,
+      itemType: input.itemType,
+      itemId: input.itemId,
+      mealType: input.slotType === 'meal' ? input.mealType : undefined,
+      title: input.title.trim(),
+      notes: input.notes?.trim() || undefined,
+      status: 'planned',
+      order: siblings.length ? Math.max(...siblings.map((slot) => slot.order)) + 1 : 0,
+    };
+    upsertMirrorRecordSync(tx, 'planSlots', drizzleSchema.planSlots, slot);
+    return slot;
+  });
 }
 
 export async function updatePlanSlotServer(

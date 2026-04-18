@@ -242,8 +242,8 @@ export async function commitImportBatch(
   const resolvedSourceType = analysis?.sourceType ?? input.sourceType;
   const batch = await createImportBatch(store, resolvedSourceType);
   const affectedDays = new Set<string>();
-  let adds = 0;
-  let duplicates = 0;
+  let adds!: number;
+  let duplicates!: number;
 
   if (resolvedSourceType === 'apple-health-xml') {
     const parsed = analysis?.healthEvents ?? parseAppleHealthXml(input.rawText);

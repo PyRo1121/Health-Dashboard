@@ -144,7 +144,7 @@
               class="event-reference-link"
               href={toSafeExternalHref(event.referenceUrl) ?? undefined}
               target="_blank"
-              rel="noreferrer"
+              rel="external noreferrer"
               aria-label={`Learn more about same-day event ${event.label}`}
             >
               Learn more

@@ -137,6 +137,7 @@ function toTodayMealRecommendation(
   }
 
   return {
+    itemId: recommendation.id,
     title: recommendation.title,
     subtitle: recommendation.subtitle,
     reasons: recommendation.reasons,

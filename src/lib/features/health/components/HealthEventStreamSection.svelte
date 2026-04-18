@@ -26,7 +26,7 @@
                   class="status-copy"
                   href={toSafeExternalHref(event.referenceUrl) ?? undefined}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="external noreferrer"
                   aria-label={`Learn more about logged medication ${event.title}`}
                 >
                   Learn more

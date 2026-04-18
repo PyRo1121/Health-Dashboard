@@ -22,11 +22,9 @@ import { drizzleSchema } from '$lib/server/db/drizzle/schema';
 import {
   selectAllMirrorRecords,
   selectMirrorRecordById,
-  selectMirrorRecordsByField,
   selectMirrorRecordsByFieldValues,
   upsertMirrorRecord,
   upsertMirrorRecordSync,
-  upsertMirrorRecords,
   upsertMirrorRecordsSync,
 } from '$lib/server/db/drizzle/mirror';
 import { refreshWeeklyReviewArtifactsForDaysServer } from '$lib/server/review/service';
@@ -67,25 +65,6 @@ function resolveSmartClinicalImport(
     events: imported.events,
     patientIdentity: imported.patientIdentity,
   };
-}
-
-async function stageArtifacts(input: {
-  batchId: string;
-  artifactType: 'healthEvent' | 'journalEntry';
-  records: Array<HealthEvent | JournalEntry>;
-}): Promise<void> {
-  const { db } = getServerDrizzleClient();
-  const timestamp = nowIso();
-
-  const artifacts: ImportArtifact[] = input.records.map((record) => ({
-    ...createRecordMeta(createRecordId('import-artifact'), timestamp),
-    batchId: input.batchId,
-    artifactType: input.artifactType,
-    fingerprint: textFingerprint(JSON.stringify(record)),
-    payload: record as unknown as Record<string, unknown>,
-  }));
-
-  await upsertMirrorRecords(db, 'importArtifacts', drizzleSchema.importArtifacts, artifacts);
 }
 
 function stageArtifactsSync(input: {
@@ -281,8 +260,8 @@ export async function commitImportBatchServer(input: {
   const affectedDays = new Set<string>();
   let healthEvents: HealthEvent[] = [];
   let journalEntries: JournalEntry[] = [];
-  let adds = 0;
-  let duplicates = 0;
+  let adds!: number;
+  let duplicates!: number;
 
   if (resolvedSourceType === 'apple-health-xml') {
     const parsed = analysis?.healthEvents ?? parseAppleHealthXml(input.rawText);

@@ -89,7 +89,7 @@
                     class="timeline-reference-link"
                     href={toSafeExternalHref(item.referenceUrl) ?? undefined}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="external noreferrer"
                     aria-label={`Learn more about timeline event ${item.label}`}
                   >
                     Learn more

@@ -4,13 +4,15 @@ import {
   PlaywrightModeRequiredError,
   resetServerDrizzleStorage,
 } from '$lib/server/db/drizzle/client';
-
-const HEALTH_RESET_TOKEN = 'codex-e2e';
+import { requireControlPlaneToken } from '$lib/server/http/control-plane-guard';
 
 export const POST: RequestHandler = async ({ request }) => {
-  const token = request.headers.get('x-health-reset-token');
-  if (token !== HEALTH_RESET_TOKEN) {
-    return new Response('Forbidden', { status: 403 });
+  const authResponse = requireControlPlaneToken(request, {
+    envVar: 'HEALTH_RESET_TOKEN',
+    headerName: 'x-health-reset-token',
+  });
+  if (authResponse) {
+    return authResponse;
   }
 
   try {
