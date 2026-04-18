@@ -48,7 +48,7 @@
               <a
                 href={toSafeExternalHref(item.href) ?? undefined}
                 target="_blank"
-                rel="noreferrer"
+                rel="external noreferrer"
                 aria-label={`${item.categoryLabel} reference ${item.label} opens in new tab`}
               >
                 {item.label}

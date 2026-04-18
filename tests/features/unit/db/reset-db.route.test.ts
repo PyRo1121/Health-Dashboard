@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 
 describe('reset-db route', () => {
   afterEach(() => {
+    delete process.env.HEALTH_RESET_TOKEN;
     vi.doUnmock('$lib/server/db/drizzle/client');
     vi.restoreAllMocks();
     vi.resetModules();
@@ -25,6 +26,7 @@ describe('reset-db route', () => {
   }
 
   it('returns 403 when the reset token is missing or invalid', async () => {
+    process.env.HEALTH_RESET_TOKEN = 'reset-token';
     const resetServerDrizzleStorage = vi.fn(() => undefined);
     const { POST } = await importRoute({ resetServerDrizzleStorage });
 
@@ -40,6 +42,7 @@ describe('reset-db route', () => {
   });
 
   it('returns 403 when the helper refuses outside playwright mode', async () => {
+    process.env.HEALTH_RESET_TOKEN = 'reset-token';
     const { POST, MockPlaywrightModeRequiredError } = await importRoute({
       resetServerDrizzleStorage: vi.fn(() => {
         throw new MockPlaywrightModeRequiredError();
@@ -49,7 +52,7 @@ describe('reset-db route', () => {
     const response = await POST({
       request: new Request('http://health.test/api/test/reset-db', {
         method: 'POST',
-        headers: { 'x-health-reset-token': 'codex-e2e' },
+        headers: { 'x-health-reset-token': 'reset-token' },
       }),
     } as Parameters<typeof POST>[0]);
 
@@ -58,13 +61,14 @@ describe('reset-db route', () => {
   });
 
   it('returns ok when the helper succeeds', async () => {
+    process.env.HEALTH_RESET_TOKEN = 'reset-token';
     const resetServerDrizzleStorage = vi.fn(() => undefined);
     const { POST } = await importRoute({ resetServerDrizzleStorage });
 
     const response = await POST({
       request: new Request('http://health.test/api/test/reset-db', {
         method: 'POST',
-        headers: { 'x-health-reset-token': 'codex-e2e' },
+        headers: { 'x-health-reset-token': 'reset-token' },
       }),
     } as Parameters<typeof POST>[0]);
 

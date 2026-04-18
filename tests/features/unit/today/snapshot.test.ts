@@ -418,6 +418,7 @@ describe('today snapshot', () => {
       'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
     );
     expect(snapshot.recoveryAdaptation?.mealRecommendation).toMatchObject({
+      itemId: expect.any(String),
       title: 'Greek yogurt bowl',
       actionId: 'apply-recovery-meal',
       actionLabel: 'Swap to recovery meal',

@@ -178,6 +178,7 @@ describe('today model', () => {
           'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.',
         ],
         mealRecommendation: {
+          itemId: 'food-1',
           title: 'Greek yogurt bowl',
           subtitle: 'Saved food · Local catalog · 24g protein',
           reasons: ['Protein-forward and easy to repeat.'],

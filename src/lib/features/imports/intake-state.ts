@@ -1,4 +1,4 @@
-import type { ImportBatch, ImportPreviewResult, ImportSourceType } from '$lib/core/domain/types';
+import type { ImportPreviewResult, ImportSourceType } from '$lib/core/domain/types';
 import type { ImportPayloadSummary } from './core';
 
 export type PayloadOrigin = 'manual' | 'file' | 'sample';

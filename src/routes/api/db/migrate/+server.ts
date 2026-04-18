@@ -6,6 +6,7 @@ import {
   countMigratedRecords,
   importHealthDbSnapshot,
 } from '$lib/server/db/drizzle/import-snapshot';
+import { requireControlPlaneToken } from '$lib/server/http/control-plane-guard';
 
 const INVALID_MIGRATION_REQUEST_MESSAGE = 'Invalid migration request payload.';
 const SNAPSHOT_KEYS = [
@@ -68,6 +69,14 @@ function parseMigrationRequest(value: unknown): MigrationRequest | null {
 }
 
 export const POST: RequestHandler = async ({ request }) => {
+  const authResponse = requireControlPlaneToken(request, {
+    envVar: 'HEALTH_CONTROL_PLANE_TOKEN',
+    headerName: 'x-health-control-token',
+  });
+  if (authResponse) {
+    return authResponse;
+  }
+
   let body: unknown;
 
   try {

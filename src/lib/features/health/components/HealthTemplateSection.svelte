@@ -138,7 +138,7 @@
                 class="status-copy"
                 href={toSafeExternalHref(suggestion.referenceUrl) ?? undefined}
                 target="_blank"
-                rel="noreferrer"
+                rel="external noreferrer"
                 aria-label={`Learn more about ${suggestion.label}`}
               >
                 Learn more
@@ -169,7 +169,7 @@
                   class="status-copy"
                   href={toSafeExternalHref(template.referenceUrl) ?? undefined}
                   target="_blank"
-                  rel="noreferrer"
+                  rel="external noreferrer"
                   aria-label={`Learn more about saved ${
                     template.templateType === 'medication' ? 'medication' : 'supplement'
                   } ${template.label}`}

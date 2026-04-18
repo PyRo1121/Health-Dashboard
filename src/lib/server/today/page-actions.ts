@@ -216,7 +216,7 @@ export async function markTodayPlanSlotStatusPageServer(
     return await loadTodayPageServerWithNotice(slot.localDay, `Plan item marked ${status}.`);
   }
 
-  return await loadTodayPageServerWithNotice(state.todayDate, `Plan item marked ${status}.`);
+  return await loadTodayPageServerWithNotice(state.todayDate, 'Plan item no longer exists.');
 }
 
 export async function applyTodayRecoveryActionPageServer(
@@ -232,11 +232,11 @@ export async function applyTodayRecoveryActionPageServer(
 
   if (actionId === 'apply-recovery-meal') {
     const recommendation = adaptation.mealRecommendation;
-    if (!recommendation) {
+    if (!recommendation?.itemId) {
       return await loadTodayPageServerWithNotice(state.todayDate, 'Recovery action unavailable.');
     }
 
-    const food = source.foodCatalogItems.find((item) => item.name === recommendation.title);
+    const food = source.foodCatalogItems.find((item) => item.id === recommendation.itemId);
     if (!food) {
       return await loadTodayPageServerWithNotice(state.todayDate, 'Recovery action unavailable.');
     }
