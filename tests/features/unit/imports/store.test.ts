@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { resolvedTimeZone, toLocalDay } from '$lib/core/domain/time';
 import {
   commitImportBatch,
   dedupeImportedEvents,
@@ -44,10 +45,41 @@ describe('imports store', () => {
     expect(records[0]?.eventType).toBe('step-count');
   });
 
+  it('derives Apple Health localDay from the provided timezone instead of slicing UTC', () => {
+    const records = parseAppleHealthXml(
+      `<?xml version="1.0" encoding="UTF-8"?>
+<HealthData>
+  <Record type="HKQuantityTypeIdentifierStepCount" sourceName="iPhone" unit="count" value="4321" startDate="2026-04-02T04:30:00.000Z" />
+</HealthData>`,
+      'America/Chicago'
+    );
+
+    expect(records[0]?.sourceTimestamp).toBe('2026-04-02T04:30:00.000Z');
+    expect(records[0]?.localDay).toBe('2026-04-01');
+  });
+
   it('parses Day One entries', () => {
     const entries = parseDayOneExport(DAY_ONE_JSON);
     expect(entries).toHaveLength(1);
     expect(entries[0]?.body).toContain('Morning reflection');
+  });
+
+  it('derives Day One localDay from the provided timezone instead of slicing UTC', () => {
+    const entries = parseDayOneExport(
+      JSON.stringify({
+        entries: [
+          {
+            uuid: 'entry-midnight',
+            creationDate: '2026-04-02T04:30:00.000Z',
+            text: 'Cross-midnight reflection',
+          },
+        ],
+      }),
+      'America/Chicago'
+    );
+
+    expect(entries[0]?.createdAt).toBe('2026-04-02T04:30:00.000Z');
+    expect(entries[0]?.localDay).toBe('2026-04-01');
   });
 
   it('uses one fallback timestamp per Apple Health parse when dates are missing', () => {
@@ -58,7 +90,9 @@ describe('imports store', () => {
 
     expect(records[0]?.createdAt).toBe(records[0]?.updatedAt);
     expect(records[0]?.createdAt).toBe(records[0]?.sourceTimestamp);
-    expect(records[0]?.localDay).toBe(records[0]?.sourceTimestamp?.slice(0, 10));
+    expect(records[0]?.localDay).toBe(
+      toLocalDay(records[0]?.sourceTimestamp ?? records[0]?.createdAt, resolvedTimeZone())
+    );
     expect(records[0]?.sourceRecordId).toBe(
       `iPhone:HKQuantityTypeIdentifierStepCount:${records[0]?.sourceTimestamp}:${records[0]?.sourceTimestamp}:count:4321`
     );
@@ -72,7 +106,7 @@ describe('imports store', () => {
     );
 
     expect(entries[0]?.createdAt).toBe(entries[0]?.updatedAt);
-    expect(entries[0]?.localDay).toBe(entries[0]?.createdAt?.slice(0, 10));
+    expect(entries[0]?.localDay).toBe(toLocalDay(entries[0]?.createdAt ?? '', resolvedTimeZone()));
   });
 
   it('dedupes duplicate sourceRecordId values within same incoming event batch', async () => {

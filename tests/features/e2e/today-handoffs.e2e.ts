@@ -1,9 +1,8 @@
 import { expect, test } from '@playwright/test';
-
-const resetHeaders = { 'x-health-reset-token': 'codex-e2e' };
+import { postMigrationSnapshot, resetDb } from '../../support/e2e/http';
 
 test.beforeEach(async ({ page }) => {
-  const response = await page.request.post('/api/test/reset-db', { headers: resetHeaders });
+  const response = await resetDb(page.request);
   expect(response.ok()).toBe(true);
 });
 
@@ -15,7 +14,7 @@ test('today recovery links into a prefilled journal note', async ({ page }) => {
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -165,7 +164,7 @@ test('journal lets the user link a same-day signal and save it', async ({ page }
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -231,7 +230,7 @@ test('today event stream keeps same-day events in chronological order', async ({
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -352,7 +351,7 @@ test('today can clear a planned meal handoff after nutrition queues it', async (
 });
 
 test('recommended optional-source recipes require review before planning', async ({ page }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -414,7 +413,7 @@ test('nutrition planning replaces stale planned-food slots instead of leaving th
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -510,7 +509,7 @@ test('nutrition planning replaces stale planned-food slots instead of leaving th
 test('switching from a food match to a recipe does not carry stale food macros into the recipe plan', async ({
   page,
 }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -590,7 +589,7 @@ test('switching from a food match to a recipe does not carry stale food macros i
 test('switching from a recipe back to a food match does not leak hidden recipe notes into the food plan', async ({
   page,
 }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -673,7 +672,7 @@ test('today shows recovery-aware fallback when sleep and symptoms are rough', as
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -867,7 +866,7 @@ test('today recovery actions swap in the fallback suggestions', async ({ page })
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -1048,7 +1047,7 @@ test('today recovery mode does not offer an unknown-macro saved food as a swap t
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -1215,7 +1214,7 @@ test('recovery meal swap clears stale notes from the replaced planned meal', asy
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -1350,7 +1349,7 @@ test('today prefers a later valid planned meal over an earlier stale slot', asyn
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -1458,7 +1457,7 @@ test('nutrition still surfaces the valid planned meal when an earlier slot is st
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -1561,7 +1560,7 @@ test('recovery meal swap replaces the visible planned meal instead of mutating a
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -1713,7 +1712,7 @@ test('today clear plan removes stale same-day meal slots alongside the visible h
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -1815,7 +1814,7 @@ test('today logging a valid planned meal also clears stale sibling meal handoffs
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -1915,7 +1914,7 @@ test('nutrition clear plan removes stale sibling meal handoffs too', async ({ pa
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -2015,7 +2014,7 @@ test('recovery meal swap clears stale sibling meal slots too', async ({ page }) 
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -2164,7 +2163,7 @@ test('recovery workout swap targets the visible planned workout instead of an ea
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -2294,7 +2293,7 @@ test('recovery workout swap clears stale sibling workout slots too', async ({ pa
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -2423,7 +2422,7 @@ test('marking the visible planned workout done clears stale sibling workout slot
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -2556,7 +2555,7 @@ test('marking the visible planned meal done clears stale sibling meal slots too'
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -2664,7 +2663,7 @@ test('nutrition can load a planned recipe slot into the draft', async ({ page })
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -2748,7 +2747,7 @@ test('nutrition can load a planned recipe slot into the draft', async ({ page })
 test('saving a recipe-loaded draft as a custom food does not fabricate zero macros', async ({
   page,
 }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],
@@ -2950,7 +2949,7 @@ test('today clear plan removes stale sibling recipe meal slots too', async ({ pa
     day: '2-digit',
   }).format(new Date());
 
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [],

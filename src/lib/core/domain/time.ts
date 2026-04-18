@@ -9,6 +9,10 @@ export function toLocalDay(value: Date | string, timeZone = 'UTC'): string {
   }).format(date);
 }
 
+export function resolvedTimeZone(): string {
+  return Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC';
+}
+
 export function nowIso(value: Date | string = new Date()): string {
   const date = value instanceof Date ? value : new Date(value);
   return date.toISOString();
@@ -16,7 +20,7 @@ export function nowIso(value: Date | string = new Date()): string {
 
 export function currentLocalDay(
   value: Date | string = new Date(),
-  timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone
+  timeZone = resolvedTimeZone()
 ): string {
   return toLocalDay(value, timeZone);
 }

@@ -147,4 +147,27 @@ describe('db migrate route', () => {
     expect(importHealthDbSnapshot).not.toHaveBeenCalled();
     expect(countMigratedRecords).not.toHaveBeenCalled();
   });
+
+  it('returns 413 when the migration request content-length exceeds the route limit', async () => {
+    process.env.HEALTH_CONTROL_PLANE_TOKEN = 'control-token';
+    const importHealthDbSnapshot = vi.fn(async () => undefined);
+    const countMigratedRecords = vi.fn(() => 0);
+    const { POST } = await importRoute({ importHealthDbSnapshot, countMigratedRecords });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/db/migrate', {
+        method: 'POST',
+        headers: {
+          'content-length': '6000001',
+          'x-health-control-token': 'control-token',
+        },
+        body: JSON.stringify({ snapshot: createSnapshot() }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(413);
+    expect(await response.text()).toBe('Migration request payload is too large.');
+    expect(importHealthDbSnapshot).not.toHaveBeenCalled();
+    expect(countMigratedRecords).not.toHaveBeenCalled();
+  });
 });

@@ -111,28 +111,46 @@ export async function listWeeklyPlanSlotsServer(weeklyPlanId: string): Promise<P
 
 export async function listPlanSlotsForDayServer(localDay: string): Promise<PlanSlot[]> {
   const { db } = getServerDrizzleClient();
-  const weeklyPlan = pickCanonicalWeeklyPlan(
-    await selectMirrorRecordsByField<WeeklyPlan>(
-      db,
-      drizzleSchema.weeklyPlans,
-      'weekStart',
-      startOfWeek(localDay)
-    )
+  const directDaySlots = await selectMirrorRecordsByField<PlanSlot>(
+    db,
+    drizzleSchema.planSlots,
+    'localDay',
+    localDay
   );
-  if (!weeklyPlan) {
+  if (!directDaySlots.length) {
     return [];
   }
 
-  return sortPlanSlots(
-    (
-      await selectMirrorRecordsByField<PlanSlot>(
-        db,
-        drizzleSchema.planSlots,
-        'weeklyPlanId',
-        weeklyPlan.id
+  const weeklyPlanIds = [...new Set(directDaySlots.map((slot) => slot.weeklyPlanId))];
+  if (weeklyPlanIds.length === 1) {
+    return sortPlanSlots(directDaySlots);
+  }
+
+  const weeklyPlans = (
+    await Promise.all(
+      weeklyPlanIds.map((weeklyPlanId) =>
+        selectMirrorRecordById<WeeklyPlan>(db, drizzleSchema.weeklyPlans, weeklyPlanId)
       )
-    ).filter((slot) => slot.localDay === localDay)
-  );
+    )
+  ).filter((weeklyPlan): weeklyPlan is WeeklyPlan => weeklyPlan !== undefined);
+
+  const canonicalPlan =
+    pickCanonicalWeeklyPlan(weeklyPlans) ??
+    pickCanonicalWeeklyPlan(
+      directDaySlots.map((slot) => ({
+        id: slot.weeklyPlanId,
+        createdAt: slot.createdAt,
+        updatedAt: slot.updatedAt,
+        weekStart: startOfWeek(localDay),
+        title: DEFAULT_WEEKLY_PLAN_TITLE,
+      }))
+    );
+
+  if (!canonicalPlan) {
+    return sortPlanSlots(directDaySlots);
+  }
+
+  return sortPlanSlots(directDaySlots.filter((slot) => slot.weeklyPlanId === canonicalPlan.id));
 }
 
 export async function listDerivedGroceriesServer(

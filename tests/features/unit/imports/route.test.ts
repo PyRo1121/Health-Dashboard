@@ -3,6 +3,7 @@ import { afterEach, describe, expect, it, vi } from 'vitest';
 describe('imports route', () => {
   afterEach(() => {
     vi.doUnmock('$lib/server/imports/service');
+    vi.doUnmock('$lib/server/settings/store');
     vi.restoreAllMocks();
     vi.resetModules();
   });
@@ -11,6 +12,7 @@ describe('imports route', () => {
     listImportBatchesServer?: ReturnType<typeof vi.fn>;
     previewImportServer?: ReturnType<typeof vi.fn>;
     commitImportBatchServer?: ReturnType<typeof vi.fn>;
+    getServerOwnerProfile?: ReturnType<typeof vi.fn>;
   }) {
     vi.doMock('$lib/server/imports/service', () => ({
       listImportBatchesServer: overrides.listImportBatchesServer ?? vi.fn(async () => []),
@@ -30,6 +32,11 @@ describe('imports route', () => {
           sourceType: 'healthkit-companion',
           status: 'committed',
         })),
+    }));
+    vi.doMock('$lib/server/settings/store', () => ({
+      getServerOwnerProfile: overrides.getServerOwnerProfile ?? vi.fn(async () => null),
+      saveServerOwnerProfile: vi.fn(async () => null),
+      clearServerOwnerProfile: vi.fn(async () => undefined),
     }));
 
     return await import('../../../../src/routes/api/imports/+server.ts');
@@ -181,5 +188,75 @@ describe('imports route', () => {
     } as Parameters<typeof POST>[0]);
     expect(failing.status).toBe(400);
     expect(await failing.text()).toBe('Import preview failed.');
+  });
+
+  it('ignores caller-supplied ownerProfile and uses the server-trusted profile for preview', async () => {
+    const previewImportServer = vi.fn(async () => ({
+      sourceType: 'smart-fhir-sandbox',
+      status: 'preview',
+      summary: { adds: 3, duplicates: 0, warnings: 0 },
+    }));
+    const getServerOwnerProfile = vi.fn(async () => ({
+      fullName: 'Trusted Owner',
+      birthDate: '1990-01-01',
+    }));
+    const { POST } = await importRoute({ previewImportServer, getServerOwnerProfile });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/imports', {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'preview',
+          input: {
+            sourceType: 'smart-fhir-sandbox',
+            rawText: '{}',
+            ownerProfile: {
+              fullName: 'Forged User',
+              birthDate: '2001-02-03',
+            },
+          },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(200);
+    expect(getServerOwnerProfile).toHaveBeenCalledTimes(1);
+    expect(previewImportServer).toHaveBeenCalledWith({
+      sourceType: 'smart-fhir-sandbox',
+      rawText: '{}',
+      ownerProfile: {
+        fullName: 'Trusted Owner',
+        birthDate: '1990-01-01',
+      },
+    });
+  });
+
+  it('returns 413 when the import request content-length exceeds the route limit', async () => {
+    const previewImportServer = vi.fn(async () => ({
+      sourceType: 'day-one-json',
+      status: 'preview',
+      summary: { adds: 1, duplicates: 0, warnings: 0 },
+    }));
+    const { POST } = await importRoute({ previewImportServer });
+
+    const response = await POST({
+      request: new Request('http://health.test/api/imports', {
+        method: 'POST',
+        headers: {
+          'content-length': '2000001',
+        },
+        body: JSON.stringify({
+          action: 'preview',
+          input: {
+            sourceType: 'day-one-json',
+            rawText: '{"entries":[]}',
+          },
+        }),
+      }),
+    } as Parameters<typeof POST>[0]);
+
+    expect(response.status).toBe(413);
+    expect(await response.text()).toBe('Import request payload is too large.');
+    expect(previewImportServer).not.toHaveBeenCalled();
   });
 });

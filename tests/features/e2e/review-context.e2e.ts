@@ -1,14 +1,13 @@
 import { expect, test } from '@playwright/test';
-
-const resetHeaders = { 'x-health-reset-token': 'codex-e2e' };
+import { postMigrationSnapshot, resetDb } from '../../support/e2e/http';
 
 test.beforeEach(async ({ page }) => {
-  const response = await page.request.post('/api/test/reset-db', { headers: resetHeaders });
+  const response = await resetDb(page.request);
   expect(response.ok()).toBe(true);
 });
 
 test('weekly review surfaces journal context signals', async ({ page }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -129,7 +128,7 @@ test('weekly review surfaces journal context signals', async ({ page }) => {
 });
 
 test('weekly review surfaces repeated context patterns', async ({ page }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [
@@ -295,7 +294,7 @@ test('weekly review surfaces repeated context patterns', async ({ page }) => {
 test('weekly review keeps ranked experiment candidate ids stable after saving a different choice', async ({
   page,
 }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         dailyRecords: [

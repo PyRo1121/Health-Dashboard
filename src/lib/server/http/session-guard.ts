@@ -14,8 +14,17 @@ type SessionAuthConfig = {
   sessionValue: string;
 };
 
-function sessionAuthEnabledForRuntime(): boolean {
-  return process.env.NODE_ENV !== 'test' || process.env.HEALTH_AUTH_TEST_MODE === 'enabled';
+type SessionAuthState =
+  | { mode: 'disabled' }
+  | { mode: 'configured'; config: SessionAuthConfig }
+  | { mode: 'misconfigured' };
+
+function runningInUnitTestBypassMode(): boolean {
+  return process.env.NODE_ENV === 'test' && process.env.HEALTH_AUTH_TEST_MODE !== 'enabled';
+}
+
+function insecureLocalDevAllowed(): boolean {
+  return process.env.HEALTH_ALLOW_INSECURE_LOCAL_DEV === 'true';
 }
 
 function readEnv(name: string): string | undefined {
@@ -23,9 +32,9 @@ function readEnv(name: string): string | undefined {
   return value ? value : undefined;
 }
 
-function getSessionAuthConfig(): SessionAuthConfig | null {
-  if (!sessionAuthEnabledForRuntime()) {
-    return null;
+function resolveSessionAuthState(): SessionAuthState {
+  if (runningInUnitTestBypassMode() || insecureLocalDevAllowed()) {
+    return { mode: 'disabled' };
   }
 
   const token = readEnv('HEALTH_AUTH_TOKEN');
@@ -33,16 +42,19 @@ function getSessionAuthConfig(): SessionAuthConfig | null {
   const password = readEnv('HEALTH_AUTH_PASSWORD');
 
   if (!token && !(username && password)) {
-    return null;
+    return { mode: 'misconfigured' };
   }
 
   return {
-    token,
-    username,
-    password,
-    sessionValue: createHash('sha256')
-      .update([token ?? '', username ?? '', password ?? ''].join('\n'))
-      .digest('hex'),
+    mode: 'configured',
+    config: {
+      token,
+      username,
+      password,
+      sessionValue: createHash('sha256')
+        .update([token ?? '', username ?? '', password ?? ''].join('\n'))
+        .digest('hex'),
+    },
   };
 }
 
@@ -113,6 +125,15 @@ function unauthorizedResponse(config: SessionAuthConfig): Response {
   });
 }
 
+function misconfiguredAuthResponse(): Response {
+  return new Response('Server auth is not configured.', {
+    status: 503,
+    headers: {
+      'cache-control': 'no-store',
+    },
+  });
+}
+
 function setSessionCookie(event: Pick<RequestEvent, 'cookies'>, sessionValue: string): void {
   event.cookies.set(HEALTH_SESSION_COOKIE_NAME, sessionValue, {
     path: '/',
@@ -126,10 +147,15 @@ function setSessionCookie(event: Pick<RequestEvent, 'cookies'>, sessionValue: st
 export function authorizeSessionRequest(
   event: Pick<RequestEvent, 'request' | 'cookies'>
 ): Response | null {
-  const config = getSessionAuthConfig();
-  if (!config) {
+  const state = resolveSessionAuthState();
+  if (state.mode === 'disabled') {
     return null;
   }
+  if (state.mode === 'misconfigured') {
+    return misconfiguredAuthResponse();
+  }
+
+  const { config } = state;
 
   const sessionCookie = event.cookies.get(HEALTH_SESSION_COOKIE_NAME);
   if (safeEqual(sessionCookie, config.sessionValue)) {

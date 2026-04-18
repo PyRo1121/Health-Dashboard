@@ -5,6 +5,7 @@ import {
   resetServerDrizzleStorage,
 } from '$lib/server/db/drizzle/client';
 import { requireControlPlaneToken } from '$lib/server/http/control-plane-guard';
+import { clearServerOwnerProfile } from '$lib/server/settings/store';
 
 export const POST: RequestHandler = async ({ request }) => {
   const authResponse = requireControlPlaneToken(request, {
@@ -17,6 +18,7 @@ export const POST: RequestHandler = async ({ request }) => {
 
   try {
     resetServerDrizzleStorage();
+    await clearServerOwnerProfile();
   } catch (error) {
     if (error instanceof PlaywrightModeRequiredError) {
       return new Response('Forbidden', { status: 403 });
