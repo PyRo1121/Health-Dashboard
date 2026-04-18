@@ -196,6 +196,8 @@ function buildWeeklyData(
     grocerySignals: [],
     deviceHighlights: ['Sleep duration: 8 hours on 2026-04-02'],
     assessmentSummary: ['WHO-5: Strong wellbeing (17)'],
+    healthReferenceLinks: [],
+    symptomReferenceLinks: [],
     healthHighlights: ['Low sleep lined up with higher anxiety on 2026-03-31.'],
     contextSignals: ['Low sleep and a written reflection both landed on 2026-03-31.'],
     contextCaptureLinkedEventIds: ['anxiety-1'],
@@ -498,6 +500,113 @@ describe('Review route', () => {
       within(headlineSection).queryByText(
         /^Low sleep lined up with higher anxiety on 2026-03-31\.$/i
       )
+    ).toBeNull();
+  });
+
+  it('renders medication and symptom reference links in a unified review section', async () => {
+    reviewClientMock.setLoadState(
+      buildReviewState(
+        buildWeeklyData({
+          healthReferenceLinks: [
+            {
+              label: 'Metformin 500 MG Oral Tablet',
+              href: 'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+            },
+          ],
+          symptomReferenceLinks: [
+            {
+              label: 'Headache',
+              href: 'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+            },
+          ],
+        })
+      )
+    );
+
+    render(ReviewPage);
+
+    const referencesSection = await waitFor(() => getSection('Health references'));
+    expect(within(referencesSection).getByText('Medication')).toBeTruthy();
+    expect(within(referencesSection).getByText('Symptom')).toBeTruthy();
+    expect(within(referencesSection).getByText('Medication').className).toMatch(
+      /reference-pill--medication/
+    );
+    expect(within(referencesSection).getByText('Symptom').className).toMatch(
+      /reference-pill--symptom/
+    );
+    const medicationLink = within(referencesSection).getByRole('link', {
+      name: 'Medication reference Metformin 500 MG Oral Tablet opens in new tab',
+    });
+    const symptomLink = within(referencesSection).getByRole('link', {
+      name: 'Symptom reference Headache opens in new tab',
+    });
+
+    expect(medicationLink.getAttribute('href')).toBe(
+      'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en'
+    );
+    expect(medicationLink.getAttribute('target')).toBe('_blank');
+    expect(symptomLink.getAttribute('href')).toBe(
+      'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en'
+    );
+    expect(symptomLink.getAttribute('target')).toBe('_blank');
+  });
+
+  it('adds category-aware accessible names to health reference links', async () => {
+    reviewClientMock.setLoadState(
+      buildReviewState(
+        buildWeeklyData({
+          healthReferenceLinks: [
+            {
+              label: 'Metformin 500 MG Oral Tablet',
+              href: 'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+            },
+          ],
+          symptomReferenceLinks: [
+            {
+              label: 'Headache',
+              href: 'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+            },
+          ],
+        })
+      )
+    );
+
+    render(ReviewPage);
+
+    const referencesSection = await waitFor(() => getSection('Health references'));
+    expect(
+      within(referencesSection).getByRole('link', {
+        name: 'Medication reference Metformin 500 MG Oral Tablet opens in new tab',
+      })
+    ).toBeTruthy();
+    expect(
+      within(referencesSection).getByRole('link', {
+        name: 'Symptom reference Headache opens in new tab',
+      })
+    ).toBeTruthy();
+  });
+
+  it('does not render unsafe health reference links', async () => {
+    reviewClientMock.setLoadState(
+      buildReviewState(
+        buildWeeklyData({
+          healthReferenceLinks: [
+            {
+              label: 'Unsafe medication',
+              href: 'javascript:alert(1)',
+            },
+          ],
+        })
+      )
+    );
+
+    render(ReviewPage);
+
+    const referencesSection = await waitFor(() => getSection('Health references'));
+    expect(
+      within(referencesSection).queryByRole('link', {
+        name: 'Medication reference Unsafe medication opens in new tab',
+      })
     ).toBeNull();
   });
 });

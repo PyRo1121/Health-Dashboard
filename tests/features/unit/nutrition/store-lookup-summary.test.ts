@@ -48,8 +48,8 @@ describe('nutrition store, lookup, and summary', () => {
       name: 'Oatmeal with berries',
       sourceName: 'Local catalog',
       calories: 350,
-      carbs: 0,
-      fat: 0,
+      carbs: undefined,
+      fat: undefined,
     });
     expect(matches[1]?.sourceName).toBe('USDA fallback');
   });

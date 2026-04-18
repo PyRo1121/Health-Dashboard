@@ -97,6 +97,8 @@ describe('review model', () => {
       ],
       deviceHighlights: ['Sleep duration: 8 hours on 2026-04-02'],
       assessmentSummary: ['WHO-5: Strong wellbeing (17)'],
+      healthReferenceLinks: [],
+      symptomReferenceLinks: [],
       healthHighlights: [],
       contextSignals: ['Low sleep and a written reflection both landed on 2026-04-02.'],
       contextCaptureLinkedEventIds: ['anxiety-1'],
@@ -161,6 +163,7 @@ describe('review model', () => {
       'Drift flags',
       'Assessment changes',
       'Health highlights',
+      'Health references',
       'Context signals',
       'Journal excerpts',
       'Patterns to watch',
@@ -269,6 +272,18 @@ describe('review model', () => {
       grocerySignals: [],
       deviceHighlights: [],
       assessmentSummary: [],
+      healthReferenceLinks: [
+        {
+          label: 'Metformin 500 MG Oral Tablet',
+          href: 'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+        },
+      ],
+      symptomReferenceLinks: [
+        {
+          label: 'Headache',
+          href: 'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+        },
+      ],
       healthHighlights: ['Low sleep lined up with higher anxiety on 2026-04-02.'],
       contextSignals: ['Low sleep and a written reflection both landed on 2026-04-02.'],
       contextCaptureLinkedEventIds: ['anxiety-1'],
@@ -287,6 +302,25 @@ describe('review model', () => {
       'Health highlights'
     );
     expect(createReviewSections(weekly).map((section) => section.title)).toContain(
+      'Health references'
+    );
+    expect(
+      createReviewSections(weekly).find((section) => section.title === 'Health references')?.items
+    ).toEqual([
+      {
+        kind: 'medication',
+        categoryLabel: 'Medication',
+        label: 'Metformin 500 MG Oral Tablet',
+        href: 'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+      },
+      {
+        kind: 'symptom',
+        categoryLabel: 'Symptom',
+        label: 'Headache',
+        href: 'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+      },
+    ]);
+    expect(createReviewSections(weekly).map((section) => section.title)).toContain(
       'Context signals'
     );
     expect(createReviewSections(weekly).map((section) => section.title)).toContain(
@@ -295,6 +329,104 @@ describe('review model', () => {
     expect(createReviewSections(weekly).map((section) => section.title)).toContain(
       'Patterns to watch'
     );
+  });
+
+  it('marks pending adherence as pending and adds journal intent actions only when context exists', () => {
+    const weekly: WeeklyReviewData = {
+      anchorDay: '2026-04-02',
+      snapshot: {
+        id: 'review:2026-03-31',
+        createdAt: '2026-04-02T08:00:00.000Z',
+        updatedAt: '2026-04-02T08:00:00.000Z',
+        weekStart: '2026-03-31',
+        headline: 'Mindful reset',
+        daysTracked: 1,
+        flags: [],
+        correlations: [],
+        experiment: undefined,
+      },
+      averageMood: 4,
+      averageSleep: 7,
+      averageProtein: 25,
+      sobrietyStreak: 0,
+      nutritionHighlights: [],
+      nutritionStrategy: [],
+      planningHighlights: [],
+      adherenceScores: [
+        {
+          label: 'Overall',
+          score: 0,
+          completed: 0,
+          missed: 0,
+          pending: 2,
+          inferredCount: 0,
+          tone: 'mixed',
+          detail: '2 items still pending',
+        },
+      ],
+      adherenceSignals: [],
+      adherenceMatches: [
+        {
+          id: 'adherence-pending',
+          createdAt: '2026-04-02T08:00:00.000Z',
+          updatedAt: '2026-04-02T08:00:00.000Z',
+          weekStart: '2026-03-31',
+          planSlotId: 'slot-1',
+          localDay: '2026-04-02',
+          slotType: 'meal',
+          slotTitle: 'Greek yogurt bowl',
+          outcome: 'pending',
+          matchSource: 'food-entry',
+          matchedRecordId: undefined,
+          confidence: 'explicit',
+          reason: 'still queued for later today',
+          fingerprint: 'fp-pending',
+        },
+      ],
+      grocerySignals: [],
+      deviceHighlights: [],
+      assessmentSummary: [],
+      healthReferenceLinks: [],
+      symptomReferenceLinks: [],
+      healthHighlights: [],
+      contextSignals: ['Low sleep and a written reflection both landed on 2026-04-02.'],
+      contextCaptureLinkedEventIds: ['anxiety-1'],
+      journalHighlights: [
+        'Evening review on 2026-04-02: Crowded store and headache drained the afternoon.',
+      ],
+      journalReflectionLinkedEventIds: ['anxiety-1'],
+      patternHighlights: [],
+      whatChangedHighlights: [],
+      weeklyRecommendation: null,
+      weeklyDecisionCards: [],
+      experimentOptions: [],
+    };
+
+    expect(createReviewAdherenceCards(weekly)).toEqual([
+      {
+        label: 'Overall',
+        value: 'Pending',
+        detail: '2 items still pending.',
+        tone: 'mixed',
+      },
+    ]);
+    expect(createReviewAdherenceAuditItems(weekly)).toEqual([]);
+
+    const contextSection = createReviewSections(weekly).find(
+      (section) => section.title === 'Context signals'
+    );
+    const journalSection = createReviewSections(weekly).find(
+      (section) => section.title === 'Journal excerpts'
+    );
+
+    expect(contextSection).toMatchObject({
+      actionLabel: 'Capture context note',
+    });
+    expect(contextSection?.actionHref).toMatch(/^\/journal\?intentId=/);
+    expect(journalSection).toMatchObject({
+      actionLabel: 'Write reflection',
+    });
+    expect(journalSection?.actionHref).toMatch(/^\/journal\?intentId=/);
   });
 
   it('maps plan fallback recommendations into a stable page view', () => {
@@ -326,6 +458,8 @@ describe('review model', () => {
       ],
       deviceHighlights: [],
       assessmentSummary: [],
+      healthReferenceLinks: [],
+      symptomReferenceLinks: [],
       healthHighlights: [],
       contextSignals: [],
       contextCaptureLinkedEventIds: [],
@@ -394,6 +528,8 @@ describe('review model', () => {
       grocerySignals: [],
       deviceHighlights: [],
       assessmentSummary: [],
+      healthReferenceLinks: [],
+      symptomReferenceLinks: [],
       healthHighlights: ['Low sleep lined up with higher anxiety on 2026-04-02.'],
       contextSignals: ['Low sleep and a written reflection both landed on 2026-04-02.'],
       contextCaptureLinkedEventIds: ['anxiety-1'],

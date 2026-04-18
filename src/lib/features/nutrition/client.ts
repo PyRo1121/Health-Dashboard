@@ -33,10 +33,20 @@ import type {
   NutritionPlannedMealDraft,
   NutritionRecurringMealDraft,
 } from './actions';
-import { findFoodCatalogItemByBarcode, searchFoodData, searchPackagedFoodCatalog } from './lookup';
+import {
+  findOpenFoodFactsCatalogItemByBarcode,
+  searchPackagedFoodCatalog,
+  searchUsdaFoodCatalog,
+} from './lookup';
 import type { FoodLookupResult } from './types';
 import { listFoodCatalogItems, listRecipeCatalogItems } from './store';
 import type { RecipeCatalogItem } from '$lib/core/domain/types';
+import type { ExternalSourceMetadata } from '$lib/core/domain/external-sources';
+import type {
+  BarcodeLookupResponse,
+  SearchPackagedResponse,
+  SearchUsdaResponse,
+} from '$lib/server/nutrition/search-service';
 
 export {
   createNutritionPageState,
@@ -130,31 +140,49 @@ export async function clearNutritionPlannedMeal(
 }
 
 export async function searchPackagedFoods(state: NutritionPageState): Promise<NutritionPageState> {
-  const packagedMatches = await packagedSearchClient.request(
+  const response = await packagedSearchClient.request<SearchPackagedResponse>(
     {
       query: state.packagedQuery,
     },
-    async (db) => searchPackagedFoodCatalog(state.packagedQuery, await listFoodCatalogItems(db))
+    async (db) => ({
+      matches: searchPackagedFoodCatalog(state.packagedQuery, await listFoodCatalogItems(db)),
+      metadata: {
+        provenance: [],
+        cacheStatus: 'local-cache',
+        degradationStatus: 'none',
+      } satisfies ExternalSourceMetadata,
+    })
   );
 
   return applyPackagedNutritionMatches(
     state,
-    packagedMatches,
-    packagedMatches.length ? '' : 'No packaged food matches found.'
+    response.matches,
+    response.notice ?? (response.matches.length ? '' : 'No packaged food matches found.'),
+    response.metadata
   );
 }
 
 export async function searchNutritionFoods(state: NutritionPageState): Promise<NutritionPageState> {
-  const response = await usdaSearchClient.request<{ matches: FoodLookupResult[]; notice?: string }>(
+  const response = await usdaSearchClient.request<SearchUsdaResponse>(
     {
       query: state.searchQuery,
     },
     async (db) => ({
-      matches: searchFoodData(state.searchQuery, await listFoodCatalogItems(db)),
+      matches: searchUsdaFoodCatalog(state.searchQuery, await listFoodCatalogItems(db)),
+      metadata: {
+        provenance: [],
+        cacheStatus: 'local-cache',
+        degradationStatus: 'none',
+      } satisfies ExternalSourceMetadata,
     })
   );
 
-  return applyNutritionSearchMatches(state, response.matches, response.notice ?? '');
+  return applyNutritionSearchMatches(
+    state,
+    response.matches,
+    response.notice ?? '',
+    response.metadata
+  );
 }
 
 export async function useNutritionMatch(
@@ -178,13 +206,27 @@ export async function useNutritionMatch(
 export async function lookupPackagedBarcode(
   state: NutritionPageState
 ): Promise<NutritionPageState> {
-  const match = await createNutritionLookupClient(
+  const response = await createNutritionLookupClient(
     `/api/nutrition/barcode/${encodeURIComponent(state.barcodeQuery)}`
-  ).request<FoodLookupResult | null>({}, async (db) =>
-    findFoodCatalogItemByBarcode(state.barcodeQuery, await listFoodCatalogItems(db))
-  );
+  ).request<BarcodeLookupResponse>({}, async (db) => ({
+    match: findOpenFoodFactsCatalogItemByBarcode(
+      state.barcodeQuery,
+      await listFoodCatalogItems(db)
+    ),
+    notice: 'Packaged food loaded from local cache.',
+    metadata: {
+      provenance: [],
+      cacheStatus: 'local-cache',
+      degradationStatus: 'none',
+    } satisfies ExternalSourceMetadata,
+  }));
 
-  return applyNutritionBarcodeMatch(state, match);
+  return applyNutritionBarcodeMatch(
+    state,
+    response.match,
+    response.match ? undefined : response.notice,
+    response.metadata
+  );
 }
 
 export async function searchNutritionRecipes(

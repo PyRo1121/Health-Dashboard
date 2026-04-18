@@ -112,6 +112,7 @@ export async function saveSymptomPageServer(state: HealthMutationState): Promise
         symptom: state.symptomForm.symptom.trim(),
         severity,
         note: state.symptomForm.note.trim() || undefined,
+        referenceUrl: state.symptomForm.referenceUrl.trim() || undefined,
       },
       value: severity,
     })
@@ -211,6 +212,7 @@ export async function saveTemplatePageServer(state: HealthMutationState): Promis
     defaultDose: parseOptionalNumber(state.templateForm.defaultDose),
     defaultUnit: state.templateForm.defaultUnit,
     note: state.templateForm.note,
+    referenceUrl: state.templateForm.referenceUrl,
   };
 
   await upsertHealthTemplateServer(buildHealthTemplateRecord(existing, input));
@@ -247,6 +249,7 @@ export async function quickLogTemplatePageServer(
         amount: template.defaultDose,
         unit: template.defaultUnit,
         note: template.note,
+        referenceUrl: template.referenceUrl,
       },
       value: template.defaultDose,
       unit: template.defaultUnit,

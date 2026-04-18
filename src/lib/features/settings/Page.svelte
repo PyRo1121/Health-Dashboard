@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { browser } from '$app/environment';
   import { Button, Card, Field, SectionCard, StatusBanner } from '$lib/core/ui/primitives';
   import {
     clearSettingsPage,
@@ -19,21 +20,64 @@
   const healthkitManifest = DEVICE_SOURCE_MANIFESTS[0];
   let page = $state(createSettingsPageState());
 
-  function loadOwnerProfile() {
+  async function postSettingsAction(body: object): Promise<Response | null> {
+    if (!browser) {
+      return null;
+    }
+
+    try {
+      return await fetch('/api/settings', {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/json',
+        },
+        body: JSON.stringify(body),
+      });
+    } catch {
+      return null;
+    }
+  }
+
+  async function loadOwnerProfile() {
     page = loadSettingsPage();
+    const response = await postSettingsAction({ action: 'load' });
+    if (!response?.ok) {
+      return;
+    }
+
+    const data = (await response.json()) as {
+      profile: { fullName: string; birthDate: string } | null;
+    };
+
+    if (!data.profile) {
+      return;
+    }
+
+    page = createSettingsPageState();
+    page.fullName = data.profile.fullName;
+    page.birthDate = data.profile.birthDate;
   }
 
   let canSaveOwnerProfile = $derived(canSaveOwnerProfileForm(page.fullName, page.birthDate));
 
-  function handleSaveOwnerProfile() {
+  async function handleSaveOwnerProfile() {
     page = saveSettingsPage({
       fullName: page.fullName,
       birthDate: page.birthDate,
     });
+
+    await postSettingsAction({
+      action: 'saveOwnerProfile',
+      profile: {
+        fullName: page.fullName,
+        birthDate: page.birthDate,
+      },
+    });
   }
 
-  function handleClearOwnerProfile() {
+  async function handleClearOwnerProfile() {
     page = clearSettingsPage();
+    await postSettingsAction({ action: 'clearOwnerProfile' });
   }
 
   onBrowserRouteMount(loadOwnerProfile);

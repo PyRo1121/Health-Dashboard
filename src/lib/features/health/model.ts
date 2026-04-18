@@ -6,6 +6,7 @@ export const DEFAULT_SYMPTOM_FORM = {
   symptom: '',
   severity: '3',
   note: '',
+  referenceUrl: '',
 } as const;
 
 export const DEFAULT_ANXIETY_FORM = {
@@ -27,6 +28,7 @@ export const DEFAULT_TEMPLATE_FORM = {
   defaultDose: '',
   defaultUnit: '',
   note: '',
+  referenceUrl: '',
 } as const;
 
 export type SymptomFormState = { [Key in keyof typeof DEFAULT_SYMPTOM_FORM]: string };
@@ -38,7 +40,22 @@ export type TemplateFormState = {
   defaultDose: string;
   defaultUnit: string;
   note: string;
+  referenceUrl: string;
 };
+
+export interface HealthSymptomSuggestion {
+  label: string;
+  code?: string;
+  referenceUrl?: string;
+  sourceName: string;
+}
+
+export interface HealthMedicationSuggestion {
+  label: string;
+  code?: string;
+  referenceUrl?: string;
+  sourceName: string;
+}
 
 export interface HealthEventRow {
   id: string;
@@ -46,6 +63,7 @@ export interface HealthEventRow {
   badge?: string;
   lines: string[];
   meta: string;
+  referenceUrl?: string;
 }
 
 export function createSymptomForm(): SymptomFormState {
@@ -62,6 +80,30 @@ export function createSleepNoteForm(): SleepNoteFormState {
 
 export function createTemplateForm(): TemplateFormState {
   return { ...DEFAULT_TEMPLATE_FORM };
+}
+
+export function updateSymptomFormValue(
+  form: SymptomFormState,
+  field: keyof SymptomFormState,
+  value: string
+): SymptomFormState {
+  return {
+    ...form,
+    [field]: value,
+    ...(field === 'symptom' ? { referenceUrl: '' } : {}),
+  };
+}
+
+export function updateTemplateFormValue(
+  form: TemplateFormState,
+  field: keyof TemplateFormState,
+  value: string
+): TemplateFormState {
+  return {
+    ...form,
+    [field]: value,
+    ...(field === 'label' || field === 'templateType' ? { referenceUrl: '' } : {}),
+  } as TemplateFormState;
 }
 
 function formatDose(amount?: number, unit?: string): string | null {
@@ -124,6 +166,10 @@ function buildManualHealthRow(event: HealthEvent): HealthEventRow {
       badge: severity,
       lines: compactLines([typeof payload.note === 'string' ? payload.note : undefined]),
       meta,
+      referenceUrl:
+        typeof payload.referenceUrl === 'string' && payload.referenceUrl.trim().length > 0
+          ? payload.referenceUrl
+          : undefined,
     };
   }
 
@@ -182,6 +228,10 @@ function buildManualHealthRow(event: HealthEvent): HealthEventRow {
         typeof payload.note === 'string' ? payload.note : undefined,
       ]),
       meta,
+      referenceUrl:
+        typeof payload.referenceUrl === 'string' && payload.referenceUrl.trim().length > 0
+          ? payload.referenceUrl
+          : undefined,
     };
   }
 

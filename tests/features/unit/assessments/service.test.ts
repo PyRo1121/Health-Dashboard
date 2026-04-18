@@ -49,6 +49,17 @@ describe('assessment service', () => {
     ).rejects.toThrow(/Incomplete assessment/);
   });
 
+  it('rejects full-length submissions that still contain unanswered sentinel values', async () => {
+    const db = getDb();
+    await expect(
+      submitAssessment(db, {
+        localDay: '2026-04-02',
+        instrument: 'PHQ-9',
+        itemResponses: [1, -1, 2, -1, -1, -1, -1, -1, -1],
+      })
+    ).rejects.toThrow(/Incomplete assessment/);
+  });
+
   it('submits complete results with score, band, and risk metadata', async () => {
     const db = getDb();
     const result = await submitAssessment(db, {

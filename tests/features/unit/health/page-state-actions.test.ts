@@ -24,6 +24,7 @@ describe('health page state and actions', () => {
         symptom: 'Nausea',
         severity: '2',
         note: 'Faded after breakfast',
+        referenceUrl: '',
       },
     });
     expect(state.saveNotice).toBe('Symptom logged.');
@@ -61,6 +62,7 @@ describe('health page state and actions', () => {
         defaultDose: '1',
         defaultUnit: 'softgel',
         note: 'Morning stack',
+        referenceUrl: '',
       },
     });
     expect(state.saveNotice).toBe('Template saved.');
@@ -73,6 +75,29 @@ describe('health page state and actions', () => {
       true
     );
     expect(await db.reviewSnapshots.count()).toBe(1);
+  });
+
+  it('carries a selected symptom reference link through the save action into the logged event', async () => {
+    const db = getDb();
+    const state = await loadHealthPage(db, '2026-04-02');
+
+    await saveSymptomPage(db, {
+      ...state,
+      symptomForm: {
+        symptom: 'Headache',
+        severity: '4',
+        note: 'After lunch',
+        referenceUrl:
+          'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+      },
+    });
+
+    const events = await db.healthEvents.toArray();
+    expect(events.find((event) => event.eventType === 'symptom')?.payload).toMatchObject({
+      symptom: 'Headache',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+    });
   });
 
   it('guards required symptom and sleep-note fields', async () => {

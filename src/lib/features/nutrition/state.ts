@@ -5,13 +5,19 @@ import type {
   PlannedMeal,
   RecipeCatalogItem,
 } from '$lib/core/domain/types';
-import { createNutritionForm, mergeNutritionFormWithDraft, type NutritionFormState } from './model';
+import {
+  createNutritionForm,
+  mergeNutritionFormWithDraft,
+  type NutritionDraftSource,
+  type NutritionFormState,
+} from './model';
 import {
   getNutritionPlannedMealResolution,
   type NutritionPlannedMealStore,
 } from './planned-meal-resolution';
 import { attachNutrientsToFoodEntry, searchFoodData } from './lookup';
 import type { FoodLookupResult } from './types';
+import type { ExternalSourceMetadata } from '$lib/core/domain/external-sources';
 import {
   buildNutritionRecommendationContext,
   buildDailyNutritionSummary,
@@ -57,6 +63,8 @@ export interface NutritionPageState {
   searchNotice: string;
   packagedNotice: string;
   recipeNotice: string;
+  searchMetadata: ExternalSourceMetadata | null;
+  packagedMetadata: ExternalSourceMetadata | null;
   summary: NutritionSummary;
   favoriteMeals: FavoriteMeal[];
   catalogItems: FoodCatalogItem[];
@@ -64,6 +72,7 @@ export interface NutritionPageState {
   plannedMeal: PlannedMeal | null;
   plannedMealIssue: string;
   plannedMealSlotId: string | null;
+  plannedMealSource: NutritionDraftSource | null;
   searchQuery: string;
   matches: FoodLookupResult[];
   packagedQuery: string;
@@ -72,6 +81,7 @@ export interface NutritionPageState {
   recipeQuery: string;
   recipeMatches: RecipeCatalogItem[];
   selectedMatch: FoodLookupResult | null;
+  selectedDraftSource: NutritionDraftSource | null;
   form: NutritionFormState;
   recommendationContext: NutritionRecommendationContext;
 }
@@ -109,6 +119,8 @@ export function createNutritionPageState(): NutritionPageState {
     searchNotice: '',
     packagedNotice: '',
     recipeNotice: '',
+    searchMetadata: null,
+    packagedMetadata: null,
     summary: createEmptyNutritionSummary(),
     favoriteMeals: [],
     catalogItems: [],
@@ -116,6 +128,7 @@ export function createNutritionPageState(): NutritionPageState {
     plannedMeal: null,
     plannedMealIssue: '',
     plannedMealSlotId: null,
+    plannedMealSource: null,
     searchQuery: '',
     matches: [],
     packagedQuery: '',
@@ -124,6 +137,7 @@ export function createNutritionPageState(): NutritionPageState {
     recipeQuery: '',
     recipeMatches: [],
     selectedMatch: null,
+    selectedDraftSource: null,
     form: createNutritionForm(),
     recommendationContext: createEmptyRecommendationContext(),
   };
@@ -162,10 +176,8 @@ export async function loadNutritionPage(
     recipeCatalogItems,
     plannedMeal: plannedMeal.candidate?.meal ?? null,
     plannedMealIssue: plannedMeal.issue ?? '',
-    plannedMealSlotId:
-      plannedMeal.candidate?.kind === 'plan-slot-food'
-        ? (plannedMeal.candidate.slotId ?? null)
-        : null,
+    plannedMealSlotId: plannedMeal.candidate?.slotId ?? null,
+    plannedMealSource: plannedMeal.candidate?.source ?? null,
     recommendationContext,
   };
 }
@@ -237,24 +249,28 @@ export function runNutritionSearch(state: NutritionPageState): NutritionPageStat
 export function applyNutritionSearchMatches(
   state: NutritionPageState,
   matches: FoodLookupResult[],
-  searchNotice = ''
+  searchNotice = '',
+  searchMetadata: ExternalSourceMetadata | null = null
 ): NutritionPageState {
   return {
     ...state,
     matches,
     searchNotice,
+    searchMetadata,
   };
 }
 
 export function applyPackagedNutritionMatches(
   state: NutritionPageState,
   packagedMatches: FoodLookupResult[],
-  packagedNotice = ''
+  packagedNotice = '',
+  packagedMetadata: ExternalSourceMetadata | null = null
 ): NutritionPageState {
   return {
     ...state,
     packagedMatches,
     packagedNotice,
+    packagedMetadata,
   };
 }
 
@@ -272,13 +288,16 @@ export function applyNutritionRecipeMatches(
 
 export function applyNutritionBarcodeMatch(
   state: NutritionPageState,
-  match: FoodLookupResult | null
+  match: FoodLookupResult | null,
+  packagedNotice?: string,
+  packagedMetadata: ExternalSourceMetadata | null = null
 ): NutritionPageState {
   if (!match) {
     return {
       ...state,
       packagedMatches: [],
-      packagedNotice: 'No packaged food found for that barcode.',
+      packagedNotice: packagedNotice ?? 'No packaged food found for that barcode.',
+      packagedMetadata,
     };
   }
 
@@ -290,7 +309,8 @@ export function applyNutritionBarcodeMatch(
       },
       match
     ),
-    packagedNotice: 'Packaged food loaded from barcode.',
+    packagedNotice: packagedNotice ?? 'Packaged food loaded from barcode.',
+    packagedMetadata,
   };
 }
 
@@ -301,9 +321,19 @@ export function selectNutritionMatch(
   return {
     ...state,
     selectedMatch: match,
+    selectedDraftSource: {
+      kind: 'food',
+      id: match.id,
+      sourceName: match.sourceName,
+    },
     searchNotice: '',
+    packagedNotice: '',
+    recipeNotice: '',
     form: mergeNutritionFormWithDraft(
-      state.form,
+      {
+        ...state.form,
+        notes: '',
+      },
       attachNutrientsToFoodEntry(
         {
           localDay: state.localDay,
@@ -322,10 +352,24 @@ export function useNutritionRecipe(
 ): NutritionPageState {
   return {
     ...state,
+    selectedMatch: null,
+    selectedDraftSource: {
+      kind: 'recipe',
+      id: recipe.id,
+      sourceName: recipe.sourceName,
+    },
+    searchNotice: '',
+    packagedNotice: '',
     recipeNotice: `Loaded ${recipe.title} into the meal form.`,
     form: {
       ...state.form,
+      mealType: recipe.mealType ?? state.form.mealType,
       name: recipe.title,
+      calories: '',
+      protein: '',
+      fiber: '',
+      carbs: '',
+      fat: '',
       notes: recipe.ingredients.slice(0, 4).join(', '),
     },
   };

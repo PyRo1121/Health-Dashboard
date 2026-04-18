@@ -36,10 +36,50 @@ describe('buildImportSourceCatalog', () => {
       'apple-health-xml',
       'day-one-json',
     ]);
-    expect(catalog.labels['healthkit-companion']).toBe('iPhone bundle / Shortcuts JSON');
+    expect(catalog.labels['healthkit-companion']).toBe('iPhone HealthKit Companion');
     expect(catalog.config['smart-fhir-sandbox'].sampleBundle?.filename).toBe(
       'sample-smart-fhir-bundle.json'
     );
+  });
+
+  it('derives the healthkit lane label from the device manifest so the source registry cannot drift', () => {
+    const catalog = buildImportSourceCatalog({
+      healthkitManifest: {
+        ...HEALTHKIT_MANIFEST,
+        label: 'Clinic-managed iPhone Export',
+      },
+      createSampleHealthKitBundle: () => ({ connector: 'healthkit' }),
+      createSampleSmartFhirBundle: () => ({ resourceType: 'Bundle' }),
+    });
+
+    expect(catalog.options.find((option) => option.value === 'healthkit-companion')).toEqual({
+      value: 'healthkit-companion',
+      label: 'Clinic-managed iPhone Export',
+    });
+    expect(catalog.labels['healthkit-companion']).toBe('Clinic-managed iPhone Export');
+  });
+
+  it('attaches source-registry import metadata for healthkit and smart sandbox lanes', () => {
+    const catalog = buildImportSourceCatalog({
+      healthkitManifest: HEALTHKIT_MANIFEST,
+      createSampleHealthKitBundle: () => ({ connector: 'healthkit' }),
+      createSampleSmartFhirBundle: () => ({ resourceType: 'Bundle' }),
+    });
+
+    expect(catalog.config['healthkit-companion']).toMatchObject({
+      sourceMetadata: {
+        sourceName: 'HealthKit Companion',
+        authMode: 'native-consent',
+        reliability: 'official',
+      },
+    });
+    expect(catalog.config['smart-fhir-sandbox']).toMatchObject({
+      sourceMetadata: {
+        sourceName: 'SMART on FHIR sandbox',
+        authMode: 'oauth2',
+        reliability: 'sandbox',
+      },
+    });
   });
 });
 

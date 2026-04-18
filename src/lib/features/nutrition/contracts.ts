@@ -13,6 +13,11 @@ function isNutritionPageState(value: unknown): value is NutritionPageState {
   const summary = state.summary as Record<string, unknown> | undefined;
   const form = state.form as Record<string, unknown> | undefined;
   const recommendationContext = state.recommendationContext as Record<string, unknown> | undefined;
+  const selectedDraftSource = state.selectedDraftSource as
+    | Record<string, unknown>
+    | null
+    | undefined;
+  const plannedMealSource = state.plannedMealSource as Record<string, unknown> | null | undefined;
 
   return (
     typeof state.loading === 'boolean' &&
@@ -35,6 +40,9 @@ function isNutritionPageState(value: unknown): value is NutritionPageState {
       (typeof state.plannedMeal === 'object' && state.plannedMeal !== null)) &&
     typeof state.plannedMealIssue === 'string' &&
     (state.plannedMealSlotId === null || typeof state.plannedMealSlotId === 'string') &&
+    (plannedMealSource === null ||
+      plannedMealSource === undefined ||
+      (typeof plannedMealSource.kind === 'string' && typeof plannedMealSource.id === 'string')) &&
     typeof state.searchQuery === 'string' &&
     Array.isArray(state.matches) &&
     typeof state.packagedQuery === 'string' &&
@@ -44,6 +52,10 @@ function isNutritionPageState(value: unknown): value is NutritionPageState {
     Array.isArray(state.recipeMatches) &&
     (state.selectedMatch === null ||
       (typeof state.selectedMatch === 'object' && state.selectedMatch !== null)) &&
+    (selectedDraftSource === null ||
+      selectedDraftSource === undefined ||
+      (typeof selectedDraftSource.kind === 'string' &&
+        typeof selectedDraftSource.id === 'string')) &&
     form !== undefined &&
     typeof form.mealType === 'string' &&
     typeof form.name === 'string' &&
@@ -71,37 +83,39 @@ const nutritionMealDraftSchema = z.object({
   localDay: z.string(),
   mealType: z.string(),
   name: z.string(),
-  calories: z.number(),
-  protein: z.number(),
-  fiber: z.number(),
-  carbs: z.number(),
-  fat: z.number(),
+  calories: z.number().optional(),
+  protein: z.number().optional(),
+  fiber: z.number().optional(),
+  carbs: z.number().optional(),
+  fat: z.number().optional(),
   notes: z.string(),
+  sourceName: z.string().optional(),
 }) satisfies z.ZodType<NutritionMealDraft>;
 
 const nutritionRecurringMealDraftSchema = z.object({
   mealType: z.string(),
   name: z.string(),
-  calories: z.number(),
-  protein: z.number(),
-  fiber: z.number(),
-  carbs: z.number(),
-  fat: z.number(),
+  calories: z.number().optional(),
+  protein: z.number().optional(),
+  fiber: z.number().optional(),
+  carbs: z.number().optional(),
+  fat: z.number().optional(),
   sourceName: z.string().optional(),
 }) satisfies z.ZodType<NutritionRecurringMealDraft>;
 
 const nutritionPlannedMealDraftSchema = nutritionRecurringMealDraftSchema.extend({
   notes: z.string(),
   foodCatalogItemId: z.string().optional(),
+  recipeCatalogItemId: z.string().optional(),
 }) satisfies z.ZodType<NutritionPlannedMealDraft>;
 
 const nutritionCatalogItemDraftSchema = z.object({
   name: z.string(),
-  calories: z.number(),
-  protein: z.number(),
-  fiber: z.number(),
-  carbs: z.number(),
-  fat: z.number(),
+  calories: z.number().optional(),
+  protein: z.number().optional(),
+  fiber: z.number().optional(),
+  carbs: z.number().optional(),
+  fat: z.number().optional(),
 }) satisfies z.ZodType<NutritionCatalogItemDraft>;
 
 export const nutritionRequestSchema = z.discriminatedUnion('action', [

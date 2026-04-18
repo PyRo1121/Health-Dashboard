@@ -11,7 +11,7 @@ enum HealthKitExportMode: String, CaseIterable, Identifiable {
 		case .dailySnapshot:
 			return "Daily snapshot"
 		case .incrementalChanges:
-			return "Changes since last export"
+			return "Today changes since last sync"
 		}
 	}
 
@@ -20,7 +20,7 @@ enum HealthKitExportMode: String, CaseIterable, Identifiable {
 		case .dailySnapshot:
 			return "Exports one compact daily bundle with sleep duration, total steps, and the latest resting heart rate."
 		case .incrementalChanges:
-			return "Uses anchored HealthKit queries to export only new matching samples since the last successful export."
+			return "Uses anchored HealthKit queries to export new matching samples from today since the last successful local sync."
 		}
 	}
 }

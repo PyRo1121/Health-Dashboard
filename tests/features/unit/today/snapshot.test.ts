@@ -57,12 +57,12 @@ describe('today snapshot', () => {
 
     const events = await listEventsForDay(db, '2026-04-02');
     expect(events.map((event) => event.eventType)).toEqual([
-      'energy',
-      'focus',
       'mood',
+      'energy',
+      'stress',
+      'focus',
       'sleepHours',
       'sleepQuality',
-      'stress',
     ]);
   });
 
@@ -101,12 +101,12 @@ describe('today snapshot', () => {
     const snapshot = await getTodaySnapshot(db, '2026-04-02');
 
     expect(snapshot.events.map((event) => event.eventType)).toEqual([
-      'anxiety-episode',
       'sleep-duration',
+      'anxiety-episode',
     ]);
     expect(snapshot.events.map((event) => event.sourceType)).toEqual([
-      'manual',
       'native-companion',
+      'manual',
     ]);
   });
 
@@ -133,6 +133,56 @@ describe('today snapshot', () => {
       title: 'Full body reset',
       status: 'planned',
     });
+  });
+
+  it('builds plan item summaries from planner domain data', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Greek yogurt bowl',
+      calories: 310,
+      protein: 24,
+      fiber: 6,
+      carbs: 34,
+      fat: 8,
+    });
+    const workout = await saveWorkoutTemplate(db, {
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    });
+
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      title: food.name,
+      mealType: 'breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: workout.id,
+      title: workout.title,
+    });
+
+    const snapshot = await getTodaySnapshot(db, '2026-04-02');
+
+    expect(snapshot.planItems).toHaveLength(2);
+    expect(snapshot.planItems[0]).toMatchObject({
+      title: 'Greek yogurt bowl',
+      status: 'planned',
+    });
+    expect(snapshot.planItems[0]?.subtitle).toMatch(/Saved food/i);
+    expect(snapshot.planItems[1]).toMatchObject({
+      title: 'Full body reset',
+      status: 'planned',
+    });
+    expect(snapshot.planItems[1]?.subtitle).toMatch(/Recovery/i);
   });
 
   it('surfaces the canonical planned meal when a planned food slot exists', async () => {
@@ -168,6 +218,44 @@ describe('today snapshot', () => {
       kind: 'planned_meal',
       title: 'Log Greek yogurt bowl next',
       confidence: 'high',
+    });
+  });
+
+  it('does not claim intake gains when a planned recipe has no known nutrition totals', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    await db.recipeCatalogItems.put({
+      id: 'themealdb:52772',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      title: 'Teriyaki Chicken Casserole',
+      sourceType: 'themealdb',
+      sourceName: 'TheMealDB',
+      externalId: '52772',
+      mealType: 'dinner',
+      cuisine: 'Japanese',
+      ingredients: ['3/4 cup soy sauce', '2 chicken breast'],
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'recipe',
+      itemId: 'themealdb:52772',
+      title: 'Teriyaki Chicken Casserole',
+    });
+
+    const snapshot = await getTodaySnapshot(db, '2026-04-02');
+
+    expect(snapshot.plannedMeal).toMatchObject({
+      name: 'Teriyaki Chicken Casserole',
+      mealType: 'dinner',
+      sourceName: 'TheMealDB',
+    });
+    expect(snapshot.intelligence.primaryRecommendation).toMatchObject({
+      kind: 'planned_meal',
+      title: 'Log Teriyaki Chicken Casserole next',
+      summary: 'dinner is already queued, so logging it now keeps plan, Today, and Review aligned.',
     });
   });
 
@@ -330,6 +418,7 @@ describe('today snapshot', () => {
       'Workout fallback: downgrade Full body reset to a short walk, mobility reset, or full rest.'
     );
     expect(snapshot.recoveryAdaptation?.mealRecommendation).toMatchObject({
+      itemId: expect.any(String),
       title: 'Greek yogurt bowl',
       actionId: 'apply-recovery-meal',
       actionLabel: 'Swap to recovery meal',
@@ -373,5 +462,76 @@ describe('today snapshot', () => {
       title: 'No strong recommendation yet.',
       action: { kind: 'href', label: 'Open check-in', href: '#today-check-in' },
     });
+  });
+
+  it('does not suggest an unknown-macro saved food as a recovery meal swap', async () => {
+    const db = getDb();
+    const weeklyPlan = await ensureWeeklyPlan(db, '2026-04-02');
+    const food = await saveFoodCatalogItem(db, {
+      name: 'Toast and jam',
+      calories: 260,
+      protein: 6,
+      fiber: 2,
+      carbs: 42,
+      fat: 6,
+    });
+    await saveFoodCatalogItem(db, {
+      name: 'Mystery soup',
+    });
+    const workout = await saveWorkoutTemplate(db, {
+      title: 'Full body reset',
+      goal: 'Recovery',
+      exerciseRefs: [{ name: 'Goblet squat', reps: '8', sets: 3, restSeconds: 60 }],
+    });
+
+    await db.dailyRecords.put({
+      id: 'daily:2026-04-02',
+      createdAt: '2026-04-02T08:00:00.000Z',
+      updatedAt: '2026-04-02T08:00:00.000Z',
+      date: '2026-04-02',
+      mood: 3,
+      energy: 2,
+      stress: 4,
+      focus: 3,
+      sleepHours: 5.5,
+      sleepQuality: 2,
+      freeformNote: 'Dragging today.',
+    });
+    await logSymptomEvent(db, {
+      localDay: '2026-04-02',
+      symptom: 'Headache',
+      severity: 4,
+    });
+    await logAnxietyEvent(db, {
+      localDay: '2026-04-02',
+      intensity: 7,
+      trigger: 'Cramped schedule',
+      durationMinutes: 25,
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'meal',
+      itemType: 'food',
+      itemId: food.id,
+      title: food.name,
+      mealType: 'breakfast',
+    });
+    await savePlanSlot(db, {
+      weeklyPlanId: weeklyPlan.id,
+      localDay: '2026-04-02',
+      slotType: 'workout',
+      itemType: 'workout-template',
+      itemId: workout.id,
+      title: workout.title,
+    });
+
+    const snapshot = await getTodaySnapshot(db, '2026-04-02');
+
+    expect(snapshot.recoveryAdaptation?.mealRecommendation).toBeNull();
+    expect(snapshot.recoveryAdaptation?.actions).not.toContainEqual(
+      expect.objectContaining({ id: 'apply-recovery-meal' })
+    );
+    expect(snapshot.intelligence.primaryRecommendation?.secondaryAction).toBeNull();
   });
 });

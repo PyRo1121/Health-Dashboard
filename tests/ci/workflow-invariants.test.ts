@@ -39,7 +39,57 @@ describe('workflow structure invariants', () => {
     expect(jobNames).toContain('typecheck');
     expect(jobNames).toContain('unit-tests');
     expect(jobNames).toContain('component-tests');
+    expect(jobNames).toContain('coverage');
+    expect(jobNames).toContain('smoke-tests');
+    expect(jobNames).toContain('operational-check');
     expect(jobNames).toContain('build');
+  });
+
+  it('release.yml requires proof jobs before build and publish', () => {
+    const wf = readWorkflow('release.yml');
+    expect(wf).not.toBeNull();
+    const jobs = wf!.jobs as Record<string, Record<string, unknown>>;
+
+    expect(Object.keys(jobs)).toContain('typecheck');
+    expect(Object.keys(jobs)).toContain('unit-tests');
+    expect(Object.keys(jobs)).toContain('component-tests');
+    expect(Object.keys(jobs)).toContain('e2e');
+    expect(Object.keys(jobs)).toContain('coverage');
+    expect(Object.keys(jobs)).toContain('smoke-tests');
+    expect(Object.keys(jobs)).toContain('operational-check');
+
+    expect(jobs['build']?.needs).toEqual([
+      'typecheck',
+      'unit-tests',
+      'component-tests',
+      'e2e',
+      'coverage',
+      'smoke-tests',
+      'operational-check',
+    ]);
+
+    expect(jobs['publish']?.needs).toEqual(['build', 'sign', 'sbom', 'scan']);
+  });
+
+  it('operational-check jobs explicitly opt into the local insecure auth override', () => {
+    const ci = readWorkflow('ci.yml');
+    const release = readWorkflow('release.yml');
+    expect(ci).not.toBeNull();
+    expect(release).not.toBeNull();
+
+    const ciJobs = ci!.jobs as Record<string, Record<string, unknown>>;
+    const releaseJobs = release!.jobs as Record<string, Record<string, unknown>>;
+
+    expect(ciJobs['operational-check']?.env).toEqual(
+      expect.objectContaining({
+        HEALTH_ALLOW_INSECURE_LOCAL_DEV: 'true',
+      })
+    );
+    expect(releaseJobs['operational-check']?.env).toEqual(
+      expect.objectContaining({
+        HEALTH_ALLOW_INSECURE_LOCAL_DEV: 'true',
+      })
+    );
   });
 
   it('grok-ci-surgeon.yml has correct permissions', () => {
@@ -58,6 +108,38 @@ describe('workflow structure invariants', () => {
     expect(perms['pull-requests']).toBe('read');
   });
 
+  it('workflow_dispatch workflows admit dispatch in their job guards', () => {
+    const prManager = readWorkflow('pr-manager-grok.yml');
+    const grokDescribe = readWorkflow('grok-describe.yml');
+    expect(prManager).not.toBeNull();
+    expect(grokDescribe).not.toBeNull();
+
+    const prManagerJobs = prManager!.jobs as Record<string, Record<string, unknown>>;
+    const describeJobs = grokDescribe!.jobs as Record<string, Record<string, unknown>>;
+
+    expect(String(prManagerJobs['manage-pr']?.if ?? '')).toContain(
+      "github.event_name == 'workflow_dispatch'"
+    );
+    expect(String(prManagerJobs['manage-pr']?.if ?? '')).toContain(
+      "github.event.inputs.pr_number != ''"
+    );
+    expect(String(describeJobs['describe']?.if ?? '')).toContain(
+      "github.event_name == 'workflow_dispatch'"
+    );
+    expect(String(describeJobs['describe']?.if ?? '')).toContain(
+      "github.event.inputs.pr_number != ''"
+    );
+  });
+
+  it('grok-threat-monitor has an authenticated push path without permission widening', () => {
+    const wf = readWorkflow('grok-threat-monitor.yml');
+    expect(wf).not.toBeNull();
+    const perms = wf!.permissions as Record<string, string>;
+    expect(perms['contents']).toBe('write');
+    const content = JSON.stringify(wf);
+    expect(content).toContain('git remote set-url origin');
+    expect(content).toContain('x-access-token:${GITHUB_TOKEN}');
+  });
   it('audit doc "what was reviewed" entries match real workflow files', () => {
     const workflowsDir = resolve(__dirname, '../../.github/workflows');
     const reviewedWorkflows = [

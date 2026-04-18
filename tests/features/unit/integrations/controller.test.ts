@@ -9,11 +9,14 @@ describe('integrations controller', () => {
 
   it('loads integrations controller state from imported events', async () => {
     const db = getDb();
-    const batch = await previewImport(db, {
+    await previewImport(db, {
       sourceType: 'healthkit-companion',
       rawText: HEALTHKIT_BUNDLE_JSON,
     });
-    await commitImportBatch(db, batch.id);
+    await commitImportBatch(db, {
+      sourceType: 'healthkit-companion',
+      rawText: HEALTHKIT_BUNDLE_JSON,
+    });
 
     const state = await loadIntegrationsPage(db);
     expect(state.loading).toBe(false);

@@ -31,6 +31,11 @@ final class BridgeBundleEncodingTests: XCTestCase {
 		XCTAssertTrue(json.contains("\"deviceName\" : \"Pyro iPhone\""))
 	}
 
+
+	func testEmptyBundleExportErrorMessageIsExplicit() {
+		XCTAssertEqual(HealthKitBundleExportError.emptyBundle.errorDescription, "No matching HealthKit samples were available for this export.")
+	}
+
 	func testBundleWriterGeneratesStableFilename() throws {
 		let bundle = HealthKitBridgeBundle.make(
 			deviceId: "iphone-15-pro",

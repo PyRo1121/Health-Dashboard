@@ -167,6 +167,25 @@ describe('planning model', () => {
     expect(createSlotSummary(slots[0], foods, recipes, workouts, exerciseCatalogItems)).toBe(
       'Saved food · Local catalog · 24g protein'
     );
+    expect(
+      createSlotSummary(
+        { ...slots[0], itemId: 'food-unknown' },
+        [
+          ...foods,
+          {
+            id: 'food-unknown',
+            createdAt: '2026-04-02T08:00:00.000Z',
+            updatedAt: '2026-04-02T08:00:00.000Z',
+            name: 'Mystery soup',
+            sourceType: 'custom',
+            sourceName: 'Local catalog',
+          },
+        ],
+        recipes,
+        workouts,
+        exerciseCatalogItems
+      )
+    ).toBe('Saved food · Local catalog · Nutrition totals unknown');
     expect(createSlotSummary(slots[1], foods, recipes, workouts, exerciseCatalogItems)).toBe(
       'Recovery · 1 exercise · Quadriceps · Dumbbell'
     );

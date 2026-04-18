@@ -18,7 +18,7 @@ export default defineConfig({
     command:
       'rm -f /tmp/personal-health-cockpit-playwright.sqlite .playwright-mode && ' +
       'touch .playwright-mode && ' +
-      'bun run build && bun run preview -- --host 127.0.0.1 --port 4173',
+      'bun run build && HEALTH_ALLOW_INSECURE_LOCAL_DEV=true HEALTH_RESET_TOKEN=codex-e2e HEALTH_CONTROL_PLANE_TOKEN=codex-e2e bun run preview -- --host 127.0.0.1 --port 4173',
     port: 4173,
     reuseExistingServer: false,
   },

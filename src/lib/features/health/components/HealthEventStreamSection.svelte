@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toSafeExternalHref } from '$lib/core/shared/external-links';
   import { EmptyState, SectionCard } from '$lib/core/ui/primitives';
   import type { HealthEventRow } from '$lib/features/health/model';
 
@@ -19,6 +20,19 @@
             {#each event.lines as line (line)}
               <p>{line}</p>
             {/each}
+            {#if toSafeExternalHref(event.referenceUrl)}
+              <p>
+                <a
+                  class="status-copy"
+                  href={toSafeExternalHref(event.referenceUrl) ?? undefined}
+                  target="_blank"
+                  rel="external noreferrer"
+                  aria-label={`Learn more about logged medication ${event.title}`}
+                >
+                  Learn more
+                </a>
+              </p>
+            {/if}
             <p class="status-copy event-meta">{event.meta}</p>
           </div>
           {#if event.badge}

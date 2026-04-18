@@ -15,11 +15,14 @@ import { HEALTHKIT_BUNDLE_JSON } from '../fixtures/healthkit-bundle';
 
 export async function seedHealthkitImport() {
   const db = getTestHealthDb();
-  const batch = await previewImport(db, {
+  await previewImport(db, {
     sourceType: 'healthkit-companion',
     rawText: HEALTHKIT_BUNDLE_JSON,
   });
-  await commitImportBatch(db, batch.id);
+  await commitImportBatch(db, {
+    sourceType: 'healthkit-companion',
+    rawText: HEALTHKIT_BUNDLE_JSON,
+  });
 }
 
 export async function seedReviewSnapshotInputs() {

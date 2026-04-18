@@ -1,4 +1,8 @@
 import type { FoodCatalogItem, RecipeCatalogItem } from '$lib/core/domain/types';
+import {
+  getExternalSourceDefinition,
+  type ExternalSourceProductionPosture,
+} from '$lib/core/domain/external-sources';
 
 export interface NutritionRecommendationContext {
   mealType: string;
@@ -13,6 +17,9 @@ export interface NutritionRecommendation {
   kind: 'food' | 'recipe';
   title: string;
   subtitle: string;
+  sourceName: string;
+  sourcePosture: ExternalSourceProductionPosture;
+  canPlanDirectly: boolean;
   score: number;
   reasons: string[];
 }
@@ -72,58 +79,110 @@ function keywordHits(text: string, keywords: string[]): number {
   return keywords.reduce((count, keyword) => (normalized.includes(keyword) ? count + 1 : count), 0);
 }
 
+function createFoodRecommendationSubtitle(item: FoodCatalogItem): string {
+  const rows = [
+    [
+      item.calories !== undefined ? `${item.calories} kcal` : null,
+      item.protein !== undefined ? `${item.protein}g protein` : null,
+      item.fiber !== undefined ? `${item.fiber}g fiber` : null,
+    ],
+    [
+      item.carbs !== undefined ? `${item.carbs}g carbs` : null,
+      item.fat !== undefined ? `${item.fat}g fat` : null,
+    ],
+  ]
+    .map((row) => row.filter((value): value is string => value !== null).join(' · '))
+    .filter((row) => row.length > 0);
+
+  return rows.join(' · ') || 'Nutrition totals unknown.';
+}
+
 function scoreFood(
   item: FoodCatalogItem,
   context: NutritionRecommendationContext
 ): NutritionRecommendation {
   const target = targetForMealType(context.mealType);
-  const protein = item.protein ?? 0;
-  const fiber = item.fiber ?? 0;
-  const calories = item.calories ?? 0;
-  const carbs = item.carbs ?? 0;
-  const fat = item.fat ?? 0;
+  const protein = item.protein;
+  const fiber = item.fiber;
+  const calories = item.calories;
+  const carbs = item.carbs;
+  const fat = item.fat;
   const [minCalories, maxCalories] = target.calories;
-  let score = 40;
+  const knownMetricCount = [protein, fiber, calories, carbs, fat].filter(
+    (value) => value !== undefined
+  ).length;
+  let score = knownMetricCount === 0 ? 18 : 40;
   const reasons: string[] = [];
 
-  score += clamp((protein / target.protein) * 30, 0, 30);
-  if (protein >= target.protein * 0.8) reasons.push('protein target looks strong');
+  if (protein !== undefined) {
+    score += clamp((protein / target.protein) * 30, 0, 30);
+    if (protein >= target.protein * 0.8) reasons.push('protein target looks strong');
+  }
 
-  score += clamp((fiber / target.fiber) * 20, 0, 20);
-  if (fiber >= target.fiber * 0.8) reasons.push('fiber target looks strong');
+  if (fiber !== undefined) {
+    score += clamp((fiber / target.fiber) * 20, 0, 20);
+    if (fiber >= target.fiber * 0.8) reasons.push('fiber target looks strong');
+  }
 
-  if (calories >= minCalories && calories <= maxCalories) {
-    score += 20;
-    reasons.push('calorie range fits this meal');
-  } else {
-    score -= Math.min(
-      20,
-      Math.abs((calories < minCalories ? minCalories - calories : calories - maxCalories) / 25)
-    );
+  if (calories !== undefined) {
+    if (calories >= minCalories && calories <= maxCalories) {
+      score += 20;
+      reasons.push('calorie range fits this meal');
+    } else {
+      score -= Math.min(
+        20,
+        Math.abs((calories < minCalories ? minCalories - calories : calories - maxCalories) / 25)
+      );
+    }
   }
 
   if (needsSteadyEnergy(context)) {
-    if (protein >= target.protein * 0.8) score += 10;
-    if (fiber >= target.fiber * 0.8) score += 10;
-    if (carbs >= 20 && carbs <= 55) {
+    let steadyEnergyEvidence = false;
+
+    if (protein !== undefined && protein >= target.protein * 0.8) {
+      score += 10;
+      steadyEnergyEvidence = true;
+    }
+    if (fiber !== undefined && fiber >= target.fiber * 0.8) {
+      score += 10;
+      steadyEnergyEvidence = true;
+    }
+    if (carbs !== undefined && carbs >= 20 && carbs <= 55) {
       score += 8;
       reasons.push('carb range supports steadier energy');
+      steadyEnergyEvidence = true;
     }
-    if (fat > 22) {
+    if (fat !== undefined && fat > 22) {
       score -= 8;
       reasons.push('higher fat load may feel heavier on low-sleep days');
     }
-    if (calories > maxCalories + 150) score -= 15;
-    reasons.push('good fit for a steadier-energy day');
+    if (calories !== undefined && calories > maxCalories + 150) score -= 15;
+    if (steadyEnergyEvidence) {
+      reasons.push('good fit for a steadier-energy day');
+    }
   }
 
-  if (!reasons.length) reasons.push('saved food with decent baseline nutrition');
+  if (!reasons.length) {
+    reasons.push(
+      knownMetricCount === 0
+        ? 'nutrition totals are still unknown, so treat this as a saved rotation idea.'
+        : 'saved food with partial nutrition detail'
+    );
+  }
 
   return {
     id: item.id,
     kind: 'food',
     title: item.name,
-    subtitle: `${calories} kcal · ${protein}g protein · ${fiber}g fiber · ${carbs}g carbs · ${fat}g fat`,
+    subtitle: createFoodRecommendationSubtitle(item),
+    sourceName: item.sourceName,
+    sourcePosture:
+      item.sourceType === 'open-food-facts'
+        ? getExternalSourceDefinition('open-food-facts').productionPosture
+        : item.sourceType === 'usda-fallback'
+          ? getExternalSourceDefinition('usda-fooddata-central').productionPosture
+          : 'adopt',
+    canPlanDirectly: true,
     score: Math.round(score),
     reasons,
   };
@@ -170,6 +229,9 @@ function scoreRecipe(
     kind: 'recipe',
     title: item.title,
     subtitle: [item.mealType, item.cuisine].filter(Boolean).join(' · ') || item.sourceName,
+    sourceName: item.sourceName,
+    sourcePosture: getExternalSourceDefinition('themealdb').productionPosture,
+    canPlanDirectly: getExternalSourceDefinition('themealdb').productionPosture === 'adopt',
     score: Math.round(score),
     reasons,
   };

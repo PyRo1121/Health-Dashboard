@@ -201,6 +201,41 @@ describe('Plan route', () => {
     });
   });
 
+  it('shows unknown nutrition truthfully for saved-food meal slots without macros', async () => {
+    await getTestHealthDb().foodCatalogItems.put({
+      id: 'food-catalog-unknown',
+      createdAt: '2026-04-03T00:00:00.000Z',
+      updatedAt: '2026-04-03T00:00:00.000Z',
+      name: 'Mystery soup',
+      sourceType: 'custom',
+      sourceName: 'Local catalog',
+    });
+
+    render(PlanPage);
+    expectHeading('Plan');
+
+    await screen.findByLabelText('Meal source');
+    await fireEvent.change(screen.getByLabelText('Meal source'), {
+      target: { value: 'food' },
+    });
+    await waitFor(() => {
+      expect(screen.getByLabelText('Saved food')).toBeTruthy();
+    });
+    await fireEvent.change(screen.getByLabelText('Saved food'), {
+      target: { value: 'food-catalog-unknown' },
+    });
+    await fireEvent.click(screen.getByRole('button', { name: 'Add to week' }));
+
+    await waitFor(() => {
+      expect(screen.getByText(/Plan slot saved\./i)).toBeTruthy();
+      expect(screen.getAllByText('Mystery soup').length).toBeGreaterThan(0);
+      expect(
+        screen.getByText(/Saved food · Local catalog · Nutrition totals unknown/i)
+      ).toBeTruthy();
+      expect(screen.queryByText(/0g protein/i)).toBeNull();
+    });
+  });
+
   it('moves plan slots up within the same day', async () => {
     render(PlanPage);
     expectHeading('Plan');

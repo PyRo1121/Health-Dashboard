@@ -1,6 +1,7 @@
 import { nowIso } from '$lib/core/domain/time';
 import type { BaseRecord, FoodCatalogItem } from '$lib/core/domain/types';
 import { updateRecordMeta } from '$lib/core/shared/records';
+import { withTimeoutInit } from '$lib/server/http/fetch-timeout';
 
 const USDA_SOURCE_NAME = 'USDA FoodData Central';
 const USDA_BASE_URL = 'https://api.nal.usda.gov/fdc/v1';
@@ -148,7 +149,7 @@ async function readJson<T>(
   init: RequestInit,
   fetchImpl: typeof fetch = fetch
 ): Promise<T> {
-  const response = await fetchImpl(url, init);
+  const response = await fetchImpl(url, withTimeoutInit(init));
 
   if (!response.ok) {
     throw new Error(`USDA request failed with ${response.status}`);

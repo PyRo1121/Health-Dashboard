@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ImportBatch } from '$lib/core/domain/types';
+import type { ImportBatch, ImportPreviewResult } from '$lib/core/domain/types';
 import type { ImportPayloadSummary } from '$lib/features/imports/core';
 import {
   commitImportsPage,
@@ -32,6 +32,16 @@ const STAGED_BATCH: ImportBatch = {
   updatedAt: '2026-04-02T08:00:00.000Z',
   sourceType: 'healthkit-companion',
   status: 'staged',
+};
+
+const PREVIEW_RESULT: ImportPreviewResult = {
+  sourceType: 'healthkit-companion',
+  status: 'preview',
+  summary: {
+    adds: 3,
+    duplicates: 0,
+    warnings: 0,
+  },
 };
 
 describe('imports page state and actions', () => {
@@ -99,25 +109,26 @@ describe('imports page state and actions', () => {
       {
         getOwnerProfile: () => null,
         previewImport: async ({ sourceType }) => ({
-          ...STAGED_BATCH,
+          ...PREVIEW_RESULT,
           sourceType,
         }),
       }
     );
-    expect(previewed.intake.latestPreview?.status).toBe('staged');
-    expect(previewed.batches).toEqual(batches);
+    expect(previewed.intake.latestPreview?.status).toBe('preview');
+    expect(previewed.batches).toEqual([]);
 
     const committed = await commitImportsPage(
       {
         ...previewed,
-        intake: {
-          ...previewed.intake,
-          latestPreview: STAGED_BATCH,
-        },
       },
       {
-        commitImportBatch: async (batchId) => {
-          expect(batchId).toBe('batch-1');
+        getOwnerProfile: () => null,
+        commitImportBatch: async (input) => {
+          expect(input).toEqual({
+            sourceType: 'healthkit-companion',
+            rawText: '{"entries":[]}',
+            ownerProfile: null,
+          });
           return {
             ...STAGED_BATCH,
             status: 'committed',
@@ -125,8 +136,9 @@ describe('imports page state and actions', () => {
         },
       }
     );
-    expect(committed.intake.latestPreview?.status).toBe('committed');
+    expect(committed.intake.latestPreview).toBeNull();
     expect(committed.intake.saveNotice).toBe('Import committed.');
+    expect(committed.batches[0]?.status).toBe('committed');
   });
 
   it('keeps successful preview and commit state even if batch refetch would fail', async () => {
@@ -134,21 +146,22 @@ describe('imports page state and actions', () => {
       applyImportsManualPayloadEdit(createImportsPageState(), '{"entries":[]}'),
       {
         getOwnerProfile: () => null,
-        previewImport: async () => STAGED_BATCH,
+        previewImport: async () => PREVIEW_RESULT,
       }
     );
 
-    expect(previewed.intake.latestPreview?.id).toBe('batch-1');
-    expect(previewed.batches).toEqual([STAGED_BATCH]);
+    expect(previewed.intake.latestPreview?.status).toBe('preview');
+    expect(previewed.batches).toEqual([]);
 
     const committed = await commitImportsPage(previewed, {
+      getOwnerProfile: () => null,
       commitImportBatch: async () => ({
         ...STAGED_BATCH,
         status: 'committed',
       }),
     });
 
-    expect(committed.intake.latestPreview?.status).toBe('committed');
+    expect(committed.intake.latestPreview).toBeNull();
     expect(committed.batches[0]?.status).toBe('committed');
     expect(committed.intake.errorNotice).toBe('');
   });

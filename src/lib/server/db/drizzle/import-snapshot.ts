@@ -1,7 +1,7 @@
 import type { createDrizzleSqliteClient } from './client';
 import type { HealthDbSnapshot } from '$lib/core/db/types';
 import { drizzleSchema } from './schema';
-import { toMirrorInsertRecord } from './mirror';
+import { upsertMirrorRecord } from './mirror';
 
 type DrizzleDb = ReturnType<typeof createDrizzleSqliteClient>['db'];
 
@@ -32,16 +32,21 @@ export async function importHealthDbSnapshot(
   db: DrizzleDb,
   snapshot: HealthDbSnapshot
 ): Promise<void> {
-  for (const tableName of SNAPSHOT_TABLES) {
-    const records = snapshot[tableName] ?? [];
-    if (!records.length) continue;
+  await db.transaction(async (tx) => {
+    for (const tableName of SNAPSHOT_TABLES) {
+      const records = snapshot[tableName] ?? [];
+      if (!records.length) continue;
 
-    await db
-      .insert((drizzleSchema as Record<string, unknown>)[tableName] as never)
-      .values(
-        records.map((record) => toMirrorInsertRecord(tableName, record as { id: string })) as never
-      );
-  }
+      for (const record of records) {
+        await upsertMirrorRecord(
+          tx as never,
+          tableName,
+          (drizzleSchema as Record<string, unknown>)[tableName],
+          record as { id: string }
+        );
+      }
+    }
+  });
 }
 
 export function countMigratedRecords(snapshot: HealthDbSnapshot): number {

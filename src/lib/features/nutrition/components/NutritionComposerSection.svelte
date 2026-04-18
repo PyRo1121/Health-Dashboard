@@ -1,7 +1,9 @@
 <script lang="ts">
+  import type { ExternalSourceMetadata } from '$lib/core/domain/external-sources';
   import type { RecipeCatalogItem } from '$lib/core/domain/types';
   import { Button, Field, SectionCard } from '$lib/core/ui/primitives';
   import {
+    createNutritionMetricRows,
     createRecipeSummary,
     nutritionMealTypeOptions,
     type NutritionFormState,
@@ -11,10 +13,12 @@
   let {
     searchQuery,
     searchNotice,
+    searchMetadata,
     matches,
     packagedQuery,
     barcodeQuery,
     packagedNotice,
+    packagedMetadata,
     packagedMatches,
     recipeQuery,
     recipeNotice,
@@ -39,10 +43,12 @@
   }: {
     searchQuery: string;
     searchNotice: string;
+    searchMetadata: ExternalSourceMetadata | null;
     matches: FoodLookupResult[];
     packagedQuery: string;
     barcodeQuery: string;
     packagedNotice: string;
+    packagedMetadata: ExternalSourceMetadata | null;
     packagedMatches: FoodLookupResult[];
     recipeQuery: string;
     recipeNotice: string;
@@ -65,6 +71,20 @@
     onSaveCustomFood: () => void;
     onSaveRecurringMeal: () => void;
   } = $props();
+
+  function createMetadataRows(metadata: ExternalSourceMetadata | null): string[] {
+    if (!metadata) {
+      return [];
+    }
+
+    const sourceNames = metadata.provenance.map((item) => item.sourceName).join(', ');
+
+    return [
+      sourceNames ? `Sources: ${sourceNames}` : '',
+      `Cache: ${metadata.cacheStatus}`,
+      `Status: ${metadata.degradationStatus}`,
+    ].filter(Boolean);
+  }
 </script>
 
 <SectionCard title="Meal logging">
@@ -83,6 +103,13 @@
   {#if searchNotice}
     <p class="status-copy">{searchNotice}</p>
   {/if}
+  {#if searchMetadata}
+    <div class="metadata-block">
+      {#each createMetadataRows(searchMetadata) as row (row)}
+        <p class="status-copy">{row}</p>
+      {/each}
+    </div>
+  {/if}
 
   {#if matches.length}
     <ul class="match-list">
@@ -90,8 +117,13 @@
         <li>
           <div>
             <strong>{match.name}</strong>
-            <p>{match.calories} kcal · {match.protein}g protein · {match.fiber}g fiber</p>
-            <p>{match.carbs}g carbs · {match.fat}g fat</p>
+            {#if createNutritionMetricRows(match).length}
+              {#each createNutritionMetricRows(match) as row (row)}
+                <p>{row}</p>
+              {/each}
+            {:else}
+              <p>Nutrition totals unknown.</p>
+            {/if}
           </div>
           <Button variant="ghost" onclick={() => onUseMatch(match)}>Use match</Button>
         </li>
@@ -127,6 +159,13 @@
     {#if packagedNotice}
       <p class="status-copy">{packagedNotice}</p>
     {/if}
+    {#if packagedMetadata}
+      <div class="metadata-block">
+        {#each createMetadataRows(packagedMetadata) as row (row)}
+          <p class="status-copy">{row}</p>
+        {/each}
+      </div>
+    {/if}
 
     {#if packagedMatches.length}
       <ul class="match-list">
@@ -135,8 +174,13 @@
             <div>
               <strong>{match.name}</strong>
               <p>{match.brandName ?? match.sourceName}</p>
-              <p>{match.calories} kcal · {match.protein}g protein · {match.fiber}g fiber</p>
-              <p>{match.carbs}g carbs · {match.fat}g fat</p>
+              {#if createNutritionMetricRows(match).length}
+                {#each createNutritionMetricRows(match) as row (row)}
+                  <p>{row}</p>
+                {/each}
+              {:else}
+                <p>Nutrition totals unknown.</p>
+              {/if}
             </div>
             <Button variant="ghost" onclick={() => onUseMatch(match)}>Use packaged</Button>
           </li>
@@ -265,6 +309,10 @@
 <style>
   .field-grid {
     margin: 1rem 0;
+  }
+
+  .metadata-block {
+    margin-top: 0.35rem;
   }
 
   .match-list {

@@ -1,5 +1,6 @@
 import type { ExerciseCatalogItem } from '$lib/core/domain/types';
 import { z } from 'zod';
+import { withTimeoutInit } from '$lib/server/http/fetch-timeout';
 
 type WgerEntity = Record<string, unknown>;
 
@@ -128,11 +129,14 @@ async function requestExercises(
   url.searchParams.set('ordering', 'name');
   url.searchParams.set(searchParam, query);
 
-  const response = await fetchImpl(url, {
-    headers: {
-      accept: 'application/json',
-    },
-  });
+  const response = await fetchImpl(
+    url,
+    withTimeoutInit({
+      headers: {
+        accept: 'application/json',
+      },
+    })
+  );
 
   if (!response.ok) {
     throw new Error(`wger request failed with ${response.status}`);

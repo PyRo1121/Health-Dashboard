@@ -98,7 +98,10 @@ export async function submitAssessment(
   }
 ): Promise<AssessmentResult> {
   const definition = getAssessmentDefinition(input.instrument);
-  if (input.itemResponses.length !== definition.questions.length) {
+  if (
+    input.itemResponses.length !== definition.questions.length ||
+    input.itemResponses.some((response) => response < 0)
+  ) {
     throw new Error('Incomplete assessment');
   }
 

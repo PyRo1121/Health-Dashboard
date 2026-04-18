@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { toSafeExternalHref } from '$lib/core/shared/external-links';
   import type { PlannedMeal } from '$lib/core/domain/types';
   import { Button, EmptyState, SectionCard } from '$lib/core/ui/primitives';
   import type { TodayEventRow, TodayPlanRow } from '$lib/features/today/model';
@@ -138,6 +139,17 @@
         <li>
           <strong>{event.label}</strong>
           <span>{event.valueLabel}</span>
+          {#if toSafeExternalHref(event.referenceUrl)}
+            <a
+              class="event-reference-link"
+              href={toSafeExternalHref(event.referenceUrl) ?? undefined}
+              target="_blank"
+              rel="external noreferrer"
+              aria-label={`Learn more about same-day event ${event.label}`}
+            >
+              Learn more
+            </a>
+          {/if}
         </li>
       {/each}
     </ul>
@@ -152,6 +164,11 @@
 <style>
   .event-list {
     gap: 0.7rem;
+  }
+
+  .event-reference-link {
+    margin-left: 0.75rem;
+    color: var(--phc-label);
   }
 
   .compact-actions {

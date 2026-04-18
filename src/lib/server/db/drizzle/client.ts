@@ -1,21 +1,23 @@
-import { existsSync, rmSync } from 'node:fs';
+import { rmSync } from 'node:fs';
 import { join, resolve } from 'node:path';
 import { Database } from 'bun:sqlite';
 import { drizzle } from 'drizzle-orm/bun-sqlite';
 import { DB_VERSION, SCHEMA_STORES } from '$lib/core/db/schema';
 import { drizzleSchema } from './schema';
+import {
+  assertPlaywrightModeForDbReset,
+  isPlaywrightMode,
+  PlaywrightModeRequiredError,
+} from './reset-guard';
 
 const DEFAULT_DB_PATH = join(process.cwd(), '.data', 'personal-health-cockpit.sqlite');
 const PLAYWRIGHT_DB_PATH = '/tmp/personal-health-cockpit-playwright.sqlite';
-const PLAYWRIGHT_MODE_FLAG = join(process.cwd(), '.playwright-mode');
 
 const globalState = globalThis as typeof globalThis & {
   __healthDrizzleClient?: ReturnType<typeof createDrizzleSqliteClient> | null;
 };
 
-function isPlaywrightMode(): boolean {
-  return existsSync(PLAYWRIGHT_MODE_FLAG);
-}
+export { assertPlaywrightModeForDbReset, PlaywrightModeRequiredError };
 
 function indexedColumnsForTable(tableName: keyof typeof SCHEMA_STORES): string[] {
   return SCHEMA_STORES[tableName]
@@ -106,6 +108,7 @@ export function resetServerDrizzleClient(): void {
 }
 
 export function resetServerDrizzleStorage(): void {
+  assertPlaywrightModeForDbReset();
   resetServerDrizzleClient();
   deleteHealthDbFiles();
 }

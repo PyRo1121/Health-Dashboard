@@ -11,6 +11,7 @@ export const USDA_FALLBACK_FOODS: FoodLookupResult[] = [
     carbs: 52,
     fat: 7,
     sourceName: 'USDA fallback',
+    sourceType: 'usda-fallback',
   },
   {
     id: 'fdc-chicken-salad',
@@ -21,6 +22,7 @@ export const USDA_FALLBACK_FOODS: FoodLookupResult[] = [
     carbs: 18,
     fat: 19,
     sourceName: 'USDA fallback',
+    sourceType: 'usda-fallback',
   },
   {
     id: 'fdc-lentil-soup',
@@ -31,18 +33,29 @@ export const USDA_FALLBACK_FOODS: FoodLookupResult[] = [
     carbs: 39,
     fat: 6,
     sourceName: 'USDA fallback',
+    sourceType: 'usda-fallback',
   },
 ];
+
+export function filterUsdaCatalogItems(catalogItems: FoodCatalogItem[] = []): FoodCatalogItem[] {
+  return catalogItems.filter((item) => item.sourceType === 'usda-fallback');
+}
+
+export function filterOpenFoodFactsCatalogItems(
+  catalogItems: FoodCatalogItem[] = []
+): FoodCatalogItem[] {
+  return catalogItems.filter((item) => item.sourceType === 'open-food-facts');
+}
 
 export function foodLookupResultFromCatalogItem(item: FoodCatalogItem): FoodLookupResult {
   return {
     id: item.id,
     name: item.name,
-    calories: item.calories ?? 0,
-    protein: item.protein ?? 0,
-    fiber: item.fiber ?? 0,
-    carbs: item.carbs ?? 0,
-    fat: item.fat ?? 0,
+    calories: item.calories,
+    protein: item.protein,
+    fiber: item.fiber,
+    carbs: item.carbs,
+    fat: item.fat,
     sourceName: item.sourceName,
     sourceType: item.sourceType,
     brandName: item.brandName,
@@ -98,6 +111,13 @@ export function searchPackagedFoodCatalog(
     .map((item) => foodLookupResultFromCatalogItem(item));
 }
 
+export function searchUsdaFoodCatalog(
+  query: string,
+  catalogItems: FoodCatalogItem[] = []
+): FoodLookupResult[] {
+  return searchFoodData(query, filterUsdaCatalogItems(catalogItems));
+}
+
 export function findFoodCatalogItemByBarcode(
   barcode: string,
   catalogItems: FoodCatalogItem[] = []
@@ -107,6 +127,13 @@ export function findFoodCatalogItemByBarcode(
 
   const item = catalogItems.find((candidate) => candidate.barcode === normalized);
   return item ? foodLookupResultFromCatalogItem(item) : null;
+}
+
+export function findOpenFoodFactsCatalogItemByBarcode(
+  barcode: string,
+  catalogItems: FoodCatalogItem[] = []
+): FoodLookupResult | null {
+  return findFoodCatalogItemByBarcode(barcode, filterOpenFoodFactsCatalogItems(catalogItems));
 }
 
 export function attachNutrientsToFoodEntry(

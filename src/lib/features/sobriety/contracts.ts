@@ -1,28 +1,30 @@
 import { z } from 'zod';
-import type { SobrietyPageState } from './controller';
 
-function isSobrietyPageState(value: unknown): value is SobrietyPageState {
-  if (!value || typeof value !== 'object') return false;
-  const state = value as Record<string, unknown>;
-  const summary = state.summary;
+const sobrietyEventSchema = z.object({
+  id: z.string(),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+  localDay: z.string(),
+  eventType: z.enum(['status', 'craving', 'lapse', 'recovery']),
+  status: z.enum(['sober', 'lapse', 'recovery']).optional(),
+  cravingScore: z.number().optional(),
+  triggerTags: z.array(z.string()).optional(),
+  recoveryAction: z.string().optional(),
+  note: z.string().optional(),
+});
 
-  return (
-    typeof state.loading === 'boolean' &&
-    typeof state.localDay === 'string' &&
-    typeof state.saveNotice === 'string' &&
-    typeof state.cravingScore === 'string' &&
-    typeof state.cravingNote === 'string' &&
-    typeof state.lapseNote === 'string' &&
-    typeof state.recoveryAction === 'string' &&
-    !!summary &&
-    typeof summary === 'object' &&
-    typeof (summary as Record<string, unknown>).streak === 'number' &&
-    Array.isArray((summary as Record<string, unknown>).todayEvents)
-  );
-}
-
-const sobrietyPageStateSchema = z.custom<SobrietyPageState>(isSobrietyPageState, {
-  message: 'Invalid sobriety page state',
+const sobrietyPageStateSchema = z.object({
+  loading: z.boolean(),
+  localDay: z.string(),
+  summary: z.object({
+    streak: z.number(),
+    todayEvents: z.array(sobrietyEventSchema),
+  }),
+  saveNotice: z.string(),
+  cravingScore: z.string().regex(/^[0-5]$/),
+  cravingNote: z.string(),
+  lapseNote: z.string(),
+  recoveryAction: z.string(),
 });
 
 export const sobrietyRequestSchema = z.discriminatedUnion('action', [

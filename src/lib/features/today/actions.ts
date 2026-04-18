@@ -8,6 +8,7 @@ import {
   type FoodCatalogItemsStore,
   type FoodEntriesStore,
 } from '$lib/features/nutrition/store';
+import { listStalePlannedMealSlotIds } from '$lib/features/nutrition/planned-meal-resolution';
 import {
   deletePlanSlot,
   ensureWeeklyPlan,
@@ -18,6 +19,7 @@ import {
   type PlanSlotsStore,
   type WeeklyPlansStore,
 } from '$lib/features/planning/service';
+import { listWorkoutTemplates } from '$lib/features/movement/service';
 import {
   refreshWeeklyReviewArtifactsSafely,
   type ReviewStorage,
@@ -27,6 +29,7 @@ import {
   getTodaySnapshot,
   type TodaySnapshotStore,
 } from './snapshot';
+import { listStalePlannedWorkoutSlotIdsFromData } from './snapshot-builder';
 
 export interface TodayActionsStorage
   extends
@@ -83,6 +86,21 @@ export function buildDailyCheckinEvent(
   };
 }
 
+async function deleteStalePlannedWorkoutSlots(
+  store: TodayActionsStorage,
+  localDay: string
+): Promise<boolean> {
+  const [planSlots, workoutTemplates] = await Promise.all([
+    listPlanSlotsForDay(store, localDay),
+    listWorkoutTemplates(store),
+  ]);
+  const staleSlotIds = listStalePlannedWorkoutSlotIdsFromData(planSlots, workoutTemplates);
+  for (const slotId of staleSlotIds) {
+    await deletePlanSlot(store, slotId);
+  }
+  return staleSlotIds.length > 0;
+}
+
 export async function saveDailyCheckin(
   store: TodayActionsStorage,
   input: DailyCheckinInput
@@ -136,6 +154,12 @@ export async function logPlannedMealForToday(
   if (candidate.slotId) {
     await updatePlanSlotStatus(store, candidate.slotId, 'done');
   }
+
+  const staleSlotIds = await listStalePlannedMealSlotIds(store, date);
+  for (const slotId of staleSlotIds) {
+    await deletePlanSlot(store, slotId);
+  }
+
   await refreshWeeklyReviewArtifactsSafely(store, date);
 
   return entry;
@@ -146,8 +170,17 @@ export async function clearTodayPlannedMeal(
   date: string
 ): Promise<void> {
   const resolution = await getTodayPlannedMealResolution(store, date);
+  const staleSlotIds = await listStalePlannedMealSlotIds(store, date);
+
   if (resolution.candidate?.slotId) {
     await deletePlanSlot(store, resolution.candidate.slotId);
+  }
+
+  for (const slotId of staleSlotIds) {
+    await deletePlanSlot(store, slotId);
+  }
+
+  if (resolution.candidate?.slotId || staleSlotIds.length) {
     await refreshWeeklyReviewArtifactsSafely(store, date);
   }
 }
@@ -158,6 +191,15 @@ export async function updateTodayPlanSlotStatus(
   status: PlanSlot['status']
 ): Promise<PlanSlot> {
   const slot = await updatePlanSlotStatus(store, slotId, status);
+  if (slot.slotType === 'meal') {
+    const staleMealSlotIds = await listStalePlannedMealSlotIds(store, slot.localDay);
+    for (const staleSlotId of staleMealSlotIds) {
+      await deletePlanSlot(store, staleSlotId);
+    }
+  }
+  if (slot.slotType === 'workout') {
+    await deleteStalePlannedWorkoutSlots(store, slot.localDay);
+  }
   await refreshWeeklyReviewArtifactsSafely(store, slot.localDay);
   return slot;
 }
@@ -175,20 +217,22 @@ export async function applyTodayRecoveryAction(
 
   if (actionId === 'apply-recovery-meal') {
     const recommendation = adaptation.mealRecommendation;
-    if (!recommendation) {
+    if (!recommendation?.itemId) {
       return false;
     }
 
     const food = (await listFoodCatalogItems(store)).find(
-      (item) => item.name === recommendation.title
+      (item) => item.id === recommendation.itemId
     );
     if (!food) {
       return false;
     }
 
-    const currentMealSlot = (await listPlanSlotsForDay(store, date)).find(
-      (slot) => slot.slotType === 'meal' && slot.status === 'planned'
-    );
+    const planSlots = await listPlanSlotsForDay(store, date);
+    const plannedMealResolution = await getTodayPlannedMealResolution(store, date);
+    const currentMealSlot = plannedMealResolution.candidate?.slotId
+      ? planSlots.find((slot) => slot.id === plannedMealResolution.candidate?.slotId)
+      : planSlots.find((slot) => slot.slotType === 'meal' && slot.status === 'planned');
 
     if (currentMealSlot) {
       await updatePlanSlot(store, currentMealSlot.id, {
@@ -196,6 +240,7 @@ export async function applyTodayRecoveryAction(
         itemId: food.id,
         mealType: currentMealSlot.mealType ?? snapshot.plannedMeal?.mealType ?? 'meal',
         title: food.name,
+        notes: '',
       });
     } else {
       const weeklyPlan = await ensureWeeklyPlan(store, date);
@@ -210,13 +255,22 @@ export async function applyTodayRecoveryAction(
       });
     }
 
+    const staleSlotIds = await listStalePlannedMealSlotIds(store, date);
+    for (const slotId of staleSlotIds) {
+      await deletePlanSlot(store, slotId);
+    }
+
     await refreshWeeklyReviewArtifactsSafely(store, date);
     return true;
   }
 
-  const currentWorkoutSlot = (await listPlanSlotsForDay(store, date)).find(
-    (slot) => slot.slotType === 'workout' && slot.status === 'planned'
-  );
+  const currentWorkoutSlot = snapshot.plannedWorkout
+    ? (await listPlanSlotsForDay(store, date)).find(
+        (slot) => slot.id === snapshot.plannedWorkout?.id
+      )
+    : (await listPlanSlotsForDay(store, date)).find(
+        (slot) => slot.slotType === 'workout' && slot.status === 'planned'
+      );
   if (!currentWorkoutSlot) {
     return false;
   }
@@ -227,6 +281,7 @@ export async function applyTodayRecoveryAction(
     title: 'Recovery walk',
     notes: '10-20 minutes easy walk or mobility reset.',
   });
+  await deleteStalePlannedWorkoutSlots(store, date);
   await refreshWeeklyReviewArtifactsSafely(store, date);
   return true;
 }

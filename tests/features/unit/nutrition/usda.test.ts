@@ -67,5 +67,7 @@ describe('usda adapter', () => {
     expect(results[0]?.externalId).toBe('12345');
     expect(detail.fdcId).toBe(12345);
     expect(fetchImpl.mock.calls[0]?.[1]?.method).toBe('POST');
+    expect(fetchImpl.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal);
+    expect(fetchImpl.mock.calls[1]?.[1]?.signal).toBeInstanceOf(AbortSignal);
   });
 });

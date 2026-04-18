@@ -1,5 +1,6 @@
 import type { RequestHandler } from './$types';
 import { sobrietyRequestSchema } from '$lib/features/sobriety/contracts';
+import { createValidatedActionPostHandler } from '$lib/server/http/validated-action-route';
 import {
   loadSobrietyPageServer,
   markSobrietyStatusServer,
@@ -7,30 +8,14 @@ import {
   saveSobrietyLapseServer,
 } from '$lib/server/sobriety/service';
 
-export const POST: RequestHandler = async ({ request }) => {
-  let body: unknown;
-
-  try {
-    body = await request.json();
-  } catch {
-    return new Response('Invalid sobriety request payload.', { status: 400 });
-  }
-
-  const parsed = sobrietyRequestSchema.safeParse(body);
-  if (!parsed.success) {
-    return new Response('Invalid sobriety request payload.', { status: 400 });
-  }
-
-  switch (parsed.data.action) {
-    case 'load':
-      return Response.json(await loadSobrietyPageServer(parsed.data.localDay, parsed.data.state));
-    case 'markStatus':
-      return Response.json(
-        await markSobrietyStatusServer(parsed.data.state, parsed.data.status, parsed.data.notice)
-      );
-    case 'saveCraving':
-      return Response.json(await saveSobrietyCravingServer(parsed.data.state));
-    case 'saveLapse':
-      return Response.json(await saveSobrietyLapseServer(parsed.data.state));
-  }
-};
+export const POST: RequestHandler = createValidatedActionPostHandler({
+  schema: sobrietyRequestSchema,
+  invalidMessage: 'Invalid sobriety request payload.',
+  handlers: {
+    load: async (data) => await loadSobrietyPageServer(data.localDay, data.state),
+    markStatus: async (data) =>
+      await markSobrietyStatusServer(data.state, data.status, data.notice),
+    saveCraving: async (data) => await saveSobrietyCravingServer(data.state),
+    saveLapse: async (data) => await saveSobrietyLapseServer(data.state),
+  },
+});

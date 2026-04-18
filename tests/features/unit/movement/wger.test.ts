@@ -22,6 +22,7 @@ describe('wger adapter', () => {
     const results = await searchWgerExercises('squat', fetchImpl as never);
 
     expect(fetchImpl).toHaveBeenCalled();
+    expect(fetchImpl.mock.calls[0]?.[1]?.signal).toBeInstanceOf(AbortSignal);
     expect(results).toEqual([
       {
         id: 'wger:123',

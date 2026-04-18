@@ -67,9 +67,20 @@ export function createSlotSummary(
       return 'Saved food no longer available';
     }
 
-    return ['Saved food', food.sourceName, food.protein ? `${food.protein}g protein` : '']
-      .filter(Boolean)
-      .join(' · ');
+    const nutritionSummary =
+      food.protein !== undefined
+        ? `${food.protein}g protein`
+        : food.calories !== undefined
+          ? `${food.calories} kcal`
+          : food.fiber !== undefined
+            ? `${food.fiber}g fiber`
+            : food.carbs !== undefined
+              ? `${food.carbs}g carbs`
+              : food.fat !== undefined
+                ? `${food.fat}g fat`
+                : 'Nutrition totals unknown';
+
+    return ['Saved food', food.sourceName, nutritionSummary].filter(Boolean).join(' · ');
   }
 
   if (slot.slotType === 'meal' && slot.itemId) {

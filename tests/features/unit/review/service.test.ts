@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import { saveAssessmentProgress, submitAssessment } from '$lib/features/assessments/service';
 import { deriveWeeklyGroceries, setGroceryItemState } from '$lib/features/groceries/service';
-import { logAnxietyEvent, logSymptomEvent } from '$lib/features/health/service';
+import {
+  logAnxietyEvent,
+  logSymptomEvent,
+  quickLogHealthTemplate,
+  saveHealthTemplate,
+} from '$lib/features/health/service';
 import { commitImportBatch, previewImport } from '$lib/features/imports/store';
 import { saveJournalEntry } from '$lib/features/journal/service';
 import {
@@ -100,11 +105,14 @@ describe('review service', () => {
       instrument: 'WHO-5',
       itemResponses: [3, 3, 3, 4, 4],
     });
-    const batch = await previewImport(db, {
+    await previewImport(db, {
       sourceType: 'healthkit-companion',
       rawText: HEALTHKIT_BUNDLE_JSON,
     });
-    await commitImportBatch(db, batch.id);
+    await commitImportBatch(db, {
+      sourceType: 'healthkit-companion',
+      rawText: HEALTHKIT_BUNDLE_JSON,
+    });
   }
 
   it('computes weekly trend comparisons', async () => {
@@ -281,6 +289,79 @@ describe('review service', () => {
     expect(weekly.journalHighlights).toContain(
       'Evening review on 2026-03-30: Crowded store and headache drained the afternoon.'
     );
+  });
+
+  it('collects medication reference links from quick-logged health events into the weekly snapshot', async () => {
+    const db = getDb();
+    await seedWeek();
+
+    const metformin = await saveHealthTemplate(db, {
+      label: 'Metformin 500 MG Oral Tablet',
+      templateType: 'medication',
+      defaultDose: 1,
+      defaultUnit: 'tablet',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+    });
+    const vitaminD = await saveHealthTemplate(db, {
+      label: 'Vitamin D3',
+      templateType: 'supplement',
+      defaultDose: 1,
+      defaultUnit: 'capsule',
+      referenceUrl: 'https://example.com/supplement-reference',
+    });
+
+    await quickLogHealthTemplate(db, {
+      localDay: '2026-04-02',
+      templateId: metformin.id,
+    });
+    await quickLogHealthTemplate(db, {
+      localDay: '2026-04-01',
+      templateId: metformin.id,
+    });
+    await quickLogHealthTemplate(db, {
+      localDay: '2026-04-02',
+      templateId: vitaminD.id,
+    });
+
+    const weekly = await buildWeeklySnapshot(db, '2026-04-02');
+
+    expect(weekly.healthReferenceLinks).toEqual([
+      {
+        label: 'Metformin 500 MG Oral Tablet',
+        href: 'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.88&mainSearchCriteria.v.c=860975&mainSearchCriteria.v.dn=Metformin+500+MG+Oral+Tablet&informationRecipient.languageCode.c=en',
+      },
+    ]);
+  });
+
+  it('collects symptom reference links from logged symptom events into the weekly snapshot', async () => {
+    const db = getDb();
+    await seedWeek();
+
+    await logSymptomEvent(db, {
+      localDay: '2026-04-02',
+      symptom: 'Headache',
+      severity: 4,
+      note: 'After lunch',
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+    });
+    await logSymptomEvent(db, {
+      localDay: '2026-04-01',
+      symptom: 'Headache',
+      severity: 3,
+      referenceUrl:
+        'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+    });
+
+    const weekly = await buildWeeklySnapshot(db, '2026-04-02');
+
+    expect(weekly.symptomReferenceLinks).toEqual([
+      {
+        label: 'Headache',
+        href: 'https://connect.medlineplus.gov/application?mainSearchCriteria.v.cs=2.16.840.1.113883.6.90&mainSearchCriteria.v.c=R51&mainSearchCriteria.v.dn=Headache&informationRecipient.languageCode.c=en',
+      },
+    ]);
   });
 
   it('captures repeated journal-linked patterns in the weekly snapshot', async () => {

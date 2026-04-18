@@ -1,4 +1,5 @@
 import type { ImportSourceType } from '$lib/core/domain/types';
+import { getExternalSourceDefinition } from '$lib/core/domain/external-sources';
 import type { DeviceSourceManifest } from '$lib/features/integrations/manifests/device-sources';
 import {
   buildHealthKitImportHelperCopy,
@@ -9,6 +10,11 @@ import {
 export interface ImportSourceConfig {
   label: string;
   description: string;
+  sourceMetadata?: {
+    sourceName: string;
+    authMode: string;
+    reliability: string;
+  };
   helper?: ImportSourceHelperCopy;
   sampleBundle?: {
     filename: string;
@@ -30,9 +36,17 @@ export function buildImportSourceCatalog(input: {
 }): ImportSourceCatalog {
   const config: Record<ImportSourceType, ImportSourceConfig> = {
     'healthkit-companion': {
-      label: 'iPhone bundle / Shortcuts JSON',
+      label: input.healthkitManifest.label,
       description:
         'Preferred no-Mac T9 path. Use Apple Shortcuts to export this JSON bundle, or paste the same contract from a native iPhone companion build.',
+      sourceMetadata: (() => {
+        const source = getExternalSourceDefinition('healthkit-companion');
+        return {
+          sourceName: source.sourceName,
+          authMode: source.authMode,
+          reliability: source.reliability,
+        };
+      })(),
       helper: buildHealthKitImportHelperCopy(input.healthkitManifest),
       sampleBundle: {
         filename: 'sample-healthkit-bundle.json',
@@ -44,6 +58,14 @@ export function buildImportSourceCatalog(input: {
       label: 'SMART sandbox FHIR JSON',
       description:
         'T10 proof lane. Paste a SMART sandbox FHIR Bundle after you configure your single-owner profile in Settings.',
+      sourceMetadata: (() => {
+        const source = getExternalSourceDefinition('smart-fhir-sandbox');
+        return {
+          sourceName: source.sourceName,
+          authMode: source.authMode,
+          reliability: source.reliability,
+        };
+      })(),
       helper: buildSmartFhirImportHelperCopy(),
       sampleBundle: {
         filename: 'sample-smart-fhir-bundle.json',

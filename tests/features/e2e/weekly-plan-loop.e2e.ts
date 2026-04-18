@@ -1,6 +1,5 @@
 import { expect, test } from '@playwright/test';
-
-const resetHeaders = { 'x-health-reset-token': 'codex-e2e' };
+import { postMigrationSnapshot, resetDb } from '../../support/e2e/http';
 
 function emptySnapshot() {
   return {
@@ -28,12 +27,19 @@ function emptySnapshot() {
 }
 
 test.beforeEach(async ({ page }) => {
-  const response = await page.request.post('/api/test/reset-db', { headers: resetHeaders });
+  const response = await resetDb(page.request);
   expect(response.ok()).toBe(true);
 });
 
 test('weekly plan loop connects plan, today, and review', async ({ page }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const localDay = new Intl.DateTimeFormat('en-CA', {
+    timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
+
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         ...emptySnapshot(),
@@ -70,6 +76,7 @@ test('weekly plan loop connects plan, today, and review', async ({ page }) => {
   await expect(page.getByText(/No workout templates yet\./i)).toBeVisible();
   await expect(page.getByText(/No grocery items yet\./i)).toBeVisible();
 
+  await page.getByLabel('Plan day').selectOption(localDay);
   await page.getByLabel('Recipe').selectOption('themealdb:52772');
   await page.getByRole('button', { name: 'Add to week' }).click();
   await expect(page.getByText(/Plan slot saved\./i)).toBeVisible();
@@ -89,11 +96,13 @@ test('weekly plan loop connects plan, today, and review', async ({ page }) => {
   await expect(page.getByText(/Workout template saved\./i)).toBeVisible();
 
   await page.getByLabel('Plan slot type').selectOption('workout');
+  await page.getByLabel('Plan day').selectOption(localDay);
   await page.getByLabel('Workout template').selectOption({ label: 'Full body reset' });
   await page.getByRole('button', { name: 'Add to week' }).click();
   await expect(page.getByText(/Plan slot saved\./i)).toBeVisible();
 
   await page.getByLabel('Plan slot type').selectOption('meal');
+  await page.getByLabel('Plan day').selectOption(localDay);
   await page.getByLabel('Meal source').selectOption('food');
   await page.getByLabel('Saved food').selectOption({ label: 'Greek yogurt bowl' });
   await page.getByRole('button', { name: 'Add to week' }).click();
@@ -115,16 +124,21 @@ test('weekly plan loop connects plan, today, and review', async ({ page }) => {
   const plannedWorkoutSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Planned workout' }),
   });
-  await expect(plannedMealSection.getByText('Greek yogurt bowl')).toBeVisible();
+  await expect(plannedMealSection.getByText('Teriyaki Chicken Casserole')).toBeVisible();
   await expect(plannedWorkoutSection).toContainText('Full body reset');
   await page.getByRole('button', { name: 'Log planned meal' }).click();
   await expect(page.getByText(/Planned meal logged\./i)).toBeVisible();
+  await expect(page.getByText(/Latest meal: Teriyaki Chicken Casserole/i)).toBeVisible();
   await page.getByRole('button', { name: 'Mark workout done' }).click();
   await expect(page.getByText(/Plan item marked done\./i)).toBeVisible();
   const todayPlanSection = page.locator('section').filter({
     has: page.getByRole('heading', { name: "Today's plan" }),
   });
-  await todayPlanSection.getByRole('button', { name: 'Skip' }).first().click();
+  await todayPlanSection
+    .locator('li')
+    .filter({ hasText: 'Greek yogurt bowl' })
+    .getByRole('button', { name: 'Skip' })
+    .click();
   await expect(page.getByText(/Plan item marked skipped\./i)).toBeVisible();
 
   await page.getByLabel('Mood').fill('4');
@@ -157,9 +171,7 @@ test('weekly plan loop connects plan, today, and review', async ({ page }) => {
   await expect(
     planFollowThroughSection.getByText(/Workouts planned: 1\/1 completed\./i)
   ).toBeVisible();
-  await expect(
-    page.getByText(/Meal miss: Teriyaki Chicken Casserole was skipped\./i)
-  ).toBeVisible();
+  await expect(page.getByText(/Meal miss: Greek yogurt bowl was skipped\./i)).toBeVisible();
   await expect(
     page.getByText(/Workout hit: Full body reset was completed as planned\./i)
   ).toBeVisible();
@@ -167,26 +179,23 @@ test('weekly plan loop connects plan, today, and review', async ({ page }) => {
     planFollowThroughSection.getByText(/Groceries: 1\/2 checked, 1 on hand, 1 excluded\./i)
   ).toBeVisible();
   await expect(
-    page
-      .getByText(
-        /Potential waste: Teriyaki Chicken Casserole was missed after 1 grocery item had already been sourced\./i
-      )
-      .first()
-  ).toBeVisible();
-  await expect(
-    page.getByText(
-      /Grocery miss: Teriyaki Chicken Casserole still had 1 unresolved grocery item when the meal was missed\./i
-    )
+    page.getByText(/No grocery misses or waste signals surfaced this week\./i)
   ).toBeVisible();
   const strategySection = page.locator('section').filter({
     has: page.getByRole('heading', { name: 'Decision engine actions' }),
   });
   await expect(strategySection.getByText('Stop', { exact: true }).first()).toBeVisible();
-  await expect(strategySection.getByRole('link', { name: 'Review recipe' })).toBeVisible();
+  const loadRecipeLink = strategySection.getByRole('link', { name: 'Load recipe' });
+  await expect(loadRecipeLink).toBeVisible();
+  await loadRecipeLink.click();
+  await expect(page).toHaveURL(/\/nutrition$/);
+  await expect(page.getByLabel('Meal name')).toHaveValue('Teriyaki Chicken Casserole');
+  await expect(page.getByLabel('Meal type')).toHaveValue('dinner');
+  await expect(page.getByText(/Loaded from Review strategy\./i)).toBeVisible();
 });
 
 test('grocery checklist merges duplicate ingredients across recipes', async ({ page }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         ...emptySnapshot(),
@@ -238,7 +247,7 @@ test('grocery checklist merges duplicate ingredients across recipes', async ({ p
 });
 
 test('manual grocery items persist after weekly plan recompute', async ({ page }) => {
-  const seedResponse = await page.request.post('/api/db/migrate', {
+  const seedResponse = await postMigrationSnapshot(page.request, {
     data: {
       snapshot: {
         ...emptySnapshot(),

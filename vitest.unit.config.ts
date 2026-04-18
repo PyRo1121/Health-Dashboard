@@ -19,7 +19,14 @@ export default mergeConfig(
           branches: 70,
           statements: 80,
         },
-        exclude: ['tests/**', '**/*.d.ts', 'vite.config.*', 'vitest.*.config.ts'],
+        exclude: [
+          '.github/**',
+          'scripts/**',
+          'tests/**',
+          '**/*.d.ts',
+          'vite.config.*',
+          'vitest.*.config.ts',
+        ],
       },
     },
   })
