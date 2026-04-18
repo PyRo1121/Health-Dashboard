@@ -1,0 +1,183 @@
+src/lib/server/http/session-guard.ts
+  502af712075941b9 1-158
+src/lib/features/imports/intake-state.ts
+  502af712075941b9 1
+playwright.config.ts
+  502af712075941b9 21
+tests/features/unit/today/recovery-action-id.test.ts
+  502af712075941b9 1-85
+src/lib/features/today/actions.ts
+  502af712075941b9 220,225
+tests/features/unit/today/model.test.ts
+  502af712075941b9 181
+src/lib/server/today/page-actions.ts
+  502af712075941b9 219,235,239
+src/lib/features/review/components/ReviewListSection.svelte
+  502af712075941b9 51
+src/lib/features/today/components/TodayPlanSurface.svelte
+  502af712075941b9 147
+src/lib/server/today/page-loader.ts
+  502af712075941b9 12,41-51,53-54,57-58
+tests/features/unit/db/migrate.route.test.ts
+  502af712075941b9 6,52,60-63,75,83,100,121,131-148
+tests/features/unit/today/snapshot.test.ts
+  502af712075941b9 421
+src/lib/features/health/components/HealthEventStreamSection.svelte
+  502af712075941b9 29
+src/lib/server/http/control-plane-guard.ts
+  502af712075941b9 1-51
+tests/features/unit/imports/intake-state.test.ts
+  502af712075941b9 2
+src/routes/api/db/migrate/+server.ts
+  502af712075941b9 9,72-79
+tests/features/unit/http/api-session.test.ts
+  502af712075941b9 1-95
+src/hooks.server.ts
+  502af712075941b9 1-29
+src/routes/api/test/reset-db/+server.ts
+  502af712075941b9 7,10-15
+src/lib/features/health/components/HealthTemplateSection.svelte
+  502af712075941b9 141,172
+src/lib/features/imports/store.ts
+  502af712075941b9 245-246
+src/lib/features/today/intelligence.ts
+  502af712075941b9 76
+src/lib/features/today/recovery.ts
+  502af712075941b9 140
+tests/features/unit/db/reset-db.route.test.ts
+  502af712075941b9 5,29,45,55,64,71
+src/lib/features/health/components/HealthManualLoggingSection.svelte
+  502af712075941b9 125
+src/lib/features/timeline/Page.svelte
+  502af712075941b9 92
+src/lib/server/planning/store.ts
+  502af712075941b9 21,25,27,30-31,40-71,114-125,127-134,165-176,178-186,200-202,206-223
+tests/features/unit/today/intelligence.test.ts
+  502af712075941b9 79
+src/lib/server/imports/service.ts
+  502af712075941b9 263-264
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "6a871cfe14be63671e5ee2295b08f0b0cd41f550",
+  "prompts": {
+    "0c70b9e55da3ea12": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9dac-31d8-71ec-a958-f2ce31c6100e",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 7,
+      "total_deletions": 310,
+      "accepted_lines": 7,
+      "overriden_lines": 0
+    },
+    "2d6b89e9e600d72a": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9df3-7761-738c-804d-9fc9c86a13c7",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 110,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "502af712075941b9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9dab-b782-7560-8958-3cb80c8072f6",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 620,
+      "total_deletions": 200213,
+      "accepted_lines": 610,
+      "overriden_lines": 0
+    },
+    "ad11c8f827fe75b7": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9dce-d0b1-715d-9504-e29cf805c08b",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 841,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "b73b8868e83ea295": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9dce-d0c0-7698-a5d4-1125cf0503c6",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 217,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "bd324fdf73f89470": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9dc0-f8fd-70fa-802a-9bb9d1001b89",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 14,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "c24120574dfa7af8": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9dc1-be4c-757a-8aca-73bcf1ff0014",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "ce3409372e6cb0f0": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9df3-777a-767a-8cdd-0ecd674b6381",
+        "model": "gpt-5.3-codex"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 1,
+      "total_deletions": 1,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "ed888380bb25dcbb": {
+      "agent_id": {
+        "tool": "pi",
+        "id": "019d9dce-d0c7-77ae-a4c3-54c31ccb929b",
+        "model": "gpt-5.3-codex-spark"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 517,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
