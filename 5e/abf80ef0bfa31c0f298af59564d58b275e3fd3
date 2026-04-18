@@ -1,0 +1,99 @@
+tests/features/e2e/daily-core.e2e.ts
+  502af712075941b9 2,5,92
+tests/features/e2e/weekly-plan-loop.e2e.ts
+  502af712075941b9 2,30,42,198,250
+src/lib/features/settings/Page.svelte
+  502af712075941b9 2,23-41,43-58,63,68-75,78,80
+tests/features/e2e/today-handoffs.e2e.ts
+  502af712075941b9 2,5,17,167,233,354,416,512,592,675,869,1050,1217,1352,1460,1563,1715,1817,1917,2017,2166,2296,2425,2558,2666,2750,2952
+tests/features/unit/db/migrate.route.test.ts
+  502af712075941b9 150-172
+FUTURE_UPDATES.md
+  502af712075941b9 1-773
+tests/features/e2e/imports.e2e.ts
+  502af712075941b9 223-269
+tests/features/e2e/plan-to-today.e2e.ts
+  502af712075941b9 2,5,94
+src/lib/server/planning/store.ts
+  502af712075941b9 114-118,120,124-132,134-153
+src/lib/server/settings/store.ts
+  502af712075941b9 1-40
+tests/ci/package-scripts.test.ts
+  502af712075941b9 1-21
+tests/features/unit/http/api-session.test.ts
+  502af712075941b9 8-9,38,40,44-57,97,113-129
+tests/features/unit/settings/route.test.ts
+  502af712075941b9 1-101
+tests/features/unit/imports/store.test.ts
+  502af712075941b9 2,48-60,67-84,93-95,109
+tests/features/unit/db/import-snapshot.test.ts
+  502af712075941b9 1-168
+tests/features/unit/planning/server-day-slots.test.ts
+  502af712075941b9 1-67
+tests/ci/workflow-invariants.test.ts
+  502af712075941b9 42-44,48-71
+tests/features/e2e/review-context.e2e.ts
+  502af712075941b9 2,5,10,131,297
+src/routes/api/imports/+server.ts
+  502af712075941b9 9,11-21,26-45,48-50,55-63
+src/routes/api/test/reset-db/+server.ts
+  502af712075941b9 8,21
+tests/features/unit/e2e/http.test.ts
+  502af712075941b9 1-66
+vitest.component.config.ts
+  502af712075941b9 17,24-31
+src/lib/features/imports/parsers.ts
+  502af712075941b9 2,19,35-36,45,54
+.github/workflows/release.yml
+  502af712075941b9 35-215,224
+playwright.config.ts
+  502af712075941b9 21
+src/lib/server/db/drizzle/import-snapshot.ts
+  502af712075941b9 4,35-38,40-49
+src/routes/api/settings/+server.ts
+  502af712075941b9 1-39
+tests/features/unit/imports/route.test.ts
+  502af712075941b9 6,15,36-40,192-260
+tests/features/unit/db/reset-db.route.test.ts
+  502af712075941b9 7,12-15,27-29,73-74,86
+package.json
+  502af712075941b9 31-33
+src/lib/server/http/session-guard.ts
+  502af712075941b9 17-27,35-37,45,49-57,128-136,150-151,154-158
+tests/features/unit/integrations/smart-fhir-normalize.test.ts
+  502af712075941b9 1-38
+src/lib/core/domain/time.ts
+  502af712075941b9 12-15,23
+src/lib/features/integrations/normalization/fhir-normalize.ts
+  502af712075941b9 1,71,87-88,103-104,121,132-133,144,155-156,163,171-174,213,218,223
+vitest.unit.config.ts
+  502af712075941b9 22-29
+src/routes/api/db/migrate/+server.ts
+  502af712075941b9 12,73-77
+src/hooks.server.ts
+  502af712075941b9 4-10,12,20
+.github/workflows/ci.yml
+  502af712075941b9 176-253,262-273
+tests/support/e2e/http.ts
+  502af712075941b9 1-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "5eabf80ef0bfa31c0f298af59564d58b275e3fd3",
+  "prompts": {
+    "502af712075941b9": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "019d9dab-b782-7560-8958-3cb80c8072f6",
+        "model": "gpt-5.4"
+      },
+      "human_author": "Olen Latham",
+      "messages": [],
+      "total_additions": 2171,
+      "total_deletions": 126,
+      "accepted_lines": 2171,
+      "overriden_lines": 0
+    }
+  }
+}
