@@ -58,7 +58,7 @@ jobs:
         run: node .github/scripts/grok-timeline.mjs
 
       - name: Post timeline
-        uses: actions/github-script@v8
+        uses: actions/github-script@v9
         env:
           TIMELINE_MARKDOWN_PATH: ${{ runner.temp }}/grok-timeline.md
           PR_NUMBER: ${{ github.event.inputs.pr_number }}
